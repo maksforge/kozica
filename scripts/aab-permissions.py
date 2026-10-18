@@ -89,7 +89,7 @@ EXPECTED = {
 # rest on, so it is asserted rather than assumed.
 FORBIDDEN = {
     "com.google.android.gms.permission.AD_ID": "Data safety says no advertising ID",
-    "android.permission.QUERY_ALL_PACKAGES": "the <queries> element names one package instead",
+    "android.permission.QUERY_ALL_PACKAGES": "the <queries> element names the intents it needs instead",
     "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS": "Play restricts it to apps whose core function is the exemption; deep-link to the list instead",
     # "No backend, no account" is a claim the Data safety form and the privacy policy
     # both make, and this is the only thing that checks it against the artifact: a
@@ -104,8 +104,7 @@ FORBIDDEN = {
     # The TakePicture intent needs no permission. Declaring CAMERA would make the
     # intent *require* it to be granted, and changes the listing.
     "android.permission.CAMERA": "the camera intent needs none; declaring it changes the listing",
-    # Play permits USE_EXACT_ALARM only for alarm clocks and calendars.
-    "android.permission.USE_EXACT_ALARM": "Play policy: alarm-clock and calendar apps only; SCHEDULE_EXACT_ALARM instead",
+    "android.permission.USE_EXACT_ALARM": "Play policy: alarm-clock and calendar apps only",
 }
 
 # Every <uses-feature> the artifact is allowed to carry, with the required= value
