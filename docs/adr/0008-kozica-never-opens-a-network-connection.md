@@ -15,10 +15,19 @@ of ours.
 
 ## Decision
 
-**The merged manifest of every build declares no `INTERNET` permission.** `scripts/aab-permissions.py`
-forbids it. A dependency that merges it — MapLibre, the Play Billing Library for a later tip — has it
-removed with `tools:node="remove"` and must work without it; a library that cannot is not used.
-The same goes for `ACCESS_NETWORK_STATE`.
+**The merged manifest of every build declares no `INTERNET` permission**, and no
+`ACCESS_NETWORK_STATE` or `ACCESS_WIFI_STATE` either. `scripts/aab-permissions.py` forbids all three.
+A dependency that merges one has it removed with `tools:node="remove"` and must work without it; a
+library that cannot is not used. Two are known:
+
+- **MapLibre** (`android-sdk` 13.7.1) merges all three, and the fine and coarse location pair that
+  phase 2's ask uses, the moment it becomes a dependency.
+- **The Play Billing Library** (9.1.0), for a later tip, depends on Google's `datatransport`. Besides
+  `INTERNET` and `ACCESS_NETWORK_STATE`, that merges a `JobInfoSchedulerService` and an
+  `AlarmManagerSchedulerBroadcastReceiver` that schedule the library's own usage logging. Stripping
+  the permissions alone would ship an SDK that still tries to upload on a schedule, so both
+  components are removed too, and the tip ships only after a purchase is confirmed on a phone
+  without them.
 
 **Live information is a hand-off.** Where the user needs something only the network has, the app
 opens another app with an intent and claims nothing about the result:
@@ -41,8 +50,10 @@ browser shows the page as its authors keep it, with its own date on it.
 sensitive data an app can hold. It would need a server, an account and a privacy story of its own.
 Ratunek already lets rescuers locate a caller.
 
-**Crash reporting.** It is the honest loss: bugs on testers' phones arrive only when someone mails
-them, through `ui/support/`. At this size, the mail hand-off and readings from a real phone carry it.
+**Crash reporting of our own.** It is the honest loss. Play Console's Android vitals reports crashes
+and ANRs with stack traces, but only from devices whose owners opted into sharing usage and
+diagnostics; anything else arrives when someone mails it, through `ui/support/`. At this size,
+vitals, the mail hand-off and readings from a real phone carry it.
 
 **Cloud backup and sync.** Backup stays on the device and in Android's own backup
 ([ADR-0005](0005-backup-is-automatic-for-the-database-and-manual-for-media.md)), which needs nothing
@@ -58,4 +69,5 @@ from the app's manifest.
   system for network state it no longer has permission to read and throws.
 - A hand-off's target can move: a URL changes, Ratunek is renamed. It is fixed in an ordinary release,
   and the browser or the Play Store shows the user that something is wrong rather than the app.
-- No crash reports, ever. A fault on a tester's phone is found by them, or by a reading.
+- No crash reporting of our own. Android vitals is the only source, and it sees only opted-in
+  devices; a fault on any other phone is found by its owner, or by a reading.
