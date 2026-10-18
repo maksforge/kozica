@@ -8,7 +8,7 @@ memory a year from now is how a true answer turns false.
 <!--
     A template with real structure. Every section below is a page the Console will make you answer
     before a closed release, and the answers are pre-filled for the template *as shipped*: no
-    network, no account, no ads, reminders and photos on the device. Delete what your app does not
+    network, no account, no ads, photos on the device. Delete what your app does not
     have, re-reason what it adds, and date every answer the day you give it in the Console.
 
     The first app built from this template wrote this file in its fifth phase, after `DOD.md` had
@@ -34,21 +34,16 @@ Read at **versionCode _, versionName _** by `publish-play.yml`'s verify step on 
 
 | Permission | Whose | What it is for | Console consequence |
 | --- | --- | --- | --- |
-| `POST_NOTIFICATIONS` | ours | reminder notifications, asked from a screen that explains them | none |
-| `RECEIVE_BOOT_COMPLETED` | ours | `BootReceiver` re-arms the sweep after a restart | none: normal, install-time |
-| `SCHEDULE_EXACT_ALARM` | ours | a reminder that must land on its minute (ADR-0003) | **none today, but watch it**: Play restricts exact alarms, and `USE_EXACT_ALARM` is forbidden outright |
-| `WAKE_LOCK` | WorkManager | the worker's own wake lock | none |
-| `ACCESS_NETWORK_STATE` | WorkManager | reads connectivity for job constraints; opens nothing | none, but a reviewer may ask why an app with no network reads it — this row is the answer |
-| `FOREGROUND_SERVICE` | WorkManager | its `SystemForegroundService`, never started by this app | none while nothing declares a foreground service *type* |
 | `…DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | its own non-exported receivers, signature-level | none: not user-visible |
 
-**Forbidden, and asserted absent**: `INTERNET`, `AD_ID`, `QUERY_ALL_PACKAGES`,
-`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `CAMERA`, `USE_EXACT_ALARM`. The first two are what the Data
-safety and advertising-ID answers rest on.
+**Forbidden, and asserted absent**: `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`,
+`AD_ID`, `QUERY_ALL_PACKAGES`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `CAMERA`, `USE_EXACT_ALARM`.
+The network three are [ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md); `INTERNET`
+and `AD_ID` are what the Data safety and advertising-ID answers rest on.
 
-**Two asks are not permissions and appear on no Play list**: the battery-optimisation exemption and
-Xiaomi's autostart. Both are hand-offs to Settings. They need no declaration, and the privacy policy
-names them anyway, because a user sent to two Settings screens should find both explained.
+**No asks that are not permissions, either.** The battery-optimisation and Xiaomi autostart
+hand-offs left with the reminders; `PLAN.md` rule 4 brings them back only on a reading, and the
+privacy policy names them in the same commit if they do.
 
 ---
 
@@ -130,8 +125,8 @@ forbids it. Answered _<date>_.
 
 ## Foreground service permissions
 
-**None declared** as shipped: WorkManager merges `FOREGROUND_SERVICE` but no foreground service
-*type*, and nothing here starts one. If the app gains a foreground service, this section records the
+**None declared**: the artifact carries no `FOREGROUND_SERVICE` and nothing here starts one. Phase
+6's hike recording brings a `location` service. If the app gains a foreground service, this section records the
 type, the `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` text if it is `specialUse`, and the three answers the
 declaration asks for: what the user sees, why it cannot wait, and why no named type fits.
 

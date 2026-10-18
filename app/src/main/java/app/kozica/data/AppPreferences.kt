@@ -41,7 +41,6 @@ class AppPreferences(
     private object Keys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MATERIAL_YOU = booleanPreferencesKey("material_you")
-        val REMINDERS_ENABLED = booleanPreferencesKey("reminders_enabled")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val BACKUP_FOLDER_URI = stringPreferencesKey("backup_folder_uri")
     }
@@ -68,15 +67,6 @@ class AppPreferences(
      * app's identity would be invisible on almost every device that runs it.
      */
     val materialYou: Flow<Boolean> = store.data.map { it[Keys.MATERIAL_YOU] ?: false }
-
-    /**
-     * Whether the user has opted into reminders.
-     *
-     * Separate from the OS notification permission on purpose, and both are checked before anything
-     * is posted. The permission answers "may we", this answers "did they ask us to" — and a user who
-     * granted the permission once and turned reminders off in the app has not revoked the permission.
-     */
-    val remindersEnabled: Flow<Boolean> = store.data.map { it[Keys.REMINDERS_ENABLED] ?: false }
 
     /** Whether first-run setup has been completed. */
     val onboardingDone: Flow<Boolean> = store.data.map { it[Keys.ONBOARDING_DONE] ?: false }
@@ -107,10 +97,6 @@ class AppPreferences(
 
     suspend fun setMaterialYou(enabled: Boolean) {
         store.edit { it[Keys.MATERIAL_YOU] = enabled }
-    }
-
-    suspend fun setRemindersEnabled(enabled: Boolean) {
-        store.edit { it[Keys.REMINDERS_ENABLED] = enabled }
     }
 
     suspend fun setOnboardingDone(done: Boolean) {

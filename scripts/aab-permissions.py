@@ -75,26 +75,10 @@ PRIM_INT_DEC = 6
 PRIM_INT_HEX = 7
 
 # Every <uses-permission> the release artifact is allowed to carry. Each is
-# accounted for in docs/play-app-content.md — keep the two in step. Read off the
-# template's own bundle, so the list is true on the day you clone it; it stops
-# being true the day you remove the reminders or WorkManager, and that is the day
-# to edit it.
+# accounted for in docs/play-app-content.md — keep the two in step. Kozica asks for
+# nothing yet: precise location arrives in phase 2 and the recording service's
+# permissions in phase 6 (PLAN.md rule 4), each with its row here.
 EXPECTED = {
-    # Declared in AndroidManifest.xml. Runtime on API 33+, asked for from a screen
-    # that explains it first (work/NotificationPermission.kt, ADR-0003).
-    "android.permission.POST_NOTIFICATIONS": "ours — reminder notifications, ADR-0003",
-    # Declared. Install-time and invisible; BootReceiver re-arms the sweep after a restart.
-    "android.permission.RECEIVE_BOOT_COMPLETED": "ours — work/BootReceiver.kt, ADR-0003",
-    # Declared, and deliberately not USE_EXACT_ALARM (the manifest comment says why).
-    # Delete the manifest line and this row together if nothing needs a precise moment.
-    "android.permission.SCHEDULE_EXACT_ALARM": "ours — work/ExactAlarms.kt, ADR-0003",
-    # The three WorkManager merges, none of them in our source. They leave with
-    # WorkManager — and an artifact that carries one again without it has a new
-    # dependency that wants a wake lock or network state, which is a Data safety
-    # question before it is a build one.
-    "android.permission.WAKE_LOCK": "WorkManager",
-    "android.permission.ACCESS_NETWORK_STATE": "WorkManager — reads connectivity state, opens nothing",
-    "android.permission.FOREGROUND_SERVICE": "WorkManager — its SystemForegroundService, never started here",
     # AndroidX defines and uses this itself, signature-level. The prefix is the
     # applicationId, which differs between the debug and release builds, so it is
     # matched by suffix rather than spelled out.
@@ -106,13 +90,17 @@ EXPECTED = {
 FORBIDDEN = {
     "com.google.android.gms.permission.AD_ID": "Data safety says no advertising ID",
     "android.permission.QUERY_ALL_PACKAGES": "the <queries> element names one package instead",
-    "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS": "Play restricts it; work/BatteryExemption.kt deep-links instead",
+    "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS": "Play restricts it to apps whose core function is the exemption; deep-link to the list instead",
     # "No backend, no account" is a claim the Data safety form and the privacy policy
     # both make, and this is the only thing that checks it against the artifact: a
     # dependency that merges INTERNET makes the claim false without touching a line of
     # our source. An app that genuinely needs the network moves it to EXPECTED — and
     # rewrites both of those documents in the same commit.
     "android.permission.INTERNET": "no network: a merged one makes the privacy policy and Data safety wrong",
+    # Reading network state opens nothing, but on an app that never connects (ADR-0008)
+    # it is a question a Play reviewer can ask and this app has no answer to.
+    "android.permission.ACCESS_NETWORK_STATE": "ADR-0008: no network, so nothing to read the state of",
+    "android.permission.ACCESS_WIFI_STATE": "ADR-0008: no network, so nothing to read the state of",
     # The TakePicture intent needs no permission. Declaring CAMERA would make the
     # intent *require* it to be granted, and changes the listing.
     "android.permission.CAMERA": "the camera intent needs none; declaring it changes the listing",

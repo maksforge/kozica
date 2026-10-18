@@ -105,11 +105,11 @@ fun EmptyState(
  * these denials fail silently, the app knows and the user does not.
  *
  * It is deliberately *not* the idiom for a grant the app **cannot** read back, such as a vendor's
- * autostart toggle (`work/Autostart.kt`). Those get a permanent row that makes no claim: a banner
- * that could never clear would be the app asserting a state it has no way to observe.
+ * autostart toggle. Those get a permanent row that makes no claim: a banner that could never clear
+ * would be the app asserting a state it has no way to observe.
  *
- * The body says what is lost, not what is switched off — "reminders will not arrive" rather than
- * "notifications are disabled", which the user can already see on the screen they are being sent to.
+ * The body says what is lost, not what is switched off — "the map cannot show where you are" rather
+ * than "location is denied", which the user can already see on the screen they are being sent to.
  */
 @Composable
 fun WarningBanner(

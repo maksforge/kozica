@@ -177,12 +177,6 @@ def api_level() -> int:
 # wrong name — see [usable_configs].
 GESTURE_MIN_API = 29
 
-# `POST_NOTIFICATIONS` is Android 13. Below it the permission does not exist, `pm grant` fails with
-# a non-zero exit, and there is nothing to grant anyway: notifications are on until an owner turns
-# them off, so the banner the grant below exists to avoid cannot appear. The first nightly matrix
-# run died here on API 26, one minute in.
-POST_NOTIFICATIONS_MIN_API = 33
-
 # The AOSP navigation-mode overlays, all declaring `android:category="…systemui.navbar"`, which is
 # what makes `enable-exclusive --category` a single call rather than an enable plus N disables.
 NAVBAR_OVERLAYS = {
@@ -400,10 +394,8 @@ def set_dnd(on: bool) -> None:
     explain it. Worth pinning *before* it costs you a run: from the artifacts alone it is close to
     undiagnosable.
 
-    `set_dnd` and not a revoked `POST_NOTIFICATIONS`: the scenes photograph reminder copy, and an
-    app that cannot post notifications draws a blocked-state banner instead — which would make the
-    screenshots lie about a different thing. Zen suppresses the *presentation* and leaves the app's
-    own state alone (verified: `zen_mode` reads 2 with it on and 0 with it off).
+    Zen suppresses the *presentation* and leaves every app's own state alone (verified: `zen_mode`
+    reads 2 with it on and 0 with it off).
 
     It is **phone-wide**, which is why every caller's `off` belongs in a `finally`. A crashed run
     must not leave somebody's phone silent.
@@ -1126,21 +1118,6 @@ def reset_to_seeded() -> None:
         tap(label)
     settle(1.0)
 
-    # Last, because `pm grant` can kill the process and everything above is a tap sequence that
-    # would die with it. Every caller relaunches before its next screenshot, so the app picks the
-    # permission up cleanly.
-    #
-    # `pm clear` revokes POST_NOTIFICATIONS, and a denied notification permission is *visible*: a
-    # screen that explains it grows a "notifications are off" banner, and its button's label can
-    # collide with a needle a later scene taps — which then launches the system's notification
-    # settings, so the next scene photographs the Settings app and the one after fails with an empty
-    # node list, the foreground no longer being this package. Granting it back is also the honest
-    # state: a seeded install stands in for an app
-    # in use, not for one whose permission was just refused. The `empty` suite is the deliberate
-    # exception and keeps the denied state, because there it is the truth of a first run.
-    if api_level() >= POST_NOTIFICATIONS_MIN_API:
-        shell(f"pm grant {PACKAGE} android.permission.POST_NOTIFICATIONS")
-        settle(0.5)
     global _SEEDED
     _SEEDED = ""
 

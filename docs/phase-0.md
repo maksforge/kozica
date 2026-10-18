@@ -159,7 +159,7 @@ rule 3).
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The release bundle declares none of the six permissions in § 1 | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
+| R1 | The release bundle declares none of the six permissions in § 1 | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | 2026-10-18, versionCode 13: one permission, AndroidX's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; none of the 8 forbidden ones |
 | R2 | The app opens on the placeholder screen, in English and in Polish | `./gradlew installDebug`, switch language in Settings | |
 | R3 | The palette in light and dark, on the phone | `./gradlew installDebug`, system dark mode on and off | |
 | R4 | Nothing says "Item" anywhere | `grep -rniE '>[^<]*\bitems?\b' app/src/*/res/values*/strings.xml`, and a walk through every screen | |

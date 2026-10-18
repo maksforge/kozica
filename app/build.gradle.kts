@@ -304,7 +304,6 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     androidTestImplementation(libs.androidx.room.testing)
-    androidTestImplementation(libs.androidx.work.testing)
     implementation(libs.androidx.datastore.preferences)
 
     // The export manifest inside a backup zip. JSON rather than a hand-rolled format, because the
@@ -330,11 +329,6 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.kotlinx.coroutines.test)
-
-    // Scheduling. Initialised on demand rather than by androidx.startup — see MainApplication,
-    // where the schema wipe guard also lives and the ordering between the two has to be a decision
-    // rather than a merged-manifest accident.
-    implementation(libs.androidx.work.runtime)
 
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)

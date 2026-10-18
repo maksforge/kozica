@@ -8,7 +8,7 @@ import androidx.annotation.StringRes
 import androidx.core.net.toUri
 import app.kozica.BuildConfig
 import app.kozica.R
-import app.kozica.work.startActivitySafely
+import app.kozica.ui.common.startActivitySafely
 
 /**
  * Where a report goes, and it is **frozen the day a build leaves this machine**.
