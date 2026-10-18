@@ -289,11 +289,11 @@ it is asked for.
 
 | | |
 | --- | --- |
-| File | `~/.keystores/<app>-upload.jks` — **outside the repo**; `*.jks` is gitignored as a second line of defence |
+| File | `~/.keystores/kozica-upload.jks`, created 2026-10-18 — **outside the repo**; `*.jks` is gitignored as a second line of defence |
 | Type / alias | PKCS12, alias `upload`. PKCS12 keeps **one** password, so `upload.storePassword` and `upload.keyPassword` are the same string |
-| Key | *(algorithm, size, valid until)* |
-| SHA-256 | *(fingerprint)* |
-| Backed up to | *(somewhere that is not this machine)* |
+| Key | RSA 4096, SHA384withRSA, `CN=Maksymilian Sredniawa`, valid until 2054-03-05 |
+| SHA-256 | `69:05:4C:8F:9C:7C:E5:B0:9D:08:B7:2C:3F:0B:63:B6:60:04:35:45:07:EB:8D:B5:5D:AF:31:AF:8C:B3:4F:F6` |
+| Backed up to | NordPass, the owner's account, 2026-10-18 — the keystore and its password |
 
 ```bash
 keytool -genkeypair -v -storetype PKCS12 -keystore ~/.keystores/<app>-upload.jks \
