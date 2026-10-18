@@ -46,8 +46,8 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       EXPECTED_ORIENTATION describe the template. Run all four `aab-*.py` scripts against a local
       `bundleRelease` **before the first tag** — the first app built from it found its stale table in the publish
       workflow, after the tag, with the version already spent.
-- [ ] **Choose the palette.** Four seeds in `scripts/gen_scheme.py`, regenerate `theme/Color.kt`,
-      read the contrast report it prints on stderr.
+- [x] **Choose the palette.** Chamois ochre, rock, slate and stone in `scripts/gen_scheme.py`; every
+      contrast pair passes. Phase 2 checks it against the Trail colours on the map.
 - [ ] **Put a real support address in `ui/support/SupportHandoff.kt`.** It ships as
       `support@example.com`, `bootstrap.py` cannot guess it, and a release carrying it is a release
       with no way for anyone to reach you — Play's listing wants the same address in its contact

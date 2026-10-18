@@ -110,14 +110,14 @@ Pierwsze wydanie.
 
 ### 0.2.0 — Kozica's own screen
 
-**English** — 136/500:
+**English** — 161/500:
 
 ```
-Kozica now opens on its own screen, with a place kept for the map. Settings are behind the icon at the top. Reminders have been removed.
+Kozica now opens on its own screen, with a place kept for the map, in its own warm colours. Settings are behind the icon at the top. Reminders have been removed.
 ```
 
-**Polish** — 143/500:
+**Polish** — 172/500:
 
 ```
-Kozica otwiera się teraz na własnym ekranie, z miejscem zarezerwowanym na mapę. Ustawienia są pod ikoną u góry. Przypomnienia zostały usunięte.
+Kozica otwiera się teraz na własnym ekranie, z miejscem zarezerwowanym na mapę, w nowych, ciepłych kolorach. Ustawienia są pod ikoną u góry. Przypomnienia zostały usunięte.
 ```

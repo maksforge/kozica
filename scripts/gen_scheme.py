@@ -17,10 +17,11 @@ is the one with the widest reach.
 import sys
 from hct import TonalPalette, argb_from_hex, hex_from_argb, xyz_from_argb
 
-SEED_PRIMARY = "4C6FA5"    # Slate blue
-SEED_SECONDARY = "6B7A8F"  # Muted steel
-SEED_TERTIARY = "9A6BA5"   # Heather
-SEED_NEUTRAL = "DCDFE4"    # Cool grey
+# Hues chosen to stay clear of the five Trail colours (docs/phase-0.md § 3).
+SEED_PRIMARY = "A86B32"    # Chamois ochre, the summer coat
+SEED_SECONDARY = "7D7064"  # Warm grey-brown, rock
+SEED_TERTIARY = "56646E"   # Muted slate
+SEED_NEUTRAL = "8A847C"    # Warm stone grey
 
 PACKAGE = "app.kozica"  # the Kotlin package root; bootstrap.py rewrites this
 
