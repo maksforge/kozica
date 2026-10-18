@@ -22,7 +22,7 @@ SEED_SECONDARY = "6B7A8F"  # Muted steel
 SEED_TERTIARY = "9A6BA5"   # Heather
 SEED_NEUTRAL = "DCDFE4"    # Cool grey
 
-PACKAGE = "app.starter"  # the Kotlin package root; bootstrap.py rewrites this
+PACKAGE = "app.kozica"  # the Kotlin package root; bootstrap.py rewrites this
 
 P = TonalPalette.from_argb(argb_from_hex(SEED_PRIMARY))
 S = TonalPalette.from_argb(argb_from_hex(SEED_SECONDARY))

@@ -17,7 +17,7 @@
     purpose so someone lost in a language they cannot read can find their way back.
 -->
 <resources>
-    <string name="app_name" translatable="false">Starter</string>
+    <string name="app_name" translatable="false">Kozica</string>
 
     <!-- Navigation -->
     <string name="tab_items">Items</string>
@@ -78,9 +78,9 @@
     <string name="support_report_hint">Opens your email app with what the app knows about your phone already filled in.</string>
     <string name="support_feature">Suggest a feature</string>
     <string name="support_feature_hint">Say what you would like the app to do, and what you would use it for.</string>
-    <string name="support_subject_bug" translatable="false">Starter #bug</string>
-    <string name="support_subject_feature" translatable="false">Starter #feature</string>
-    <string name="support_subject_language" translatable="false">Starter #language</string>
+    <string name="support_subject_bug" translatable="false">Kozica #bug</string>
+    <string name="support_subject_feature" translatable="false">Kozica #feature</string>
+    <string name="support_subject_language" translatable="false">Kozica #language</string>
     <string name="support_body_bug">What happened, and what you expected instead:</string>
     <string name="support_body_feature">What would you like the app to do?</string>
     <string name="support_body_language">Which word read wrong, and on which screen?</string>

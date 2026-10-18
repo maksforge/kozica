@@ -109,7 +109,7 @@ jobs:
             printf '%s' "${JSON_KEY_DATA}" > "${key}"
             echo "Asking Play which build is on '${{ inputs.from_track }}'..."
             out="$(bundle exec fastlane run google_play_track_version_codes \
-              package_name:'com.example.starter' \
+              package_name:'io.github.srednimax.kozica' \
               track:'${{ inputs.from_track }}' \
               json_key:"${key}" 2>&1)" || { echo "${out}"; rm -f "${key}"; exit 1; }
             rm -f "${key}"

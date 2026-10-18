@@ -55,7 +55,7 @@ DEBUG_APPLICATION_ID = f"{APPLICATION_ID}.debug"
 
 # The human name, for generated art and log lines. The authority for what the launcher shows is
 # `app_name` in res/values/strings.xml; this is only for things outside the APK.
-APP_NAME = "Starter"
+APP_NAME = "Kozica"
 
 
 def _debug_app_name() -> str:
@@ -81,7 +81,7 @@ DEBUG_APP_NAME = _debug_app_name()
 
 # --- Room -------------------------------------------------------------------------------------
 # The filename passed to Room.databaseBuilder, and so what lands in /data/data/<pkg>/databases/.
-DATABASE_FILE = "app.db"
+DATABASE_FILE = "kozica.db"
 
 # **Whether this app has a database at all**, read off the source rather than declared. An app that
 # stores settings and not records is a legitimate shape — the first app built from this template

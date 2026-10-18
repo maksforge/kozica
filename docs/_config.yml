@@ -12,5 +12,5 @@
 # because this repo is public and they hold nothing that is not already on GitHub; anything that must not
 # be published must not be in docs/ at all.
 theme: jekyll-theme-minimal
-title: Starter
+title: Kozica
 description: <One line about the app>
