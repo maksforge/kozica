@@ -80,9 +80,12 @@ easy to miss:
   same commit, and `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE` join `INTERNET` in FORBIDDEN, with
   [ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md) as the reason.
 - The rest of `work/` goes too. `Autostart.kt` and `BatteryExemption.kt` serve only background work,
-  and `PLAN.md` rule 4 brings them back only on a reading; `SchemaGuard.kt` serves only reminders. The
-  `com.miui.securitycenter` entry in `<queries>` goes with `Autostart.kt`. `startActivitySafely`
-  moves to `ui/common/` first: `ui/support/SupportHandoff.kt` uses it, and phase 3's hand-offs will.
+  and `PLAN.md` rule 4 brings them back only on a reading. The `com.miui.securitycenter` entry in
+  `<queries>` goes with `Autostart.kt`. Two helpers move out first: `startActivitySafely` to
+  `ui/common/`, because `ui/support/SupportHandoff.kt` uses it and phase 3's hand-offs will; and
+  `schemaBlocksBackgroundWork()` to `data/`, beside the gate, because ADR-0001 makes it the check
+  every background entry point runs and phase 6's recording service is the next one.
+  `SchemaGuard.kt`'s `rebuildInBackground` serves only the reminders' receivers and goes with them.
 - Settings' *Reminders* section is the template's worked example of `PLAN.md` rule 4, and phase 2's
   location ask copies its shape. After this checkpoint read it at `10bf995`:
   `ui/settings/SettingsScreen.kt` and `work/NotificationPermission.kt`.
@@ -97,7 +100,8 @@ Settings. `scripts/edge-to-edge.py`'s SCENES walk this screen and Settings, noth
 
 Debug seeding keeps its seam: `SeedReceiver`, Settings' debug rows and the seed machinery in
 `edge-to-edge.py` and `screenshots.py` stay, and `SampleData.kt` seeds nothing until phase 5 or 6
-has data to put in it. Deleting the seam would mean rewriting both scripts now and again then.
+has data to put in it. Deleting the seam would mean rewriting both scripts now and again then. The
+wipe row's `debug_wipe`, "Delete all items", becomes "Delete all data", or R4 finds it.
 
 Copy, English:
 
@@ -137,7 +141,9 @@ rule 3).
 - ADR-0003: the amendment above.
 - `CLAUDE.md`: the WorkManager stack row, `work/` in the layout, and the environment note's
   scheduled notifications.
-- `docs/privacy-policy.md`: the notifications line goes with reminders.
+- `docs/privacy-policy.md`: the notifications line goes with reminders, and point 2 of *The three
+  things that happen outside the app*, the backups you export yourself, with the heading's count,
+  until phase 6 brings Backup back.
 - `docs/play-app-content.md`: the reminder permissions' rows, § *Foreground service permissions*
   and the reminders in the header comment, in the same commit as the policy.
 - `scripts/aab-permissions.py`: EXPECTED, to what is left; FORBIDDEN, as in § 1, and the battery
