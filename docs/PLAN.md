@@ -14,18 +14,17 @@ per phase, no task lists. The detail is written when the phase opens, not now. T
 was extracted from and the first app built from it settled on exactly this split independently.
 [`phase-template.md`](phase-template.md) is the shape a phase file settled into; copy it on the day.
 
-<!--
-    A skeleton. Replace the phases with yours; keep the four rules at the bottom unless you have a
-    reason, because each of them was paid for by an app built from this template.
--->
-
 ## Status
 
-- [ ] **Phase 0** — Skeleton: the placeholder domain gone, the palette and the mark chosen
-- [ ] **Phase P** — The pipeline: repository setup, upload key, Play entry, secrets, a green internal upload
-- [ ] **Phase 1** — *(the smallest version of the app's one mechanism, working on the phone)*
-- [ ] **Phase 2** — *(safe to hand to a stranger)* ← **the door: closed testing opens here**
-- [ ] **Phase N** — Ship shape: listing, screenshots, the App content answers
+- [ ] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
+- [ ] **Phase P** — The pipeline: everything set up; the first *automatic* upload still to be watched
+- [ ] **Phase 1** — The data reaches the phone: one Region built in CI and delivered by Play
+- [ ] **Phase 2** — The map: every Region drawn, Trails in their colours, "you are here"
+- [ ] **Phase 3** — Safe for a stranger ← **the door: closed testing opens here**
+- [ ] **Phase 4** — Elevation: contours and hillshading
+- [ ] **Phase 5** — Route planning, and search by name
+- [ ] **Phase 6** — The hike log
+- [ ] **Phase N** — Ship shape: screenshots, production access, **1.0**
 
 ---
 
@@ -83,8 +82,17 @@ to settings screens whose result cannot be read back reliably — `appops` has b
 **Every ask waits for the moment the feature needing it is switched on. The phase that introduces an
 ask owns its hand-off, its re-read, and what the user sees when the answer is no.**
 
-Write the table for your app — the ask, the moment it is made, the phase that owns it — and put it
-here, so a later phase cannot quietly move an ask forward to "get it out of the way".
+Kozica's asks — the moment each is made and the phase that owns it — are this table, so a later
+phase cannot quietly move one forward to "get it out of the way".
+
+| Ask | Moment it is made | Phase that owns it |
+| --- | --- | --- |
+| Precise location | The first tap on "show me where I am" — never at launch | 2 |
+| Notifications | Starting a hike recording: its notification is the stop button | 6 |
+| Background location | Starting a recording, and only if the platform requires it beyond the foreground service | 6 |
+| Battery exemption, Xiaomi autostart | Never, unless a reading shows a recording dying without them | 6 |
+| *(none for photos)* | The Photo Picker and the system camera's `TakePicture` intent need no permission | 6 |
+
 
 **The third clause is the one that gets left out, and it is the one that generates support mail.**
 These denials nearly all fail *silently*: a denied notification permission leaves a foreground
@@ -105,15 +113,71 @@ phone's own controls go inert is a system control that appears broken, caused by
 introduces the behaviour owns saying so.
 
 ---
+---
 
 ## Phase 0 — Skeleton
 
-*(one paragraph)*
+Everything the template shipped for an app that is not this one goes: reminders and WorkManager, the
+Items screens and the tab bar built around them. Room, photos and backup stay, because the hike log
+needs all three. The app opens on one screen, the map's place, with Settings behind an icon, in
+the chamois-ochre palette, in English and Polish. The mark stays a placeholder until its concept is
+drawn. [`phase-0.md`](phase-0.md).
 
 ## Phase P — The pipeline
 
-*(one paragraph — `DOD.md`'s "Before the first upload" is most of it)*
+Done but for one reading: the repository, the upload key, the Play entry, the secrets and the service
+account are in place, and version 0.1.0 reached internal testing by hand. What is left is watching
+`publish-play.yml` upload a release-please release by itself
+([`RELEASING.md`](RELEASING.md)).
+
+## Phase 1 — The data reaches the phone
+
+`scripts/build-map-data.py` builds one Region, the Tatry, in CI from the pinned extract
+([ADR-0007](adr/0007-osm-data-ships-per-mountain-range-as-play-asset-packs.md)), and Play delivers it
+to the phone as an on-demand asset pack. The gate is the file format: what an update costs after a
+one-Trail edit, measured through a build Play delivers, because Play does not document how it patches
+asset packs. Nothing has to be drawn yet; the app only proves it can find and read the files.
+
+## Phase 2 — The map
+
+Every Region built and downloadable from a picker, with "Download all". The map draws Trails in their
+marking colours and symbols, Paths apart from them, Huts, Shelters, peaks, passes, springs,
+viewpoints, the way in and out, the land, national-park boundaries and the state border, and the
+user's position, accuracy and heading. The OSM credit and the data date sit on every map screen.
+
+## Phase 3 — Safe for a stranger
+
+What a stranger needs before installing: the listing, the privacy policy, a real support address, the
+App content answers, and the hand-offs for live information — mountain rescue (985), Ratunek, the
+avalanche bulletin and the weather ([ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md)).
+Closed testing opens when this phase closes; the next three phases are built while it runs.
+
+## Phase 4 — Elevation
+
+Contours and hillshading from a DEM, through a second pipeline with its own source, licence and
+attribution. Route planning's walking times come from the same data.
+
+## Phase 5 — Route planning
+
+The user plans a route over Trails and sees its length, ascent and walking time, entirely on the
+phone. Search by name arrives here, because picking a start and an end needs it. A second area of
+the app arrives with it, so this is the phase that brings a tab bar.
+
+## Phase 6 — The hike log
+
+Record a hike — the track, photos and notes — and look back at it. It brings the foreground service,
+the notifications ask and the first of the user's own data that a backup has to keep.
+
+## Phase N — Ship shape
+
+Screenshots, the production-access application and **1.0**: everything above, in the public's hands.
 
 ## Not in this plan
 
-*(what the app will deliberately never do, so a phase cannot quietly grow it back)*
+- **A network connection**, ever: no online tiles, weather, sync, accounts or crash reporting
+  ([ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md)). Live information is a hand-off.
+- **Ads, paid features and sign-in.** Kozica is free. An optional tip that unlocks nothing may come
+  after 1.0, through Play Billing with its `INTERNET` stripped as ADR-0008 requires.
+- **Data beyond Poland's border** in 1.0. A Region stops at the state border; cross-border ranges
+  would be a new ADR once the file format is settled.
+- **Reminders and scheduled work.** Nothing in the plan schedules anything.
