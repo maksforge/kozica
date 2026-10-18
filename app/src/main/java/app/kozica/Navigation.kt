@@ -4,18 +4,10 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -23,9 +15,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.kozica.ui.backup.BackupScreen
-import app.kozica.ui.items.ItemDetailScreen
-import app.kozica.ui.items.ItemEditorScreen
-import app.kozica.ui.items.ItemsScreen
+import app.kozica.ui.home.HomeScreen
 import app.kozica.ui.settings.SettingsScreen
 import app.kozica.ui.support.LicenceTextScreen
 import app.kozica.ui.support.LicencesScreen
@@ -54,40 +44,15 @@ internal fun appEntryDecorators(): List<NavEntryDecorator<NavKey>> =
     )
 
 /**
- * The app shell: a bottom bar over a [NavDisplay].
- *
- * The back stack is rooted at [Items], so Back from any top-level destination returns there and
- * Back from there exits. That is one rule rather than per-screen behaviour, and it is why
- * [showTopLevel] rewrites the stack instead of pushing onto it — pushing would let a user walk
- * Items → Settings → Items → Settings and need four Backs to leave.
+ * The app shell: a [NavDisplay] rooted at [Home], so Back from anywhere walks back there and Back
+ * from there exits. No bottom bar until phase 5 brings the tabs that fill it.
  */
 @Composable
 fun MainNavigation(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(Items)
+    val backStack = rememberNavBackStack(Home)
     val activity = LocalActivity.current
 
-    // Which top-level destination the bar should show as selected. Derived from the *bottom* of the
-    // stack rather than the top, so a detail screen pushed on top does not deselect its own tab.
-    val current =
-        remember(backStack.firstOrNull()) {
-            TopLevelDestination.entries.firstOrNull { it.key == backStack.firstOrNull() }
-                ?: TopLevelDestination.ItemsTab
-        }
-    val onDetailScreen = backStack.size > 1
-
-    Scaffold(
-        modifier = modifier,
-        bottomBar = {
-            // Hidden on a detail screen: a detail screen has its own back affordance, and a bar
-            // that stays visible invites a tab tap that silently discards an unsaved form.
-            if (!onDetailScreen) {
-                AppNavigationBar(
-                    current = current,
-                    onSelect = { destination -> backStack.showTopLevel(destination) },
-                )
-            }
-        },
-    ) { insets ->
+    Scaffold(modifier = modifier) { insets ->
         NavDisplay(
             backStack = backStack,
             // **The keyboard is an inset like any other, and this Scaffold owns them.**
@@ -107,36 +72,17 @@ fun MainNavigation(modifier: Modifier = Modifier) {
             onBack = {
                 if (backStack.size > 1) backStack.removeLastOrNull() else activity?.finish()
             },
-            // Kotlin note: this is a builder DSL, not a map literal — `entry<Items> { … }` registers
+            // Kotlin note: this is a builder DSL, not a map literal — `entry<Home> { … }` registers
             // the composable that renders that key, and the lambda receives the key itself, which is
             // how a key carrying arguments passes them in.
             entryProvider =
                 entryProvider {
-                    entry<Items> {
-                        ItemsScreen(
-                            onOpenItem = { id -> backStack.add(ItemDetail(id)) },
-                            onAddItem = { backStack.add(ItemEditor()) },
-                        )
-                    }
-                    entry<ItemDetail> { key ->
-                        ItemDetailScreen(
-                            itemId = key.itemId,
-                            onEdit = { backStack.add(ItemEditor(key.itemId)) },
-                            onBack = { backStack.removeLastOrNull() },
-                            // A deleted item's detail screen has nothing left to show, so the
-                            // screen leaves rather than rendering an empty state nobody asked for.
-                            onDeleted = { backStack.removeLastOrNull() },
-                        )
-                    }
-                    entry<ItemEditor> { key ->
-                        ItemEditorScreen(
-                            itemId = key.itemId,
-                            onDone = { backStack.removeLastOrNull() },
-                        )
+                    entry<Home> {
+                        HomeScreen(onOpenSettings = { backStack.add(Settings) })
                     }
                     entry<Settings> {
                         SettingsScreen(
-                            onOpenBackup = { backStack.add(Backup) },
+                            onBack = { backStack.removeLastOrNull() },
                             onOpenLicences = { backStack.add(Licences) },
                             onOpenSupport = { backStack.add(Support) },
                         )
@@ -162,35 +108,4 @@ fun MainNavigation(modifier: Modifier = Modifier) {
                 },
         )
     }
-}
-
-@Composable
-private fun AppNavigationBar(
-    current: TopLevelDestination,
-    onSelect: (TopLevelDestination) -> Unit,
-) {
-    NavigationBar {
-        for (destination in TopLevelDestination.entries) {
-            val label = stringResource(destination.label)
-            NavigationBarItem(
-                selected = destination == current,
-                onClick = { onSelect(destination) },
-                icon = { Icon(destination.icon, contentDescription = null) },
-                // `contentDescription = null` on the icon is correct **because** the label is
-                // present: a screen reader would otherwise announce the same word twice.
-                label = { Text(label) },
-            )
-        }
-    }
-}
-
-/**
- * Replace the stack with just this destination.
- *
- * Not `add`: a bottom bar is a switch between roots, not a path to walk deeper into. Pushing would
- * let a user tap between two tabs a dozen times and need a dozen Backs to leave the app.
- */
-private fun NavBackStack<NavKey>.showTopLevel(destination: TopLevelDestination) {
-    clear()
-    add(destination.key)
 }

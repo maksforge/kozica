@@ -38,7 +38,7 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
 - **The camera**, only when you tap to take a picture, through the system camera app. The app
   declares no camera permission.
 
-## The three things that happen outside the app
+## The two things that happen outside the app
 
 These are done by the operating system or by Google, not by <app name>, but they are the honest
 answer to "where could my data be":
@@ -47,9 +47,7 @@ answer to "where could my data be":
    to your own Google Drive, in a space that does not count against your storage quota and that
    Google states apps cannot read. You can turn this off in your phone's settings; the app has a
    link to that screen.
-2. **Backups you export yourself.** A backup is a file, and once you have shared or saved it, where
-   it goes is up to you and to whatever app you sent it to.
-3. **Google Play.** Installing and updating an app is a transaction between your phone and Google,
+2. **Google Play.** Installing and updating an app is a transaction between your phone and Google,
    with its own privacy policy. The developer of this app receives aggregate, anonymous statistics —
    install counts, crash rates, country-level breakdowns — and no information about individuals.
 

@@ -7,12 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,6 +21,7 @@ import app.kozica.R
 import app.kozica.data.ThemeMode
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
+import app.kozica.ui.common.DetailScaffold
 import app.kozica.ui.common.SectionHeader
 import app.kozica.ui.common.SwitchRow
 import app.kozica.ui.support.SupportRequest
@@ -31,10 +29,9 @@ import app.kozica.ui.support.hintRes
 import app.kozica.ui.support.sendSupportMail
 import app.kozica.ui.support.titleRes
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onOpenBackup: () -> Unit,
+    onBack: () -> Unit,
     onOpenLicences: () -> Unit,
     onOpenSupport: () -> Unit,
     modifier: Modifier = Modifier,
@@ -44,11 +41,12 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    Scaffold(
+    DetailScaffold(
+        title = stringResource(R.string.settings_title),
+        onBack = onBack,
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.tab_settings)) }) },
-    ) { insets ->
-        Column(modifier = Modifier.padding(insets).verticalScroll(rememberScrollState())) {
+    ) { contentModifier ->
+        Column(modifier = contentModifier.verticalScroll(rememberScrollState())) {
             SectionHeader(stringResource(R.string.settings_appearance))
 
             Row(modifier = Modifier.padding(horizontal = Spacing.base)) {
@@ -79,9 +77,6 @@ fun SettingsScreen(
                 subtitle = stringResource(SupportRequest.Language.hintRes()),
                 onClick = { context.sendSupportMail(SupportRequest.Language) },
             )
-
-            SectionHeader(stringResource(R.string.settings_data))
-            SettingsRow(stringResource(R.string.settings_backup), onClick = onOpenBackup)
 
             SectionHeader(stringResource(R.string.settings_about))
             SettingsRow(stringResource(R.string.settings_support), onClick = onOpenSupport)

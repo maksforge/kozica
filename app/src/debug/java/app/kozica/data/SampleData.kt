@@ -8,24 +8,9 @@ package app.kozica.data
  * turns a screenshot suite from a check into decoration.
  */
 object SampleData {
-    private val titles =
-        listOf(
-            "First item",
-            "Second item",
-            "An item with a longer title, to see how a row wraps",
-        )
-
-    suspend fun seed(repository: ItemRepository) {
-        wipe(repository)
-        for ((index, title) in titles.withIndex()) {
-            repository.save(
-                ItemEntity(
-                    title = title,
-                    notes = if (index == 0) "Some notes, so the list has two lines in it." else null,
-                ),
-            )
-        }
-    }
+    // Seeds nothing until a phase has data of its own; the seam stays so the capture scripts and
+    // SeedReceiver keep working unchanged (docs/phase-0.md § 2).
+    suspend fun seed(repository: ItemRepository) = wipe(repository)
 
     suspend fun wipe(repository: ItemRepository) {
         for (item in repository.all()) repository.delete(item)

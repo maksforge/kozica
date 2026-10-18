@@ -38,10 +38,10 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       `make-feature-graphic.py`. Commit the concept image and record its provenance in
       `art/README.md` — where the art came from is the thing most likely to block a first upload, and
       it is discovered late.
-- [ ] **Replace the placeholder domain.** `data/ItemEntity.kt` and `ui/items/` — or delete them
-      (above).
-- [ ] **Rewrite `scripts/edge-to-edge.py`'s SCENES** against your screens. Until then the nightly
-      walks screens that do not exist, and `screenshots.py` cannot shoot a listing.
+- [ ] **Drop the dormant `items` table.** `ui/items/` is gone; `ItemEntity` stays until phase 5's
+      `MIGRATION_1_2` replaces it ([`phase-0.md`](phase-0.md) § *Not in*).
+- [x] **Rewrite `scripts/edge-to-edge.py`'s SCENES** against your screens. Home and Settings; each
+      new screen brings its own scenes.
 - [ ] **Make the artifact allowlists yours.** `aab-permissions.py`'s EXPECTED, FORBIDDEN and
       EXPECTED_ORIENTATION describe the template. Run all four `aab-*.py` scripts against a local
       `bundleRelease` **before the first tag** — the first app built from it found its stale table in the publish

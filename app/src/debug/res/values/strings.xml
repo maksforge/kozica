@@ -19,5 +19,5 @@
     <string name="app_name" translatable="false">Kozica debug</string>
     <string name="debug_section" translatable="false">Debug</string>
     <string name="debug_seed" translatable="false">Seed sample data</string>
-    <string name="debug_wipe" translatable="false">Delete all items</string>
+    <string name="debug_wipe" translatable="false">Delete all data</string>
 </resources>

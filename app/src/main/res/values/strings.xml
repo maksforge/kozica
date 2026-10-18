@@ -19,30 +19,14 @@
 <resources>
     <string name="app_name" translatable="false">Kozica</string>
 
-    <!-- Navigation -->
-    <string name="tab_items">Items</string>
-    <string name="tab_settings">Settings</string>
-
     <!-- Common actions -->
     <string name="action_back">Back</string>
-    <string name="action_save">Save</string>
-    <string name="action_edit">Edit</string>
-    <string name="action_delete">Delete</string>
 
-    <!-- Items -->
-    <string name="item_add">Add an item</string>
-    <string name="item_detail_title">Item</string>
-    <string name="item_title_label">Title</string>
-    <string name="item_notes_label">Notes</string>
-    <string name="item_pick_image">Choose a picture</string>
-    <!-- Says what to do, not that there is nothing. -->
-    <string name="items_empty">Nothing here yet. Tap + to add your first item.</string>
-    <plurals name="items_count">
-        <item quantity="one">%d item</item>
-        <item quantity="other">%d items</item>
-    </plurals>
+    <!-- Home -->
+    <string name="home_map_placeholder">Your map will appear here.</string>
 
     <!-- Settings -->
+    <string name="settings_title">Settings</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
@@ -55,7 +39,6 @@
     <string name="settings_language_polish" translatable="false">Polski</string>
     <string name="settings_language_report">Something read wrong?</string>
     <string name="settings_language_report_hint">Tell me if a word looks wrong in your language. Opens your email app, with the language you are reading already filled in.</string>
-    <string name="settings_data">Data</string>
     <string name="settings_backup">Backup and restore</string>
     <string name="settings_about">About</string>
     <string name="settings_support">Help and feedback</string>
