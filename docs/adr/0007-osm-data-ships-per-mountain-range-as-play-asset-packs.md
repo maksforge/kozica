@@ -5,10 +5,9 @@
 The trail data comes from OpenStreetMap, built by us from Geofabrik and never from the public tile
 server or Overpass (house rule in [`CLAUDE.md`](../../CLAUDE.md)). Geofabrik's Poland extract,
 `poland-latest.osm.pbf`, is **2.0 GB**. That raised the question of what a data refresh costs:
-re-downloading the 2 GB file for every build, re-uploading it to Play, and users downloading it
-again.
+re-uploading the whole thing to Play, and users downloading it again.
 
-None of those has to happen, because the 2 GB file is only the input and the data changes slowly.
+Neither has to happen, because the 2 GB file is only the input and the data changes slowly.
 Geofabrik publishes a daily change file (`.osc.gz`) for the same extract. The last seven, read on
 2026-10-18 from `download.geofabrik.de/europe/poland-updates/`, were **2.6–3.4 MB each for the whole
 country**. Geofabrik also keeps dated copies of the extract: the last week's days, the first of each
@@ -39,13 +38,11 @@ sequence with `pyosmium-up-to-date --end-id` (pyosmium 4.2 or later), then check
 updated file's PBF header against the pin and fails if they differ. The same tag therefore always
 builds the same data.
 
-**The extract is cached and brought forward with the daily diffs.** CI keeps the Poland extract in
-`actions/cache`, keyed on its replication sequence. A build restores the newest entry and
-`pyosmium-up-to-date` applies Geofabrik's change files up to the pin. When there is no entry, or the
-restored one is already past the pin, the build downloads the newest dated Geofabrik extract from
-before the pin and rolls it forward instead. The replication state lives in the PBF header
-(`osmosis_replication_sequence_number`, `osmosis_replication_timestamp`,
-`osmosis_replication_base_url`), which `pyosmium-up-to-date` reads and rewrites, so the file carries
+**Each release downloads a dated extract and brings it forward with the daily diffs.** The build
+downloads the newest dated Geofabrik extract from before the pin, and `pyosmium-up-to-date` applies
+Geofabrik's change files up to the pinned sequence. Nothing is cached between builds. The
+replication state lives in the PBF header (`osmosis_replication_sequence_number`,
+`osmosis_replication_timestamp`, `osmosis_replication_base_url`), which `pyosmium-up-to-date` reads and rewrites, so the file carries
 its own date and there is no separate state file to keep.
 
 **Regions follow mountain ranges, not administrative borders.** Each region is a boundary polygon
@@ -89,9 +86,10 @@ how fresh the trails are without reading a changelog.
 
 ## Alternatives
 
-**Download a fresh extract for every build instead of caching one.** It works, and the PBF header
-still dates the data. The only cost is bandwidth and time: each build moves 2 GB to pick up a few days
-of 3 MB changes.
+**Cache the extract between builds.** It would save the 2 GB download. But `publish-play.yml` runs
+on a release tag, and a tag ref can't restore a cache saved under a different tag, so `actions/cache`
+would never hit. Keeping one warm would need a scheduled job that pulls Geofabrik's diffs every day
+for a build that happens a few times a year.
 
 **Build the data on a developer's machine and upload the bundle from there.** It keeps a warm 2 GB
 file between builds for free. But the release bundle would no longer come from the tagged checkout
@@ -138,10 +136,9 @@ every range, and the store download grows with each range added.
   doesn't, and the region is split in two. The 30 GB total is not a practical limit.
 - During an app update Play invalidates the downloaded packs and patches them after the binary. The
   app can open in between, so it has an "update in progress" state for map data, not a crash.
-- GitHub evicts a cache entry that goes unused for 7 days. Builds further apart than that start from
-  a dated Geofabrik download, about 2 GB and some minutes of runner time, and lose nothing else. A
-  pin whose extract or diffs Geofabrik no longer keeps can't be rebuilt, and the build fails rather
-  than build different data.
+- Every release costs one ~2 GB download from Geofabrik plus the diffs up to the pin, and some
+  minutes of runner time. A pin whose extract or diffs Geofabrik no longer keeps can't be rebuilt,
+  and the build fails rather than build different data.
 - The deterministic-output rule is load-bearing and invisible: a stray timestamp in a file header
   turns every refresh into a full download for every user, and still works. The first data refresh is
   read on the phone, through one of the Play paths above. Compare the update size Play reports with
