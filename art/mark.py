@@ -32,8 +32,8 @@ from dataclasses import dataclass
 # `primary` darkened for contrast as the ground and it read as mud; then a gradient, whose middle is
 # the same mud at 44dp. What survived was a flat mid-tone role (`surfaceVariant`) under a light-ish
 # ink (`primary`). Judge the ground at launcher size on a real home screen, light and dark.
-GROUND = (0x2B, 0x4C, 0x7E)  # the icon's flat field — `primary`, darkened for contrast at icon sizes
-MARK_INK = (0xFF, 0xFB, 0xFF)  # the mark on that field — the light scheme's `surface`
+GROUND = (0x4D, 0x46, 0x39)  # the icon's flat field — the dark scheme's `surfaceVariant`
+MARK_INK = (0xFF, 0xB7, 0x77)  # the mark on that field — the dark scheme's `primary`
 
 
 @dataclass(frozen=True)
