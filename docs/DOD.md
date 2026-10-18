@@ -61,24 +61,18 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       the same commit as the privacy policy, every time.
 - [ ] **`LICENSE` and `README.md`.** Bootstrap wrote an all-rights-reserved notice that grants
       nothing; choose the licence you mean, and make the README's *Contributing* agree with it.
-- [ ] **Create the upload keystore, outside the repo**, and put its four values in
-      `local.properties`. Back it up somewhere that is not this machine: losing it means never being
-      able to update the app on Play again. Fill in *The upload key* table in `RELEASING.md` the same
-      day — the fingerprint is what Play asks you to compare.
-- [ ] **Set up the GitHub repository** — `python3 scripts/repo-setup.py` does the ruleset, the
-      merge setting and Pages; the release-please PAT is the one step it cannot do, and without it
-      no release PR is ever opened. *Setting up a new repository* in [`RELEASING.md`](RELEASING.md).
-      **None of this is inherited from the template** — GitHub copies files, never settings — and
-      the build stays green while it is all still undone.
-- [ ] **Set the five Play secrets and create the service account** (`docs/RELEASING.md`) — the
-      service account is the one step CI cannot do for itself. No account permissions; two app
-      permissions, on this app only; no expiry date.
+- [x] **Create the upload keystore, outside the repo.** Recorded in [`RELEASING.md`](RELEASING.md)
+      § *The upload key*.
+- [x] **Set up the GitHub repository.** The `main: require CI` ruleset, rebase merges, Pages and
+      `RELEASE_PLEASE_TOKEN`.
+- [x] **Set the five Play secrets and create the service account.** All in place; the first
+      automatic upload is still to be watched (`PLAN.md`, phase P).
 - [ ] **Plan the closed test.** A new personal developer account reaches production only after a
       closed test — at the time of writing 12 testers opted in for 14 continuous days, then an access
       application. Recruit the testers before the build is ready, not after; `publish-play-closed.yml`
       moves each build to them.
-- [ ] **Decide the `applicationId` deliberately.** It is fixed the moment the Play entry is created —
-      not renameable, not transferable without losing every install and review.
+- [x] **Decide the `applicationId` deliberately.** `io.github.srednimax.kozica`, fixed by the Play
+      entry.
 
 ## After the closed test
 
