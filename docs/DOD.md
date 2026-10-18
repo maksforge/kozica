@@ -42,10 +42,11 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       `MIGRATION_1_2` replaces it ([`phase-0.md`](phase-0.md) § *Not in*).
 - [x] **Rewrite `scripts/edge-to-edge.py`'s SCENES** against your screens. Home and Settings; each
       new screen brings its own scenes.
-- [ ] **Make the artifact allowlists yours.** `aab-permissions.py`'s EXPECTED, FORBIDDEN and
-      EXPECTED_ORIENTATION describe the template. Run all four `aab-*.py` scripts against a local
-      `bundleRelease` **before the first tag** — the first app built from it found its stale table in the publish
-      workflow, after the tag, with the version already spent.
+- [ ] **Run the artifact gates before the first tag.** Phase 0 rewrote `aab-permissions.py`'s
+      EXPECTED and FORBIDDEN for Kozica, and its empty EXPECTED_ORIENTATION is right while no screen
+      is locked. Run all four `aab-*.py` scripts against a local `bundleRelease` **before the first
+      tag** — the first app built from the template found its stale table in the publish workflow,
+      after the tag, with the version already spent.
 - [x] **Choose the palette.** Chamois ochre, rock, slate and stone in `scripts/gen_scheme.py`; every
       contrast pair passes. Phase 2 checks it against the Trail colours on the map.
 - [ ] **Put a real support address in `ui/support/SupportHandoff.kt`.** It ships as
