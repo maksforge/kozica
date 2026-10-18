@@ -48,7 +48,7 @@ private const val PLAY_STORE_APP = "com.android.vending"
  *
  * **The subject is `translatable="false"` and the prompt is not.** The subject carries a filter tag
  * you sort on and the user never reads; the prompt is a sentence addressed to them. A Polish bug
- * report arriving under `Starter #bug` is the correct outcome of an app with a Polish locale, not a
+ * report arriving under `Kozica #bug` is the correct outcome of an app with a Polish locale, not a
  * bug in this pairing.
  */
 enum class SupportRequest(
@@ -132,7 +132,7 @@ fun Context.rateOnPlay(): Boolean {
  * deletable line by line.
  *
  * `app_name` rather than a literal, because the debug source set overrides it — a report from a
- * sideloaded debug build says *Starter debug* and is told apart from a Play one at a glance.
+ * sideloaded debug build says *Kozica debug* and is told apart from a Play one at a glance.
  *
  * The version block is deliberately **not** in `strings.xml`: it is data rather than prose, there is
  * nothing in it a translator could improve, and `docs/translator-brief.md` §4 keeps exactly this
