@@ -580,11 +580,7 @@ class Node:
     cls: str
     package: str
     clickable: bool
-    # Compose publishes `Modifier.selectable`'s state as the accessibility node's `isSelected`, and
-    # the navigation bar is the only place this app uses it — so exactly one node in a top-level
-    # dump carries it, and it is the current tab. Verified in a dump rather than assumed: the item
-    # itself carries no text (the label is a child `TextView`), which is why [showing_tab] compares
-    # rectangles instead of reading it off the labelled node.
+    # `Modifier.selectable`'s state; nothing carries it until phase 5's tab bar (docs/PLAN.md).
     selected: bool = False
 
     @property
@@ -774,13 +770,8 @@ BACK_BOUND = 6
 def showing_tab(nodes: list[Node], needle: str) -> bool:
     """Is the tab called `needle` the selected one?
 
-    The selected item's geometry, which is what
-    turns a tab tap from "something on screen moved" into "the app is on that tab". Without it, a
-    mis-tap that opens a sheet counts as movement, and the run reports every scene reached while
-    some of them photographed the wrong screen entirely.
-
-    Exact, because the whole point is to not be fooled by a label quoted inside another string —
-    the same reason the tap itself is exact. See [TAB_NEEDLES].
+    Idle while [TAB_NEEDLES] is empty; phase 5's tab bar brings it back (docs/PLAN.md). Geometry,
+    because the selected item carries no text of its own — its label is a child `TextView`.
     """
     label = find(nodes, needle, exact=True)
     if label is None:
