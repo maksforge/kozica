@@ -38,7 +38,7 @@ refuses a paste.
 ### App name — 0/30
 
 ```
-Starter
+Kozica
 ```
 
 ### Short description — 0/80
@@ -58,7 +58,7 @@ The line that appears under the name in search results, and the most-read text i
 ### App name — 0/30
 
 ```
-Starter
+Kozica
 ```
 
 ### Short description — 0/80

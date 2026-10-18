@@ -1,9 +1,9 @@
-This template is provided as-is, for you to build on. Use it for anything.
+Kozica
+Copyright (c) 2026 Maksymilian Średniawa. All rights reserved.
 
-The apps you build from it are yours; nothing here asks for attribution.
+No licence is granted yet. This notice was written by the template's bootstrap and
+stands until the owner replaces it with the licence they choose.
 
-Note that the *built app* ships third-party open-source code (androidx, Kotlin,
-Coroutines, Coil, Room and their transitive dependencies). Those obligations are
-real and travel with your binary — which is what `licensee`, the generated
-licences screen and `app/src/main/assets/licences/` exist to satisfy. Do not
-remove them.
+Third-party components bundled in the built application remain under their own
+licences, reproduced in the app's licences screen and in
+app/src/main/assets/licences/. Those obligations travel with every build.
