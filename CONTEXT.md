@@ -1,8 +1,6 @@
 # Vocabulary
 
-<The words this app uses, and the ones it does not. Fill this in early — it is cheap now and
-expensive later, because a name that is wrong in the model is wrong in the schema, the UI copy, every
-translation of it, and the URL scheme.>
+The words Kozica uses, and the ones it does not.
 
 **The rule this file exists to enforce: one concept, one word, everywhere.** The entity, the DAO, the
 route key, the string resource and the sentence in the UI all use it. When the domain word and the
@@ -12,12 +10,16 @@ user-facing word genuinely differ, both are written here with the difference sta
 
 | Term | Means | Not |
 | --- | --- | --- |
-| **Item** | *the placeholder — replace it* | |
+| **Trail** | A marked hiking route with a colour and a symbol, as on the signposts, running over any number of paths and roads. Polish UI: *szlak*. | "route", "track", "path" |
+| **Path** | Any footway on the map, marked or not. A Path is never drawn or named as if it were a Trail. Polish UI: *ścieżka*. | "trail" for an unmarked way |
+| **Hut** | A staffed mountain hut. Polish UI: *schronisko*. | "shelter", "refuge", "hostel" |
+| **Shelter** | An unstaffed roof on or near a Trail. Polish UI: *wiata*, *chatka*. | "hut" |
+| **Region** | A group of neighbouring mountain ranges that the user downloads or removes as one unit, e.g. *Beskidy Zachodnie*. Its boundary follows the ranges, not administrative borders, and stops at the state border. | "area", "pack", "map" (a Region is what the map shows, not the map itself) |
 
 ## Words we deliberately avoid
 
-<For example: "'delete' is reserved for something irreversible; anything recoverable is 'archived'."
-The value here is in the distinctions, not the definitions.>
+- **"Trail" never names an unmarked way.** In the Tatras only marked Trails may be walked, so the
+  word, the map and the copy keep a Path from passing for one.
 
 ## Naming conventions in code
 

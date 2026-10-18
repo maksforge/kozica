@@ -33,10 +33,7 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 - [ ] **Delete what the app does not need**, while deleting is free — [`optional-modules.md`](optional-modules.md)
       lists each module's files and the five places around the code a strip reaches. Room, photos,
       backup and reminders are each a data-loss or Data safety story you will otherwise defend forever.
-- [ ] **Decide `minSdk` deliberately, before launch.** The direction is asymmetric: raising it later
-      strands existing installs on the last build that fitted them, lowering it later is free. If the
-      only phone in the loop sits at the top of the range, every `SDK_INT` branch below it ships
-      unvalidated — the first app built from this template raised 26 to 33 for exactly that reason. Move CI's floor legs with it.
+- [x] **Decide `minSdk` deliberately.** Kept at 26 ([`phase-0.md`](phase-0.md) § 0).
 - [ ] **Replace the placeholder mark.** `art/mark.py`, then `python3 art/make-launcher-icon.py` and
       `make-feature-graphic.py`. Commit the concept image and record its provenance in
       `art/README.md` — where the art came from is the thing most likely to block a first upload, and
