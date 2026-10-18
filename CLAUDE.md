@@ -1,8 +1,6 @@
 # Kozica
 
-A hiking app for the Polish mountains, built on OpenStreetMap trail data. The constraint that shapes
-everything: the code is **all rights reserved** (`LICENSE`), while the map data is **ODbL**, so the
-data's obligations must stay visible and separate from everything the app owns.
+A hiking app for the Polish mountains, built on OpenStreetMap trail data.
 
 - **Vocabulary:** [`CONTEXT.md`](CONTEXT.md) — use these terms in code and UI.
 - **Decisions and why:** [`docs/adr/`](docs/adr/) — read before changing anything they cover.
@@ -51,10 +49,12 @@ let us do otherwise".">
 
 - **OpenStreetMap data keeps its ODbL obligations.** Every map screen shows "© OpenStreetMap
   contributors" linked to https://www.openstreetmap.org/copyright, and the licences screen lists
-  ODbL. The app's own data (tracks, photos, notes) lives in its own tables, never merged into
-  OSM-derived ones, or share-alike reaches it. A modified OSM database the app publishes is offered
-  under ODbL. `tile.openstreetmap.org` and the public Overpass instance are never the app's backend:
-  serve from Geofabrik extracts. The code's `LICENSE` stays all rights reserved.
+  ODbL. Shipping a modified or filtered OSM extract, or publicly conveying maps produced from one, is
+  public use of a derivative database: from that first release, offer the database or the script that
+  builds it under ODbL (§4.6). The app's own data (tracks, photos, notes) stays an independent
+  database, never merged into OSM-derived data. We build OSM data ourselves from Geofabrik extracts,
+  never from `tile.openstreetmap.org` or the public Overpass instance. The code's `LICENSE` stays all
+  rights reserved.
 - **An update never loses a user's data.** Any change to `APP_SCHEMA_VERSION` ships with its
   `MIGRATION_x_y` *registered in* `APP_MIGRATIONS`, the exported `app/schemas/*/N.json` committed, a
   `SchemaGateTest` assertion that the launch gate lets the upgrade through, and a migration test that
