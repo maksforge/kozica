@@ -13,13 +13,16 @@ user-facing word genuinely differ, both are written here with the difference sta
 | **Trail** | A marked hiking route with a colour and a symbol, as on the signposts, running over any number of paths and roads. Polish UI: *szlak*. | "route", "track", "path" |
 | **Path** | Any footway on the map, marked or not. A Path is never drawn or named as if it were a Trail. Polish UI: *ścieżka*. | "trail" for an unmarked way |
 | **Hut** | A staffed mountain hut. Polish UI: *schronisko*. | "shelter", "refuge", "hostel" |
-| **Shelter** | An unstaffed roof on or near a Trail. Polish UI: *wiata*, *chatka*. | "hut" |
+| **Shelter** | An unstaffed roof on or near a Trail. Polish UI: *wiata*. A staffed *chatka* is a Hut. | "hut", *chatka* |
 | **Region** | A group of neighbouring mountain ranges that the user downloads or removes as one unit, e.g. *Beskidy Zachodnie*. Its boundary follows the ranges, not administrative borders, and stops at the state border. | "area", "pack", "map" (a Region is what the map shows, not the map itself) |
 
 ## Words we deliberately avoid
 
 - **"Trail" never names an unmarked way.** In the Tatras only marked Trails may be walked, so the
   word, the map and the copy keep a Path from passing for one.
+- **"Route" and "track" never name a Trail**, because each is kept for a concept of its own: what the
+  user plans (phase 5) and the line a recorded hike leaves (phase 6). Each gets a row here when its
+  phase opens.
 
 ## Naming conventions in code
 

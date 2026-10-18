@@ -87,9 +87,9 @@ phase cannot quietly move one forward to "get it out of the way".
 
 | Ask | Moment it is made | Phase that owns it |
 | --- | --- | --- |
-| Precise location | The first tap on "show me where I am" — never at launch | 2 |
+| Precise location | The first tap on "show me where I am" — never at launch. Fine and coarse are asked together, and from API 31 the user may grant approximate only: a third answer the map has to handle | 2 |
 | Notifications | Starting a hike recording: its notification is the stop button | 6 |
-| Background location | Starting a recording, and only if the platform requires it beyond the foreground service | 6 |
+| Background location | Never: a `location` foreground service started from the visible app keeps while-in-use access | 6 |
 | Battery exemption, Xiaomi autostart | Never, unless a reading shows a recording dying without them | 6 |
 | *(none for photos)* | The Photo Picker and the system camera's `TakePicture` intent need no permission | 6 |
 
@@ -136,7 +136,8 @@ account are in place, and version 0.1.0 reached internal testing by hand. What i
 ([ADR-0007](adr/0007-osm-data-ships-per-mountain-range-as-play-asset-packs.md)), and Play delivers it
 to the phone as an on-demand asset pack. The gate is the file format: what an update costs after a
 one-Trail edit, measured through a build Play delivers, because Play does not document how it patches
-asset packs. Nothing has to be drawn yet; the app only proves it can find and read the files.
+asset packs. Nothing has to be drawn yet; the app only proves it can find and read the files. Of
+ADR-0007's decisions for "the map phase", this one owns the file format.
 
 ## Phase 2 — The map
 
@@ -144,6 +145,8 @@ Every Region built and downloadable from a picker, with "Download all". The map 
 marking colours and symbols, Paths apart from them, Huts, Shelters, peaks, passes, springs,
 viewpoints, the way in and out, the land, national-park boundaries and the state border, and the
 user's position, accuracy and heading. The OSM credit and the data date sit on every map screen.
+It owns ADR-0007's other two decisions, fixed when it opens: the list of Regions and the filter. It
+also takes the palette reading phase 0 could not ([`phase-0.md`](phase-0.md) § 3).
 
 ## Phase 3 — Safe for a stranger
 
@@ -165,8 +168,10 @@ the app arrives with it, so this is the phase that brings a tab bar.
 
 ## Phase 6 — The hike log
 
-Record a hike — the track, photos and notes — and look back at it. It brings the foreground service,
-the notifications ask and the first of the user's own data that a backup has to keep.
+Record a hike — the track, photos and notes — and look back at it. It brings the `location`
+foreground service, with `FOREGROUND_SERVICE_LOCATION` from API 34 and the Console's
+foreground-service declaration; the notifications ask; and the first of the user's own data that a
+backup has to keep, so Backup returns to Settings.
 
 ## Phase N — Ship shape
 
@@ -174,10 +179,12 @@ Screenshots, the production-access application and **1.0**: everything above, in
 
 ## Not in this plan
 
-- **A network connection**, ever: no online tiles, weather, sync, accounts or crash reporting
-  ([ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md)). Live information is a hand-off.
+- **A network connection**, ever: no online tiles, weather, sync, accounts or crash reporting of our
+  own ([ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md)). Live information is a
+  hand-off.
 - **Ads, paid features and sign-in.** Kozica is free. An optional tip that unlocks nothing may come
-  after 1.0, through Play Billing with its `INTERNET` stripped as ADR-0008 requires.
+  after 1.0, through Play Billing, only once a purchase works on a phone with Billing's telemetry
+  stripped as ADR-0008 requires.
 - **Data beyond Poland's border** in 1.0. A Region stops at the state border; cross-border ranges
   would be a new ADR once the file format is settled.
 - **Reminders and scheduled work.** Nothing in the plan schedules anything.

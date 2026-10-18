@@ -2,8 +2,7 @@
 
 Sequence lives in [`PLAN.md`](PLAN.md); the live worklist lives in [`DOD.md`](DOD.md). This phase
 amends [ADR-0003](adr/0003-two-scheduling-mechanisms.md) (nothing schedules any more) and relies on
-[ADR-0001](adr/0001-the-database-stops-being-disposable-at-1-0.md) (the database is disposable until
-1.0) and [ADR-0006](adr/0006-the-app-owns-its-palette-material-you-is-opt-in.md). `CONTEXT.md` is owed
+[ADR-0006](adr/0006-the-app-owns-its-palette-material-you-is-opt-in.md). `CONTEXT.md` is owed
 nothing more: Region, Trail, Path, Hut and Shelter were settled before this phase opened, and no term
 of its own appears on screen.
 
@@ -25,10 +24,11 @@ installed build declares none of the reminders' permissions, and nothing on scre
 
 ## What is in, and what is deliberately not
 
-**In:** deleting reminders and WorkManager; deleting the Items screens, routes, strings and tab bar,
-and the debug seeding that feeds them; a single home screen with an empty-map placeholder and an icon
-to Settings; the ochre palette; `aab-permissions.py` and `scripts/edge-to-edge.py` rewritten against
-what is left; the privacy policy and `play-app-content.md` amended to match.
+**In:** deleting reminders, WorkManager and the rest of `work/`; deleting the Items screens, routes,
+strings and tab bar, and the sample data that feeds them; a single home screen with an empty-map
+placeholder and an icon to Settings; the ochre palette; `aab-permissions.py` and
+`scripts/edge-to-edge.py` rewritten against what is left; the privacy policy and
+`play-app-content.md` amended to match.
 
 **Not in, and each with a reason rather than a phase:**
 
@@ -38,9 +38,13 @@ what is left; the privacy policy and `play-app-content.md` amended to match.
   National Park's chamois logo. The placeholder ships until then; the DOD item stays open.
 - **The support address.** It waits for the dedicated account; the DOD item stays open.
 - **`ItemEntity` as a table.** It stays in the schema, dormant, with no screen reading it. Room
-  cannot run with no entity, and the first real one — a planned route — arrives in phase 5, which
-  replaces this table while the database is still disposable (ADR-0001). Deleting Room now and
-  re-adding it then would cost more than a table nobody reads.
+  cannot run with no entity, and the first real one — a planned route — arrives in phase 5. Only a
+  debug build may drop the database (`destructiveMigrationAllowed()`), and Play installs already run
+  0.1.0, so phase 5 ships a real `MIGRATION_1_2` that drops `items` and creates its own table, with
+  all five items of `DOD.md`'s standing schema gate. Deleting Room now and re-adding it then would
+  cost more than a table nobody reads.
+- **Backup in Settings.** The code and the screen stay; the row leaves Settings until phase 6 gives
+  it something of the user's to keep, for the same reason a tab waits for the phase that fills it.
 
 **The tempting one** is to put the three final tabs in now — Map, Routes, Hikes — so the shell never
 changes. Two of them would be empty through the whole closed test. A tab arrives with the phase that
@@ -53,11 +57,12 @@ fills it (phase 5).
 | | Checkpoint | Merges | Depends on |
 | --- | --- | --- | --- |
 | **A** | **Reminders gone** — the code, the manifest entries, WorkManager, Settings' section, the allowlist rows | `refactor:` | — |
-| **B** | **Items gone, one screen** — the Items UI and tab bar out, the empty-map home in, debug seeding pointed at nothing | `feat:` | — |
+| **B** | **Items gone, one screen** — the Items UI and tab bar out, the empty-map home in, the debug seeding seam kept but seeding nothing | `feat:` | — |
 | **C** | **The palette** — four seeds in `scripts/gen_scheme.py`, regenerated, read on the phone in light and dark | `feat:` | — |
 
-A and B are independent and touch different files. C goes last so the palette is judged on the
-screen that will actually carry it rather than on the Items list.
+A and B are independent; both edit `SettingsScreen.kt`, so whichever merges second rebases. C goes
+last so the palette is judged on the screen that will actually carry it rather than on the Items
+list.
 
 There is no gate. Nothing in this phase is unmeasured platform behaviour; the risk is a permission
 or a string left behind, which the readings below catch.
@@ -66,16 +71,21 @@ or a string left behind, which the readings below catch.
 
 ## 1. Reminders gone
 
-`docs/optional-modules.md` § *Reminders and WorkManager* is the list, file by file. Two parts of it
-are easy to miss:
+`docs/optional-modules.md` § *Reminders and WorkManager* is the list, file by file. What it leaves
+easy to miss:
 
-- WorkManager merges `WAKE_LOCK`, `ACCESS_NETWORK_STATE`, `FOREGROUND_SERVICE` and
-  `RECEIVE_BOOT_COMPLETED` without the source declaring them. Removing it removes all four, and
-  `aab-permissions.py`'s EXPECTED table loses them in the same commit.
-  [ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md) wants `ACCESS_NETWORK_STATE` gone
-  for good; this is where it goes.
-- Settings' *Reminders* section is the template's worked example of `PLAN.md` rule 4. Phase 2's
-  location ask copies its shape, so read it before deleting it.
+- Six permissions leave the artifact: `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED` and
+  `SCHEDULE_EXACT_ALARM`, which the manifest declares, and `WAKE_LOCK`, `ACCESS_NETWORK_STATE` and
+  `FOREGROUND_SERVICE`, which WorkManager merges. `aab-permissions.py`'s EXPECTED loses all six in the
+  same commit, and `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE` join `INTERNET` in FORBIDDEN, with
+  [ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md) as the reason.
+- The rest of `work/` goes too. `Autostart.kt` and `BatteryExemption.kt` serve only background work,
+  and `PLAN.md` rule 4 brings them back only on a reading; `SchemaGuard.kt` serves only reminders. The
+  `com.miui.securitycenter` entry in `<queries>` goes with `Autostart.kt`. `startActivitySafely`
+  moves to `ui/common/` first: `ui/support/SupportHandoff.kt` uses it, and phase 3's hand-offs will.
+- Settings' *Reminders* section is the template's worked example of `PLAN.md` rule 4, and phase 2's
+  location ask copies its shape. After this checkpoint read it at `10bf995`:
+  `ui/settings/SettingsScreen.kt` and `work/NotificationPermission.kt`.
 
 ADR-0003 gets a dated amendment: Kozica schedules nothing, and both mechanisms are gone.
 
@@ -84,6 +94,10 @@ ADR-0003 gets a dated amendment: Kozica schedules nothing, and both mechanisms a
 `docs/optional-modules.md` § *The placeholder domain* lists the files. The home screen is an empty
 map placeholder — a neutral surface with the app name and one line of copy — and a top-bar icon to
 Settings. `scripts/edge-to-edge.py`'s SCENES walk this screen and Settings, nothing else.
+
+Debug seeding keeps its seam: `SeedReceiver`, Settings' debug rows and the seed machinery in
+`edge-to-edge.py` and `screenshots.py` stay, and `SampleData.kt` seeds nothing until phase 5 or 6
+has data to put in it. Deleting the seam would mean rewriting both scripts now and again then.
 
 Copy, English:
 
@@ -107,6 +121,10 @@ of them, and each Trail colour must stay clearly visible on the map in light and
 colours themselves belong to the map style, not to `MaterialTheme`; phase 2 records that exception
 to the house rule.
 
+This phase cannot check the constraint, because there is no map yet. Phase 2 reads it: the position
+dot and the map controls over a yellow and a black Trail, in light and dark, and a seed changes if
+one fails.
+
 ---
 
 ## Tests
@@ -117,9 +135,13 @@ rule 3).
 ## Documents this phase amends
 
 - ADR-0003: the amendment above.
+- `CLAUDE.md`: the WorkManager stack row, `work/` in the layout, and the environment note's
+  scheduled notifications.
 - `docs/privacy-policy.md`: the notifications line goes with reminders.
-- `docs/play-app-content.md`: the reminder permissions' rows, in the same commit as the policy.
-- `scripts/aab-permissions.py`: EXPECTED, to what is left.
+- `docs/play-app-content.md`: the reminder permissions' rows, § *Foreground service permissions*
+  and the reminders in the header comment, in the same commit as the policy.
+- `scripts/aab-permissions.py`: EXPECTED, to what is left; FORBIDDEN, as in § 1, and the battery
+  exemption row's reason, which names `work/BatteryExemption.kt`.
 
 ## Known gaps, deliberately
 
@@ -131,7 +153,7 @@ rule 3).
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The release bundle declares none of the reminders' permissions | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
+| R1 | The release bundle declares none of the six permissions in § 1 | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
 | R2 | The app opens on the placeholder screen, in English and in Polish | `./gradlew installDebug`, switch language in Settings | |
 | R3 | The palette in light and dark, on the phone | `./gradlew installDebug`, system dark mode on and off | |
-| R4 | Nothing says "Item" anywhere | `grep -rli 'item' app/src/*/res/values*/strings.xml`, and a walk through every screen | |
+| R4 | Nothing says "Item" anywhere | `grep -rniE '>[^<]*\bitems?\b' app/src/*/res/values*/strings.xml`, and a walk through every screen | |
