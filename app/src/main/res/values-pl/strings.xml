@@ -39,12 +39,6 @@
     <string name="settings_language_system">Systemowy</string>
     <string name="settings_language_report">Coś brzmi nie tak?</string>
     <string name="settings_language_report_hint">Napisz, jeśli jakieś słowo jest nie tak w twoim języku. Otwiera aplikację pocztową z już wpisanym językiem, w którym czytasz.</string>
-    <string name="settings_reminders">Przypomnienia</string>
-    <string name="settings_reminders_enabled">Przypominaj mi</string>
-    <string name="settings_reminders_hint">Jedno sprawdzenie dziennie. Nic nie jest nigdzie wysyłane.</string>
-    <string name="settings_reminders_blocked_title">Przypomnienia nie dotrą</string>
-    <string name="settings_reminders_blocked_body">Android ukrywa przypomnienia tej aplikacji, więc nic nie zostanie wyświetlone, gdy nadejdzie termin.</string>
-    <string name="settings_reminders_blocked_action">Otwórz ustawienia powiadomień</string>
     <string name="settings_data">Dane</string>
     <string name="settings_backup">Kopia zapasowa i przywracanie</string>
     <string name="settings_about">O aplikacji</string>
@@ -70,9 +64,6 @@
     <string name="backup_restore">Przywróć z pliku…</string>
 
     <string name="licence_text_missing">Treść tej licencji nie jest dołączona do aplikacji.</string>
-
-    <string name="channel_reminders_name">Przypomnienia</string>
-    <string name="channel_reminders_description">Codzienne sprawdzenie, czy coś jest do zrobienia.</string>
 
     <string name="schema_mismatch_title">Te dane zapisała inna wersja</string>
     <string name="schema_mismatch_body">Dane na tym telefonie zapisano w wersji %1$d, a ta kompilacja odczytuje wersję %2$d.</string>

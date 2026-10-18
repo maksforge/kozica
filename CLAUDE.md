@@ -40,7 +40,7 @@ let us do otherwise".">
 | **Navigation 3** (`androidx.navigation3`) | Replaces Navigation Compose 2.x — don't reintroduce the old one |
 | Room via KSP | DAOs return `Flow`; schema evolution per ADR-0001 |
 | Manual DI via `AppContainer`, **not Hilt** | Constructor injection is clearer at this size and easy to migrate later |
-| WorkManager + exact alarms | Two mechanisms on purpose — ADR-0003 |
+| Nothing scheduled | Reminders and WorkManager left in phase 0 — ADR-0003's amendment |
 | Photo Picker + `TakePicture` intent, **not CameraX** | Far less code; the system camera is fine here |
 | Coil 3 images | Compose-native, local files only |
 | On-device storage only | No backend. Backup per ADR-0005 |
@@ -120,7 +120,6 @@ app/src/main/java/<namespace>/
   media/       MediaFiles.kt — the single path for persisting images, kind-aware
   theme/       generated palette, type scale, spacing, the night-mode window half
   ui/          Compose screens + ViewModels, one package per area
-  work/        WorkManager, receivers, notification channels, permission asks
 
 app/src/debug/    the developer-only build: the sample-data seeder, Settings' debug section and its
                   strings, and SeedReceiver for the capture driver
@@ -154,15 +153,11 @@ most time, and none of it is discoverable from the code. What belongs here:>
   **A brand-new `applicationId` is a different failure with the same error string**: HyperOS refuses
   the *first* install of a package outright, with no dialog to miss. Either enable USB installation
   in developer options, or `adb push` the APK to `/sdcard/Download/` and tap it in the file manager.
-- **Xiaomi kills background work aggressively.** Scheduled notifications need battery-optimisation
-  exemption and **autostart**, and autostart is the load-bearing one: without it the ROM does not
-  start the process for a broadcast at all. It has no appop, it is a Settings toggle, and the grant
-  **lapses on its own** — re-read it before any run that depends on it. `scripts/device-gate.py`
-  reads and sets it.
-- **Two device readings look identical to a pass when they are nothing at all.** A database pulled
+- **Xiaomi kills background work aggressively.** Anything that must run without the app on screen
+  may need battery-optimisation exemption and **autostart**, and autostart is the load-bearing one:
+  without it the ROM does not start the process for a broadcast at all. It has no appop, it is a
+  Settings toggle, and the grant **lapses on its own** — re-read it before any run that depends on
+  it. `scripts/device-gate.py` reads and sets it.
+- **A device reading can look identical to a pass when it is nothing at all.** A database pulled
   without its `-wal` sidecar is **stale** — the app's most recent writes sit in the WAL, so a deleted
-  row still reads as present. Pull both and `PRAGMA wal_checkpoint(TRUNCATE)` on the host. And
-  `cmd jobscheduler run -f -n androidx.work.systemjobscheduler <pkg> <id>` answers *"Could not find
-  job N"* on stderr and **exits 0**: `am force-stop` cancels the app's jobs and WorkManager
-  re-enqueues under a new id at the next launch, so read the id from `dumpsys jobscheduler` and
-  confirm `WM-WorkerWrapper: Starting work for …` in logcat before believing any sweep result.
+  row still reads as present. Pull both and `PRAGMA wal_checkpoint(TRUNCATE)` on the host.

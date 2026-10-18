@@ -37,7 +37,6 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
   the location a camera stamps on a photo is removed in the process.
 - **The camera**, only when you tap to take a picture, through the system camera app. The app
   declares no camera permission.
-- **Notifications**, only if you turn reminders on.
 
 ## The three things that happen outside the app
 

@@ -1,6 +1,5 @@
 package app.kozica.ui.settings
 
-import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,17 +14,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
@@ -34,18 +26,10 @@ import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.SectionHeader
 import app.kozica.ui.common.SwitchRow
-import app.kozica.ui.common.WarningBanner
 import app.kozica.ui.support.SupportRequest
 import app.kozica.ui.support.hintRes
 import app.kozica.ui.support.sendSupportMail
 import app.kozica.ui.support.titleRes
-import app.kozica.work.NotificationPermissionOutcome
-import app.kozica.work.ReminderChannel
-import app.kozica.work.channelCanAppear
-import app.kozica.work.notificationsAllowed
-import app.kozica.work.openAppNotificationSettings
-import app.kozica.work.openChannelNotificationSettings
-import app.kozica.work.rememberNotificationPermissionAsk
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,31 +43,6 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    // **A live read, re-taken on every resume, and never a remembered outcome.** The fix for a
-    // refusal is a settings screen this screen hands the user off to, and they come back — so an
-    // answer cached from the ask itself is stale exactly when it decides whether to warn them.
-    var notificationsAllowed by remember { mutableStateOf(context.notificationsAllowed()) }
-    // The other half: a channel muted on its own blocks its notifications while the permission above
-    // still reads as granted. The first muted one, so the banner can land the user on its own page.
-    var mutedChannel by remember { mutableStateOf(context.firstMutedChannel()) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    notificationsAllowed = context.notificationsAllowed()
-                    mutedChannel = context.firstMutedChannel()
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    val askNotifications =
-        rememberNotificationPermissionAsk { outcome ->
-            notificationsAllowed = outcome == NotificationPermissionOutcome.Granted
-        }
 
     Scaffold(
         modifier = modifier,
@@ -120,45 +79,6 @@ fun SettingsScreen(
                 subtitle = stringResource(SupportRequest.Language.hintRes()),
                 onClick = { context.sendSupportMail(SupportRequest.Language) },
             )
-
-            SectionHeader(stringResource(R.string.settings_reminders))
-            SwitchRow(
-                title = stringResource(R.string.settings_reminders_enabled),
-                subtitle = stringResource(R.string.settings_reminders_hint),
-                checked = state.remindersEnabled,
-                onChange = { enabled ->
-                    viewModel.setRemindersEnabled(enabled)
-                    // **The ask rides on the moment the feature is switched on, and never before**
-                    // (`PLAN.md` rule 4). Android permits two denials before the dialog stops
-                    // appearing for good, so spending one at launch — for a feature the user may
-                    // never turn on — is spending half the budget on nothing.
-                    if (enabled && !notificationsAllowed) askNotifications()
-                },
-            )
-
-            // The third clause of the same rule: the phase that introduces an ask owns what the user
-            // sees when the answer is no. Without this the switch reads as on, the preference *is*
-            // on, and nothing is ever posted — the app knows and the user does not. Only while
-            // reminders are enabled: a warning about a permission a disabled feature would want is
-            // the app asking for something it is not using.
-            //
-            // One banner for both halves, because the loss is the same. The button differs: the
-            // app-wide switch lives on the app's page, a channel's level on the channel's own.
-            val muted = mutedChannel
-            if (state.remindersEnabled && (!notificationsAllowed || muted != null)) {
-                WarningBanner(
-                    title = stringResource(R.string.settings_reminders_blocked_title),
-                    body = stringResource(R.string.settings_reminders_blocked_body),
-                    actionLabel = stringResource(R.string.settings_reminders_blocked_action),
-                    onAct = {
-                        if (!notificationsAllowed || muted == null) {
-                            context.openAppNotificationSettings()
-                        } else {
-                            context.openChannelNotificationSettings(muted)
-                        }
-                    },
-                )
-            }
 
             SectionHeader(stringResource(R.string.settings_data))
             SettingsRow(stringResource(R.string.settings_backup), onClick = onOpenBackup)
@@ -237,9 +157,4 @@ private fun ThemeMode.labelRes(): Int =
         ThemeMode.SYSTEM -> R.string.settings_theme_system
         ThemeMode.LIGHT -> R.string.settings_theme_light
         ThemeMode.DARK -> R.string.settings_theme_dark
-    }
-
-private fun Context.firstMutedChannel(): ReminderChannel? =
-    ReminderChannel.entries.firstOrNull {
-        !channelCanAppear(it)
     }

@@ -61,3 +61,17 @@ the user's patience on nudges that do not need any of it. If everything is urgen
   user**. Creating a channel quiet is a decision with no second attempt.
 - Testing any of this on a vendor ROM requires reading the autostart state first. A run against an
   unknown one proves nothing either way — `scripts/device-gate.py` reads it.
+
+## Amendment — 2026-10-18: Kozica schedules nothing
+
+Kozica has no reminders and nothing in [`PLAN.md`](../PLAN.md) schedules anything, so both
+mechanisms are gone ([`phase-0.md`](../phase-0.md) § 1): the sweep, the receivers, exact alarms,
+WorkManager and the notification ask. The artifact no longer carries `POST_NOTIFICATIONS`,
+`RECEIVE_BOOT_COMPLETED`, `SCHEDULE_EXACT_ALARM`, `WAKE_LOCK`, `ACCESS_NETWORK_STATE` or
+`FOREGROUND_SERVICE`, and `scripts/aab-permissions.py` now forbids the network-state pair outright
+(ADR-0008).
+
+What outlives the deletion is the background schema check (`data/BackgroundSchemaGuard.kt`), which
+phase 6's recording service will ask before it touches the database, and phase 6 re-reads this ADR
+for the notification ask and the vendor-ROM facts above. If scheduled work ever returns, the
+decision above is the starting point rather than a blank page.

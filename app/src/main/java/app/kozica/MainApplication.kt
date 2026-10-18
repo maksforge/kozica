@@ -1,8 +1,6 @@
 package app.kozica
 
 import android.app.Application
-import android.util.Log
-import androidx.work.Configuration
 import app.kozica.data.APP_DATABASE_FILE
 import app.kozica.data.APP_SCHEMA_VERSION
 import app.kozica.data.AppPreferences
@@ -14,14 +12,12 @@ import app.kozica.data.preserveBeforeWipe
 import app.kozica.data.readUserVersion
 import app.kozica.data.schemaGateDecision
 import app.kozica.theme.applyThemeMode
-import app.kozica.work.ensureSweepEnqueued
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
@@ -55,15 +51,13 @@ data class SchemaMismatch(
  *
  * The tempting alternative — leave the container constructed and merely stop it from *collecting* —
  * works today and is one eager `stateIn` away from silently breaking, in an app that will go on to
- * add background work at process start. A guard by absence-of-subscription is unwritten and
+ * add background work. A guard by absence-of-subscription is unwritten and
  * unenforceable, and it would be load-bearing for the only copy of data the user cannot retype.
  *
  * Kotlin note: `by lazy` computes on first read and caches — like a memoised getter, but here the
  * *first read* is the event that matters, which is why nothing may touch [container] before consent.
  */
-class MainApplication :
-    Application(),
-    Configuration.Provider {
+class MainApplication : Application() {
     /**
      * The scope for work that outlives any screen. `SupervisorJob` so one failed child does not
      * cancel its siblings — the closest JS analogue is `Promise.allSettled` semantics rather than
@@ -97,18 +91,6 @@ class MainApplication :
      */
     val container: AppContainer by lazy { AppContainer(this, preferences, applicationScope) }
 
-    /**
-     * WorkManager builds itself the first time `getInstance` is called, rather than from an
-     * androidx.startup initializer inside a ContentProvider — which would run *before* this method,
-     * and so before the guard below. See the manifest for the other half.
-     */
-    override val workManagerConfiguration: Configuration
-        get() =
-            Configuration
-                .Builder()
-                .setMinimumLoggingLevel(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
-                .build()
-
     override fun onCreate() {
         super.onCreate()
 
@@ -125,17 +107,15 @@ class MainApplication :
         val onDisk = readUserVersion(databaseFile)
 
         when (schemaGateDecision(onDisk)) {
-            SchemaGate.Open -> onDatabaseUsable()
+            SchemaGate.Open -> Unit
 
             SchemaGate.Consent, SchemaGate.Refuse -> {
                 // The copy is taken *before* anything decides what to do about it, so the file
                 // exists whichever branch the user then takes — including "force-stop the app".
                 val preserved =
                     preserveBeforeWipe(databaseFile, File(filesDir, PRESERVED_DIRECTORY))
-                if (preserved == null) {
-                    // Nothing was there to preserve after all, so there is nothing to refuse over.
-                    onDatabaseUsable()
-                } else {
+                // Null when nothing was there to preserve after all, so there is nothing to refuse over.
+                if (preserved != null) {
                     _schemaMismatch.value =
                         SchemaMismatch(
                             preservedCopy = preserved,
@@ -154,16 +134,5 @@ class MainApplication :
      */
     fun consentToWipe() {
         _schemaMismatch.value = null
-        onDatabaseUsable()
-    }
-
-    /**
-     * Everything that is allowed to touch the database, gathered in one place so it is obvious that
-     * the gate above is the only thing standing in front of all of it.
-     */
-    private fun onDatabaseUsable() {
-        applicationScope.launch {
-            ensureSweepEnqueued(this@MainApplication)
-        }
     }
 }

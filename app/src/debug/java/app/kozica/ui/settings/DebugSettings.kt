@@ -21,8 +21,7 @@ import kotlinx.coroutines.launch
  * The developer-only section of Settings. **This file exists only in the debug source set** — see
  * the release half for why that is a source set and not a `BuildConfig.DEBUG` branch.
  *
- * Add things here freely: a sample-data seeder, a "fire the reminder in two minutes" button, a
- * schema-version stamp. None of it reaches a release binary, and none of its strings reach the
+ * Add things here freely: a sample-data seeder, a schema-version stamp. None of it reaches a release binary, and none of its strings reach the
  * translation gate.
  */
 @Composable

@@ -37,8 +37,7 @@ scripts in the last column — they are what tells you the strip is finished rat
 - Gradle: the `ksp` plugin and `ksp {}` block, the three Room dependencies, `room.testing`, and the
   `androidTest` schema-assets line in `androidComponents`
 - **What adapts on its own**: `scripts/project.py` reads `HAS_DATABASE` off `data/AppDatabase.kt`, so
-  `schema-gate.py` passes with *"no database, nothing to gate"*, `doze-capture.sh` stops pulling a
-  file that is not there, and the `mismatch` suite leaves `edge-to-edge.py` and `screenshots.py`.
+  `schema-gate.py` passes with *"no database, nothing to gate"*, and the `mismatch` suite leaves `edge-to-edge.py` and `screenshots.py`.
 - **What does not**: `docs/DOD.md`'s standing schema gate — mark it *parked*, keep the five points
   verbatim, and say it comes back the day a feature adds a table. ADR-0001 gets a dated amendment,
   not a rewrite (`docs/adr/0000-template.md`).
