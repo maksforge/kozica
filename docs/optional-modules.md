@@ -30,8 +30,8 @@ scripts in the last column — they are what tells you the strip is finished rat
 ### Room database and the schema gate
 
 - `data/AppDatabase.kt`, `ItemDao.kt`, `ItemEntity.kt`, `ItemRepository.kt`, `Converters.kt`,
-  `Migrations.kt`, `SchemaGate.kt`, `DatabasePreserve.kt`
-- `work/SchemaGuard.kt`, `ui/wipe/SchemaMismatchScreen.kt`, the wipe guard's call in `MainApplication`
+  `Migrations.kt`, `SchemaGate.kt`, `DatabasePreserve.kt`, `BackgroundSchemaGuard.kt`
+- `ui/wipe/SchemaMismatchScreen.kt`, the wipe guard's call in `MainApplication`
 - `app/schemas/`, `test/…/data/SchemaGateTest.kt`, `androidTest/…/data/ItemDaoTest.kt`,
   `MigrationTest.kt`
 - Gradle: the `ksp` plugin and `ksp {}` block, the three Room dependencies, `room.testing`, and the

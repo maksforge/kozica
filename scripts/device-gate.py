@@ -28,10 +28,6 @@ Usage:
 
     python3 scripts/device-gate.py                 # read everything
     python3 scripts/device-gate.py --autostart on  # set it, then re-read
-    python3 scripts/device-gate.py --reboot        # reboot and wait for a human unlock
-
-⚠️ **A reboot always needs a human to unlock the phone.** There is no way around it; the script
-waits rather than pretending otherwise.
 
 The driving vocabulary — `tap`, `swipe_to_end` and the rest — is imported from `edge-to-edge.py`
 rather than copied. That file is the expensive asset here (`screenshots.py` does the same): its
@@ -45,7 +41,6 @@ import argparse
 import importlib.util
 import re
 import sys
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -275,8 +270,6 @@ def pick_time(hour: int, minute: int = 0) -> None:
     e2e.settle(1.0)
 
 
-SWITCH_ID = "com.android.settings:id/switchWidget"
-
 AUTOSTART_ACTIVITY = "com.miui.securitycenter/com.miui.permcenter.autostart.AutoStartManagementActivity"
 
 # The label HyperOS lists this build under. The debug build takes `applicationIdSuffix = ".debug"`
@@ -303,8 +296,7 @@ def shell_ok(cmd: str) -> str:
     """`adb shell`, tolerating a non-zero exit.
 
     `e2e.shell` raises on one, which is right for the commands that ought to succeed and wrong for
-    the ones whose *failure is the answer*: `pidof` exits 1 when the process is not running, which
-    is precisely the reading the reboot check is taking.
+    the ones whose *failure is the answer*, or whose output is all that is wanted.
     """
     import subprocess
 
@@ -316,7 +308,7 @@ def _system_xml(attempts: int = 4) -> str:
     """A `uiautomator` dump as raw XML, for the screens that are not this app's.
 
     `e2e.dump_ui` filters to the app's own package, which is right everywhere else and useless here:
-    the autostart list and the channel settings both belong to the OEM.
+    the autostart list belongs to the OEM.
 
     **The file is deleted before every dump, and that is the whole point of this function.**
     `uiautomator dump` fails while the screen is still moving — *"ERROR: could not get idle state"* —
@@ -409,69 +401,12 @@ def set_autostart(on: bool) -> bool:
     return autostart_state()[1] == on
 
 
-def wait_for_unlock(timeout: float = 900.0) -> None:
-    """Stop and ask a person to unlock the phone, then carry on when they have.
-
-    **This device has a password and `adb` cannot get past it** — not `wm dismiss-keyguard`, not a
-    swipe, not a power cycle. So a reboot is not a step a script may take and then continue through;
-    it is a step that hands the run back to a person for a moment.
-
-    Ploughing on instead is worse than stalling, because a locked phone refuses far more than taps
-    and every refusal is misleading: `am start` answers `Error type 3 / Activity class ... does not
-    exist` for an activity plainly in the resolver table, `adb install` answers
-    `INSTALL_FAILED_USER_RESTRICTED` because its prompt cannot be shown, and `uiautomator dump`
-    comes back empty. On 2026-08-19 those three cost a session's worth of chasing a package that was
-    never broken. Asking the question first turns all of them into one known state.
-    """
-    if "isKeyguardShowing=false" in e2e.shell("dumpsys window | grep isKeyguardShowing"):
-        return
-    print("\n  ⏸  THE PHONE IS LOCKED — please unlock it. Waiting…", flush=True)
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if "isKeyguardShowing=false" in e2e.shell("dumpsys window | grep isKeyguardShowing"):
-            print("  ▶  unlocked, carrying on", flush=True)
-            # Held awake while on USB for the rest of the run, so the screen cannot lock itself
-            # again halfway through the taps that follow and strand the check a second time.
-            # `main` puts it back.
-            e2e.shell("svc power stayon usb")
-            e2e.settle(2.0)
-            return
-        time.sleep(5)
-    raise StepFailed("the phone was never unlocked; the reboot arm cannot continue without it")
-
-
-def reboot_and_wait(timeout: float = 180.0) -> float:
-    """Reboot the phone and come back when it is up. Returns how long that took.
-
-    **Nothing is launched afterwards, and that is the whole design of the check.** Whatever is read
-    after boot can only have been done by a boot receiver; touching the app first would do it from
-    the ordinary process-start path and prove nothing about the receiver.
-    """
-    started = time.time()
-    e2e.adb("reboot")
-    time.sleep(8)
-    e2e.adb("wait-for-device")
-    while time.time() - started < timeout:
-        if e2e.shell("getprop sys.boot_completed").strip() == "1":
-            # The receiver is not synchronous with `sys.boot_completed`: BOOT_COMPLETED is queued
-            # behind the rest of the boot, and reading too early reports nothing for a receiver
-            # that simply had not run yet — a false negative that looks exactly
-            # like the finding.
-            time.sleep(45)
-            # The boot itself needs no screen, but everything after it does — and the check
-            # must not walk into a locked phone's misleading refusals. See [wait_for_unlock].
-            return time.time() - started
-        time.sleep(3)
-    raise StepFailed(f"the phone never finished booting in {timeout:.0f}s")
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--autostart", choices=["on", "off"], help="set Xiaomi's autostart and re-read it")
-    parser.add_argument("--reboot", action="store_true", help="reboot and wait for the unlock")
     args = parser.parse_args()
 
     if args.autostart:
@@ -489,9 +424,6 @@ def main() -> int:
     # every other reading here is taken against is the **debug** applicationId — the build that is
     # actually installed when anybody runs this.
     print(f"battery exempt           : {'yes' if battery_exempt() else 'no'}")
-
-    if args.reboot:
-        reboot_and_wait()
     return 0
 
 

@@ -15,11 +15,6 @@
 #     so `AppBackupAgent` is kept without a rule here. Worth confirming rather than assuming: its
 #     failure mode is a backup that silently does nothing.
 #
-#   * **Workers, across versions.** `androidx.work` ships `-keepnames class * extends
-#     androidx.work.ListenableWorker`, which is the rule that matters most: WorkManager persists the
-#     worker's *class name* in its own database, so a sweep enqueued by 1.0 must still resolve after
-#     the update to 1.1. `-keepnames` is what makes the name stable release to release.
-#
 #   * **Room.** `-keep class * extends androidx.room.RoomDatabase` plus R8's own handling of the
 #     `Class.forName(… + "_Impl")` lookup. `AppDatabase_Impl` stays unrenamed. The DAOs are renamed,
 #     which is fine — nothing looks them up by name.
