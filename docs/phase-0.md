@@ -160,6 +160,6 @@ rule 3).
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
 | R1 | The release bundle declares none of the six permissions in § 1 | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | 2026-10-18, versionCode 13: one permission, AndroidX's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; none of the 8 forbidden ones |
-| R2 | The app opens on the placeholder screen, in English and in Polish | `./gradlew installDebug`, switch language in Settings | |
-| R3 | The palette in light and dark, on the phone | `./gradlew installDebug`, system dark mode on and off | |
-| R4 | Nothing says "Item" anywhere | `grep -rniE '>[^<]*\bitems?\b' app/src/*/res/values*/strings.xml`, and a walk through every screen | |
+| R2 | The app opens on the placeholder screen, in English and in Polish | `./gradlew installDebug`, switch language in Settings | 2026-10-18, versionCode 19 debug, Xiaomi 24115RA8EG: "Your map will appear here." / "Tu pojawi się twoja mapa." under the app name, Settings icon top right. Language set with `cmd locale set-app-locales`, the mechanism the picker drives |
+| R3 | The palette in light and dark, on the phone | `./gradlew installDebug`, system dark mode on and off | 2026-10-18, same phone, `cmd uimode night yes/no`: warm stone surfaces in both; in dark, ochre section headers and warm-brown selected chips in Settings. The Trail constraint waits for phase 2 |
+| R4 | Nothing says "Item" anywhere | `grep -rniE '>[^<]*\bitems?\b' app/src/*/res/values*/strings.xml`, and a walk through every screen | 2026-10-18: the grep is empty; a `uiautomator dump` of Home, Settings (top and bottom), Help and feedback and Licences shows no "item" in any label |
