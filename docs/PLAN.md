@@ -16,7 +16,7 @@ was extracted from and the first app built from it settled on exactly this split
 
 ## Status
 
-- [ ] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
+- [x] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
 - [ ] **Phase P** — The pipeline: everything set up; the first *automatic* upload still to be watched
 - [ ] **Phase 1** — The data reaches the phone: one Region built in CI and delivered by Play
 - [ ] **Phase 2** — The map: every Region drawn, Trails in their colours, "you are here"
