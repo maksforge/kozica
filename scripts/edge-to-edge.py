@@ -583,7 +583,7 @@ class Node:
     # Compose publishes `Modifier.selectable`'s state as the accessibility node's `isSelected`, and
     # the navigation bar is the only place this app uses it — so exactly one node in a top-level
     # dump carries it, and it is the current tab. Verified in a dump rather than assumed: the item
-    # itself carries no text (the label is a child `TextView`), which is why [showing_home] compares
+    # itself carries no text (the label is a child `TextView`), which is why [showing_tab] compares
     # rectangles instead of reading it off the labelled node.
     selected: bool = False
 
@@ -677,7 +677,7 @@ def find(
     which is why this is a bug you meet on the first non-English run. See [TAB_NEEDLES].
 
     **Every needle is translated here**, which is the one place it can be: `tap`, `return_to_home`
-    and `showing_home` all arrive through this function, so a locale run needs no second table and
+    and `showing_tab` all arrive through this function, so a locale run needs no second table and
     no scene rewritten. See [resolve_needles].
     """
     needle = _TRANSLATED.get(needle, needle).casefold()
@@ -745,13 +745,10 @@ def relaunch() -> None:
     repin_rotation()  # `-S` is a force-stop, and a force-stop costs the rotation — see [repin_rotation]
 
 
-# The two needles the isolation step is built on, both from the shell rather than from any screen.
-# The bottom bar is drawn only while `onDetailScreen` is false (Navigation.kt), so finding a tab in
-# it is exactly the question "is a top-level destination on screen?" — and [HOME_TAB] is the bar's
-# first item, the one the back stack is rooted at. Naming them here rather than inline is what lets
-# a locale run translate them with the rest of the table.
-TAB_BAR = "Items"
-HOME_TAB = "Items"
+# The needle the isolation step is built on: the home screen's placeholder line, which no other
+# screen carries. Named here rather than inline so a locale run translates it with the rest of the
+# table.
+HOME = "Your map will appear here."
 
 # The top-level destinations, named so [tap] can tell a tab from anything else it is asked to
 # press. Two things follow from being on this list, and both are about a tab label being a *short*
@@ -765,7 +762,8 @@ HOME_TAB = "Items"
 # that is also a button somewhere — and where that happens, [showing_tab] turns it into a *failed
 # scene* rather than a wrong screenshot. That is the division of labour: exactness is the fix, the
 # assertion is what makes the next collision survivable.
-TAB_NEEDLES = (HOME_TAB, "Settings")
+# Empty while Home is the only root; phase 5's tab bar refills it.
+TAB_NEEDLES: tuple[str, ...] = ()
 
 # How many times [return_to_home] may press back before it gives up. Six covers the deepest route in
 # the app (Settings → Licences → one licence, plus a dialog and an IME) with room to spare; it is a
@@ -773,25 +771,10 @@ TAB_NEEDLES = (HOME_TAB, "Settings")
 BACK_BOUND = 6
 
 
-def showing_home(nodes: list[Node]) -> bool:
-    """Is the *Home* tab the selected one, rather than merely some top-level tab?
-
-    The distinction is the whole reason this exists. A restored back stack does not have to be a
-    detail route — it can be another *tab*, which has the tab bar, passes every "are we at
-    the shell?" check, and is still the wrong screen for `home`, `home-bottom` and every scene that
-    taps *Edit* on a profile card.
-
-    The selected navigation item carries no text of its own, so this is geometry: the one node in
-    the dump with `selected="true"` is the current tab, and the *Home* label is inside it exactly
-    when Home is that tab.
-    """
-    return showing_tab(nodes, HOME_TAB)
-
-
 def showing_tab(nodes: list[Node], needle: str) -> bool:
     """Is the tab called `needle` the selected one?
 
-    [showing_home]'s geometry, asked about any tab rather than only about the root — which is what
+    The selected item's geometry, which is what
     turns a tab tap from "something on screen moved" into "the app is on that tab". Without it, a
     mis-tap that opens a sheet counts as movement, and the run reports every scene reached while
     some of them photographed the wrong screen entirely.
@@ -807,41 +790,22 @@ def showing_tab(nodes: list[Node], needle: str) -> bool:
 
 
 def return_to_home() -> None:
-    """Put the app on the Home tab, or fail the scene saying so.
-
-    **What it found, which is not what it was written to fix.** It was written on the reading that
-    `am start -S -f 0x10008000` does not clear a restored Nav3 back stack. Checked directly — walk
-    into a detail screen, relaunch; switch tab, relaunch — and **both came back on the root**. So
-    the flags do their job, and a cell that relaunches into the same wrong screen over and over is
-    better explained by a notification than by the stack: a reminder that re-arms at process start
-    and is already past fires immediately, posting a fresh heads-up over *every* scene rather than
-    poisoning one. [set_dnd] is the fix for that, and this is the check that says so — it
-    prints when it has to correct anything, so a run that never prints is evidence about the
-    relaunch and not merely the absence of a complaint.
+    """Put the app on Home, or fail the scene saying so.
 
     **`KEYCODE_BACK` alone is not the fix**, which is why this is bounded and checks first. Backing
     past Home exits to the launcher and makes every following scene worse, so the loop presses back
-    only while the shell is *not* on screen, and stops the moment it is.
+    only while Home is *not* on screen, and stops the moment it is.
 
     Failing loudly is the other half. A driver that cannot find Home must not tap into whatever is
     open — that produces a screenshot of the wrong screen under the right name, which is worse than
     a skipped scene because it is evidence that looks like evidence.
     """
     for _ in range(BACK_BOUND + 1):
-        nodes = dump_ui()
-        if find(nodes, TAB_BAR) is not None:
-            break
+        if find(dump_ui(), HOME) is not None:
+            return
         back()
-    else:
-        visible = ", ".join(sorted({n.label for n in dump_ui() if n.package == PACKAGE and n.label})[:20])
-        raise StepFailed(f"never reached a top-level tab in {BACK_BOUND} backs; on screen: {visible}")
-
-    if not showing_home(nodes):
-        # Only paid when it is actually owed. `tap` verifies by asking the screen whether anything
-        # moved, and on the common path — already at Home — that is three taps and three dumps for
-        # nothing, which is minutes across a four-cell matrix.
-        print("     (restored off Home; corrected)")
-        tap(HOME_TAB)
+    visible = ", ".join(sorted({n.label for n in dump_ui() if n.package == PACKAGE and n.label})[:20])
+    raise StepFailed(f"never reached Home in {BACK_BOUND} backs; on screen: {visible}")
 
 
 # How far [tap] will scroll looking for a needle, and how many dumps it takes before an unchanged
@@ -1332,33 +1296,18 @@ SCENES = [
         suite="mismatch",
     ),
 
-    # --- a wiped install: the empty states, which no seeded run can show ------------------------
-    Scene("items-empty", "tab", [("wipe", "")], suite="empty"),
+    # --- a wiped install: the first launch, which no seeded run can show ------------------------
+    Scene("home-empty", "home", [("wipe", "")], suite="empty"),
 
-    # --- the tabs ------------------------------------------------------------------------------
-    Scene("items", "tab", []),
-    Scene("items-bottom", "tab", [("swipe_end", "")]),
-    Scene("settings", "tab", [("tap", "Settings")]),
-    Scene("settings-bottom", "tab", [("tap", "Settings"), ("swipe_end", "")]),
+    # --- the root ------------------------------------------------------------------------------
+    Scene("home", "home", []),
 
-    # --- detail screens: no bottom bar, so the navigation-bar inset is the app's own problem ----
-    Scene("item-detail", "detail", [("tap", "First item")]),
-    Scene("backup", "detail", [("tap", "Settings"), ("tap", "Backup and restore")]),
+    # --- pushed screens: no bottom bar, so the navigation-bar inset is the app's own problem ----
+    Scene("settings", "detail", [("tap", "Settings")]),
+    Scene("settings-bottom", "detail", [("tap", "Settings"), ("swipe_end", "")]),
     Scene("support", "detail", [("tap", "Settings"), ("tap", "Help and feedback")]),
     Scene("licences", "detail", [("tap", "Settings"), ("tap", "Open-source licences")]),
     Scene("licences-bottom", "detail", [("tap", "Settings"), ("tap", "Open-source licences"), ("swipe_end", "")]),
-
-    # --- forms: the keyboard is an inset too, and this is where `imePadding` is proved ----------
-    Scene("item-editor", "form", [("tap", "Add an item")]),
-    Scene("item-editor-bottom", "form", [("tap", "Add an item"), ("swipe_end", "")]),
-    Scene(
-        "item-editor-keyboard",
-        "form",
-        # Focus the first field and wait for the keyboard to finish animating in. This is the scene
-        # that catches a window being *panned* instead of resized — the top bar, Save button and all,
-        # slides off the top of the screen and only a screenshot shows it.
-        [("tap", "Add an item"), ("tap_field", "0"), ("wait", "1.5")],
-    ),
 ]
 
 
@@ -1448,7 +1397,7 @@ def load_strings(locale: str | None) -> dict[str, str]:
 
 def scene_needles() -> set[str]:
     """Every string this driver will look for on screen, across all suites."""
-    needles = {TAB_BAR, HOME_TAB, PROMPT_DISMISS, *SEED_WALK}
+    needles = {HOME, PROMPT_DISMISS, *SEED_WALK}
     for scene in SCENES:
         needles.update(arg for kind, arg in scene.steps if kind in ("tap", "tap?", "tap_text"))
     return needles

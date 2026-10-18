@@ -8,27 +8,11 @@
     supplying only `one` and `other` here would be a red build, not a silently wrong app.
 -->
 <resources>
-    <string name="tab_items">Rzeczy</string>
-    <string name="tab_settings">Ustawienia</string>
-
     <string name="action_back">Wstecz</string>
-    <string name="action_save">Zapisz</string>
-    <string name="action_edit">Edytuj</string>
-    <string name="action_delete">Usuń</string>
 
-    <string name="item_add">Dodaj rzecz</string>
-    <string name="item_detail_title">Rzecz</string>
-    <string name="item_title_label">Tytuł</string>
-    <string name="item_notes_label">Notatki</string>
-    <string name="item_pick_image">Wybierz zdjęcie</string>
-    <string name="items_empty">Nic tu jeszcze nie ma. Dotknij +, aby dodać pierwszą rzecz.</string>
-    <plurals name="items_count">
-        <item quantity="one">%d rzecz</item>
-        <item quantity="few">%d rzeczy</item>
-        <item quantity="many">%d rzeczy</item>
-        <item quantity="other">%d rzeczy</item>
-    </plurals>
+    <string name="home_map_placeholder">Tu pojawi się twoja mapa.</string>
 
+    <string name="settings_title">Ustawienia</string>
     <string name="settings_appearance">Wygląd</string>
     <string name="settings_theme_system">Systemowy</string>
     <string name="settings_theme_light">Jasny</string>
@@ -39,7 +23,6 @@
     <string name="settings_language_system">Systemowy</string>
     <string name="settings_language_report">Coś brzmi nie tak?</string>
     <string name="settings_language_report_hint">Napisz, jeśli jakieś słowo jest nie tak w twoim języku. Otwiera aplikację pocztową z już wpisanym językiem, w którym czytasz.</string>
-    <string name="settings_data">Dane</string>
     <string name="settings_backup">Kopia zapasowa i przywracanie</string>
     <string name="settings_about">O aplikacji</string>
     <string name="settings_support">Pomoc i opinie</string>

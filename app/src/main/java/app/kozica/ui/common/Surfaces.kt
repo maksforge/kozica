@@ -1,10 +1,8 @@
 package app.kozica.ui.common
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -23,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import app.kozica.R
 import app.kozica.theme.Spacing
 
@@ -68,31 +65,6 @@ fun DetailScaffold(
         },
     ) { insets ->
         content(Modifier.padding(insets))
-    }
-}
-
-/**
- * What a list shows when it is empty.
- *
- * **Say what to do, not that there is nothing.** "No items yet" tells the user what they can already
- * see; "Tap + to add your first item" tells them what to do about it.
- */
-@Composable
-fun EmptyState(
-    message: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(Spacing.block),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 
