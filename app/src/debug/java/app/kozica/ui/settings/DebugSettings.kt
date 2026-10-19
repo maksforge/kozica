@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kozica.MainApplication
 import app.kozica.R
 import app.kozica.data.SampleData
+import app.kozica.data.location.clearPositionOverride
 import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.RegionState
 import app.kozica.theme.Spacing
@@ -62,6 +63,7 @@ fun DebugSettings() {
     DebugRow(stringResource(R.string.debug_tatry_remove)) {
         scope.launch { regions.remove() }
     }
+    DebugRow(stringResource(R.string.debug_position_real), onClick = ::clearPositionOverride)
 }
 
 @Composable

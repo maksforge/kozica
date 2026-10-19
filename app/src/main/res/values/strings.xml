@@ -28,6 +28,15 @@
     <string name="map_osm_credit">© OpenStreetMap contributors</string>
     <!-- %1$s is a date, formatted for the locale -->
     <string name="map_osm_date">OSM data: %1$s</string>
+    <string name="map_position_show">Show my position</string>
+    <string name="map_location_approximate">Approximate location only.</string>
+    <string name="map_location_approximate_body">Allow precise location to see where you are on a Trail.</string>
+    <string name="map_location_allow">Allow</string>
+    <string name="map_location_off">Location is turned off.</string>
+    <!-- %1$s is a short elapsed time from the platform, such as "45 s", "5 min" or "1 hr, 5 min". -->
+    <string name="map_position_stale">Last position %1$s ago.</string>
+    <!-- Opens Android's settings, not the app's own Settings screen. -->
+    <string name="map_location_settings">Settings</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

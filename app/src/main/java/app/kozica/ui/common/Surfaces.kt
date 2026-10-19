@@ -86,10 +86,10 @@ fun DetailScaffold(
 @Composable
 fun WarningBanner(
     title: String,
-    body: String,
-    actionLabel: String,
-    onAct: () -> Unit,
     modifier: Modifier = Modifier,
+    body: List<String> = emptyList(),
+    actionLabel: String? = null,
+    onAct: () -> Unit = {},
 ) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
@@ -102,13 +102,17 @@ fun WarningBanner(
     ) {
         Column(modifier = Modifier.padding(Spacing.base)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = body,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = Spacing.tight),
-            )
-            TextButton(onClick = onAct, modifier = Modifier.padding(top = Spacing.tight)) {
-                Text(actionLabel)
+            body.forEach { line ->
+                Text(
+                    text = line,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = Spacing.tight),
+                )
+            }
+            if (actionLabel != null) {
+                TextButton(onClick = onAct, modifier = Modifier.padding(top = Spacing.tight)) {
+                    Text(actionLabel)
+                }
             }
         }
     }

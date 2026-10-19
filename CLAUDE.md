@@ -121,16 +121,19 @@ app/src/main/java/<namespace>/
   data/regions/ every Region's state and what its PMTiles header says; each variant supplies the
                states in RegionSource.kt
   data/backup/ export, restore, the manifest, the WAL checkpoint
+  data/location/ the app's own reader of the phone's fixes; each variant wraps it in
+               PositionOverride.kt
   media/       MediaFiles.kt — the single path for persisting images, kind-aware
   theme/       generated palette, type scale, spacing, the night-mode window half
   ui/          Compose screens + ViewModels, one package per area; ui/map/ is Home
 
 app/src/debug/    the developer-only build: the sample-data seeder, Settings' debug section and its
-                  strings, SeedReceiver for the capture driver, and data/regions/, where
+                  strings, SeedReceiver for the capture driver, data/regions/, where
                   RegionFiles.kt asks Play for the Tatry's pack and RegionSource.kt falls back to an
-                  archive hand-pushed to files/regions/
+                  archive hand-pushed to files/regions/, and the position override: a long press on
+                  the map, Settings' "real position" row and PositionReceiver for scripted readings
 app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
-                  settings, and no Region until phase 2b
+                  settings, no Region until phase 2b, and the real position passed through
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
 scripts/map/      the planetiler profile build-map-data.py runs, and decode-tile.py
 scripts/regions/  one boundary polygon per Region

@@ -1,15 +1,21 @@
 package app.kozica
 
+import android.Manifest
 import android.content.Context
+import android.location.Location
+import androidx.annotation.RequiresPermission
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import app.kozica.data.AppPreferences
 import app.kozica.data.ItemRepository
 import app.kozica.data.buildAppDatabase
+import app.kozica.data.location.positionFixes
+import app.kozica.data.location.withPositionOverride
 import app.kozica.data.regions.regionStates
 import app.kozica.media.MediaFiles
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 
 /**
  * `internal` rather than private: [MainApplication] holds the one [AppPreferences] over this store
@@ -56,4 +62,8 @@ class AppContainer(
     val items by lazy { ItemRepository(database.itemDao(), media) }
 
     val regions by lazy { regionStates(appContext) }
+
+    @RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    fun positions(approximateOnly: Boolean): Flow<Location> =
+        positionFixes(appContext, approximateOnly).withPositionOverride()
 }
