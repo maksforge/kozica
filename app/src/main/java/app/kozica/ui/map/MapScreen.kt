@@ -199,7 +199,21 @@ fun MapScreen(
                         .locationComponentOptions(dotOptions(context, colors, stale = false))
                         .build(),
                 )
-                dotActivated = true
+                // A fix fed before the component's first frame is dropped, and approximate only
+                // sends the next one ten minutes later.
+                mapView.addOnDidFinishRenderingFrameListener(
+                    object : MapView.OnDidFinishRenderingFrameListener {
+                        override fun onDidFinishRenderingFrame(
+                            fully: Boolean,
+                            frameEncodingTime: Double,
+                            frameRenderingTime: Double,
+                        ) {
+                            if (!fully) return
+                            mapView.removeOnDidFinishRenderingFrameListener(this)
+                            dotActivated = true
+                        }
+                    },
+                )
             }
         }
     }
