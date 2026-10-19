@@ -476,7 +476,7 @@ private fun OsmCredit(
     }
 }
 
-/** The style's colours are not the theme's until phase 2's C, so text sits on a surface of its own. */
+/** Text laid straight over Trails and map labels is unreadable, so it sits on a surface of its own. */
 @Composable
 private fun MapLabel(
     modifier: Modifier = Modifier,
