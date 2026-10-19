@@ -82,7 +82,9 @@ public class KozicaProfile implements Profile {
     var osmcSymbol = relation.getString("osmc:symbol");
     var hasSymbol = osmcSymbol != null && !osmcSymbol.isBlank();
     var parts = hasSymbol ? osmcSymbol.split(":") : new String[0];
-    var colour = hasSymbol ? colourOf(parts[0]) : colourOf(relation.getString("colour"));
+    var colour = hasSymbol
+        ? colourOf(parts.length > 0 ? parts[0] : null)
+        : colourOf(relation.getString("colour"));
     var symbol = parts.length > 2 && !parts[2].isBlank() ? parts[2].trim().toLowerCase(Locale.ROOT) : null;
     var ways = relation.members().stream()
         .filter(member -> member.type() == OsmElement.Type.WAY)
