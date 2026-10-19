@@ -17,7 +17,6 @@ enum class ThemeMode {
     DARK,
 }
 
-/** Where the map looks, as MapLibre's camera has it. */
 data class MapCamera(
     val latitude: Double,
     val longitude: Double,
