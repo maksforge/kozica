@@ -79,9 +79,8 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       declaration, the data build in `publish-play.yml`, and the update size Play reports for a
       one-pin refresh. Its brief is [`phase-1.md`](phase-1.md) § 5 until 2b's file exists
       ([`PLAN.md`](PLAN.md), phase 2b).
-- [ ] **Take phase 1's phone readings before phase 2 builds on MapLibre.** The gate (R1), the first
-      pack download (R8), no pack without a crash (R9) and R10's screen were deferred on 2026-10-19,
-      when the owner moved on from phase 1 without them. If R1 fails, the format turns to `.map`
+- [x] **Take phase 1's phone readings before phase 2 builds on MapLibre.** Taken 2026-10-19: R1
+      verdict 1, R8 verdict 3 (undecided until E), R9 after fixing a crash, R10's screen
       ([`phase-1.md`](phase-1.md) § 1).
 
 ## After the closed test

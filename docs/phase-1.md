@@ -155,14 +155,18 @@ All of it under `app/src/debug/`, per the house rule:
    the style, the archive's path, the `pmtiles://file://` scheme. Only a cause that needs a network
    permission makes it verdict 2.
 
-### The verdict, deferred
+### The verdict, taken 2026-10-19
 
-Not taken. On 2026-10-19 the owner moved on from the phase without the phone readings (R1, R8, R9
-and R10's screen), assuming verdict 1; they are a `DOD.md` item, due before phase 2 builds on
-MapLibre. B went ahead on that bet, and B–D are what it risks. Verdict 2 would replace B's tiling
-and packaging, because a `.map` archive needs a different writer: the planetiler profile,
-`--check-determinism` against that writer, `decode-tile.py` and the style rule all go. The pin, the
-extract update and the cut stay, and C–D are rewritten for the new format.
+**Verdict 1.** On the phone (Xiaomi 24115RA8EG, API 36), the debug build drew the Tatry archive offline
+with all five permissions stripped (R1). It drew lines, water, Trails in their colours and peak
+names with Polish characters. MapLibre logged `connected - false`, and nothing threw. MapLibre and
+PMTiles stand.
+
+The readings found one fault no verdict anticipated: R9 crashed. With no pack, a failed state
+request reached `asset-delivery-ktx` 2.3.0's failure callback, which threw `NoSuchMethodError`
+on the main thread. That library is built against coroutines 1.5. The debug build now uses the
+plain `asset-delivery` artifact, with its own `Task.await()` and `callbackFlow`, and R9 passes on
+that build.
 
 ## 2. The build: `scripts/build-map-data.py`
 
@@ -205,8 +209,8 @@ the data. That release is E's, so the offer is too.
   on a machine that holds the archive, with no ODbL offer. In this phase only R8's local-testing
   debug bundle passes it. Without it `assembleDebug`, CI and a checkout without data keep building.
   E makes `publish-play.yml` pass it, and fail when the archive is missing.
-- **The Play Asset Delivery library** (`com.google.android.play:asset-delivery-ktx` 2.3.0) as a
-  `debugImplementation`. **It brings WorkManager back, in the debug build only.** `asset-delivery`
+- **The Play Asset Delivery library** (`com.google.android.play:asset-delivery` 2.3.0, not its `-ktx`
+  wrapper, which crashes under this app's coroutines; § 1's verdict) as a `debugImplementation`. **It brings WorkManager back, in the debug build only.** `asset-delivery`
   depends on `androidx.work:work-runtime` 2.9.1 for its `ExtractionWorker`, and WorkManager merges
   `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and `ACCESS_NETWORK_STATE`, which is
   FORBIDDEN. The library itself adds `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC`. Read
@@ -225,6 +229,10 @@ the data. That release is E's, so the offer is too.
      a different delivery for map data. The phase stops at C until then.
   3. **The pack arrives, but `ExtractionWorker` never ran under `--local-testing`.** → Undecided, and
      the strip is provisional. E decides it through Play.
+
+  **Taken 2026-10-19: verdict 3.** The pack arrived and the app reported it ready (R8), but
+  `ExtractionWorker` never ran under `--local-testing`, and nothing threw. The strip stays
+  provisional until E.
 - **The four other rows wait for E.** `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`,
   `WAKE_LOCK` and `RECEIVE_BOOT_COMPLETED` belong in EXPECTED, each naming the library or WorkManager
   as its source. But `aab-permissions.py` reads the release artifact, and in C that artifact carries
@@ -340,15 +348,15 @@ read it. A reading that drives the phone waits until the owner says it is free.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL\|KozicaGate\|Mbgl'` | Deferred: the owner moved on without it on 2026-10-19, assuming it passes; `DOD.md` holds it |
+| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL\|KozicaGate\|Mbgl'` | 2026-10-19, API 36, archive `7a5e28c6…9171` pushed with `run-as`: lines, water, Trails in five colours and peak names (ą, ł, ś) drawn, OSM credit shown; logcat `Mbgl-ConnectivityReceiver: connected - false`, no `SecurityException`, `FATAL`, `KozicaGate` error or `Mbgl` load error. **Verdict 1** |
 | R2 | The merged debug manifest declares none of the five, and no required hardware feature | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk`; `aapt2 dump xmltree --file AndroidManifest.xml app/build/outputs/apk/debug/app-debug.apk \| grep -A2 uses-feature` | 2026-10-19, debug APK with `android-sdk-opengl` 13.7.1 (`libmaplibre.so` in all four ABIs): one permission, AndroidX's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; none of the five. One `uses-feature`, `android.hardware.wifi` with `required=false`; no `android.hardware.vulkan.version` |
 | R3 | After C, the merged debug manifest still declares none of the five with the asset-delivery library and WorkManager in. The release bundle's reading moved to E2 | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | 2026-10-19, debug APK with `asset-delivery-ktx` 2.3.0 and `work-runtime` 2.9.1: none of the five. Four new, exactly § 3's: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, beside AndroidX's `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. WorkManager's `InitializationProvider` and `SystemJobService` are merged. The release bundle is unchanged: `aab-permissions.py` passes |
 | R4 | Two builds at one pin are byte-identical | `python3 scripts/build-map-data.py --check-determinism` | 2026-10-19, pin 4942: byte-identical, 1,051,229 bytes, sha256 `7a5e28c6…9171`. The metadata carries sequence 4942 and its time, 2026-10-18T20:25:06Z, once the cut copies the replication header: `osmium extract` drops it by default |
 | R5 | The Tatry archive's size, raw and zstd | `ls -l`, `zstd -19 -c … \| wc -c` | 2026-10-19, pin 4942: 1,051,229 bytes raw, 622,694 zstd -19. Geofabrik's Poland extract stops at the state border, so `tatry.poly`'s Slovak half draws nothing; the Region's shape is phase 2's |
 | R6 | The patch between two pins a week apart, against the newer archive | `python3 scripts/build-map-data.py --patch-from <older pin>` | 2026-10-19, 4935 (2026-10-11, from `poland-261001` and ten diffs) to 4942 (2026-10-18, `poland-261018`): bsdiff patch 3,824 bytes, 0.36 % of the newer archive raw, 0.61 % of it zstd. § 4's verdict 1 |
 | R7 | The patch for a one-Trail colour edit, with the relation's id | the edit in § 4, then `python3 scripts/build-map-data.py --patch-from-extract edited.osm.pbf` | 2026-10-19, pin 4942 against a copy of `poland-261018` with r1020533 ("Stacja IMGW - Świnicka Przełęcz", v13 to v14) recoloured black to blue, `osmc:symbol` `black:white:black_bar` to `blue:white:blue_bar` and `colour=` with it, its replication header kept: bsdiff patch 1,600 bytes, 0.15 % of the newer archive raw, 0.26 % of it zstd. The older archive is 1,051,173 bytes, sha256 `3d27f05b…f4ba`, 56 smaller than the newer, which is still `7a5e28c6…9171` |
-| R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, the debug map draws from the pack's path, and whether `ExtractionWorker` ran, with the phone's API level (JobScheduler checks the network-state permission only from API 34) | `./gradlew bundleDebug -PmapPacks`, then `bundletool build-apks --local-testing --bundle app/build/outputs/bundle/debug/app-debug.aab … && bundletool install-apks …`; `adb shell getprop ro.build.version.sdk`; `adb logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|SecurityException'`; `adb shell dumpsys jobscheduler \| grep <debug id>` | Deferred: the owner moved on without it on 2026-10-19, assuming it passes; `DOD.md` holds it |
-| R9 | `installDebug` with no pack reports "not downloaded" and does not crash | `./gradlew installDebug`, open Settings' debug section | Deferred: the owner moved on without it on 2026-10-19, assuming it passes; `DOD.md` holds it |
-| R10 | The debug map draws Trails in their colours from the profile's attribute; the tile holding a way shared by two Trails carries both colours on that way, sorted. The decode is local and can be taken any time; the screen waits for the phone | `build-map-data.py`, push, open the debug map, `adb exec-out screencap -p > r10.png`; `python3 scripts/map/decode-tile.py <archive> <z> <x> <y>`; the count, over the archive's z14 tile range: `for x in $(seq 9083 9118); do for y in $(seq 5605 5620); do python3 scripts/map/decode-tile.py <archive> 14 $x $y; done; done 2>/dev/null \| grep "colours': '[^']*;" \| awk '{print $2}' \| sort -u \| wc -l` | 2026-10-19, decode only, pin 4942 (`7a5e28c6…9171`): w22773921, a path two Trails share, in tile 14/9090/5612, carries `colour=blue`, `colours=blue;green`. w22787884 in 14/9090/5611 carries `green;red`, and w26552164 in 14/9096/5607 `blue;green`. 140 ways carry two or more colours, in 163 features, because some ways are split across tiles. The screen is deferred with R1 |
+| R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, the debug map draws from the pack's path, and whether `ExtractionWorker` ran, with the phone's API level (JobScheduler checks the network-state permission only from API 34) | `./gradlew bundleDebug -PmapPacks`, then `bundletool build-apks --local-testing --bundle app/build/outputs/bundle/debug/app-debug.aab … && bundletool install-apks …`; `adb shell getprop ro.build.version.sdk`; `adb logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|SecurityException'`; `adb shell dumpsys jobscheduler \| grep <debug id>` | 2026-10-19, API 36: "Tatry: not downloaded" → Download → "Tatry: ready, OSM data of 2026-10-18T20:25:06Z"; extracted to `files/assetpacks/region_tatry/44/44/assets/tatry.pmtiles`, and the gate drew from it with the pushed file removed. No `WM-WorkerWrapper` or `ExtractionWorker` line, no `SecurityException`. **§ 3 verdict 3**: undecided until E |
+| R9 | `installDebug` with no pack reports "not downloaded" and does not crash | `./gradlew installDebug`, open Settings' debug section | 2026-10-19, API 36. First run: **crash**, `NoSuchMethodError` in `asset-delivery-ktx` 2.3.0's `onFailure`. After the switch to plain `asset-delivery`: "Tatry: not downloaded", and the gate shows its no-archive message; the process stays alive |
+| R10 | The debug map draws Trails in their colours from the profile's attribute; the tile holding a way shared by two Trails carries both colours on that way, sorted. The decode is local and can be taken any time; the screen waits for the phone | `build-map-data.py`, push, open the debug map, `adb exec-out screencap -p > r10.png`; `python3 scripts/map/decode-tile.py <archive> <z> <x> <y>`; the count, over the archive's z14 tile range: `for x in $(seq 9083 9118); do for y in $(seq 5605 5620); do python3 scripts/map/decode-tile.py <archive> 14 $x $y; done; done 2>/dev/null \| grep "colours': '[^']*;" \| awk '{print $2}' \| sort -u \| wc -l` | 2026-10-19, decode only, pin 4942 (`7a5e28c6…9171`): w22773921, a path two Trails share, in tile 14/9090/5612, carries `colour=blue`, `colours=blue;green`. w22787884 in 14/9090/5611 carries `green;red`, and w26552164 in 14/9096/5607 `blue;green`. 140 ways carry two or more colours, in 163 features, because some ways are split across tiles. Screen, 2026-10-19: Trails drawn in red, blue, green, yellow and black from `colour` (offsets for shared ways are phase 2's) |
 | E1 | *(checkpoint E)* The update size Play reports for a one-pin data refresh, against R6 | internal app sharing, two builds | |
 | E2 | *(checkpoint E)* The release bundle declares none of the FORBIDDEN permissions with the asset-delivery library and WorkManager in, and exactly the four new EXPECTED rows | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
