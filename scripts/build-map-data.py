@@ -39,10 +39,10 @@ PLANETILER_SHA256 = "f310bd0413e2e4512b27f4046d418664e8e1d3bf31603c2a70e23de06c1
 REPLICATION_HEADER = (
     "osmosis_replication_sequence_number",
     "osmosis_replication_timestamp",
-    "osmosis_replication_base_url",
 )
 SIZE_LIMIT = 1_500_000_000
 OLDEST_EXTRACT_DAYS = 400
+TIMEOUT = 60
 
 
 def log(message: str) -> None:
@@ -76,7 +76,7 @@ def download(url: str, target: Path) -> None:
     log(f"downloading {url}")
     target.parent.mkdir(parents=True, exist_ok=True)
     partial = target.with_name(target.name + ".part")
-    with urllib.request.urlopen(url) as response, partial.open("wb") as file:
+    with urllib.request.urlopen(url, timeout=TIMEOUT) as response, partial.open("wb") as file:
         shutil.copyfileobj(response, file, 1 << 20)
     partial.rename(target)
 
@@ -96,7 +96,7 @@ def read_pin() -> int:
 def pin_date(sequence: int) -> dt.date:
     digits = f"{sequence:09d}"
     url = f"{UPDATES}/{digits[:3]}/{digits[3:6]}/{digits[6:]}.state.txt"
-    with urllib.request.urlopen(url) as response:
+    with urllib.request.urlopen(url, timeout=TIMEOUT) as response:
         state = response.read().decode()
     found = re.search(r"^timestamp=(\d{4}-\d{2}-\d{2})", state, re.MULTILINE)
     if not found:
@@ -106,7 +106,7 @@ def pin_date(sequence: int) -> dt.date:
 
 def exists(url: str) -> bool:
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, method="HEAD")):
+        with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=TIMEOUT):
             return True
     except urllib.error.HTTPError as error:
         if error.code == 404:
@@ -127,7 +127,7 @@ def header_sequence(pbf: Path) -> int:
 
 def dated_extract(name: str) -> Path:
     target = WORK / "extracts" / name
-    with urllib.request.urlopen(f"{GEOFABRIK}/{name}.md5") as response:
+    with urllib.request.urlopen(f"{GEOFABRIK}/{name}.md5", timeout=TIMEOUT) as response:
         expected = response.read().decode().split()[0]
     if target.exists() and digest(target, "md5") == expected:
         return target
@@ -158,14 +158,18 @@ def extract_at(sequence: int) -> Path:
     if header_sequence(source) == sequence:
         return source
     partial = target.with_name(target.name + ".part")
-    run("pyosmium-up-to-date", "-v", "--end-id", sequence, "--format", "pbf", "-o", partial, source)
+    partial.unlink(missing_ok=True)
+    run(
+        "pyosmium-up-to-date", "-v", "--end-id", sequence, "--force-update-of-old-planet",
+        "--format", "pbf", "-o", partial, source,
+    )
     if (found := header_sequence(partial)) != sequence:
         fail(f"the update reached sequence {found}, not the pin {sequence}")
     partial.rename(target)
     return target
 
 
-def tile(extract: Path, archive: Path) -> Path:
+def tile(extract: Path, archive: Path, replicated: bool = True) -> Path:
     scratch = WORK / "tmp" / archive.stem
     shutil.rmtree(scratch, ignore_errors=True)
     scratch.mkdir(parents=True)
@@ -174,7 +178,7 @@ def tile(extract: Path, archive: Path) -> Path:
         "osmium", "extract", "-p", POLY, "-s", "smart", "--set-bounds", "-O", "-o", cut,
         *(f"--output-header={option}!" for option in REPLICATION_HEADER), extract,
     )
-    if header_sequence(cut) != header_sequence(extract):
+    if replicated and header_sequence(cut) != header_sequence(extract):
         fail(f"the cut lost the replication header of {extract.name}")
     archive.parent.mkdir(parents=True, exist_ok=True)
     result = run(
@@ -240,7 +244,7 @@ def main() -> None:
         older = tile(extract_at(args.patch_from), WORK / "patch/older.pmtiles")
         measure_patch(older, tile(extract_at(sequence), OUTPUT))
     elif args.patch_from_extract is not None:
-        older = tile(args.patch_from_extract.resolve(), WORK / "patch/older.pmtiles")
+        older = tile(args.patch_from_extract.resolve(), WORK / "patch/older.pmtiles", replicated=False)
         measure_patch(older, tile(extract_at(sequence), OUTPUT))
     else:
         tile(extract_at(sequence), OUTPUT)
