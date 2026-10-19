@@ -355,6 +355,18 @@ The ask, and every answer to it, in one table (`PLAN.md` rule 4):
   the other, and R7 reads the real coarse interval on the phone; a reading longer than 15 minutes
   moves the threshold.
 
+- **A debug build can put "you are here" anywhere.** Reading the dot, its accuracy circle, the
+  stale state and a position outside every Region should not need a hike. So the position reader
+  has a variant seam, the same shape as `DebugSettings.kt`, and the debug half can swap the phone's
+  fix for a chosen one. A long press on the map puts the position there; a debug row returns it to
+  the real reader; an `adb` broadcast in `SeedReceiver`'s pattern sets latitude, longitude, accuracy
+  and bearing, for scripted readings. The release half is the real reader and nothing else. A chosen
+  fix takes the same path as a real one, `forceLocationUpdate` and `PositionAge`, with its
+  `elapsedRealtimeNanos` stamped at the moment it is set, so going stale is also testable. It
+  replaces only the platform reader: the permission states and a real fix are still read with the
+  real provider, and Android's mock-location test provider is the later way to exercise that path
+  without walking.
+
 Copy: "Show my position", "Approximate location only. Allow precise location to see where you are on
 a Trail.", "Allow", "Location is turned off.", "Last position %1$s ago.", "Settings".
 
