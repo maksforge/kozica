@@ -29,10 +29,13 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
 
 ## When you write to the developer
 
-"Help and feedback" and "Something read wrong?" open **your own email app** with a draft addressed to
-the developer. The draft carries the app's version, your Android version, your phone's make and
-model, and the language you are reading the app in, so a report can be acted on. You see every line
-before sending, can change or delete any of it, and nothing is sent unless you send it yourself.
+The **Help and feedback** screen in Settings has a row to report a problem and one to suggest a
+feature, and Settings' Language section has **Something read wrong?**. Each opens **your own email
+app** with a draft addressed to the developer. The draft carries the app's version, your Android
+version, your phone's make and model, and the language you are reading the app in, so a report can be
+acted on. You see every line before sending, can change or delete any of it, and nothing is sent
+unless you send it yourself. The screen's third row, rating the app on Google Play, opens Play and
+sends no mail.
 
 ## The two things that happen outside the app
 
