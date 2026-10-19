@@ -15,7 +15,8 @@ reads the pack once it is on the phone. The difference a device can be asked abo
 shows the Tatry's state — not downloaded, downloading, ready with its OSM date — and draws the Region
 with `INTERNET`, `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE` absent from its merged manifest.
 
-**`PLAN.md`'s paragraph is wrong in two places, and both were decided before this file was written.**
+**`PLAN.md`'s paragraph changed in two places, both decided before this file was written, and is
+amended with it.**
 
 - **The gate it names is split off.** `PLAN.md` puts the gate on what an update costs "measured through
   a build Play delivers". Play-side work is deferred for now: only the local build has to work. So, by
@@ -51,15 +52,20 @@ with `INTERNET`, `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE` absent from its 
 
 **In:** `scripts/build-map-data.py`, from pin to PMTiles, for the Tatry only and run locally. The
 planetiler profile it runs, deliberately thin. A debug-only map screen that draws the archive with
-MapLibre, with the network permissions stripped. An on-demand asset pack for the Tatry, the Play Asset
-Delivery library, and the code in `main/` that asks for the pack and reads its state. Local readings of
-determinism, patch size and pack delivery through `bundletool --local-testing`.
+MapLibre, with the network permissions stripped. An on-demand asset pack for the Tatry, and the Play
+Asset Delivery library with the code that asks for the pack and reads its state, both in the debug
+build only. Local readings of determinism, patch size and pack delivery through
+`bundletool --local-testing`.
 
 **Not in, and each with a reason rather than a phase:**
 
 - **A map in the release build.** Phase 2 draws the map for users. Here MapLibre is a
   `debugImplementation` dependency: the release artifact, its allowlist and its licences stay as they
   are until phase 2 decides what the user sees.
+- **The asset-delivery library in the release build.** It brings WorkManager and a `dataSync`
+  foreground service, and both need the Console's foreground-service declaration in the commit that
+  puts them in the release (ADR-0007, `aab-permissions.py`'s own rule). That commit is E's, or phase
+  2's if its map reaches a release first. Until then the release build gains nothing from this phase.
 - **Every Region, and the filter.** ADR-0007 gives the list of Regions and the filter to phase 2.
   Building one Region is enough to prove the pipeline; building nine would only multiply the download.
 - **The full tile schema.** Phase 2 owns the layers and attributes the map needs. This phase owns the
@@ -84,20 +90,20 @@ gate uses `AndroidView` around `MapView`. Phase 2 may revisit it on a Kotlin bum
 | --- | --- | --- | --- |
 | **A** | **The gate** — MapLibre draws a local Tatry PMTiles with every network permission stripped | `chore:` (debug only) | — |
 | **B** | **The build** — `build-map-data.py` from pin to a deterministic, uncompressed PMTiles | `chore:` | A |
-| **C** | **The pack** — the Tatry as an on-demand asset pack; `main/` asks for it and reads its state, with WorkManager's network permission stripped | `chore:` | B |
+| **C** | **The pack** — the Tatry as an on-demand asset pack; the debug build asks for it and reads its state, with WorkManager's network permission stripped | `chore:` (debug only) | B |
 | **D** | **The proxy** — patch size between two pins, measured locally | readings only | B |
-| **E** | **Play delivers it** — the data build in CI, an update through Play, its real size | `fix:` or `feat:`, later | C, D, Play work resuming |
+| **E** | **Play delivers it** — the library in `main/` with its declaration, the data build in CI, an update through Play, its real size | `fix:` or `feat:`, later | C, D, Play work resuming |
 
 **A goes first, and builds its own archive by hand.** The gate's archive comes from one planetiler
 command run by hand, not from `build-map-data.py`. A gate taken after B would answer whether to build
 B a week after B was written.
 
-**None of A–D cuts a release.** Each is debug-only or tooling. The release build gains the Play Asset
-Delivery library in C, but nothing a user can reach. That is deliberate: a release that carries a
-pack is E's to make.
+**None of A–D cuts a release.** Each is debug-only or tooling, and the release build gains nothing
+from any of them. That is deliberate: a release that carries a pack, or the library that asks for
+one, is E's to make.
 
 **E is a checkpoint of this phase that closes later.** Phase 1 closes on A–D. E gets a `DOD.md` item
-so it cannot be lost, due before the first release that carries a pack.
+so it cannot be lost, due before the first release that carries a pack or the library.
 
 ---
 
@@ -109,10 +115,10 @@ Does a debug build that removes `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI
 `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION` from the merged manifest with
 `tools:node="remove"`, and calls `MapLibre.setConnected(false)` before any `MapView` exists, draw a
 Tatry PMTiles archive from the app's own files directory? The style, glyphs and sprites come from
-`asset://`. The test is no crash, no `SecurityException` in logcat, lines drawn from the archive, and
-one text label drawn from local glyphs. Trail colours are not part of it: a Trail's colour lives on a
-route relation, which only B's profile reads, and a styling miss must never be what switches the
-renderer.
+`asset://`. The test is no crash, no `SecurityException` in logcat, and a screencap showing lines
+drawn from the archive and one text label drawn from local glyphs. Trail colours are not part of it:
+a Trail's colour lives on a route relation, which only B's profile reads, and a styling miss must
+never be what switches the renderer.
 
 The question is not settled by reading MapLibre's source. That reading says `MapView` calls
 `MapLibre.isConnected()` during setup, which reaches `ConnectivityManager` and throws without
@@ -134,8 +140,8 @@ All of it under `app/src/debug/`, per the house rule:
 
 ### The verdicts, decided now rather than argued about later
 
-1. **It draws, nothing is thrown, and the merged manifest declares none of the five.** → MapLibre and
-   PMTiles stand. B builds PMTiles.
+1. **The screencap shows lines and the label, nothing is thrown, and the merged manifest declares
+   none of the five.** → MapLibre and PMTiles stand. B builds PMTiles.
 2. **It crashes or throws for want of a permission, and no public API avoids it.** → MapLibre is out.
    The phase switches to Mapsforge/VTM and `.map`, rewrites this file's B–D for that format, and
    records why in ADR-0007's amendment. A fork or patch of MapLibre is not a fallback: it would be a
@@ -143,6 +149,9 @@ All of it under `app/src/debug/`, per the house rule:
 3. **It draws, but only with one permission kept.** → Not accepted as a pass. ADR-0008 allows no
    network permission. This is verdict 2 unless the permission is one of the two location ones, which
    phase 2 owns anyway; then it is verdict 1 with that permission noted for phase 2.
+4. **Nothing is thrown, but nothing is drawn.** → Not a pass, and not yet any verdict. Find why first:
+   the style, the archive's path, the `pmtiles://file://` scheme. Only a cause that needs a network
+   permission makes it verdict 2.
 
 ### The verdict, taken *(date)*
 
@@ -166,6 +175,10 @@ tools and the format.
   single-file launcher against a pinned, checksummed planetiler jar
   (`java -cp planetiler.jar scripts/map/KozicaProfile.java …`). No Gradle project for it. A way shared
   by several Trails carries the list of their colours, sorted, so phase 2 can offset them.
+- **The debug style gains one rule**: Trail lines coloured from the profile's colour attribute, the
+  first of a shared way's list, so R10 can be read off the screen. Drawing a shared way's other
+  colours stays phase 2's. R10 reads them from the tile instead, with `scripts/map/decode-tile.py`: a
+  few lines that print one tile's features and attributes, cheap because the tiles are uncompressed.
 - **The archive** is PMTiles v3, written by planetiler with `--tile_compression=none`. Not
   `pmtiles convert`: it always gzips vector tiles.
 - **Determinism is checked, not assumed.** `--check-determinism` builds twice and compares the two
@@ -181,30 +194,36 @@ the data. That release is E's, so the offer is too.
   writes into. Pack names allow letters, digits and underscores only, and the directory name is the
   pack name. The pack joins the build only when its archive exists, so `assembleDebug`, CI and a
   checkout without data keep building. E makes its absence a failure in `publish-play.yml`.
-- **The Play Asset Delivery library** (`com.google.android.play:asset-delivery-ktx` 2.3.0) in
-  `main/`. **It brings WorkManager back.** `asset-delivery` depends on `androidx.work:work-runtime`
-  2.9.1 for its `ExtractionWorker`, and WorkManager merges `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`,
-  `FOREGROUND_SERVICE` and `ACCESS_NETWORK_STATE`, which is FORBIDDEN. The library itself adds
-  `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC`. Read from the AARs' manifests on
-  2026-10-19.
-- **`ACCESS_NETWORK_STATE` is stripped with `tools:node="remove"` in `main/`'s manifest.** WorkManager
-  reads network state only to enforce a network constraint, and whether `ExtractionWorker` sets one is
-  not visible from its bytecode. The verdicts, decided now:
-  1. **A pack downloads and extracts through `--local-testing`, R8 holds, and logcat shows no
-     `SecurityException`.** → The strip stands; E re-checks it through Play, where extraction runs
-     for real.
+- **The Play Asset Delivery library** (`com.google.android.play:asset-delivery-ktx` 2.3.0) as a
+  `debugImplementation`. **It brings WorkManager back, in the debug build only.** `asset-delivery`
+  depends on `androidx.work:work-runtime` 2.9.1 for its `ExtractionWorker`, and WorkManager merges
+  `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and `ACCESS_NETWORK_STATE`, which is
+  FORBIDDEN. The library itself adds `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC`. Read
+  from the AARs' manifests on 2026-10-19. Nothing of ours schedules anything, and the release artifact
+  carries none of it, so the documents that say so stay true until E.
+- **`ACCESS_NETWORK_STATE` stays stripped.** A's debug manifest already removes it with
+  `tools:node="remove"`, and WorkManager's copy merges into the same removal. WorkManager reads
+  network state only to enforce a network constraint, and whether `ExtractionWorker` sets one is not
+  visible from its bytecode. The verdicts, decided now:
+  1. **A pack downloads and extracts through `--local-testing`, R8 shows `ExtractionWorker` ran, and
+     logcat shows no `SecurityException`.** → The strip stands; E re-checks it through Play, where
+     extraction runs for real.
   2. **Extraction fails for want of the permission.** → No workaround in code. ADR-0008 and ADR-0007
      conflict, and the owner chooses between a narrow ADR-0008 amendment that allows
      `ACCESS_NETWORK_STATE` alone, since it opens no connection and changes no Data safety answer, and
      a different delivery for map data. The phase stops at C until then.
-- **The other four rows go into EXPECTED**, in C's commit, each naming the asset-delivery library or
-  WorkManager as its source: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`,
-  `RECEIVE_BOOT_COMPLETED`. Phase 0 removed the last three with WorkManager. They return because the
-  only way to receive a pack without `INTERNET` needs them.
-- **`data/regions/RegionFiles.kt`** asks `AssetPackManager` for a Region's state and path, and exposes
-  it as a `Flow` of: not downloaded, downloading (with progress), update in progress, ready (path and
-  OSM date), failed. The OSM date is read from the archive's metadata, which the profile writes from
-  the PBF header's replication timestamp, so the file carries its own date.
+  3. **The pack arrives, but `ExtractionWorker` never ran under `--local-testing`.** → Undecided, and
+     the strip is provisional. E decides it through Play.
+- **The four other rows wait for E.** `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`,
+  `WAKE_LOCK` and `RECEIVE_BOOT_COMPLETED` belong in EXPECTED, each naming the library or WorkManager
+  as its source. But `aab-permissions.py` reads the release artifact, and in C that artifact carries
+  none of them, so rows added now would fail it as missing. Phase 0 removed the last three with
+  WorkManager; they return because the only way to receive a pack without `INTERNET` needs them.
+- **`data/regions/RegionFiles.kt`**, under `app/src/debug/` beside the debug map, asks
+  `AssetPackManager` for a Region's state and path, and exposes it as a `Flow` of: not downloaded,
+  downloading (with progress), update in progress, ready (path and OSM date), failed. The OSM date is
+  read from the archive's metadata, which the profile writes from the PBF header's replication
+  timestamp, so the file carries its own date.
 - **The debug section** shows the Tatry's state and offers "Download Tatry" and "Remove Tatry". Debug
   strings, `translatable="false"`. `DebugMapScreen` reads the path from `RegionFiles` once C lands,
   in place of the hand-pushed file.
@@ -217,7 +236,25 @@ the data. That release is E's, so the offer is too.
 Two builds from two pins a week apart, the same profile, then `bsdiff` from the older archive to the
 newer. The patch size is read against the newer archive, raw and zstd-compressed. A one-feature edit is
 measured the same way, from a pin and a copy of its extract with one Trail's colour changed. Both are
-readings, R6 and R7. The command is a flag on `build-map-data.py` so it can be re-run at any pin.
+readings, R6 and R7. The commands are flags on `build-map-data.py` so they can be re-run at any pin:
+
+- **`--patch-from <older pin>`** builds both pins and measures the patch from the older to the newer.
+- **`--patch-from-extract <pbf>`** takes a local PBF as the older side in place of a pin, skipping
+  the update and the header check for that side; the newer side is the current pin.
+
+**The edited copy**, for R7: a Trail's colour lives on its route relation, so the edit is to one
+relation. `osmium getid -f opl <pinned extract> r<id> > edit.opl`, change its `colour=` and bump its
+`v` by one, `osmium cat edit.opl -o edit.osc`, then
+`osmium apply-changes <pinned extract> edit.osc -o edited.osm.pbf`. The relation and its id go into
+the reading.
+
+### The verdicts, decided now
+
+1. **R6's patch, one week of churn, is at most 5 % of the newer archive zstd-compressed.** → The
+   format stands. ADR-0007's amendment is written with the measured number.
+2. **It is above 5 %.** → First prove determinism (R4), and look in the archive for anything per-build:
+   a timestamp in the metadata, an order that varies. If the archive is clean and the patch is still
+   above 5 %, the layout question goes back to the owner before E.
 
 **What the proxy cannot say.** Play's algorithm for packs is not documented. A small bsdiff is
 necessary, not sufficient. E is the reading that counts.
@@ -226,6 +263,18 @@ necessary, not sufficient. E is the reading that counts.
 
 What E does when Play work resumes, written now so it is not re-derived:
 
+- **The asset-delivery library moves to `main/`**, unless phase 2 has already moved it: the
+  dependency becomes `implementation`, `RegionFiles` moves to `main/`'s `data/regions/`, and the
+  `ACCESS_NETWORK_STATE` strip moves to `main/`'s manifest. In the same commit, per ADR-0007 and
+  `aab-permissions.py`'s rule: the Console's foreground-service declaration for `dataSync`,
+  `play-app-content.md` § *Foreground service permissions* rewritten from "None declared", and only
+  then the four EXPECTED rows. E2 reads the result. ADR-0007's "in the commit that adds the library"
+  is read as the commit that puts it in the release.
+- **The documents that say Kozica schedules nothing change with that commit**, because the release
+  then carries WorkManager: `CLAUDE.md`'s "Nothing scheduled" stack row, ADR-0003's amendment ("the
+  artifact no longer carries…"), and `PLAN.md`'s "Reminders and scheduled work" under *Not in this
+  plan*. Each says that WorkManager is the asset-delivery library's, and that nothing of ours
+  schedules anything.
 - **The data build moves into `publish-play.yml`**, before `bundleRelease`, as ADR-0007 decides. A
   release without the Tatry archive fails there.
 - **Two builds go through internal app sharing**, differing by one pin. The update size Play reports
@@ -234,10 +283,6 @@ What E does when Play work resumes, written now so it is not re-derived:
 - **The ODbL offer ships with it**: the script and profile, linked from the licences screen.
 - **`aab-locale.py`'s open failure on `schema_mismatch_continue`** is still standing then; it blocks
   any upload, pack or not.
-- **C's permissions reach the next release even without a pack.** C lands in `main/` as a `chore:`, so
-  any release cut for another reason ships the asset-delivery library with its `dataSync` foreground
-  service. That release needs the Console's foreground-service declaration and a
-  `play-app-content.md` § *Foreground service permissions*, which phase 0 deleted.
 
 ---
 
@@ -248,14 +293,18 @@ build-time assertions inside `build-map-data.py`, not unit tests.
 
 ## Documents this phase amends
 
-- **ADR-0007**: a dated amendment, written when R6 is taken. Files store their tiles uncompressed,
-  because compression inside a file defeats the delta. The format is PMTiles built by planetiler, or
-  `.map` if the gate goes the other way. The CI data build joins with E.
-- **`scripts/aab-permissions.py`**: EXPECTED gains the four rows in § 3, in C's commit; FORBIDDEN is
-  unchanged.
-- **`CLAUDE.md`**: the stack table gains MapLibre (debug only, for now) and Play Asset Delivery; the
-  layout gains `data/regions/`, `scripts/map/` and `scripts/regions/`.
+- **`PLAN.md`**: phase 1's paragraph and status line, amended with this file to match it.
+- **ADR-0007**: a dated amendment, written when R6 takes § 4's verdict 1, with the measured number.
+  Files store their tiles uncompressed, because compression inside a file defeats the delta. The
+  format is PMTiles built by planetiler, or `.map` if the gate goes the other way. The CI data build
+  joins with E.
+- **`scripts/aab-permissions.py`**: unchanged in this phase. The four rows in § 3 land with E.
+- **`CLAUDE.md`**: the stack table gains MapLibre and Play Asset Delivery, both debug only for now;
+  the layout's `app/src/debug/` gains the debug map and `RegionFiles`, and `scripts/` gains
+  `scripts/map/` and `scripts/regions/`.
 - **`.gitignore`**: Region archives, the downloaded extract and the planetiler jar.
+
+The documents that change when the library reaches the release are listed in § 5, with E.
 
 ## Known gaps, deliberately
 
@@ -274,14 +323,15 @@ read it. A reading that drives the phone waits until the owner says it is free.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb logcat -d \| grep -E 'SecurityException\|FATAL'` | |
+| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL'` | |
 | R2 | The merged debug manifest declares none of the five | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | |
-| R3 | The release bundle declares none of the FORBIDDEN permissions with the asset-delivery library and WorkManager in, and exactly the four new EXPECTED rows | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
+| R3 | After C, the merged debug manifest still declares none of the five with the asset-delivery library and WorkManager in. The release bundle's reading moved to E2 | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | |
 | R4 | Two builds at one pin are byte-identical | `python3 scripts/build-map-data.py --check-determinism` | |
 | R5 | The Tatry archive's size, raw and zstd | `ls -l`, `zstd -19 -c … \| wc -c` | |
 | R6 | The patch between two pins a week apart, against the newer archive | `python3 scripts/build-map-data.py --patch-from <older pin>` | |
-| R7 | The patch for a one-Trail colour edit | the same, against the edited extract | |
-| R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, and the debug map draws from the pack's path | `bundletool build-apks --local-testing … && bundletool install-apks …` | |
+| R7 | The patch for a one-Trail colour edit, with the relation's id | the edit in § 4, then `python3 scripts/build-map-data.py --patch-from-extract edited.osm.pbf` | |
+| R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, the debug map draws from the pack's path, and whether `ExtractionWorker` ran, with the phone's API level (JobScheduler checks the network-state permission only from API 34) | `bundletool build-apks --local-testing … && bundletool install-apks …`; `adb shell getprop ro.build.version.sdk`; `adb logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|SecurityException'`; `adb shell dumpsys jobscheduler \| grep <debug id>` | |
 | R9 | `installDebug` with no pack reports "not downloaded" and does not crash | `./gradlew installDebug`, open Settings' debug section | |
-| R10 | The debug map draws Trails in their colours from the profile's attribute, including a way shared by two Trails | `build-map-data.py`, push, open the debug map | |
+| R10 | The debug map draws Trails in their colours from the profile's attribute; the tile holding a way shared by two Trails carries both colours on that way, sorted. The decode is local and can be taken any time; the screen waits for the phone | `build-map-data.py`, push, open the debug map, `adb exec-out screencap -p > r10.png`; `python3 scripts/map/decode-tile.py <archive> <z> <x> <y>` | |
 | E1 | *(checkpoint E)* The update size Play reports for a one-pin data refresh, against R6 | internal app sharing, two builds | |
+| E2 | *(checkpoint E)* The release bundle declares none of the FORBIDDEN permissions with the asset-delivery library and WorkManager in, and exactly the four new EXPECTED rows | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |

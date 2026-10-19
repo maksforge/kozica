@@ -18,7 +18,7 @@ was extracted from and the first app built from it settled on exactly this split
 
 - [x] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
 - [ ] **Phase P** — The pipeline: everything set up; the first *automatic* upload still to be watched
-- [ ] **Phase 1** — The data reaches the phone: one Region built in CI and delivered by Play
+- [ ] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; Play's reading (E) later
 - [ ] **Phase 2** — The map: every Region drawn, Trails in their colours, "you are here"
 - [ ] **Phase 3** — Safe for a stranger ← **the door: closed testing opens here**
 - [ ] **Phase 4** — Elevation: contours and hillshading
@@ -132,12 +132,14 @@ account are in place, and version 0.1.0 reached internal testing by hand. What i
 
 ## Phase 1 — The data reaches the phone
 
-`scripts/build-map-data.py` builds one Region, the Tatry, in CI from the pinned extract
-([ADR-0007](adr/0007-osm-data-ships-per-mountain-range-as-play-asset-packs.md)), and Play delivers it
-to the phone as an on-demand asset pack. The gate is the file format: what an update costs after a
-one-Trail edit, measured through a build Play delivers, because Play does not document how it patches
-asset packs. Nothing has to be drawn yet; the app only proves it can find and read the files. Of
-ADR-0007's decisions for "the map phase", this one owns the file format.
+`scripts/build-map-data.py` builds one Region, the Tatry, from the pinned extract as a PMTiles
+archive ([ADR-0007](adr/0007-osm-data-ships-per-mountain-range-as-play-asset-packs.md)), and a debug
+build asks for it as an on-demand asset pack and draws it with MapLibre. The gate draws, because a
+format cannot be judged apart from its renderer, and MapLibre is sound only if it runs with every
+network permission stripped. What an update costs is measured locally, with bsdiff as a proxy; the
+reading through a build Play delivers is checkpoint E, taken when Play work resumes and before any
+release carries a pack. The phase closes on A–D. Of ADR-0007's decisions for "the map phase", this
+one owns the file format. [`phase-1.md`](phase-1.md).
 
 ## Phase 2 — The map
 

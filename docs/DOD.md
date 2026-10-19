@@ -74,8 +74,9 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       moves each build to them.
 - [x] **Decide the `applicationId` deliberately.** `io.github.srednimax.kozica`, fixed by the Play
       entry.
-- [ ] **Take phase 1's checkpoint E before any release carries a map pack.** The data build in
-      `publish-play.yml`, and the update size Play reports for a one-pin refresh
+- [ ] **Take phase 1's checkpoint E before any release carries a map pack or the asset-delivery
+      library.** The library in `main/` with the Console's foreground-service declaration, the data
+      build in `publish-play.yml`, and the update size Play reports for a one-pin refresh
       ([`phase-1.md`](phase-1.md) § 5).
 
 ## After the closed test
