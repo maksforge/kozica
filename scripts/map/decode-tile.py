@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prints one tile of an uncompressed PMTiles v3 archive: its layers, features and attributes.
 
-    python3 scripts/map/decode-tile.py map-data/regions/tatry.pmtiles 14 9101 5612
+    python3 scripts/map/decode-tile.py region_tatry/src/main/assets/tatry.pmtiles 14 9101 5612
 
 Reads R10 of docs/phase-1.md, a shared way's sorted colours, without a renderer.
 """

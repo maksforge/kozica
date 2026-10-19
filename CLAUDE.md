@@ -44,6 +44,8 @@ let us do otherwise".">
 | Photo Picker + `TakePicture` intent, **not CameraX** | Far less code; the system camera is fine here |
 | Coil 3 images | Compose-native, local files only |
 | On-device storage only | No backend. Backup per ADR-0005 |
+| MapLibre Native (OpenGL ES) + PMTiles | Debug only in phase 1 — the gate, `docs/phase-1.md` § 1 |
+| Play Asset Delivery | Debug only until phase 1's checkpoint E; brings WorkManager into the debug build alone (§ 3) |
 
 ## House rules
 
@@ -122,11 +124,13 @@ app/src/main/java/<namespace>/
   ui/          Compose screens + ViewModels, one package per area
 
 app/src/debug/    the developer-only build: the sample-data seeder, Settings' debug section and its
-                  strings, and SeedReceiver for the capture driver
+                  strings, SeedReceiver for the capture driver, the offline map gate, and
+                  data/regions/RegionFiles.kt, which asks Play for a Region's pack
 app/src/release/  only the no-op half of that seam, so main/ can call it unconditionally
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
 scripts/map/      the planetiler profile build-map-data.py runs, and decode-tile.py
 scripts/regions/  one boundary polygon per Region
+region_tatry/     the Tatry's on-demand asset pack; joins the build only with -PmapPacks
 art/             mark.py is the identity; both generators derive from it
 ```
 

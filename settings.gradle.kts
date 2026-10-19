@@ -31,3 +31,5 @@ plugins {
 
 rootProject.name = "bunny-app"
 include(":app")
+// docs/phase-1.md § 3: the pack joins only on request, never because its archive is on disk.
+if (providers.gradleProperty("mapPacks").isPresent) include(":region_tatry")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the Tatry Region's map archive from the pinned OSM data, per docs/phase-1.md § 2 and § 4.
 
-    python3 scripts/build-map-data.py                          # map-data/regions/tatry.pmtiles
+    python3 scripts/build-map-data.py                          # region_tatry/src/main/assets/tatry.pmtiles
     python3 scripts/build-map-data.py --check-determinism      # R4
     python3 scripts/build-map-data.py --patch-from 4935        # R6
     python3 scripts/build-map-data.py --patch-from-extract edited.osm.pbf   # R7
@@ -28,7 +28,7 @@ WORK = ROOT / "map-data"
 PIN = ROOT / "scripts/osm-data.pin"
 POLY = ROOT / "scripts/regions/tatry.poly"
 PROFILE = ROOT / "scripts/map/KozicaProfile.java"
-OUTPUT = WORK / "regions/tatry.pmtiles"
+OUTPUT = ROOT / "region_tatry/src/main/assets/tatry.pmtiles"
 
 GEOFABRIK = "https://download.geofabrik.de/europe"
 UPDATES = f"{GEOFABRIK}/poland-updates"

@@ -33,3 +33,5 @@ fastlane/metadata/
 
 # OSM data, the planetiler jar and Region archives: built by scripts/build-map-data.py, never committed.
 /map-data/
+/region_tatry/src/main/assets/
+/region_tatry/build/
