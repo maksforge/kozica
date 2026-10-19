@@ -1,6 +1,7 @@
 package app.kozica.debug
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -32,18 +33,25 @@ import java.io.File
 
 /** Phase 1's gate (docs/phase-1.md § 1): draws a hand-pushed Tatry archive with no network permission. */
 class DebugMapActivity : ComponentActivity() {
-    private lateinit var mapView: MapView
+    private var mapView: MapView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val archive = File(filesDir, "regions/tatry.pmtiles")
+        if (!archive.exists()) {
+            Log.w(TAG, "No archive at ${archive.absolutePath}")
+            setContent { AppTheme { MissingArchive() } }
+            return
+        }
+
         MapLibre.getInstance(this)
         // Before any MapView: its setup asks ConnectivityManager otherwise, which throws without
         // ACCESS_NETWORK_STATE.
         MapLibre.setConnected(false)
 
-        mapView = MapView(this)
+        val mapView = MapView(this).also { mapView = it }
         mapView.onCreate(savedInstanceState)
-        val archive = File(filesDir, "regions/tatry.pmtiles")
+        mapView.addOnDidFailLoadingMapListener { Log.e(TAG, "Map failed to load: $it") }
         val style =
             assets
                 .open("map/gate-style.json")
@@ -72,37 +80,48 @@ class DebugMapActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        mapView.onStart()
+        mapView?.onStart()
     }
 
     override fun onResume() {
         super.onResume()
-        mapView.onResume()
+        mapView?.onResume()
     }
 
     override fun onPause() {
-        mapView.onPause()
+        mapView?.onPause()
         super.onPause()
     }
 
     override fun onStop() {
-        mapView.onStop()
+        mapView?.onStop()
         super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
+        mapView?.onSaveInstanceState(outState)
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        mapView.onLowMemory()
+        mapView?.onLowMemory()
     }
 
     override fun onDestroy() {
-        mapView.onDestroy()
+        mapView?.onDestroy()
         super.onDestroy()
+    }
+}
+
+private const val TAG = "KozicaGate"
+
+@Composable
+private fun MissingArchive() {
+    Surface(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().padding(Spacing.base), contentAlignment = Alignment.Center) {
+            Text(stringResource(R.string.debug_map_no_archive), style = MaterialTheme.typography.bodyLarge)
+        }
     }
 }
 

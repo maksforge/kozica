@@ -1,1 +1,0 @@
-The pack now joins the build only with `-PmapPacks`, which only R8's local-testing debug bundle passes and E's `publish-play.yml` will pass (failing without the archive) (8e8eaba). Confirmed from the AGP 9.0.1 API jar: `assetPacks` exists only on `ApplicationExtension`, not on any build type or flavour.
