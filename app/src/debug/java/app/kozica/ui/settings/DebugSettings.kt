@@ -1,5 +1,6 @@
 package app.kozica.ui.settings
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import app.kozica.MainApplication
 import app.kozica.R
 import app.kozica.data.SampleData
+import app.kozica.debug.DebugMapActivity
 import app.kozica.theme.Spacing
 import app.kozica.ui.common.SectionHeader
 import kotlinx.coroutines.launch
@@ -36,6 +38,9 @@ fun DebugSettings() {
     }
     DebugRow(stringResource(R.string.debug_wipe)) {
         scope.launch { SampleData.wipe(app.container.items) }
+    }
+    DebugRow(stringResource(R.string.debug_map)) {
+        context.startActivity(Intent(context, DebugMapActivity::class.java))
     }
 }
 

@@ -31,6 +31,7 @@ lifecycleViewmodelNav3 = "2.10.0"
 # Build-time only: resolves the runtime classpath and emits the attribution list the
 # app renders itself. Nothing of it ships except the JSON it writes into assets.
 licensee = "1.14.1"
+maplibre = "13.7.1"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppCompat" }
@@ -70,6 +71,9 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
+
+# Debug only in phase 1: the gate in docs/phase-1.md § 1.
+maplibre-android = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

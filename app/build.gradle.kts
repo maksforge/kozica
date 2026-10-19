@@ -215,6 +215,8 @@ licensee {
     // Exactly one artifact: androidx's repackaging of protobuf-javalite, pulled in behind DataStore.
     // Nobody knows this is in the build until the plugin is run — which is the argument for it.
     allow("BSD-3-Clause")
+    // MapLibre Native, debug only in phase 1; its text lives in src/debug/assets/licences/.
+    allow("BSD-2-Clause")
 }
 
 /**
@@ -297,6 +299,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.maplibre.android)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
