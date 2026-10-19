@@ -7,7 +7,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -56,8 +58,13 @@ fun AppTheme(
 
     SystemBarAppearance(darkTheme)
 
-    MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+    CompositionLocalProvider(LocalDarkTheme provides darkTheme) {
+        MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+    }
 }
+
+/** Whether [AppTheme] resolved to dark, for what paints outside `MaterialTheme`, such as the map style. */
+val LocalDarkTheme = staticCompositionLocalOf { false }
 
 /**
  * Dark icons on the status and navigation bars under a light scheme, light icons under a dark one.

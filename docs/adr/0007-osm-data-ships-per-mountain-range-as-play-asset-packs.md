@@ -182,3 +182,13 @@ half. The map phase was split ([`PLAN.md`](../PLAN.md), [`phase-2.md`](../phase-
 draws the map against the Tatry and fixes the filter when it opens; phase 2b builds every Region and
 fixes the list of Regions, with each Region's polygon, when it opens. Phase 2b also takes over phase
 1's checkpoint E, so the CI data build above arrives with 2b.
+
+## Amendment — 2026-10-19: the profile is the filter
+
+The Decision's "`osmium tags-filter` drops only what nothing in the app reads" is not built as a
+step. planetiler emits only what the profile names, so a `tags-filter` list would be a second copy of
+the profile's, kept in step by hand. The cut goes straight to planetiler, and the layer table in
+[`phase-2.md`](../phase-2.md) § 3, which `scripts/map/KozicaProfile.java` implements, is the filter.
+What reaches a Region is still what the Decision names: Trails, Huts, peaks and Shelters, roads,
+villages, water and land cover. A thing the app starts to read joins the profile and the table, not
+a filter.

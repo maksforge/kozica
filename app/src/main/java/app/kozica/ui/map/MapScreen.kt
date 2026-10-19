@@ -69,6 +69,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
 import app.kozica.data.MapCamera
 import app.kozica.data.location.overridePosition
+import app.kozica.theme.LocalDarkTheme
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.WarningBanner
@@ -107,6 +108,8 @@ fun MapScreen(
     val context = LocalContext.current
     val activity = LocalActivity.current
     val colors = MaterialTheme.colorScheme
+    val dark = LocalDarkTheme.current
+    LaunchedEffect(dark) { viewModel.darkTheme(dark) }
     // Saved state rather than the ViewModel's, so the camera also survives process death.
     var shown by rememberSaveable(stateSaver = CameraSaver) { mutableStateOf<MapCamera?>(null) }
     val mapView = rememberMapView(onStop = viewModel::storeCamera)
