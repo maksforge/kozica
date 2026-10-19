@@ -110,7 +110,6 @@ fun MapScreen(
     }
 }
 
-/** A [MapView] driven by the lifecycle of whatever hosts this composition, destroyed with it. */
 @Composable
 private fun rememberMapView(onStop: () -> Unit): MapView {
     val context = LocalContext.current

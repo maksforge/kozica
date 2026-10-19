@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
 
-/** Where the map opens: a camera it had, or a view fitted over bounds. */
 sealed interface MapStart {
     data class At(
         val camera: MapCamera,
