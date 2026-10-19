@@ -16,5 +16,9 @@
             android:name=".debug.SeedReceiver"
             android:enabled="true"
             android:exported="true" />
+        <receiver
+            android:name=".debug.PositionReceiver"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 </manifest>

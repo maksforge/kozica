@@ -1,6 +1,8 @@
 package app.kozica.ui.map
 
+import android.annotation.SuppressLint
 import android.content.res.AssetManager
+import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -15,6 +17,7 @@ import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,7 +26,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -50,11 +55,15 @@ enum class MapEmpty {
  * @param regions null until the first read of the phone's Regions.
  * @param style the expanded style JSON, null until the template is read.
  * @param camera where a new map view opens, null until the stored camera is read.
+ * @param location null until the first resume reads it.
+ * @param fix the newest position, null while location cannot be read.
  */
 data class MapUiState(
     val regions: List<Region>? = null,
     val style: String? = null,
     val camera: MapStart? = null,
+    val location: LocationRead? = null,
+    val fix: Location? = null,
 ) {
     private val ready: List<RegionState.Ready> get() = regions.orEmpty().mapNotNull { it.state as? RegionState.Ready }
 
@@ -77,6 +86,7 @@ class MapViewModel(
     private val preferences: AppPreferences,
     private val assets: AssetManager,
     private val applicationScope: CoroutineScope,
+    private val positions: (approximateOnly: Boolean) -> Flow<Location>,
 ) : ViewModel() {
     private val regions = regions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -93,8 +103,21 @@ class MapViewModel(
             .flowOn(Dispatchers.IO)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    private val location = MutableStateFlow<LocationRead?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @SuppressLint("MissingPermission")
+    private val fix: Flow<Location?> =
+        location.flatMapLatest { read ->
+            when {
+                read == null || !read.on -> flowOf(null)
+                read.grant == LocationGrant.NONE -> flowOf(null)
+                else -> positions(read.grant == LocationGrant.APPROXIMATE)
+            }
+        }
+
     val state: StateFlow<MapUiState> =
-        combine(this.regions, style, camera, ::MapUiState)
+        combine(this.regions, style, camera, location, fix, ::MapUiState)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     init {
@@ -116,6 +139,10 @@ class MapViewModel(
         camera.value = MapStart.At(at)
     }
 
+    fun locationRead(read: LocationRead) {
+        location.value = read
+    }
+
     fun storeCamera() {
         val at = (camera.value as? MapStart.At)?.camera ?: return
         // Back finishes the activity, and that cancels viewModelScope before this write would run.
@@ -130,7 +157,13 @@ class MapViewModel(
             viewModelFactory {
                 initializer {
                     val app = this[APPLICATION_KEY] as MainApplication
-                    MapViewModel(app.container.regions, app.preferences, app.assets, app.container.applicationScope)
+                    MapViewModel(
+                        app.container.regions,
+                        app.preferences,
+                        app.assets,
+                        app.container.applicationScope,
+                        app.container::positions,
+                    )
                 }
             }
     }

@@ -37,6 +37,9 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
   the location a camera stamps on a photo is removed in the process.
 - **The camera**, only when you tap to take a picture, through the system camera app. The app
   declares no camera permission.
+- **Your location**, only once you tap the position button and allow it, to draw where you are on
+  the map. It is read on the phone and used there: the app never stores it and never sends it
+  anywhere. You can allow only an approximate location, or none, and the map works without it.
 
 ## The two things that happen outside the app
 

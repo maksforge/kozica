@@ -35,6 +35,13 @@ Read at **versionCode _, versionName _** by `publish-play.yml`'s verify step on 
 | Permission | Whose | What it is for | Console consequence |
 | --- | --- | --- | --- |
 | `…DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | its own non-exported receivers, signature-level | none: not user-visible |
+| `ACCESS_FINE_LOCATION` | Kozica | the position button: the dot, its accuracy circle and heading on the map, read on the phone only | the location permission declaration; Data safety stays "no data collected", because nothing leaves the device |
+| `ACCESS_COARSE_LOCATION` | Kozica | asked with fine, as Android requires from API 31 for the approximate option | as fine |
+
+**Features**: `android.hardware.location` and `android.hardware.location.gps`, both
+`required="false"`. Declaring a location permission makes Play assume the hardware is required
+unless the feature says otherwise, and the position is optional to the map: a phone without GPS
+still gets the app, and the map without a dot.
 
 **Forbidden, and asserted absent**: `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`,
 `AD_ID`, `QUERY_ALL_PACKAGES`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `CAMERA`, `USE_EXACT_ALARM`.
@@ -116,7 +123,8 @@ Would change any of it:
 
 - **`INTERNET` on the artifact**, from our code or a dependency. Every answer here becomes a question.
 - **Anything the app sends by itself**, such as crash reporting or analytics. There is none today.
-- **Location of any kind**, including through a photo's metadata surviving into storage or a backup.
+- **Storing location**, which phase 6's hike recording does, or a photo's metadata surviving into
+  storage or a backup. Reading it to draw the dot is not collection: it never leaves the device.
 
 ## Advertising ID
 

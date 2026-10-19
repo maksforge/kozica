@@ -14,6 +14,13 @@
     <string name="map_updating">Trwa aktualizacja danych mapy.</string>
     <string name="map_osm_credit">© Współtwórcy OpenStreetMap</string>
     <string name="map_osm_date">Dane OSM: %1$s</string>
+    <string name="map_position_show">Pokaż moją pozycję</string>
+    <string name="map_location_approximate">Tylko przybliżona lokalizacja.</string>
+    <string name="map_location_approximate_body">Zezwól na dokładną lokalizację, aby widzieć, gdzie jesteś na szlaku.</string>
+    <string name="map_location_allow">Zezwól</string>
+    <string name="map_location_off">Lokalizacja jest wyłączona.</string>
+    <string name="map_position_stale">Ostatnia pozycja sprzed %1$s.</string>
+    <string name="map_location_settings">Ustawienia</string>
 
     <string name="settings_title">Ustawienia</string>
     <string name="settings_appearance">Wygląd</string>

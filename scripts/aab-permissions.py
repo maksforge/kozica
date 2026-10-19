@@ -75,14 +75,15 @@ PRIM_INT_DEC = 6
 PRIM_INT_HEX = 7
 
 # Every <uses-permission> the release artifact is allowed to carry. Each is
-# accounted for in docs/play-app-content.md — keep the two in step. Kozica asks for
-# nothing yet: precise location arrives in phase 2 and the recording service's
-# permissions in phase 6 (PLAN.md rule 4), each with its row here.
+# accounted for in docs/play-app-content.md — keep the two in step. The recording
+# service's permissions arrive in phase 6 (PLAN.md rule 4), each with its row here.
 EXPECTED = {
     # AndroidX defines and uses this itself, signature-level. The prefix is the
     # applicationId, which differs between the debug and release builds, so it is
     # matched by suffix rather than spelled out.
     "*.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION": "AndroidX, signature-level",
+    "android.permission.ACCESS_FINE_LOCATION": "the position button: the dot on the map",
+    "android.permission.ACCESS_COARSE_LOCATION": "the position button: asked with fine, for the approximate option",
 }
 
 # Permissions that must never appear. Absence is what the Data safety answers
@@ -108,8 +109,9 @@ FORBIDDEN = {
 }
 
 # Every <uses-feature> the artifact is allowed to carry, with the required= value
-# each is allowed to carry it at. Empty on purpose: the template declares none, and
-# nothing it depends on merges one — asserted here rather than assumed.
+# each is allowed to carry it at. The location pair is declared not required, so
+# Play never derives a required GPS from the location permissions: the position is
+# optional to the map. Their reason is in docs/play-app-content.md.
 #
 # A feature at required="true" is a *distribution* rule — Play hides the app from
 # every device without it — which is why an unlisted one fails here rather than
@@ -117,7 +119,10 @@ FORBIDDEN = {
 # the feature is worth the devices it costs, write that into play-app-content.md,
 # and set it to False here (`android:required="false"`) unless it genuinely is
 # required.
-EXPECTED_FEATURES: dict[str, bool] = {}
+EXPECTED_FEATURES: dict[str, bool] = {
+    "android.hardware.location": False,
+    "android.hardware.location.gps": False,
+}
 
 # Every android:screenOrientation the release artifact is allowed to carry, and the
 # value it is allowed to carry it at, keyed by fully-qualified class name. Empty:

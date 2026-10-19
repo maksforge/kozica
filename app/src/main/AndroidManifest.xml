@@ -2,16 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!--
-        MapLibre declares these; ADR-0008 allows none of them. The location pair returns with the
-        position button, which asks for it (docs/phase-2.md § 4).
-    -->
+    <!-- MapLibre declares these; ADR-0008 allows none of them. -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="remove" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
     <uses-feature android:name="android.hardware.wifi" tools:node="remove" />
+
+    <!--
+        Asked for only by the position button (docs/phase-2.md § 4). The features are declared so
+        Play never derives them from the permissions as required: the position is optional to the map.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <!--
         The three <intent> entries are for hand-offs to a mail app, Play and a browser. None of the
