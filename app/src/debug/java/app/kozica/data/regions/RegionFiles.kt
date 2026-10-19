@@ -1,14 +1,17 @@
 package app.kozica.data.regions
 
+import android.app.Activity
 import android.content.Context
 import com.google.android.play.core.assetpacks.AssetPackException
 import com.google.android.play.core.assetpacks.AssetPackManagerFactory
 import com.google.android.play.core.assetpacks.AssetPackState
+import com.google.android.play.core.assetpacks.model.AssetPackErrorCode
 import com.google.android.play.core.assetpacks.model.AssetPackStatus
 import com.google.android.play.core.ktx.requestFetch
 import com.google.android.play.core.ktx.requestPackStates
 import com.google.android.play.core.ktx.requestProgressFlow
 import com.google.android.play.core.ktx.requestRemovePack
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -37,6 +40,8 @@ sealed interface RegionState {
     data class UpdateInProgress(
         val percent: Int,
     ) : RegionState
+
+    data object WaitingForConfirmation : RegionState
 
     data class Ready(
         val archive: File,
@@ -76,17 +81,25 @@ class RegionFiles(
         updates.emit(
             try {
                 manager.requestFetch(listOf(PACK)).packStates()[PACK]?.let(::fromPackState) ?: RegionState.NotDownloaded
-            } catch (e: AssetPackException) {
-                RegionState.Failed(e.errorCode)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                failure(e)
             },
         )
+    }
+
+    fun confirm(activity: Activity) {
+        manager.showConfirmationDialog(activity).addOnFailureListener { updates.tryEmit(failure(it)) }
     }
 
     suspend fun remove() {
         try {
             manager.requestRemovePack(PACK)
-        } catch (e: AssetPackException) {
-            updates.emit(RegionState.Failed(e.errorCode))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            updates.emit(failure(e))
             return
         }
         updates.emit(read())
@@ -104,6 +117,9 @@ class RegionFiles(
         }
     }
 
+    private fun failure(e: Exception): RegionState =
+        RegionState.Failed((e as? AssetPackException)?.errorCode ?: AssetPackErrorCode.INTERNAL_ERROR)
+
     private fun fromPackState(state: AssetPackState): RegionState =
         when (state.status()) {
             AssetPackStatus.COMPLETED ->
@@ -111,12 +127,13 @@ class RegionFiles(
             AssetPackStatus.PENDING,
             AssetPackStatus.DOWNLOADING,
             AssetPackStatus.TRANSFERRING,
-            AssetPackStatus.WAITING_FOR_WIFI,
-            AssetPackStatus.REQUIRES_USER_CONFIRMATION,
             -> {
                 val percent = downloadPercent(state)
                 if (readyArchive() != null) RegionState.UpdateInProgress(percent) else RegionState.Downloading(percent)
             }
+            AssetPackStatus.WAITING_FOR_WIFI,
+            AssetPackStatus.REQUIRES_USER_CONFIRMATION,
+            -> RegionState.WaitingForConfirmation
             AssetPackStatus.FAILED -> RegionState.Failed(state.errorCode())
             else -> RegionState.NotDownloaded
         }

@@ -26,6 +26,7 @@
     <string name="debug_tatry_not_downloaded" translatable="false">Tatry: not downloaded</string>
     <string name="debug_tatry_downloading" translatable="false">Tatry: downloading, %1$d %%</string>
     <string name="debug_tatry_updating" translatable="false">Tatry: updating, %1$d %%</string>
+    <string name="debug_tatry_waiting" translatable="false">Tatry: waiting for confirmation, tap Download Tatry</string>
     <string name="debug_tatry_ready" translatable="false">Tatry: ready, OSM data of %1$s</string>
     <string name="debug_tatry_no_date" translatable="false">unknown date</string>
     <string name="debug_tatry_failed" translatable="false">Tatry: failed, error %1$d</string>
