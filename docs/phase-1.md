@@ -307,8 +307,6 @@ What E does when Play work resumes, written now so it is not re-derived:
   is read against R6. An internal-track install does not update in place, so it cannot stand in
   (`RELEASING.md`).
 - **The ODbL offer ships with it**: the script and profile, linked from the licences screen.
-- **`aab-locale.py`'s open failure on `schema_mismatch_continue`** is still standing then; it blocks
-  any upload, pack or not.
 
 ---
 
