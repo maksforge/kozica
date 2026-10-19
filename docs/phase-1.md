@@ -194,8 +194,8 @@ the data. That release is E's, so the offer is too.
 
 - **An on-demand asset pack module, `region_tatry`**, whose assets directory `build-map-data.py`
   writes into. Pack names allow letters, digits and underscores only, and the directory name is the
-  pack name. **The pack joins the build only when `-PmapPacks` is passed**, never because its
-  archive is on disk. `assetPacks` is set on the app extension, not per build type (AGP 9.0.1's
+  pack name. **The pack joins the build only when `-PmapPacks` (or `=true`) is passed**, never
+  because its archive is on disk. `assetPacks` is set on the app extension, not per build type (AGP 9.0.1's
   DSL), so a rule keyed on the file would put OSM-derived data into any local `bundleRelease` made
   on a machine that holds the archive, with no ODbL offer. In this phase only R8's local-testing
   debug bundle passes it. Without it `assembleDebug`, CI and a checkout without data keep building.
