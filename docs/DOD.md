@@ -48,7 +48,7 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       tag** — the first app built from the template found its stale table in the publish workflow,
       after the tag, with the version already spent.
 - [x] **Choose the palette.** Chamois ochre, rock, slate and stone in `scripts/gen_scheme.py`; every
-      contrast pair passes. Phase 2 checks it against the Trail colours on the map.
+      contrast pair passes. Phase 2's R9 read it against the Trail colours on the map: no seed moved.
 - [ ] **Put a real support address in `ui/support/SupportHandoff.kt`.** It ships as
       `support@example.com`, `bootstrap.py` cannot guess it, and a release carrying it is a release
       with no way for anyone to reach you — Play's listing wants the same address in its contact
