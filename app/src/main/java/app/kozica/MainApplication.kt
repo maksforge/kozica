@@ -7,7 +7,6 @@ import app.kozica.data.AppPreferences
 import app.kozica.data.PRESERVED_DIRECTORY
 import app.kozica.data.SchemaGate
 import app.kozica.data.ThemeMode
-import app.kozica.data.destructiveMigrationAllowed
 import app.kozica.data.preserveBeforeWipe
 import app.kozica.data.readUserVersion
 import app.kozica.data.schemaGateDecision
@@ -29,16 +28,11 @@ import java.io.File
  * @param preservedCopy where the copy landed, under `filesDir`.
  * @param fromVersion the schema version the file on disk was written at.
  * @param toVersion the version this build expects.
- * @param wipeOnConsent whether continuing would destroy the file and let the app through. True in a
- *   debug build, where a schema bump is still free; false in a release build, where the open would
- *   throw instead — so the screen is a dead end offering the copy, not a button that destroys the
- *   user's history on a path where nothing was going to destroy it.
  */
 data class SchemaMismatch(
     val preservedCopy: File,
     val fromVersion: Int,
     val toVersion: Int,
-    val wipeOnConsent: Boolean,
 )
 
 /**
@@ -127,7 +121,6 @@ class MainApplication : Application() {
                             preservedCopy = preserved,
                             fromVersion = onDisk,
                             toVersion = APP_SCHEMA_VERSION,
-                            wipeOnConsent = destructiveMigrationAllowed(),
                         )
                 }
             }
