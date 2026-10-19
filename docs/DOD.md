@@ -59,8 +59,7 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       *hosted* URL, and an offline app has no server of its own. Served at
       `https://srednimax.github.io/kozica/privacy-policy.html` since 2026-10-20.
 - [x] **Answer the Console's App content pages and write [`play-app-content.md`](play-app-content.md)
-      in the same sitting.** All ten answered 2026-10-20; nothing is sent for review until a release
-      goes out.
+      in the same sitting.** All ten answered 2026-10-20.
 - [ ] **`LICENSE` and `README.md`.** Bootstrap wrote an all-rights-reserved notice that grants
       nothing; choose the licence you mean, and make the README's *Contributing* agree with it.
 - [x] **Create the upload keystore, outside the repo.** Recorded in [`RELEASING.md`](RELEASING.md)
