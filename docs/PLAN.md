@@ -18,7 +18,7 @@ was extracted from and the first app built from it settled on exactly this split
 
 - [x] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
 - [ ] **Phase P** — The pipeline: everything set up; the first *automatic* upload still to be watched
-- [ ] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; done but for the phone readings (R1, R8, R9, R10's screen), deferred on 2026-10-19 to a `DOD.md` item; Play's reading (E) moved to phase 2b
+- [x] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; Play's reading (E) moved to phase 2b
 - [ ] **Phase 2** — The map: the Tatry drawn as the signposts mark them, "you are here"
 - [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", delivered by Play
 - [ ] **Phase 3** — Safe for a stranger ← **the door: closed testing opens here**
