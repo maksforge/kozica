@@ -117,7 +117,9 @@ The answer rests on one fact per route data could take:
    exemption.** A `mailto:` hands a draft to **another app**; the user reads it, can edit every line,
    and sends it from their own mail client, or does not. ⚠ **Do not write "Play exempts support
    flows" in a re-declaration.** The help page has no such exemption; the claim is true because of
-   what "collect" means, and that is the reason to give.
+   what "collect" means, and that is the reason to give. What the developer then holds is a mail in
+   a mailbox, kept until the sender asks for it to be deleted, as the policy's *Deleting your data*
+   states.
 
 Would change any of it:
 

@@ -45,8 +45,8 @@ sends no mail.
 These are done by the operating system or by Google, not by Kozica, but they are the honest answer to
 "where could my data be":
 
-1. **Android's automatic backup.** If it is enabled on your phone, Android backs up the app's data
-   to your own Google Drive, in a space that does not count against your storage quota and that
+1. **Android's automatic backup.** If it is enabled on your phone, Android backs up the app's
+   database and its small preview images, not its settings, to your own Google Drive, in a space that does not count against your storage quota and that
    Google states apps cannot read. You can turn this off in your phone's settings.
 2. **Google Play.** Installing and updating an app is a transaction between your phone and Google,
    with its own privacy policy. The developer of this app receives aggregate, anonymous statistics —
@@ -58,8 +58,14 @@ The app is not directed at children and collects nothing from anyone.
 
 ## Deleting your data
 
-Uninstalling the app removes everything it stored. There is nowhere else to delete it from, because
-there is nowhere else it went.
+Uninstalling the app removes everything it stored on the phone. A copy can be in two other places:
+
+- **Android's backup in your Google Drive**, if backup is on. It outlives an uninstall, which is how
+  a reinstall gets your data back. Delete it under Backups in Google Drive, or manage it in your
+  phone's backup settings.
+- **A mail you sent the developer.** It is kept in the developer's mailbox, with your email address
+  and what the draft carried, until you ask for it to be deleted. Write to the address below and it
+  will be.
 
 ## Changes
 
