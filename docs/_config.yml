@@ -13,4 +13,4 @@
 # be published must not be in docs/ at all.
 theme: jekyll-theme-minimal
 title: Kozica
-description: <One line about the app>
+description: A hiking map of the Polish mountains that works with no signal at all.

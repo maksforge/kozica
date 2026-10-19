@@ -1,44 +1,42 @@
 ---
 layout: default
-title: <App name>
+title: Kozica
 ---
 
-# <App name>
+# Kozica
 
-<!--
-    The site root, served by GitHub Pages from `docs/`. It exists for two reasons: Play's listing
-    asks for a Website, and the privacy policy needs a hosted URL. Both come free from a public
-    repo — no hosting, no domain, no bill.
-
-    Write it for someone who found the app in the store and wants to know what it is before
-    installing. It is not the store listing (that is `store-listing.md`, which scripts parse) and it
-    is not the README (that is for someone reading the code).
--->
-
-**<One sentence about what it does.>** <And the constraint that makes it different — "Free, ad-free,
-and entirely on your own phone: no account, no sign-up, no server.">
+**A hiking map of the Polish mountains that works with no signal at all.** Free, ad-free, and
+entirely on your own phone: no account, no sign-up, and no permission to use the internet.
 
 ## What it does
 
-- **<Feature>** — <what it is for, in the user's words, not the schema's>.
-- **<Feature>** — <…>.
+- **Trails in their signpost colours** — red, blue, green, yellow and black, each with its symbol
+  along the line, and two trails on one path drawn side by side so you can tell which one you are on.
+- **Everything else you look for on the way** — paths, huts and shelters, peaks, passes, springs,
+  viewpoints, car parks and stops, national-park boundaries and the state border, in a light and a
+  dark style.
+- **Where you are** — one tap shows your position, its accuracy and the direction you are facing,
+  read on the phone and never sent anywhere.
 
-## <The honest limitation>
+## What it does not do
 
-<If the app is in a domain where people might over-trust it — health, finance, safety — say plainly
-what it does not do. This section costs nothing and is the one people remember.>
+It draws the trails as OpenStreetMap records them, at the date shown on the map. It does not know
+about closures, avalanche warnings, the weather or the state of a path today. Check the national
+park's announcements and the forecast before you go, and turn back when the mountain says so.
 
 ## Your data stays on your device
 
-There is no backend to send anything to. Everything lives in the app's private storage on your phone,
-and backups go to storage you choose. The details are in the
+There is no backend to send anything to. Everything lives in the app's private storage on your phone.
+The details are in the
 
 **[Privacy Policy](privacy-policy.md)**.
 
 ## Support
 
-**<support email>** — an ordinary mailbox that a person reads.
+**maksymilian.sredniawa.developer@gmail.com** — an ordinary mailbox that a person reads.
 
 ## The source
 
-Built in the open at **[<repo>](<url>)**.
+Built in the open at **[srednimax/kozica](https://github.com/srednimax/kozica)**. Map data ©
+[OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open
+Database Licence.
