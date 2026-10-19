@@ -2,12 +2,15 @@ package app.kozica.ui.map
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.icu.text.MeasureFormat
 import android.icu.util.Measure
 import android.icu.util.MeasureUnit
 import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.SystemClock
 import android.provider.Settings
@@ -54,10 +57,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -122,6 +127,23 @@ fun MapScreen(
         viewModel.locationRead(context.readLocation())
         onPauseOrDispose {}
     }
+    // The quick-settings tile flips the switch without pausing the activity.
+    LifecycleStartEffect(Unit) {
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) = viewModel.locationRead(context.readLocation())
+            }
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            IntentFilter(LocationManager.MODE_CHANGED_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        onStopOrDispose { context.unregisterReceiver(receiver) }
+    }
     val ask =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             val read = context.readLocation()
@@ -154,6 +176,9 @@ fun MapScreen(
         map.addOnMapLongClickListener { overridePosition(it.latitude, it.longitude) }
         val start = shown?.let(MapStart::At) ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
+        map.addOnCameraMoveStartedListener { reason ->
+            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) centreWanted = false
+        }
         map.addOnCameraIdleListener {
             map.cameraPosition.toMapCamera()?.let { camera ->
                 shown = camera

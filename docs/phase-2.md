@@ -315,7 +315,9 @@ The ask, and every answer to it, in one table (`PLAN.md` rule 4):
 
 - **Fine and coarse are asked together**, with `RequestMultiplePermissions`, as Android requires
   from API 31 for the approximate option to be offered.
-- **Every state but "not asked" is re-read** on each `ON_RESUME`: `checkSelfPermission` and
+- **Every state but "not asked" is re-read** on each `ON_RESUME`, and the switch also on
+  `LocationManager.MODE_CHANGED_ACTION` while Home is started, because the quick-settings tile
+  flips it without pausing the activity: `checkSelfPermission` and
   `LocationManagerCompat.isLocationEnabled` can both be read back reliably, so the banners use
   `WarningBanner` (`ui/common/Surfaces.kt`). The compat call, because
   `LocationManager.isLocationEnabled` is API 28 and `minSdk` is 26.
