@@ -30,3 +30,6 @@ __pycache__/
 fastlane/report.xml
 fastlane/README.md
 fastlane/metadata/
+
+# OSM data, the planetiler jar and Region archives: built by scripts/build-map-data.py, never committed.
+/map-data/
