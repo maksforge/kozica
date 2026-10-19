@@ -56,20 +56,22 @@ privacy policy names them in the same commit if they do.
 
 ## Ads
 
-**No.** Answered _<date>_.
+**No.** Answered 2026-10-20.
 
 Would change: any ad SDK, ever. `AD_ID` absent from the artifact is the check that would catch one
 arriving through a dependency.
 
-## App access
+## Sign-in details
 
-**All functionality is available without special access.** Answered _<date>_.
+The Console's former *App access* page. **No part of the app is restricted.** Answered 2026-10-20.
 
 There is no account and no sign-in. Would change: a feature behind a login.
 
 ## Content rating
 
-**The IARC questionnaire.** Answered _<date>_, category _<category>_, rating contact _<email>_.
+**The IARC questionnaire.** Answered 2026-10-20, category *All other app types*, rating contact the
+developer account's Gmail. "No" to every question; the ratings came back Everyone (ESRB) and All
+ages (ClassInd).
 
 Would change: user-generated content, communication between users, or a link out to anything that
 has either. A support `mailto:` hand-off is not user-to-user communication — it opens the user's own
@@ -78,14 +80,14 @@ Play's surface rather than the app's.
 
 ## Target audience and content
 
-**18 and over** _(or your answer)_. Answered _<date>_.
+**18 and over.** Answered 2026-10-20.
 
 Would change: lowering it. Any age band under 18 brings in the Families policy and its design and
 SDK requirements.
 
 ## Government, financial and health features
 
-**No to all three** _(or your answer)_. Answered _<date>_.
+**No to all three.** Answered 2026-10-20.
 
 Health is the one to guard, for an app anywhere near wellbeing. **Keep health claims out of the
 listing, the site and the tags** — Play's enforcement has treated a linked page as part of the
@@ -93,7 +95,7 @@ listing. Would change: copy or a tag that sells the app as good for you.
 
 ## Data safety
 
-**No data collected. No data shared.** Answered _<date>_ against versionCode _.
+**No data collected. No data shared.** Answered 2026-10-20, before any build reached closed testing.
 
 Play's definitions, from its Data safety help page (support.google.com, answer 10787469) — re-read
 them at each re-declaration rather than trusting this quote:
@@ -107,13 +109,11 @@ The answer rests on one fact per route data could take:
 
 1. **The app cannot transmit anything.** `INTERNET` is absent from the artifact, and
    `aab-permissions.py` fails the upload if it ever appears. This one fact is most of the answer.
-2. **Photos are processed only on the device.** Picked or taken, re-encoded by `media/MediaFiles.kt`
-   with their metadata — GPS included — stripped, and stored in the app's private storage.
-3. **Auto Backup is still "no data collected".** The platform moves the user's backup to the user's
+2. **Auto Backup is still "no data collected".** The platform moves the user's backup to the user's
    own Google Drive; the developer never sees it. That is Android transmitting the user's backup, not
    the app transmitting to the developer. ⚠ Every file the backup carries lands on the user's *next*
    phone too — see ADR-0005 for what is included and why.
-4. **A support mail is still "no data collected", and the reason is the definition rather than an
+3. **A support mail is still "no data collected", and the reason is the definition rather than an
    exemption.** A `mailto:` hands a draft to **another app**; the user reads it, can edit every line,
    and sends it from their own mail client, or does not. ⚠ **Do not write "Play exempts support
    flows" in a re-declaration.** The help page has no such exemption; the claim is true because of
@@ -129,7 +129,7 @@ Would change any of it:
 ## Advertising ID
 
 **No.** The artifact carries no `com.google.android.gms.permission.AD_ID`, and `aab-permissions.py`
-forbids it. Answered _<date>_.
+forbids it. Answered 2026-10-20.
 
 ## Foreground service permissions
 
@@ -142,8 +142,9 @@ declaration asks for: what the user sees, why it cannot wait, and why no named t
 
 - **Category:** _<category>_, and why not the obvious neighbour.
 - **Tags:** _<tags>_.
-- **Contact email:** _<address>_, public on the listing.
-- **Privacy policy:** `https://<owner>.github.io/<repo>/privacy-policy.html`, served from `docs/` by
+- **Contact email:** the developer account's Gmail for now, public on the listing. The owner may
+  move it to a dedicated address; the Console field changes without a release.
+- **Privacy policy:** `https://srednimax.github.io/kozica/privacy-policy.html`, served from `docs/` by
   Pages. It updates on a merge to `main`, with no release, which is why it has to be right before the
   app it describes ships rather than after.
 
