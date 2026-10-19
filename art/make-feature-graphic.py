@@ -34,7 +34,7 @@ import mark
 
 # The three strings this graphic is *about*. Edit them; everything else is layout.
 APP_NAME = "Kozica"
-TAGLINE = "One line about your app"
+TAGLINE = "Hiking trail map of the Polish mountains"
 FEATURES = "Private  ·  Offline  ·  No ads  ·  Free"
 
 ART = Path(__file__).parent
