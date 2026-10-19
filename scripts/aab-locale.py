@@ -111,14 +111,9 @@ def check(locale, table, default):
     # nothing about the translation having shipped — it would be present either
     # way. The ones that *differ* are the load-bearing subset, so they are counted
     # separately and the run fails if there are implausibly few.
-    missing, shrunk, distinct, distinct_missing = [], [], 0, 0
+    missing, distinct, distinct_missing = [], 0, 0
     for name, value in translated.items():
         if not value:
-            continue
-        # A name absent from the table was dropped by the resource shrinker in every language, as
-        # a string only debug code reads is; its translation was never going to ship.
-        if name.split("[")[0].encode() not in table:
-            shrunk.append(name)
             continue
         differs = default.get(name) != value
         distinct += differs
@@ -126,12 +121,10 @@ def check(locale, table, default):
             missing.append((name, value))
             distinct_missing += differs
 
-    checked = len([v for v in translated.values() if v]) - len(shrunk)
+    checked = len([v for v in translated.values() if v])
     print(f"locale       {locale}")
     print(f"checked      {checked} strings from values-{qualifier(locale)}/strings.xml")
     print(f"distinct     {distinct} differ from values/strings.xml")
-    if shrunk:
-        print(f"shrunk       {len(shrunk)} not in the release at all: {', '.join(shrunk)}")
 
     if missing:
         print(
