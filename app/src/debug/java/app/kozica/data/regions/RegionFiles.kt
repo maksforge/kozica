@@ -2,24 +2,25 @@ package app.kozica.data.regions
 
 import android.app.Activity
 import android.content.Context
+import com.google.android.gms.tasks.Task
 import com.google.android.play.core.assetpacks.AssetPackException
 import com.google.android.play.core.assetpacks.AssetPackManagerFactory
 import com.google.android.play.core.assetpacks.AssetPackState
+import com.google.android.play.core.assetpacks.AssetPackStateUpdateListener
 import com.google.android.play.core.assetpacks.model.AssetPackErrorCode
 import com.google.android.play.core.assetpacks.model.AssetPackStatus
-import com.google.android.play.core.ktx.requestFetch
-import com.google.android.play.core.ktx.requestPackStates
-import com.google.android.play.core.ktx.requestProgressFlow
-import com.google.android.play.core.ktx.requestRemovePack
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -29,6 +30,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.time.Instant
 import java.util.zip.GZIPInputStream
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 sealed interface RegionState {
     data object NotDownloaded : RegionState
@@ -64,8 +67,7 @@ class RegionFiles(
         merge(
             flow { emit(read()) },
             updates,
-            manager
-                .requestProgressFlow(listOf(PACK))
+            progress()
                 .map(::fromPackState)
                 .catch { },
         ).flowOn(Dispatchers.IO)
@@ -80,7 +82,12 @@ class RegionFiles(
     suspend fun download() {
         updates.emit(
             try {
-                manager.requestFetch(listOf(PACK)).packStates()[PACK]?.let(::fromPackState) ?: RegionState.NotDownloaded
+                manager
+                    .fetch(listOf(PACK))
+                    .await()
+                    .packStates()[PACK]
+                    ?.let(::fromPackState)
+                    ?: RegionState.NotDownloaded
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -95,7 +102,7 @@ class RegionFiles(
 
     suspend fun remove() {
         try {
-            manager.requestRemovePack(PACK)
+            manager.removePack(PACK).await()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -110,12 +117,23 @@ class RegionFiles(
     private suspend fun read(): RegionState {
         readyArchive()?.let { return RegionState.Ready(it, osmDate(it)) }
         return try {
-            manager.requestPackStates(listOf(PACK)).packStates()[PACK]?.let(::fromPackState)
+            manager
+                .getPackStates(listOf(PACK))
+                .await()
+                .packStates()[PACK]
+                ?.let(::fromPackState)
                 ?: RegionState.NotDownloaded
         } catch (_: Exception) {
             RegionState.NotDownloaded
         }
     }
+
+    private fun progress(): Flow<AssetPackState> =
+        callbackFlow {
+            val listener = AssetPackStateUpdateListener { state -> if (state.name() == PACK) trySend(state) }
+            manager.registerListener(listener)
+            awaitClose { manager.unregisterListener(listener) }
+        }
 
     private fun failure(e: Exception): RegionState =
         RegionState.Failed((e as? AssetPackException)?.errorCode ?: AssetPackErrorCode.INTERNAL_ERROR)
@@ -150,6 +168,12 @@ class RegionFiles(
         const val ARCHIVE = "tatry.pmtiles"
     }
 }
+
+private suspend fun <T> Task<T>.await(): T =
+    suspendCancellableCoroutine { continuation ->
+        addOnSuccessListener { continuation.resume(it) }
+        addOnFailureListener { continuation.resumeWithException(it) }
+    }
 
 /** The replication time planetiler copies from the extract's header into the PMTiles v3 metadata. */
 internal fun osmDate(archive: File): Instant? =

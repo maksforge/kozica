@@ -312,7 +312,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.maplibre.android.opengl)
-    debugImplementation(libs.play.asset.delivery.ktx)
+    debugImplementation(libs.play.asset.delivery)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 

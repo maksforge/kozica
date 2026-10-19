@@ -76,7 +76,9 @@ androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecy
 # Debug only in phase 1: the gate in docs/phase-1.md § 1.
 maplibre-android-opengl = { module = "org.maplibre.gl:android-sdk-opengl", version.ref = "maplibre" }
 # Debug only until checkpoint E: docs/phase-1.md § 3.
-play-asset-delivery-ktx = { module = "com.google.android.play:asset-delivery-ktx", version.ref = "playAssetDelivery" }
+# Not the -ktx artifact: its 2.3.0 is built against coroutines 1.5 and dies with NoSuchMethodError
+# on a failed request under the coroutines this app uses.
+play-asset-delivery = { module = "com.google.android.play:asset-delivery", version.ref = "playAssetDelivery" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
