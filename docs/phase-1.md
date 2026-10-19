@@ -128,7 +128,9 @@ The question is not settled by reading MapLibre's source. That reading says `Map
 
 All of it under `app/src/debug/`, per the house rule:
 
-- `debugImplementation` of MapLibre Native Android, pinned in `gradle/libs.versions.toml`.
+- `debugImplementation` of MapLibre Native Android, pinned in `gradle/libs.versions.toml`. The
+  renderer is OpenGL ES (`android-sdk-opengl`): the default `android-sdk` is the Vulkan build, and
+  its `uses-feature android.hardware.vulkan.version required="true"` would become a Play device filter.
 - The debug manifest removes the five permissions above.
 - `DebugMapScreen`, reached from Settings' debug section, is an `AndroidView` around `MapView`. It
   calls `setConnected(false)` first and loads `pmtiles://file://<filesDir>/regions/tatry.pmtiles`
@@ -155,7 +157,7 @@ All of it under `app/src/debug/`, per the house rule:
 
 ### The verdict, taken *(date)*
 
-Not taken yet. The gate build is merged, and the reading waits for the phone to be on Wi-Fi. B goes ahead on the bet that verdict 1 holds. Only B's packaging step depends on it, so verdict 2 would replace that step and nothing before it.
+Not taken yet. The gate build is merged, and the reading waits for the phone to be on Wi-Fi. B goes ahead on the bet that verdict 1 holds, and B–D are what the bet risks. Verdict 2 would replace B's tiling and packaging, because a `.map` archive needs a different writer: the planetiler profile, `--check-determinism` against that writer, `decode-tile.py` and the style rule all go. The pin, the extract update and the cut stay, and C–D are rewritten for the new format.
 
 ## 2. The build: `scripts/build-map-data.py`
 
@@ -327,8 +329,8 @@ read it. A reading that drives the phone waits until the owner says it is free.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL'` | |
-| R2 | The merged debug manifest declares none of the five | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | 2026-10-19, debug APK with MapLibre 13.7.1 (`libmaplibre.so` in all four ABIs): one permission, AndroidX's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; none of the five |
+| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL\|KozicaGate'` | |
+| R2 | The merged debug manifest declares none of the five, and no required hardware feature | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk`; `aapt2 dump xmltree --file AndroidManifest.xml app/build/outputs/apk/debug/app-debug.apk \| grep -A2 uses-feature` | 2026-10-19, debug APK with `android-sdk-opengl` 13.7.1 (`libmaplibre.so` in all four ABIs): one permission, AndroidX's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; none of the five. One `uses-feature`, `android.hardware.wifi` with `required=false`; no `android.hardware.vulkan.version` |
 | R3 | After C, the merged debug manifest still declares none of the five with the asset-delivery library and WorkManager in. The release bundle's reading moved to E2 | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | |
 | R4 | Two builds at one pin are byte-identical | `python3 scripts/build-map-data.py --check-determinism` | |
 | R5 | The Tatry archive's size, raw and zstd | `ls -l`, `zstd -19 -c … \| wc -c` | |

@@ -20,7 +20,7 @@ of ours.
 A dependency that merges one has it removed with `tools:node="remove"` and must work without it; a
 library that cannot is not used. Two are known:
 
-- **MapLibre** (`android-sdk` 13.7.1) merges all three, and the fine and coarse location pair that
+- **MapLibre** (`android-sdk-opengl` 13.7.1) merges all three, and the fine and coarse location pair that
   phase 2's ask uses, the moment it becomes a dependency.
 - **The Play Billing Library** (9.1.0), for a later tip, depends on Google's `datatransport`. Besides
   `INTERNET` and `ACCESS_NETWORK_STATE`, that merges a `JobInfoSchedulerService` and an
