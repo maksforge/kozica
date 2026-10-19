@@ -12,7 +12,7 @@ import app.kozica.theme.Spacing
 
 /**
  * The consent half of [SchemaMismatchScreen]: continuing lets the app through, and Room's
- * destructive fallback empties the file. Only a debug build has that fallback (ADR-0001).
+ * destructive fallback empties the file. Shown only where that fallback is on (ADR-0001).
  */
 @Composable
 fun SchemaMismatchContinue(onContinue: () -> Unit) {
