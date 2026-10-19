@@ -11,19 +11,12 @@ import app.kozica.R
 import app.kozica.ui.common.startActivitySafely
 
 /**
- * Where a report goes, and it is **frozen the day a build leaves this machine**.
- *
- * ⚠ **This is a placeholder, and shipping it is a release with no way to reach you.** `bootstrap.py`
- * cannot guess it, so it is a line in `docs/DOD.md`'s *Before the first upload*: put a real address
- * here, and the same one in the Play listing's contact field — two routes is one more than anybody
- * needs.
- *
- * Use a **dedicated account**, not a `…+app@` alias on your personal one. A sideloaded APK is never
- * forced to update, so whatever string is compiled in here keeps being mailed for as long as any
- * build survives. An alias is welded to one mailbox forever; a real address can be forwarded
- * anywhere, and handed to another maintainer without handing over your own mail.
+ * Where a report goes, **frozen the day a build leaves this machine**: a sideloaded APK is never
+ * forced to update, so whatever is compiled in here keeps being mailed for as long as any build
+ * survives. The Play listing's contact field carries the same address; `docs/DOD.md` still owes the
+ * choice of a dedicated account.
  */
-private const val SUPPORT_ADDRESS = "support@example.com"
+private const val SUPPORT_ADDRESS = "maksymilian.sredniawa.developer@gmail.com"
 
 /**
  * The id Play knows this app by — **a fact about the listing rather than about this build.**

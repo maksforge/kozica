@@ -153,7 +153,8 @@ rule 3).
 
 - **The placeholder mark ships to internal testing.** Nobody but the owner sees it before the door.
 - **`support@example.com` stays compiled in** until the dedicated account exists. No stranger has a
-  build before phase 3, which owns the address.
+  build before phase 3, which owns the address. Since 2026-10-20 the developer Gmail is compiled in
+  instead; the dedicated account is still open in `DOD.md`.
 
 ## Readings
 

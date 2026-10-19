@@ -142,8 +142,9 @@ declaration asks for: what the user sees, why it cannot wait, and why no named t
 
 - **Category:** _<category>_, and why not the obvious neighbour.
 - **Tags:** _<tags>_.
-- **Contact email:** the developer account's Gmail for now, public on the listing. The owner may
-  move it to a dedicated address; the Console field changes without a release.
+- **Contact email:** the developer account's Gmail for now, public on the listing and the same
+  address `SupportHandoff.kt` compiles in. The owner may move it to a dedicated address; the Console
+  field changes without a release, and the app's copy needs one.
 - **Privacy policy:** `https://srednimax.github.io/kozica/privacy-policy.html`, served from `docs/` by
   Pages. It updates on a merge to `main`, with no release, which is why it has to be right before the
   app it describes ships rather than after.
