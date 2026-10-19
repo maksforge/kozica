@@ -1,20 +1,9 @@
 # Play Console — App content answers
 
-The answers this app gave in the Console's **App content** pages, what each one rests on, and **the
+The answers Kozica gave in the Console's **App content** pages, what each one rests on, and **the
 fact that would change it**. The Console shows what was answered but never why, and Play asks again:
 when the app changes, when the questionnaire changes, and once a year. A re-declaration made from
 memory a year from now is how a true answer turns false.
-
-<!--
-    A template with real structure. Every section below is a page the Console will make you answer
-    before a closed release, and the answers are pre-filled for the template *as shipped*: no
-    network, no account, no ads, photos on the device. Delete what your app does not
-    have, re-reason what it adds, and date every answer the day you give it in the Console.
-
-    The first app built from this template wrote this file in its fifth phase, after `DOD.md` had
-    carried it as owed since before the first upload. Writing it while you fill in the Console is
-    cheaper: the reasons are in front of you then, and gone a week later.
--->
 
 Two rules keep this file honest:
 
