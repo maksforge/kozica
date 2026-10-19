@@ -151,14 +151,20 @@ every range, and the store download grows with each range added.
 
 Phase 1 picks the format left above to the map phase ([`phase-1.md`](../phase-1.md) § 2 and § 4):
 one PMTiles archive per Region, built by planetiler from the Region's cut, **with its tiles stored
-uncompressed** (`--tile_compression=none`). Compression inside the file defeats the delta.
+uncompressed** (`--tile_compression=none`). The requirement above stands; this narrows what meets
+it, and strikes the Decision's "as does any layout whose compression restarts per area". Tiles
+compressed one by one do not patch well, because a binary diff cannot see through compressed bytes.
+The basis is the 2026-10-18 research spike that `phase-1.md` § 0 describes, a scratch run: a week of
+edits cost a patch of about 44 % of the file with each tile gzipped, and under 1 % with the same
+tiles uncompressed. No reading here rebuilds the gzipped variant; R6 and R7 measure only the
+uncompressed build.
 
 The proxy for Play's delta is bsdiff between two builds, read against the newer archive. A week of
 churn, pins 4935 to 4942, patches in 3,824 bytes: 0.36 % of the 1,051,229-byte Tatry archive raw,
 0.61 % of it zstd-compressed (R6). One Trail recoloured patches in 1,600 bytes: 0.15 % and 0.26 %
-(R7). Both are far under the 5 % that `phase-1.md` § 4 set, so the format stands. The proxy is necessary, not
-sufficient: Play's algorithm for packs is not documented, and the reading that counts is the phase's
-checkpoint E.
+(R7). R6 is far under the 5 % that `phase-1.md` § 4 set, so the format stands; R7, which has no
+bar, is smaller still. The proxy is necessary, not sufficient: Play's algorithm for packs is not
+documented, and the reading that counts is the phase's checkpoint E.
 
 **The format still waits on the gate.** Whether MapLibre draws the archive with every network
 permission stripped (R1, § 1) has not yet been read on the phone. If it does not, the format becomes
