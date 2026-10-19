@@ -146,3 +146,24 @@ every range, and the store download grows with each range added.
   changed one costing close to its full size means the format doesn't patch well.
 - The app's own data (tracks, photos, notes) stays in its own database. Region files are read-only
   inputs, replaced as a whole by Play, and never written to by the app.
+
+## Amendment — 2026-10-19: PMTiles, its tiles uncompressed
+
+Phase 1 picks the format left above to the map phase ([`phase-1.md`](../phase-1.md) § 2 and § 4):
+one PMTiles archive per Region, built by planetiler from the Region's cut, **with its tiles stored
+uncompressed** (`--tile_compression=none`). Compression inside the file defeats the delta.
+
+The proxy for Play's delta is bsdiff between two builds, read against the newer archive. A week of
+churn, pins 4935 to 4942, patches in 3,824 bytes: 0.36 % of the 1,051,229-byte Tatry archive raw,
+0.61 % of it zstd-compressed (R6). One Trail recoloured patches in 1,600 bytes: 0.15 % and 0.26 %
+(R7). Both are far under the 5 % that `phase-1.md` § 4 set, so the format stands. The proxy is necessary, not
+sufficient: Play's algorithm for packs is not documented, and the reading that counts is the phase's
+checkpoint E.
+
+**The format still waits on the gate.** Whether MapLibre draws the archive with every network
+permission stripped (R1, § 1) has not yet been read on the phone. If it does not, the format becomes
+Mapsforge's `.map`, and R6 and R7 are read again for it.
+
+**The CI data build arrives with E.** Until then `build-map-data.py` runs locally and writes the
+Region's file into its pack module, where it stays git-ignored. The decision above, a job in
+`publish-play.yml` before `bundleRelease`, holds from the first release that carries a pack.

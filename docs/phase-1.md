@@ -252,7 +252,10 @@ readings, R6 and R7. The commands are flags on `build-map-data.py` so they can b
 relation. `osmium getid -f opl <pinned extract> r<id> > edit.opl`, change its `colour=` and bump its
 `v` by one, `osmium cat edit.opl -o edit.osc`, then
 `osmium apply-changes <pinned extract> edit.osc -o edited.osm.pbf`. The relation and its id go into
-the reading.
+the reading. Where the relation has an `osmc:symbol`, the profile reads the colour from it before
+`colour=`, so the edit changes both. `apply-changes` drops the replication header, and the older
+archive's metadata would then differ by more than the edit, so the three `osmosis_replication_*`
+options are passed back with `--output-header=<option>=<value>`, read from the pinned extract.
 
 ### The verdicts, decided now
 
@@ -335,7 +338,7 @@ read it. A reading that drives the phone waits until the owner says it is free.
 | R4 | Two builds at one pin are byte-identical | `python3 scripts/build-map-data.py --check-determinism` | 2026-10-19, pin 4942: byte-identical, 1,051,229 bytes, sha256 `7a5e28c6…9171`. The metadata carries sequence 4942 and its time, 2026-10-18T20:25:06Z, once the cut copies the replication header: `osmium extract` drops it by default |
 | R5 | The Tatry archive's size, raw and zstd | `ls -l`, `zstd -19 -c … \| wc -c` | 2026-10-19, pin 4942: 1,051,229 bytes raw, 622,694 zstd -19. Geofabrik's Poland extract stops at the state border, so `tatry.poly`'s Slovak half draws nothing; the Region's shape is phase 2's |
 | R6 | The patch between two pins a week apart, against the newer archive | `python3 scripts/build-map-data.py --patch-from <older pin>` | 2026-10-19, 4935 (2026-10-11, from `poland-261001` and ten diffs) to 4942 (2026-10-18, `poland-261018`): bsdiff patch 3,824 bytes, 0.36 % of the newer archive raw, 0.61 % of it zstd. § 4's verdict 1 |
-| R7 | The patch for a one-Trail colour edit, with the relation's id | the edit in § 4, then `python3 scripts/build-map-data.py --patch-from-extract edited.osm.pbf` | |
+| R7 | The patch for a one-Trail colour edit, with the relation's id | the edit in § 4, then `python3 scripts/build-map-data.py --patch-from-extract edited.osm.pbf` | 2026-10-19, pin 4942 against a copy of `poland-261018` with r1020533 ("Stacja IMGW - Świnicka Przełęcz", v13 to v14) recoloured black to blue in `colour=` and `osmc:symbol`, its replication header kept: bsdiff patch 1,600 bytes, 0.15 % of the newer archive raw, 0.26 % of it zstd. The newer archive is still `7a5e28c6…9171` |
 | R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, the debug map draws from the pack's path, and whether `ExtractionWorker` ran, with the phone's API level (JobScheduler checks the network-state permission only from API 34) | `./gradlew bundleDebug -PmapPacks`, then `bundletool build-apks --local-testing --bundle app/build/outputs/bundle/debug/app-debug.aab … && bundletool install-apks …`; `adb shell getprop ro.build.version.sdk`; `adb logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|SecurityException'`; `adb shell dumpsys jobscheduler \| grep <debug id>` | |
 | R9 | `installDebug` with no pack reports "not downloaded" and does not crash | `./gradlew installDebug`, open Settings' debug section | |
 | R10 | The debug map draws Trails in their colours from the profile's attribute; the tile holding a way shared by two Trails carries both colours on that way, sorted. The decode is local and can be taken any time; the screen waits for the phone | `build-map-data.py`, push, open the debug map, `adb exec-out screencap -p > r10.png`; `python3 scripts/map/decode-tile.py <archive> <z> <x> <y>` | |
