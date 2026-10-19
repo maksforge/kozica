@@ -16,7 +16,7 @@ short because the app does very little.
 Kozica has no account, no sign-in and no server. **The app has no permission to use the internet**,
 so it cannot send anything anywhere.
 
-What it keeps (your settings and where you last looked on the map) is stored **only in the app's
+What it keeps (your settings, including where you left the map) is stored **only in the app's
 private storage on your own phone**, and is readable only by the app.
 
 There is no analytics, no crash reporting, no advertising, and no third-party SDK that phones home.
@@ -24,8 +24,11 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
 ## What the app can access, and why
 
 - **Your location**, only once you tap the position button and allow it, to draw where you are on
-  the map. It is read on the phone and used there: the app never stores it and never sends it
-  anywhere. You can allow only an approximate location, or none, and the map works without it.
+  the map. It is read on the phone and used there, never sent anywhere, and the app keeps no record
+  of it. The map does remember where you left it, in the app's settings: if you last used the
+  position button to centre it, that spot is where you were. The settings are not part of Android's
+  backup below, so it stays on the phone. You can allow only an approximate location, or none, and
+  the map works without it.
 
 ## When you write to the developer
 

@@ -125,6 +125,9 @@ Would change any of it:
 - **Anything the app sends by itself**, such as crash reporting or analytics. There is none today.
 - **Storing location**, which phase 6's hike recording does, or a photo's metadata surviving into
   storage or a backup. Reading it to draw the dot is not collection: it never leaves the device.
+- **The preferences file joining the backup.** It holds the map's last centre, which is the user's
+  position at the fix's precision after the position button centred it. `AppBackupAgent` carries
+  only the database and thumbnails today, so that centre stays on the phone; the policy says so.
 
 ## Advertising ID
 
