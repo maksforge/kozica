@@ -5,51 +5,43 @@ title: Privacy Policy
 
 # Privacy Policy
 
-_Last updated: <date>_
+_Last updated: 20 October 2026_
 
-<!--
-    **This is a template with real structure, not boilerplate to paste unread.** Play requires a
-    *hosted* privacy policy URL and an offline app has no server of its own, which is why this repo
-    carries a `docs/_config.yml` — GitHub Pages serves this file for nothing.
-
-    The part people get wrong is the last section. An app that stores everything locally still has
-    things happening around it that a policy has to be honest about, and Play's Data safety form
-    asks about them separately. Go through each and delete what does not apply.
--->
-
-<App name> is an Android app for <one line>. This policy describes what the app does with the
-information you put into it. It is short because the app does very little.
+Kozica is an Android app for hiking in the Polish mountains: an offline map of the trails, drawn in
+their signpost colours. This policy describes what the app does with information about you. It is
+short because the app does very little.
 
 ## The app collects nothing
 
-<App name> has no account, no sign-in, and no server. Nothing you enter is transmitted anywhere.
+Kozica has no account, no sign-in and no server. **The app has no permission to use the internet**,
+so it cannot send anything anywhere.
 
-Everything you record is stored **only in the app's private storage on your own device**, and is
-readable only by the app.
+What it keeps (your settings and where you last looked on the map) is stored **only in the app's
+private storage on your own phone**, and is readable only by the app.
 
 There is no analytics, no crash reporting, no advertising, and no third-party SDK that phones home.
 
 ## What the app can access, and why
 
-- **Photos you choose.** The app uses Android's Photo Picker, which hands it the single file you
-  picked and nothing else — it never has access to your gallery. A picture you attach is copied into
-  the app's own storage, **re-encoded so that the original's metadata does not travel with it**;
-  the location a camera stamps on a photo is removed in the process.
-- **The camera**, only when you tap to take a picture, through the system camera app. The app
-  declares no camera permission.
 - **Your location**, only once you tap the position button and allow it, to draw where you are on
   the map. It is read on the phone and used there: the app never stores it and never sends it
   anywhere. You can allow only an approximate location, or none, and the map works without it.
 
+## When you write to the developer
+
+"Help and feedback" and "Something read wrong?" open **your own email app** with a draft addressed to
+the developer. The draft carries the app's version, your Android version, your phone's make and
+model, and the language you are reading the app in, so a report can be acted on. You see every line
+before sending, can change or delete any of it, and nothing is sent unless you send it yourself.
+
 ## The two things that happen outside the app
 
-These are done by the operating system or by Google, not by <app name>, but they are the honest
-answer to "where could my data be":
+These are done by the operating system or by Google, not by Kozica, but they are the honest answer to
+"where could my data be":
 
 1. **Android's automatic backup.** If it is enabled on your phone, Android backs up the app's data
    to your own Google Drive, in a space that does not count against your storage quota and that
-   Google states apps cannot read. You can turn this off in your phone's settings; the app has a
-   link to that screen.
+   Google states apps cannot read. You can turn this off in your phone's settings.
 2. **Google Play.** Installing and updating an app is a transaction between your phone and Google,
    with its own privacy policy. The developer of this app receives aggregate, anonymous statistics —
    install counts, crash rates, country-level breakdowns — and no information about individuals.
@@ -70,4 +62,4 @@ in the repository.
 
 ## Contact
 
-**<support email>**
+**maksymilian.sredniawa.developer@gmail.com**
