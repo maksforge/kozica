@@ -84,7 +84,8 @@ listing. Would change: copy or a tag that sells the app as good for you.
 
 ## Data safety
 
-**No data collected. No data shared.** Answered 2026-10-20, before any build reached closed testing.
+**No data collected. No data shared.** Saved as a draft on 2026-10-20; the Console takes it once the privacy policy URL is set, and this
+line is dated again on the day it is submitted.
 
 Play's definitions, from its Data safety help page (support.google.com, answer 10787469) — re-read
 them at each re-declaration rather than trusting this quote:
