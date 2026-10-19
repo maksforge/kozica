@@ -221,12 +221,25 @@ the filter. ADR-0007's amendment written with C records that.
   each by `(index - (count - 1) / 2) × width`, so two Trails sit side by side and three keep the
   middle one on the way. Sorting by colour, then by relation id, keeps the order stable between
   builds.
-- **Every Trail feature runs in one canonical direction.** `line-offset` is signed against the
-  line's direction, and OSM does not orient the ways of a relation consistently: where two ways of
-  one shared stretch point opposite ways, red and blue would swap sides at the node between them
-  and draw an X. So the profile emits each Trail feature's geometry reversed when needed, so that
-  its first point is west of its last, or south of it when the two share a longitude. `index`
-  then means the same side on every way. A tile post-process that merges lines must keep it.
+- **A shared way's direction follows the stretch, not the compass.** `line-offset` is signed
+  against the line's direction, and OSM does not orient the ways of a relation consistently: where
+  two ways of one shared stretch point opposite ways, red and blue would swap sides at the node
+  between them and draw an X. A compass rule such as "west first" fixes that only while the
+  stretch keeps running one way in longitude; on a serpentine, or a stretch that bends from
+  north-east to north-west, two meeting ways get opposite directions and the X comes back. So the
+  profile orients each way by a reference relation: of the Trails sharing it, the one that sorts
+  first by colour, then by relation id, the same order as `index`. The way is oriented to continue
+  from the previous member of that relation, by the relation's member order and the ways' end node
+  ids. If neither end connects to it (a gap in the relation, or the first member), the way is
+  oriented to lead into the next member. If neither applies, it falls back to west first, or
+  south first when its ends share a longitude. Along a stretch whose set of Trails does not
+  change, the reference relation stays the same, so `index` keeps its side. A tile post-process
+  that merges lines must keep the direction.
+- **The orientation needs each way's end node ids and each relation's ordered members.**
+  planetiler 0.10.2's profile hooks may expose both in its first pass, and that is the approach;
+  whether they do is checked when C starts. If they do not, `build-map-data.py` runs a pyosmium
+  pre-pass over the cut that writes a sidecar, way id to reversed or not, for the profile to read.
+  The sidecar is sorted by way id so R4's determinism holds.
 - **A Trail may change side at a junction, and that is accepted.** `index` is per way, so a blue
   Trail beside a green one is index 0, and becomes index 1 where a red Trail joins. Paper trail
   maps do the same; a fixed slot per Trail would leave gaps where its companions are absent.
@@ -317,7 +330,9 @@ The ask, and every answer to it, in one table (`PLAN.md` rule 4):
   action is that ask, and Settings only once it is refused. Opening Settings first is the heavier
   hand-off.
 - **The app reads location itself**, through `LocationManagerCompat`: the platform's fused provider
-  where the phone has one, else GPS. Neither is Play services. MapLibre's `LocationComponent` is
+  where the phone has one, else GPS, or `NETWORK_PROVIDER` with approximate only, because GPS needs
+  the fine permission. R8's `SecurityException` grep catches a provider asked for without its
+  permission. None of them is Play services. MapLibre's `LocationComponent` is
   activated with `useDefaultLocationEngine(false)` and fed each fix with `forceLocationUpdate`, so
   there is one reader of location, not two. The assistance that speeds a first fix is Android's,
   not ours (ADR-0008).
@@ -412,7 +427,7 @@ read it. A reading that drives the phone waits until the owner says it is free.
 | R2 | The release bundle declares none of the network three after B, and no `uses-feature`: MapLibre's `android.hardware.wifi` is stripped. After D, exactly the location pair beside AndroidX's own, and `android.hardware.location` and `.gps` at `required="false"` | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
 | R3 | The release map opens on its empty state and the credit, no crash, in English and Polish | `./gradlew installRelease` or the internal-testing build, `adb exec-out screencap -p` | |
 | R4 | Two builds of the new schema are byte-identical; its size and the one-Trail patch against phase 1's R5 and R7; the hiking relations that reach the colour fallback, by tag value; the Huts in the cut and in the archive | `python3 scripts/build-map-data.py --check-determinism`, then `--patch-from-extract`; `osmium tags-filter` over the cut and `decode-tile.py` over the archive's tile range for the counts | |
-| R5 | A way shared by two Trails draws both, side by side, with their symbols, across a way boundary where the OSM ways point opposite ways and at a junction where a third Trail joins; Paths read as Paths; the state border runs along the Tatry ridge | debug build with the Tatry, `adb exec-out screencap -p` at zoom 15 over w22773921, then over the boundary and junction picked from the tile decode | |
+| R5 | A way shared by two Trails draws both, side by side, with their symbols, across a way boundary where the OSM ways point opposite ways, along a shared stretch that doubles back in longitude, and at a junction where a third Trail joins; Paths read as Paths; the state border runs along the Tatry ridge | debug build with the Tatry, `adb exec-out screencap -p` at zoom 15 over w22773921, then over the boundary, the doubling-back stretch and the junction picked from the tile decode | |
 | R6 | The glyph ranges the names need, derived from the archive: the code points outside the shipped ranges in its `name` attributes, which must come back empty. Labels with *ł*, *ś*, *ż*, *ą* and a „ ” or – render, in light and dark; switching night mode with the map open keeps the Trails and the dot | `decode-tile.py` over the archive's tile range, as phase 1's R10, listing code points outside the shipped ranges; the debug build at places named with them; `adb shell cmd uimode night yes` / `no` | |
 | R7 | Each row of § 4's table, with the API level: the 31+ rows on the phone, the 26–30 rows (one dialog, no approximate) on an emulator, which the row says; and the interval between coarse fixes with approximate only | `adb shell pm revoke`/`grant`, the system location switch, a screencap per state; `adb logcat` timestamps of the fixes the app logs | |
 | R8 | The app's own reader: which provider it got, no `SecurityException`, no Play services | `adb logcat -d \| grep -E 'SecurityException\|KozicaLocation'` | |
