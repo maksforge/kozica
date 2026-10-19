@@ -15,6 +15,18 @@
       "paint": { "line-color": "#7a5c3e", "line-width": 1.2 }
     },
     {
+      "id": "trails", "type": "line", "source": "tatry", "source-layer": "ways",
+      "filter": ["has", "colour"],
+      "paint": {
+        "line-color": [
+          "match", ["get", "colour"],
+          "red", "#d62828", "blue", "#1d4ed8", "green", "#2e8b3a", "yellow", "#e6b800", "black", "#1a1a1a",
+          "#9b4dca"
+        ],
+        "line-width": 3
+      }
+    },
+    {
       "id": "peaks", "type": "symbol", "source": "tatry", "source-layer": "peaks",
       "layout": { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 13 },
       "paint": { "text-color": "#333333", "text-halo-color": "#ffffff", "text-halo-width": 1 }

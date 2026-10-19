@@ -125,6 +125,8 @@ app/src/debug/    the developer-only build: the sample-data seeder, Settings' de
                   strings, and SeedReceiver for the capture driver
 app/src/release/  only the no-op half of that seam, so main/ can call it unconditionally
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
+scripts/map/      the planetiler profile build-map-data.py runs, and decode-tile.py
+scripts/regions/  one boundary polygon per Region
 art/             mark.py is the identity; both generators derive from it
 ```
 
