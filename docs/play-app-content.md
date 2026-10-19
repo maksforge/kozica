@@ -5,6 +5,9 @@ fact that would change it**. The Console shows what was answered but never why, 
 when the app changes, when the questionnaire changes, and once a year. A re-declaration made from
 memory a year from now is how a true answer turns false.
 
+**Status:** all ten pages answered 2026-10-20 and **not yet reviewed**. Play reviews them with the
+first release sent for review, the closed-testing one; re-read every section against that build first.
+
 Two rules keep this file honest:
 
 - **The privacy policy and the Data safety form describe the same facts to two audiences**, and Play
@@ -133,16 +136,20 @@ forbids it. Answered 2026-10-20.
 type, the `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` text if it is `specialUse`, and the three answers the
 declaration asks for: what the user sees, why it cannot wait, and why no named type fits.
 
+## Privacy policy
+
+**`https://srednimax.github.io/kozica/privacy-policy.html`**, set 2026-10-20. Served from `docs/` by
+Pages, so it updates on a merge to `main` with no release, which is why it has to be right before the
+app it describes ships rather than after.
+
 ## Store settings (not App content, recorded here because it is asked for the same reason)
 
-- **Category:** _<category>_, and why not the obvious neighbour.
-- **Tags:** _<tags>_.
+- **Category:** Maps & navigation, set 2026-10-20. Not Travel & local, which is bookings and guides,
+  and not Health & fitness, whose claims this file keeps out of the listing.
+- **Tags:** none.
 - **Contact email:** the developer account's Gmail for now, public on the listing and the same
   address `SupportHandoff.kt` compiles in. The owner may move it to a dedicated address; the Console
   field changes without a release, and the app's copy needs one.
-- **Privacy policy:** `https://srednimax.github.io/kozica/privacy-policy.html`, served from `docs/` by
-  Pages. It updates on a merge to `main`, with no release, which is why it has to be right before the
-  app it describes ships rather than after.
 
 ## Production access — the application, and the answers it was given
 
