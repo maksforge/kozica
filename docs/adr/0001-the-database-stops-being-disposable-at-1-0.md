@@ -61,10 +61,12 @@ A completely green migration suite says nothing about whether a real upgrade is 
   how a release build ends up wiping someone's data.
 - `preserved/` is never pruned. It is small and it is the last copy.
 
-## Amendment — 2026-10-20: the variant decides, not a flag
+## Amendment — 2026-10-20: the variant strips the button, the flag still decides
 
-The consent screen and the refusal screen are still one composable, but the destructive button is
-no longer behind a flag. It is `ui/wipe/SchemaMismatchContinue.kt`, one file per variant: the debug
-half is the button, the release half is nothing, per CLAUDE.md's rule on developer-only surface. A
-release binary no longer carries the button or its string, so the string left `main/res` and the
-translation gate, and `SchemaMismatch` lost `wipeOnConsent`.
+The consent screen and the refusal screen are still one composable with a flag. The destructive
+button is now `ui/wipe/SchemaMismatchContinue.kt`, one file per variant: the debug half is the
+button, the release half is nothing, per CLAUDE.md's rule on developer-only surface. The variant
+decides whether the button exists in the artifact, so a release binary carries neither it nor its
+string, and the string left `main/res` and the translation gate. The flag still decides whether it
+shows, because `-PreleaseShapedDebug` compiles the debug source set without the destructive
+fallback, and there continuing would throw.

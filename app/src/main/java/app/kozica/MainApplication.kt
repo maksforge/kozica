@@ -7,6 +7,7 @@ import app.kozica.data.AppPreferences
 import app.kozica.data.PRESERVED_DIRECTORY
 import app.kozica.data.SchemaGate
 import app.kozica.data.ThemeMode
+import app.kozica.data.destructiveMigrationAllowed
 import app.kozica.data.preserveBeforeWipe
 import app.kozica.data.readUserVersion
 import app.kozica.data.schemaGateDecision
@@ -28,11 +29,15 @@ import java.io.File
  * @param preservedCopy where the copy landed, under `filesDir`.
  * @param fromVersion the schema version the file on disk was written at.
  * @param toVersion the version this build expects.
+ * @param wipeOnConsent whether continuing would destroy the file and let the app through: true only
+ *   where Room has the destructive fallback. A `-PreleaseShapedDebug` build compiles the debug
+ *   source set without it, so the source set alone cannot answer this.
  */
 data class SchemaMismatch(
     val preservedCopy: File,
     val fromVersion: Int,
     val toVersion: Int,
+    val wipeOnConsent: Boolean,
 )
 
 /**
@@ -121,6 +126,7 @@ class MainApplication : Application() {
                             preservedCopy = preserved,
                             fromVersion = onDisk,
                             toVersion = APP_SCHEMA_VERSION,
+                            wipeOnConsent = destructiveMigrationAllowed(),
                         )
                 }
             }
@@ -128,8 +134,8 @@ class MainApplication : Application() {
     }
 
     /**
-     * The user has read the screen and continued. Only reachable in a build where continuing is
-     * survivable — a release build's screen is a dead end by design.
+     * The user has read the screen and continued. Only reachable when [SchemaMismatch.wipeOnConsent]
+     * is true, the one case where continuing is survivable; every other screen is a dead end.
      */
     fun consentToWipe() {
         _schemaMismatch.value = null

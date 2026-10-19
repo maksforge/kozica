@@ -17,7 +17,7 @@ import app.kozica.theme.Spacing
 /**
  * The screen in front of a database this build cannot open (ADR-0001).
  *
- * **It is two screens wearing one name**, and the build variant decides which:
+ * **It is two screens wearing one name**, and the difference is [SchemaMismatch.wipeOnConsent]:
  *
  * - In a **debug** build, continuing wipes and lets the app through. The copy is already taken, so
  *   the user is consenting to lose the *live* file, not the data.
@@ -25,8 +25,8 @@ import app.kozica.theme.Spacing
  *   continue button at all. It is a dead end that offers the copy, not a button that destroys
  *   someone's history on a path where nothing was going to destroy it.
  *
- * The button is [SchemaMismatchContinue], one file per variant, so a release binary does not carry
- * it or its string.
+ * The flag decides whether the button shows; [SchemaMismatchContinue], one file per variant, keeps
+ * it and its string out of a release binary altogether.
  *
  * ⚠️ This screen is the one nobody sees in testing, because every migration test opens the database
  * directly and walks straight past the gate that shows it. Verify an upgrade on a phone.
@@ -64,6 +64,6 @@ fun SchemaMismatchScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = Spacing.base),
         )
-        SchemaMismatchContinue(onContinue)
+        if (mismatch.wipeOnConsent) SchemaMismatchContinue(onContinue)
     }
 }
