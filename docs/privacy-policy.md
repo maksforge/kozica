@@ -27,7 +27,7 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
   the map. It is read on the phone and used there, never sent anywhere, and the app keeps no record
   of it. The map does remember where you left it, in the app's settings: if you last used the
   position button to centre it, that spot is where you were. The settings are not part of Android's
-  backup below, so it stays on the phone. You can allow only an approximate location, or none, and
+  backup below, so that spot stays on the phone. You can allow only an approximate location, or none, and
   the map works without it.
 
 ## When you write to the developer
@@ -46,8 +46,9 @@ These are done by the operating system or by Google, not by Kozica, but they are
 "where could my data be":
 
 1. **Android's automatic backup.** If it is enabled on your phone, Android backs up the app's
-   database and its small preview images, not its settings, to your own Google Drive, in a space that does not count against your storage quota and that
-   Google states apps cannot read. You can turn this off in your phone's settings.
+   database and its small preview images, not its settings, to your own Google Drive, in a space
+   that does not count against your storage quota and that Google states apps cannot read. You can
+   turn this off in your phone's settings.
 2. **Google Play.** Installing and updating an app is a transaction between your phone and Google,
    with its own privacy policy. The developer of this app receives aggregate, anonymous statistics —
    install counts, crash rates, country-level breakdowns — and no information about individuals.
