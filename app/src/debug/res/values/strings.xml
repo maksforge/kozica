@@ -20,4 +20,6 @@
     <string name="debug_section" translatable="false">Debug</string>
     <string name="debug_seed" translatable="false">Seed sample data</string>
     <string name="debug_wipe" translatable="false">Delete all data</string>
+    <string name="debug_map" translatable="false">Open the offline map gate</string>
+    <string name="debug_osm_credit" translatable="false">© OpenStreetMap contributors</string>
 </resources>

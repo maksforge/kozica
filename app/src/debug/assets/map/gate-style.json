@@ -1,0 +1,23 @@
+{
+  "version": 8,
+  "glyphs": "asset://map/glyphs/{fontstack}/{range}.pbf",
+  "sources": {
+    "tatry": { "type": "vector", "url": "pmtiles://file://{archive}" }
+  },
+  "layers": [
+    { "id": "background", "type": "background", "paint": { "background-color": "#f2efe9" } },
+    {
+      "id": "water", "type": "fill", "source": "tatry", "source-layer": "water",
+      "paint": { "fill-color": "#9cc3e6" }
+    },
+    {
+      "id": "ways", "type": "line", "source": "tatry", "source-layer": "ways",
+      "paint": { "line-color": "#7a5c3e", "line-width": 1.2 }
+    },
+    {
+      "id": "peaks", "type": "symbol", "source": "tatry", "source-layer": "peaks",
+      "layout": { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 13 },
+      "paint": { "text-color": "#333333", "text-halo-color": "#ffffff", "text-halo-width": 1 }
+    }
+  ]
+}
