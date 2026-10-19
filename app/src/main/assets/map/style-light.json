@@ -1,0 +1,1411 @@
+{
+ "version": 8,
+ "glyphs": "asset://map/glyphs/{fontstack}/{range}.pbf",
+ "sprite": "asset://map/sprite-light",
+ "layers": [
+  {
+   "id": "background",
+   "type": "background",
+   "paint": {
+    "background-color": "#fbf2e9"
+   }
+  },
+  {
+   "id": "land",
+   "type": "fill",
+   "source": "region",
+   "source-layer": "land",
+   "paint": {
+    "fill-color": [
+     "match",
+     [
+      "get",
+      "kind"
+     ],
+     [
+      "wood",
+      "forest"
+     ],
+     "#e8d7c9",
+     "scrub",
+     "#dcccbe",
+     [
+      "grassland",
+      "meadow",
+      "heath"
+     ],
+     "#f2eae0",
+     [
+      "scree",
+      "bare_rock"
+     ],
+     "#eadecc",
+     "glacier",
+     "#fffbf8",
+     "residential",
+     "#f0e4d2",
+     "#fbf2e9"
+    ]
+   }
+  },
+  {
+   "id": "water-area",
+   "type": "fill",
+   "source": "region",
+   "source-layer": "water",
+   "filter": [
+    "==",
+    [
+     "geometry-type"
+    ],
+    "Polygon"
+   ],
+   "paint": {
+    "fill-color": "#c5d3df"
+   }
+  },
+  {
+   "id": "water-line",
+   "type": "line",
+   "source": "region",
+   "source-layer": "water",
+   "filter": [
+    "==",
+    [
+     "geometry-type"
+    ],
+    "LineString"
+   ],
+   "paint": {
+    "line-color": "#94a2ad",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     [
+      "match",
+      [
+       "get",
+       "kind"
+      ],
+      "river",
+      1.0,
+      0.3
+     ],
+     12,
+     [
+      "match",
+      [
+       "get",
+       "kind"
+      ],
+      "river",
+      2.0,
+      0.6
+     ],
+     16,
+     [
+      "match",
+      [
+       "get",
+       "kind"
+      ],
+      "river",
+      4.0,
+      1.6
+     ]
+    ]
+   }
+  },
+  {
+   "id": "boundary-park",
+   "type": "line",
+   "source": "region",
+   "source-layer": "boundaries",
+   "filter": [
+    "==",
+    [
+     "get",
+     "kind"
+    ],
+    "national_park"
+   ],
+   "paint": {
+    "line-color": "#827569",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     1.0,
+     14,
+     2.5
+    ],
+    "line-dasharray": [
+     "literal",
+     [
+      4,
+      2
+     ]
+    ],
+    "line-opacity": 0.8
+   }
+  },
+  {
+   "id": "boundary-country",
+   "type": "line",
+   "source": "region",
+   "source-layer": "boundaries",
+   "filter": [
+    "==",
+    [
+     "get",
+     "kind"
+    ],
+    "country"
+   ],
+   "paint": {
+    "line-color": "#4d4639",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     1.2,
+     14,
+     3.0
+    ],
+    "line-dasharray": [
+     "literal",
+     [
+      6,
+      2,
+      1,
+      2
+     ]
+    ]
+   }
+  },
+  {
+   "id": "road-casing",
+   "type": "line",
+   "source": "region",
+   "source-layer": "roads",
+   "filter": [
+    "!=",
+    [
+     "get",
+     "kind"
+    ],
+    "track"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#b5aa9a",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     1.2,
+     12,
+     3.0,
+     16,
+     9.0
+    ]
+   }
+  },
+  {
+   "id": "roads",
+   "type": "line",
+   "source": "region",
+   "source-layer": "roads",
+   "filter": [
+    "!=",
+    [
+     "get",
+     "kind"
+    ],
+    "track"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     0.6,
+     12,
+     1.8,
+     16,
+     7.0
+    ]
+   }
+  },
+  {
+   "id": "tracks",
+   "type": "line",
+   "source": "region",
+   "source-layer": "roads",
+   "filter": [
+    "==",
+    [
+     "get",
+     "kind"
+    ],
+    "track"
+   ],
+   "paint": {
+    "line-color": "#7f7667",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     0.8,
+     16,
+     2.0
+    ],
+    "line-dasharray": [
+     "literal",
+     [
+      5,
+      2
+     ]
+    ]
+   }
+  },
+  {
+   "id": "paths",
+   "type": "line",
+   "source": "region",
+   "source-layer": "paths",
+   "paint": {
+    "line-color": "#655d4f",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     0.6,
+     16,
+     1.4
+    ],
+    "line-dasharray": [
+     "literal",
+     [
+      2,
+      2
+     ]
+    ]
+   }
+  },
+  {
+   "id": "trail-casings",
+   "type": "line",
+   "source": "region",
+   "source-layer": "trails",
+   "filter": [
+    "==",
+    [
+     "get",
+     "colour"
+    ],
+    "yellow"
+   ],
+   "layout": {
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#4d4639",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     4.0,
+     13,
+     5.0,
+     15,
+     6.5,
+     17,
+     9.0
+    ],
+    "line-offset": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      2.0
+     ],
+     13,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      3.0
+     ],
+     15,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      4.5
+     ],
+     17,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      7.0
+     ]
+    ]
+   }
+  },
+  {
+   "id": "trails",
+   "type": "line",
+   "source": "region",
+   "source-layer": "trails",
+   "layout": {
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": [
+     "match",
+     [
+      "get",
+      "colour"
+     ],
+     "red",
+     "#d62828",
+     "blue",
+     "#1d4ed8",
+     "green",
+     "#2e8b3a",
+     "yellow",
+     "#e6b800",
+     "black",
+     "#1a1a1a",
+     "#998f7f"
+    ],
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     2.0,
+     13,
+     3.0,
+     15,
+     4.5,
+     17,
+     7.0
+    ],
+    "line-offset": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      2.0
+     ],
+     13,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      3.0
+     ],
+     15,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      4.5
+     ],
+     17,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      7.0
+     ]
+    ]
+   }
+  },
+  {
+   "id": "trail-symbols",
+   "type": "symbol",
+   "source": "region",
+   "source-layer": "trails",
+   "minzoom": 14,
+   "layout": {
+    "symbol-placement": "line",
+    "symbol-spacing": 160,
+    "icon-image": [
+     "coalesce",
+     [
+      "image",
+      [
+       "coalesce",
+       [
+        "get",
+        "symbol"
+       ],
+       ""
+      ]
+     ],
+     [
+      "image",
+      [
+       "concat",
+       [
+        "get",
+        "colour"
+       ],
+       "_bar"
+      ]
+     ],
+     [
+      "image",
+      "other_bar"
+     ]
+    ],
+    "icon-rotation-alignment": "map",
+    "icon-keep-upright": false,
+    "icon-allow-overlap": true,
+    "icon-ignore-placement": true,
+    "icon-offset": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     13,
+     [
+      "match",
+      [
+       "-",
+       [
+        "*",
+        2,
+        [
+         "coalesce",
+         [
+          "get",
+          "index"
+         ],
+         0
+        ]
+       ],
+       [
+        "-",
+        [
+         "coalesce",
+         [
+          "get",
+          "count"
+         ],
+         1
+        ],
+        1
+       ]
+      ],
+      -8,
+      [
+       "literal",
+       [
+        -72.0,
+        -12.0
+       ]
+      ],
+      -7,
+      [
+       "literal",
+       [
+        -63.0,
+        -10.5
+       ]
+      ],
+      -6,
+      [
+       "literal",
+       [
+        -54.0,
+        -9.0
+       ]
+      ],
+      -5,
+      [
+       "literal",
+       [
+        -45.0,
+        -7.5
+       ]
+      ],
+      -4,
+      [
+       "literal",
+       [
+        -36.0,
+        -6.0
+       ]
+      ],
+      -3,
+      [
+       "literal",
+       [
+        -27.0,
+        -4.5
+       ]
+      ],
+      -2,
+      [
+       "literal",
+       [
+        -18.0,
+        -3.0
+       ]
+      ],
+      -1,
+      [
+       "literal",
+       [
+        -9.0,
+        -1.5
+       ]
+      ],
+      0,
+      [
+       "literal",
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      1,
+      [
+       "literal",
+       [
+        9.0,
+        1.5
+       ]
+      ],
+      2,
+      [
+       "literal",
+       [
+        18.0,
+        3.0
+       ]
+      ],
+      3,
+      [
+       "literal",
+       [
+        27.0,
+        4.5
+       ]
+      ],
+      4,
+      [
+       "literal",
+       [
+        36.0,
+        6.0
+       ]
+      ],
+      5,
+      [
+       "literal",
+       [
+        45.0,
+        7.5
+       ]
+      ],
+      6,
+      [
+       "literal",
+       [
+        54.0,
+        9.0
+       ]
+      ],
+      7,
+      [
+       "literal",
+       [
+        63.0,
+        10.5
+       ]
+      ],
+      8,
+      [
+       "literal",
+       [
+        72.0,
+        12.0
+       ]
+      ],
+      [
+       "literal",
+       [
+        0,
+        0
+       ]
+      ]
+     ],
+     15,
+     [
+      "match",
+      [
+       "-",
+       [
+        "*",
+        2,
+        [
+         "coalesce",
+         [
+          "get",
+          "index"
+         ],
+         0
+        ]
+       ],
+       [
+        "-",
+        [
+         "coalesce",
+         [
+          "get",
+          "count"
+         ],
+         1
+        ],
+        1
+       ]
+      ],
+      -8,
+      [
+       "literal",
+       [
+        -72.0,
+        -18.0
+       ]
+      ],
+      -7,
+      [
+       "literal",
+       [
+        -63.0,
+        -15.75
+       ]
+      ],
+      -6,
+      [
+       "literal",
+       [
+        -54.0,
+        -13.5
+       ]
+      ],
+      -5,
+      [
+       "literal",
+       [
+        -45.0,
+        -11.25
+       ]
+      ],
+      -4,
+      [
+       "literal",
+       [
+        -36.0,
+        -9.0
+       ]
+      ],
+      -3,
+      [
+       "literal",
+       [
+        -27.0,
+        -6.75
+       ]
+      ],
+      -2,
+      [
+       "literal",
+       [
+        -18.0,
+        -4.5
+       ]
+      ],
+      -1,
+      [
+       "literal",
+       [
+        -9.0,
+        -2.25
+       ]
+      ],
+      0,
+      [
+       "literal",
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      1,
+      [
+       "literal",
+       [
+        9.0,
+        2.25
+       ]
+      ],
+      2,
+      [
+       "literal",
+       [
+        18.0,
+        4.5
+       ]
+      ],
+      3,
+      [
+       "literal",
+       [
+        27.0,
+        6.75
+       ]
+      ],
+      4,
+      [
+       "literal",
+       [
+        36.0,
+        9.0
+       ]
+      ],
+      5,
+      [
+       "literal",
+       [
+        45.0,
+        11.25
+       ]
+      ],
+      6,
+      [
+       "literal",
+       [
+        54.0,
+        13.5
+       ]
+      ],
+      7,
+      [
+       "literal",
+       [
+        63.0,
+        15.75
+       ]
+      ],
+      8,
+      [
+       "literal",
+       [
+        72.0,
+        18.0
+       ]
+      ],
+      [
+       "literal",
+       [
+        0,
+        0
+       ]
+      ]
+     ],
+     17,
+     [
+      "match",
+      [
+       "-",
+       [
+        "*",
+        2,
+        [
+         "coalesce",
+         [
+          "get",
+          "index"
+         ],
+         0
+        ]
+       ],
+       [
+        "-",
+        [
+         "coalesce",
+         [
+          "get",
+          "count"
+         ],
+         1
+        ],
+        1
+       ]
+      ],
+      -8,
+      [
+       "literal",
+       [
+        -72.0,
+        -28.0
+       ]
+      ],
+      -7,
+      [
+       "literal",
+       [
+        -63.0,
+        -24.5
+       ]
+      ],
+      -6,
+      [
+       "literal",
+       [
+        -54.0,
+        -21.0
+       ]
+      ],
+      -5,
+      [
+       "literal",
+       [
+        -45.0,
+        -17.5
+       ]
+      ],
+      -4,
+      [
+       "literal",
+       [
+        -36.0,
+        -14.0
+       ]
+      ],
+      -3,
+      [
+       "literal",
+       [
+        -27.0,
+        -10.5
+       ]
+      ],
+      -2,
+      [
+       "literal",
+       [
+        -18.0,
+        -7.0
+       ]
+      ],
+      -1,
+      [
+       "literal",
+       [
+        -9.0,
+        -3.5
+       ]
+      ],
+      0,
+      [
+       "literal",
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      1,
+      [
+       "literal",
+       [
+        9.0,
+        3.5
+       ]
+      ],
+      2,
+      [
+       "literal",
+       [
+        18.0,
+        7.0
+       ]
+      ],
+      3,
+      [
+       "literal",
+       [
+        27.0,
+        10.5
+       ]
+      ],
+      4,
+      [
+       "literal",
+       [
+        36.0,
+        14.0
+       ]
+      ],
+      5,
+      [
+       "literal",
+       [
+        45.0,
+        17.5
+       ]
+      ],
+      6,
+      [
+       "literal",
+       [
+        54.0,
+        21.0
+       ]
+      ],
+      7,
+      [
+       "literal",
+       [
+        63.0,
+        24.5
+       ]
+      ],
+      8,
+      [
+       "literal",
+       [
+        72.0,
+        28.0
+       ]
+      ],
+      [
+       "literal",
+       [
+        0,
+        0
+       ]
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "id": "pois",
+   "type": "symbol",
+   "source": "region",
+   "source-layer": "pois",
+   "layout": {
+    "text-font": [
+     "Noto Sans Regular"
+    ],
+    "text-size": 12,
+    "icon-image": [
+     "concat",
+     "poi_",
+     [
+      "get",
+      "kind"
+     ]
+    ],
+    "symbol-sort-key": [
+     "match",
+     [
+      "get",
+      "kind"
+     ],
+     "hut",
+     0,
+     "shelter",
+     1,
+     "peak",
+     2,
+     "pass",
+     3,
+     "station",
+     4,
+     5
+    ],
+    "text-field": [
+     "case",
+     [
+      "has",
+      "ele"
+     ],
+     [
+      "format",
+      [
+       "coalesce",
+       [
+        "get",
+        "name"
+       ],
+       ""
+      ],
+      {},
+      "\n",
+      {},
+      [
+       "concat",
+       [
+        "get",
+        "ele"
+       ],
+       " m"
+      ],
+      {
+       "font-scale": 0.85
+      }
+     ],
+     [
+      "coalesce",
+      [
+       "get",
+       "name"
+      ],
+      ""
+     ]
+    ],
+    "text-anchor": "top",
+    "text-offset": [
+     "literal",
+     [
+      0,
+      0.9
+     ]
+    ],
+    "text-optional": true,
+    "text-max-width": 8
+   },
+   "paint": {
+    "text-color": [
+     "match",
+     [
+      "get",
+      "kind"
+     ],
+     [
+      "hut",
+      "shelter"
+     ],
+     "#7a450e",
+     "#1e1b16"
+    ],
+    "text-halo-color": "#fff8ef",
+    "text-halo-width": 1.2
+   }
+  },
+  {
+   "id": "places",
+   "type": "symbol",
+   "source": "region",
+   "source-layer": "places",
+   "layout": {
+    "text-font": [
+     "Noto Sans Regular"
+    ],
+    "text-size": [
+     "match",
+     [
+      "get",
+      "kind"
+     ],
+     "town",
+     15,
+     "village",
+     13,
+     11
+    ],
+    "text-field": [
+     "get",
+     "name"
+    ],
+    "text-max-width": 8
+   },
+   "paint": {
+    "text-color": "#1e1b16",
+    "text-halo-color": "#fff8ef",
+    "text-halo-width": 1.2
+   }
+  }
+ ]
+}

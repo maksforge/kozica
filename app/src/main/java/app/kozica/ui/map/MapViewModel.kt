@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -92,9 +91,15 @@ class MapViewModel(
 
     private val camera = MutableStateFlow<MapStart?>(null)
 
+    private val dark = MutableStateFlow<Boolean?>(null)
+
     private val style: StateFlow<String?> =
         combine(
-            flow { emit(assets.open(STYLE_TEMPLATE).bufferedReader().use { it.readText() }) },
+            dark.filterNotNull().map {
+                assets.open(styleTemplate(it)).bufferedReader().use { reader ->
+                    reader.readText()
+                }
+            },
             this.regions
                 .filterNotNull()
                 .map { it.readyArchives() }
@@ -137,6 +142,10 @@ class MapViewModel(
 
     fun cameraIdle(at: MapCamera) {
         camera.value = MapStart.At(at)
+    }
+
+    fun darkTheme(on: Boolean) {
+        dark.value = on
     }
 
     fun locationRead(read: LocationRead) {
