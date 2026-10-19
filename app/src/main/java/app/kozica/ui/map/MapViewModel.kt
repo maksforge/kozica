@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -81,16 +80,16 @@ class MapViewModel(
 
     private val camera = MutableStateFlow<MapStart?>(null)
 
-    private val style: Flow<String?> =
+    private val style: StateFlow<String?> =
         combine(
             flow { emit(assets.open(STYLE_TEMPLATE).bufferedReader().use { it.readText() }) },
             this.regions
                 .filterNotNull()
                 .map { it.readyArchives() }
                 .distinctUntilChanged(),
-        ) { template, archives -> expandStyle(template, archives) as String? }
+        ) { template, archives -> expandStyle(template, archives) }
             .flowOn(Dispatchers.IO)
-            .onStart { emit(null) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val state: StateFlow<MapUiState> =
         combine(this.regions, style, camera, ::MapUiState)
