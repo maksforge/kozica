@@ -84,7 +84,7 @@ gate uses `AndroidView` around `MapView`. Phase 2 may revisit it on a Kotlin bum
 | --- | --- | --- | --- |
 | **A** | **The gate** — MapLibre draws a local Tatry PMTiles with every network permission stripped | `chore:` (debug only) | — |
 | **B** | **The build** — `build-map-data.py` from pin to a deterministic, uncompressed PMTiles | `chore:` | A |
-| **C** | **The pack** — the Tatry as an on-demand asset pack; `main/` asks for it and reads its state | `chore:` | B |
+| **C** | **The pack** — the Tatry as an on-demand asset pack; `main/` asks for it and reads its state, with WorkManager's network permission stripped | `chore:` | B |
 | **D** | **The proxy** — patch size between two pins, measured locally | readings only | B |
 | **E** | **Play delivers it** — the data build in CI, an update through Play, its real size | `fix:` or `feat:`, later | C, D, Play work resuming |
 
@@ -109,8 +109,10 @@ Does a debug build that removes `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI
 `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION` from the merged manifest with
 `tools:node="remove"`, and calls `MapLibre.setConnected(false)` before any `MapView` exists, draw a
 Tatry PMTiles archive from the app's own files directory? The style, glyphs and sprites come from
-`asset://`. The test is no crash, no `SecurityException` in logcat, Trails visible in their colours,
-and one text label drawn from local glyphs.
+`asset://`. The test is no crash, no `SecurityException` in logcat, lines drawn from the archive, and
+one text label drawn from local glyphs. Trail colours are not part of it: a Trail's colour lives on a
+route relation, which only B's profile reads, and a styling miss must never be what switches the
+renderer.
 
 The question is not settled by reading MapLibre's source. That reading says `MapView` calls
 `MapLibre.isConnected()` during setup, which reaches `ConnectivityManager` and throws without
@@ -124,8 +126,7 @@ All of it under `app/src/debug/`, per the house rule:
 - The debug manifest removes the five permissions above.
 - `DebugMapScreen`, reached from Settings' debug section, is an `AndroidView` around `MapView`. It
   calls `setConnected(false)` first and loads `pmtiles://file://<filesDir>/regions/tatry.pmtiles`
-  with a minimal style from debug assets: water, Paths, Trails coloured from a tile attribute, and
-  peak names. "© OpenStreetMap contributors" sits on it, linked as the house rule requires, even in
+  with a minimal style from debug assets: water and ways as plain lines, and peak names. "© OpenStreetMap contributors" sits on it, linked as the house rule requires, even in
   debug.
 - The archive is built once by hand with planetiler `--tile_compression=none` from a Tatry cut. It
   reaches the app with `adb shell run-as <debug id> sh -c 'cat > files/regions/tatry.pmtiles' <
@@ -176,13 +177,30 @@ the data. That release is E's, so the offer is too.
 
 ## 3. The pack
 
-- **An on-demand asset pack module, `regions-tatry`**, whose assets directory `build-map-data.py`
-  writes into. The pack joins the build only when its archive exists, so `assembleDebug`, CI and a
+- **An on-demand asset pack module, `region_tatry`**, whose assets directory `build-map-data.py`
+  writes into. Pack names allow letters, digits and underscores only, and the directory name is the
+  pack name. The pack joins the build only when its archive exists, so `assembleDebug`, CI and a
   checkout without data keep building. E makes its absence a failure in `publish-play.yml`.
-- **The Play Asset Delivery library** (`com.google.android.play:asset-delivery-ktx`) in `main/`. It
-  adds `FOREGROUND_SERVICE_DATA_SYNC` for its extraction service, which gets an EXPECTED row in
-  `aab-permissions.py` in the same commit. That commit also confirms the library merges none of the
-  FORBIDDEN permissions.
+- **The Play Asset Delivery library** (`com.google.android.play:asset-delivery-ktx` 2.3.0) in
+  `main/`. **It brings WorkManager back.** `asset-delivery` depends on `androidx.work:work-runtime`
+  2.9.1 for its `ExtractionWorker`, and WorkManager merges `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`,
+  `FOREGROUND_SERVICE` and `ACCESS_NETWORK_STATE`, which is FORBIDDEN. The library itself adds
+  `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC`. Read from the AARs' manifests on
+  2026-10-19.
+- **`ACCESS_NETWORK_STATE` is stripped with `tools:node="remove"` in `main/`'s manifest.** WorkManager
+  reads network state only to enforce a network constraint, and whether `ExtractionWorker` sets one is
+  not visible from its bytecode. The verdicts, decided now:
+  1. **A pack downloads and extracts through `--local-testing`, R8 holds, and logcat shows no
+     `SecurityException`.** → The strip stands; E re-checks it through Play, where extraction runs
+     for real.
+  2. **Extraction fails for want of the permission.** → No workaround in code. ADR-0008 and ADR-0007
+     conflict, and the owner chooses between a narrow ADR-0008 amendment that allows
+     `ACCESS_NETWORK_STATE` alone, since it opens no connection and changes no Data safety answer, and
+     a different delivery for map data. The phase stops at C until then.
+- **The other four rows go into EXPECTED**, in C's commit, each naming the asset-delivery library or
+  WorkManager as its source: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`,
+  `RECEIVE_BOOT_COMPLETED`. Phase 0 removed the last three with WorkManager. They return because the
+  only way to receive a pack without `INTERNET` needs them.
 - **`data/regions/RegionFiles.kt`** asks `AssetPackManager` for a Region's state and path, and exposes
   it as a `Flow` of: not downloaded, downloading (with progress), update in progress, ready (path and
   OSM date), failed. The OSM date is read from the archive's metadata, which the profile writes from
@@ -216,6 +234,10 @@ What E does when Play work resumes, written now so it is not re-derived:
 - **The ODbL offer ships with it**: the script and profile, linked from the licences screen.
 - **`aab-locale.py`'s open failure on `schema_mismatch_continue`** is still standing then; it blocks
   any upload, pack or not.
+- **C's permissions reach the next release even without a pack.** C lands in `main/` as a `chore:`, so
+  any release cut for another reason ships the asset-delivery library with its `dataSync` foreground
+  service. That release needs the Console's foreground-service declaration and a
+  `play-app-content.md` § *Foreground service permissions*, which phase 0 deleted.
 
 ---
 
@@ -229,7 +251,8 @@ build-time assertions inside `build-map-data.py`, not unit tests.
 - **ADR-0007**: a dated amendment, written when R6 is taken. Files store their tiles uncompressed,
   because compression inside a file defeats the delta. The format is PMTiles built by planetiler, or
   `.map` if the gate goes the other way. The CI data build joins with E.
-- **`scripts/aab-permissions.py`**: EXPECTED gains `FOREGROUND_SERVICE_DATA_SYNC`, in C's commit.
+- **`scripts/aab-permissions.py`**: EXPECTED gains the four rows in § 3, in C's commit; FORBIDDEN is
+  unchanged.
 - **`CLAUDE.md`**: the stack table gains MapLibre (debug only, for now) and Play Asset Delivery; the
   layout gains `data/regions/`, `scripts/map/` and `scripts/regions/`.
 - **`.gitignore`**: Region archives, the downloaded extract and the planetiler jar.
@@ -253,11 +276,12 @@ read it. A reading that drives the phone waits until the owner says it is free.
 | --- | --- | --- | --- |
 | R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb logcat -d \| grep -E 'SecurityException\|FATAL'` | |
 | R2 | The merged debug manifest declares none of the five | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | |
-| R3 | The release bundle still declares none of the FORBIDDEN permissions, with the asset-delivery library in | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
+| R3 | The release bundle declares none of the FORBIDDEN permissions with the asset-delivery library and WorkManager in, and exactly the four new EXPECTED rows | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
 | R4 | Two builds at one pin are byte-identical | `python3 scripts/build-map-data.py --check-determinism` | |
 | R5 | The Tatry archive's size, raw and zstd | `ls -l`, `zstd -19 -c … \| wc -c` | |
 | R6 | The patch between two pins a week apart, against the newer archive | `python3 scripts/build-map-data.py --patch-from <older pin>` | |
 | R7 | The patch for a one-Trail colour edit | the same, against the edited extract | |
 | R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, and the debug map draws from the pack's path | `bundletool build-apks --local-testing … && bundletool install-apks …` | |
 | R9 | `installDebug` with no pack reports "not downloaded" and does not crash | `./gradlew installDebug`, open Settings' debug section | |
+| R10 | The debug map draws Trails in their colours from the profile's attribute, including a way shared by two Trails | `build-map-data.py`, push, open the debug map | |
 | E1 | *(checkpoint E)* The update size Play reports for a one-pin data refresh, against R6 | internal app sharing, two builds | |
