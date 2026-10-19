@@ -167,8 +167,9 @@ bar, is smaller still. The proxy is necessary, not sufficient: Play's algorithm 
 documented, and the reading that counts is the phase's checkpoint E.
 
 **The format still waits on the gate.** Whether MapLibre draws the archive with every network
-permission stripped (R1, § 1) has not yet been read on the phone. If it does not, the format becomes
-Mapsforge's `.map`, and R6 and R7 are read again for it.
+permission stripped (R1, § 1) has not yet been read on the phone; the reading is a
+[`DOD.md`](../DOD.md) item, now due before phase 2 builds on MapLibre. If it does not draw, the
+format becomes Mapsforge's `.map`, and R6 and R7 are read again for it.
 
 **The CI data build arrives with E.** Until then `build-map-data.py` runs locally and writes the
 Region's file into its pack module, where it stays git-ignored. The decision above, a job in
