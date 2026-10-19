@@ -55,11 +55,13 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       compiled in for as long as that build survives, so a move to a dedicated account (not an alias
       on your personal mail) changes all three together, and is the owner's choice still to make.
 - [ ] **Write the listing.** `docs/store-listing.md` — every heading in it is parsed by a script.
-- [ ] **Write the privacy policy** and confirm GitHub Pages is serving `docs/`. Play requires a
-      *hosted* URL, and an offline app has no server of its own.
+- [x] **Write the privacy policy** and confirm GitHub Pages is serving `docs/`. Play requires a
+      *hosted* URL, and an offline app has no server of its own. Served at
+      `https://srednimax.github.io/kozica/privacy-policy.html` since 2026-10-20.
 - [ ] **Answer the Console's App content pages and write [`play-app-content.md`](play-app-content.md)
       in the same sitting** — the reasons are in front of you then and gone a week later. It moves in
-      the same commit as the privacy policy, every time.
+      the same commit as the privacy policy, every time. Eight of ten pages saved 2026-10-20; the
+      privacy policy URL and Data safety are submitted once the policy is on `main`.
 - [ ] **`LICENSE` and `README.md`.** Bootstrap wrote an all-rights-reserved notice that grants
       nothing; choose the licence you mean, and make the README's *Contributing* agree with it.
 - [x] **Create the upload keystore, outside the repo.** Recorded in [`RELEASING.md`](RELEASING.md)
