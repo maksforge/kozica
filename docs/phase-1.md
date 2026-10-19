@@ -192,8 +192,12 @@ the data. That release is E's, so the offer is too.
 
 - **An on-demand asset pack module, `region_tatry`**, whose assets directory `build-map-data.py`
   writes into. Pack names allow letters, digits and underscores only, and the directory name is the
-  pack name. The pack joins the build only when its archive exists, so `assembleDebug`, CI and a
-  checkout without data keep building. E makes its absence a failure in `publish-play.yml`.
+  pack name. **The pack joins the build only when `-PmapPacks` is passed**, never because its
+  archive is on disk. `assetPacks` is set on the app extension, not per build type (AGP 9.0.1's
+  DSL), so a rule keyed on the file would put OSM-derived data into any local `bundleRelease` made
+  on a machine that holds the archive, with no ODbL offer. In this phase only R8's local-testing
+  debug bundle passes it. Without it `assembleDebug`, CI and a checkout without data keep building.
+  E makes `publish-play.yml` pass it, and fail when the archive is missing.
 - **The Play Asset Delivery library** (`com.google.android.play:asset-delivery-ktx` 2.3.0) as a
   `debugImplementation`. **It brings WorkManager back, in the debug build only.** `asset-delivery`
   depends on `androidx.work:work-runtime` 2.9.1 for its `ExtractionWorker`, and WorkManager merges
@@ -275,8 +279,8 @@ What E does when Play work resumes, written now so it is not re-derived:
   artifact no longer carries…"), and `PLAN.md`'s "Reminders and scheduled work" under *Not in this
   plan*. Each says that WorkManager is the asset-delivery library's, and that nothing of ours
   schedules anything.
-- **The data build moves into `publish-play.yml`**, before `bundleRelease`, as ADR-0007 decides. A
-  release without the Tatry archive fails there.
+- **The data build moves into `publish-play.yml`**, before `bundleRelease`, as ADR-0007 decides.
+  The workflow passes `-PmapPacks`, and a release without the Tatry archive fails there.
 - **Two builds go through internal app sharing**, differing by one pin. The update size Play reports
   is read against R6. An internal-track install does not update in place, so it cannot stand in
   (`RELEASING.md`).
@@ -330,7 +334,7 @@ read it. A reading that drives the phone waits until the owner says it is free.
 | R5 | The Tatry archive's size, raw and zstd | `ls -l`, `zstd -19 -c … \| wc -c` | |
 | R6 | The patch between two pins a week apart, against the newer archive | `python3 scripts/build-map-data.py --patch-from <older pin>` | |
 | R7 | The patch for a one-Trail colour edit, with the relation's id | the edit in § 4, then `python3 scripts/build-map-data.py --patch-from-extract edited.osm.pbf` | |
-| R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, the debug map draws from the pack's path, and whether `ExtractionWorker` ran, with the phone's API level (JobScheduler checks the network-state permission only from API 34) | `bundletool build-apks --local-testing … && bundletool install-apks …`; `adb shell getprop ro.build.version.sdk`; `adb logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|SecurityException'`; `adb shell dumpsys jobscheduler \| grep <debug id>` | |
+| R8 | The first download through `bundletool --local-testing`: the app reports the Tatry ready with its OSM date, the debug map draws from the pack's path, and whether `ExtractionWorker` ran, with the phone's API level (JobScheduler checks the network-state permission only from API 34) | `./gradlew bundleDebug -PmapPacks`, then `bundletool build-apks --local-testing --bundle app/build/outputs/bundle/debug/app-debug.aab … && bundletool install-apks …`; `adb shell getprop ro.build.version.sdk`; `adb logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|SecurityException'`; `adb shell dumpsys jobscheduler \| grep <debug id>` | |
 | R9 | `installDebug` with no pack reports "not downloaded" and does not crash | `./gradlew installDebug`, open Settings' debug section | |
 | R10 | The debug map draws Trails in their colours from the profile's attribute; the tile holding a way shared by two Trails carries both colours on that way, sorted. The decode is local and can be taken any time; the screen waits for the phone | `build-map-data.py`, push, open the debug map, `adb exec-out screencap -p > r10.png`; `python3 scripts/map/decode-tile.py <archive> <z> <x> <y>` | |
 | E1 | *(checkpoint E)* The update size Play reports for a one-pin data refresh, against R6 | internal app sharing, two builds | |
