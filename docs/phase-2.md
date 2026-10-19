@@ -13,7 +13,8 @@ side by side, Paths apart from them, and Huts, Shelters, peaks, passes, springs,
 in and out, the land, national-park boundaries and the state border, in light and dark. One tap
 shows where the user is, with accuracy and heading. The difference a device can be asked about: a
 debug build with the Tatry on the phone shows a yellow and a black Trail sharing a way, both drawn,
-and the position dot over them, with no network permission in the merged manifest.
+and the position dot over them, with no network permission in the merged manifest. The dot gets
+there by § 4's `PositionReceiver` broadcast, not a walk; R9 is that reading.
 
 **`PLAN.md`'s paragraph is split, and amended with this file.** It bundled the map with every Region
 and the picker that downloads them. The two halves are blocked by different things: the map can be
@@ -359,13 +360,23 @@ The ask, and every answer to it, in one table (`PLAN.md` rule 4):
   stale state and a position outside every Region should not need a hike. So the position reader
   has a variant seam, the same shape as `DebugSettings.kt`, and the debug half can swap the phone's
   fix for a chosen one. A long press on the map puts the position there; a debug row returns it to
-  the real reader; an `adb` broadcast in `SeedReceiver`'s pattern sets latitude, longitude, accuracy
-  and bearing, for scripted readings. The release half is the real reader and nothing else. A chosen
-  fix takes the same path as a real one, `forceLocationUpdate` and `PositionAge`, with its
-  `elapsedRealtimeNanos` stamped at the moment it is set, so going stale is also testable. It
-  replaces only the platform reader: the permission states and a real fix are still read with the
-  real provider, and Android's mock-location test provider is the later way to exercise that path
-  without walking.
+  the real reader; `PositionReceiver`, an `adb` broadcast in `SeedReceiver`'s pattern, sets
+  latitude, longitude and accuracy for scripted readings:
+
+  ```bash
+  adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.PositionReceiver \
+    -f 0x00000020 --ef lat <lat> --ef lon <lon> --ef accuracy 10
+  ```
+
+  The release half is the real reader and nothing else. A chosen fix takes the same path as a real
+  one, `forceLocationUpdate` and `PositionAge`, with its `elapsedRealtimeNanos` stamped at the
+  moment it is set, so going stale is also testable. It carries no bearing: in `RenderMode.COMPASS`
+  the heading cone follows MapLibre's `CompassEngine`, the phone's real compass, and the debug half
+  does not fake it, so the cone is read by turning the phone. The chosen position lives in memory
+  only, so process death returns to the real reader. It replaces only the fix, and only in the
+  states that draw one, precise and approximate only: "not asked", "denied" and "location off"
+  behave exactly as without it. Android's mock-location test provider is the later way to exercise
+  the real provider without walking.
 
 Copy: "Show my position", "Approximate location only. Allow precise location to see where you are on
 a Trail.", "Allow", "Location is turned off.", "Last position %1$s ago.", "Settings".
@@ -402,7 +413,9 @@ profile reading OSM, and a reading on the phone and in the tile catches it, not 
   changes: `app/src/debug/` loses the offline map gate, `main/` gains `ui/map/` and
   `data/regions/`, and `app/src/release/` gains the Regions seam. With C, the colour house rule
   gains the map style's Trail colours as its one exception, and says the style's other colours are
-  generated from the scheme by `scripts/map/gen_style.py`.
+  generated from the scheme by `scripts/map/gen_style.py`. With D, the layout gains the position
+  seam's two halves: the long press, the debug row and `PositionReceiver` in `app/src/debug/`, and
+  the real reader alone in `app/src/release/`.
 - **`scripts/aab-permissions.py`**: with D, `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` move
   into EXPECTED, each naming the position button. D also declares
   `<uses-feature android:name="android.hardware.location">` and `android.hardware.location.gps`,
@@ -441,6 +454,6 @@ read it. A reading that drives the phone waits until the owner says it is free.
 | R4 | Two builds of the new schema are byte-identical; its size and the one-Trail patch against phase 1's R5 and R7; the hiking relations that reach the colour fallback, by tag value; the Huts in the cut and in the archive | `python3 scripts/build-map-data.py --check-determinism`, then `--patch-from-extract`; `osmium tags-filter` over the cut and `decode-tile.py` over the archive's tile range for the counts | |
 | R5 | A way shared by two Trails draws both, side by side, with their symbols, across a way boundary where the OSM ways point opposite ways, along a shared stretch that doubles back in longitude, and at a junction where a third Trail joins; Paths read as Paths; the state border runs along the Tatry ridge | debug build with the Tatry, `adb exec-out screencap -p` at zoom 15 over w22773921, then over the boundary, the doubling-back stretch and the junction picked from the tile decode | |
 | R6 | The glyph ranges the names need, derived from the archive: the code points outside the shipped ranges in its `name` attributes, which must come back empty. Labels with *ł*, *ś*, *ż*, *ą* and a „ ” or – render, in light and dark; switching night mode with the map open keeps the Trails and the dot | `decode-tile.py` over the archive's tile range, as phase 1's R10, listing code points outside the shipped ranges; the debug build at places named with them; `adb shell cmd uimode night yes` / `no` | |
-| R7 | Each row of § 4's table, with the API level: the 31+ rows on the phone, the 26–30 rows (one dialog, no approximate) on an emulator, which the row says; and the interval between coarse fixes with approximate only | `adb shell pm revoke`/`grant`, the system location switch, a screencap per state; `adb logcat` timestamps of the fixes the app logs | |
-| R8 | The app's own reader: which provider it got, no `SecurityException`, no Play services | `adb logcat -d \| grep -E 'SecurityException\|KozicaLocation'` | |
-| R9 | The palette over a yellow and a black Trail, light and dark | `adb shell cmd uimode night yes` / `no`, screencaps | |
+| R7 | Each row of § 4's table, with the API level: the 31+ rows on the phone, the 26–30 rows (one dialog, no approximate) on an emulator, which the row says; and the interval between coarse fixes with approximate only | With the debug position override off (a relaunch clears it): `adb shell pm revoke`/`grant`, the system location switch, a screencap per state; `adb logcat` timestamps of the fixes the app logs | |
+| R8 | The app's own reader: which provider it got, no `SecurityException`, no Play services | With the debug position override off (a relaunch clears it): `adb logcat -d \| grep -E 'SecurityException\|KozicaLocation'` | |
+| R9 | The palette over a yellow and a black Trail, light and dark | The dot put on a way the two share: `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.PositionReceiver -f 0x00000020 --ef lat <lat> --ef lon <lon> --ef accuracy 10`; then `adb shell cmd uimode night yes` / `no`, screencaps | |
