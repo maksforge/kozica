@@ -5,7 +5,7 @@ title: Kozica
 
 # Kozica
 
-**A hiking map of the Polish mountains that works with no signal at all.** Free, ad-free, and
+**A hiking map of the Polish mountains that works with no signal at all, once you have downloaded the ranges you need.** Free, ad-free, and
 entirely on your own phone: no account, no sign-up, and no permission to use the internet.
 
 ## What it does
@@ -39,4 +39,4 @@ The details are in the
 
 Built in the open at **[srednimax/kozica](https://github.com/srednimax/kozica)**. Map data ©
 [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open
-Database Licence.
+Database License.

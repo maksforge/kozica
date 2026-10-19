@@ -49,10 +49,10 @@ The line that appears under the name in search results, and the most-read text i
 Offline trail map of the Polish mountains, drawn in the signposts' own colours.
 ```
 
-### Full description — 797/4000
+### Full description — 844/4000
 
 ```
-Kozica is a hiking map of the Polish mountains that works with no signal at all.
+Kozica is a hiking map of the Polish mountains. Download the ranges you need before you go, and it works with no signal at all.
 
 Every marked trail is drawn in the colour on its signposts — red, blue, green, yellow or black — with its symbol along the line. Where two trails share a path, both are drawn side by side, so you can see which one you are on.
 
@@ -60,7 +60,7 @@ The map also shows paths, huts and shelters, peaks, passes, springs, viewpoints,
 
 Tap the position button to see where you are, with the accuracy and the direction you are facing. Your location stays on your phone: Kozica has no permission to use the internet, no account and no ads, and it collects nothing.
 
-Map data © OpenStreetMap contributors, available under the Open Database Licence.
+Map data © OpenStreetMap contributors, available under the Open Database License.
 ```
 
 ## Polish
@@ -77,16 +77,16 @@ Kozica
 Mapa szlaków w polskich górach bez internetu, w kolorach z drogowskazów.
 ```
 
-### Full description — 803/4000
+### Full description — 865/4000
 
 ```
-Kozica to mapa turystyczna polskich gór, która działa bez zasięgu.
+Kozica to mapa turystyczna polskich gór. Pobierz potrzebne pasma przed wyjściem, a zadziała bez zasięgu.
 
-Każdy znakowany szlak jest narysowany w kolorze z drogowskazów — czerwonym, niebieskim, zielonym, żółtym albo czarnym — z jego znakiem wzdłuż linii. Gdy dwa szlaki biegną jedną ścieżką, oba są narysowane obok siebie, więc widać, którym idziesz.
+Każdy znakowany szlak jest narysowany w kolorze z drogowskazów — czerwonym, niebieskim, zielonym, żółtym albo czarnym — ze swoim znakiem wzdłuż linii. Gdy dwa szlaki biegną jedną ścieżką, oba są narysowane obok siebie, więc widać, którym idziesz.
 
 Na mapie są też ścieżki, schroniska i wiaty, szczyty, przełęcze, źródła, punkty widokowe, parkingi i przystanki, granice parków narodowych i granica państwa, w jasnym i ciemnym stylu.
 
-Dotknij przycisku pozycji, aby zobaczyć, gdzie jesteś, z dokładnością i kierunkiem, w którym patrzysz. Twoja lokalizacja zostaje w telefonie: Kozica nie ma uprawnienia do internetu, konta ani reklam i niczego nie zbiera.
+Dotknij przycisku pozycji, aby zobaczyć, gdzie jesteś, z dokładnością i kierunkiem, w którym patrzysz. Twoja lokalizacja zostaje w telefonie: Kozica nie ma uprawnienia do internetu, nie wymaga konta, nie wyświetla reklam i niczego nie zbiera.
 
 Dane mapy © Współtwórcy OpenStreetMap, dostępne na licencji Open Database License.
 ```
