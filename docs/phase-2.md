@@ -336,8 +336,9 @@ The ask, and every answer to it, in one table (`PLAN.md` rule 4):
 - **Approximate only has its own threshold, 15 minutes.** Android throttles a coarse-only client to
   fixes minutes apart, about ten on current releases, so at 30 s "stale" would be the steady state
   and the banner would always say so. 15 minutes clears that interval with room for a late fix and
-  still marks a position from the previous valley as old. The threshold lives in `PositionAge` with the other, and R7 reads the
-  real coarse interval on the phone; a reading longer than 15 minutes moves the threshold.
+  still marks a position from the previous valley as old. The threshold lives in `PositionAge` with
+  the other, and R7 reads the real coarse interval on the phone; a reading longer than 15 minutes
+  moves the threshold.
 
 Copy: "Show my position", "Approximate location only. Allow precise location to see where you are on
 a Trail.", "Allow", "Location is turned off.", "Last position %1$s ago.", "Settings".
