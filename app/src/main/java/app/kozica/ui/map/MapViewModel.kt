@@ -1,7 +1,6 @@
 package app.kozica.ui.map
 
 import android.annotation.SuppressLint
-import android.content.res.AssetManager
 import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -30,6 +29,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -55,7 +55,7 @@ enum class MapEmpty {
  * @param style the expanded style JSON, null until the template is read.
  * @param camera where a new map view opens, null until the stored camera is read.
  * @param location null until the first resume reads it.
- * @param fix the newest position, null while location cannot be read.
+ * @param fix the newest position, null until the first arrives or while location cannot be read.
  */
 data class MapUiState(
     val regions: List<Region>? = null,
@@ -83,7 +83,7 @@ data class MapUiState(
 class MapViewModel(
     regions: Flow<List<Region>>,
     private val preferences: AppPreferences,
-    private val assets: AssetManager,
+    private val readAsset: (path: String) -> String,
     private val applicationScope: CoroutineScope,
     private val positions: (approximateOnly: Boolean) -> Flow<Location>,
 ) : ViewModel() {
@@ -95,11 +95,7 @@ class MapViewModel(
 
     private val style: StateFlow<String?> =
         combine(
-            dark.filterNotNull().map {
-                assets.open(styleTemplate(it)).bufferedReader().use { reader ->
-                    reader.readText()
-                }
-            },
+            dark.filterNotNull().map { readAsset(styleTemplate(it)) },
             this.regions
                 .filterNotNull()
                 .map { it.readyArchives() }
@@ -113,13 +109,14 @@ class MapViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     @SuppressLint("MissingPermission")
     private val fix: Flow<Location?> =
-        location.flatMapLatest { read ->
-            when {
-                read == null || !read.on -> flowOf(null)
-                read.grant == LocationGrant.NONE -> flowOf(null)
-                else -> positions(read.grant == LocationGrant.APPROXIMATE)
-            }
-        }
+        location
+            .flatMapLatest { read ->
+                when {
+                    read == null || !read.on -> flowOf(null)
+                    read.grant == LocationGrant.NONE -> flowOf(null)
+                    else -> positions(read.grant == LocationGrant.APPROXIMATE)
+                }
+            }.onStart { emit(null) }
 
     val state: StateFlow<MapUiState> =
         combine(this.regions, style, camera, location, fix, ::MapUiState)
@@ -169,7 +166,12 @@ class MapViewModel(
                     MapViewModel(
                         app.container.regions,
                         app.preferences,
-                        app.assets,
+                        { path ->
+                            app.assets
+                                .open(path)
+                                .bufferedReader()
+                                .use { it.readText() }
+                        },
                         app.container.applicationScope,
                         app.container::positions,
                     )
