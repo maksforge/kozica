@@ -74,10 +74,11 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       moves each build to them.
 - [x] **Decide the `applicationId` deliberately.** `io.github.srednimax.kozica`, fixed by the Play
       entry.
-- [ ] **Take phase 1's checkpoint E before any release carries a map pack or the asset-delivery
-      library.** The library in `main/` with the Console's foreground-service declaration, the data
-      build in `publish-play.yml`, and the update size Play reports for a one-pin refresh
-      ([`phase-1.md`](phase-1.md) § 5).
+- [ ] **Take checkpoint E, phase 2b's since phase 2 split, before any release carries a map pack
+      or the asset-delivery library.** The library in `main/` with the Console's foreground-service
+      declaration, the data build in `publish-play.yml`, and the update size Play reports for a
+      one-pin refresh. Its brief is [`phase-1.md`](phase-1.md) § 5 until 2b's file exists
+      ([`PLAN.md`](PLAN.md), phase 2b).
 - [ ] **Take phase 1's phone readings before phase 2 builds on MapLibre.** The gate (R1), the first
       pack download (R8), no pack without a crash (R9) and R10's screen were deferred on 2026-10-19,
       when the owner moved on from phase 1 without them. If R1 fails, the format turns to `.map`

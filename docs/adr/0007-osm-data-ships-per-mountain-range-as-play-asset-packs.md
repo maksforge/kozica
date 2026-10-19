@@ -174,3 +174,11 @@ format becomes Mapsforge's `.map`, and R6 and R7 are read again for it.
 **The CI data build arrives with E.** Until then `build-map-data.py` runs locally and writes the
 Region's file into its pack module, where it stays git-ignored. The decision above, a job in
 `publish-play.yml` before `bundleRelease`, holds from the first release that carries a pack.
+
+## Amendment — 2026-10-19: the map phase is split in two
+
+The Decision's "the list of regions and the filter are fixed when the map phase opens" now reads per
+half. The map phase was split ([`PLAN.md`](../PLAN.md), [`phase-2.md`](../phase-2.md)): phase 2
+draws the map against the Tatry and fixes the filter when it opens; phase 2b builds every Region and
+fixes the list of Regions, with each Region's polygon, when it opens. Phase 2b also takes over phase
+1's checkpoint E, so the CI data build above arrives with 2b.

@@ -18,7 +18,7 @@ was extracted from and the first app built from it settled on exactly this split
 
 - [x] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
 - [ ] **Phase P** — The pipeline: everything set up; the first *automatic* upload still to be watched
-- [ ] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; done but for the phone readings (R1, R8, R9, R10's screen), deferred on 2026-10-19 to a `DOD.md` item, and Play's reading (E)
+- [ ] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; done but for the phone readings (R1, R8, R9, R10's screen), deferred on 2026-10-19 to a `DOD.md` item; Play's reading (E) moved to phase 2b
 - [ ] **Phase 2** — The map: the Tatry drawn as the signposts mark them, "you are here"
 - [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", delivered by Play
 - [ ] **Phase 3** — Safe for a stranger ← **the door: closed testing opens here**
@@ -139,8 +139,8 @@ build asks for it as an on-demand asset pack and draws it with MapLibre. The gat
 format cannot be judged apart from its renderer, and MapLibre is sound only if it runs with every
 network permission stripped. What an update costs is measured locally, with bsdiff as a proxy; the
 reading through a build Play delivers is checkpoint E, taken when Play work resumes and before any
-release carries a pack. The phase closes on A–D. Of ADR-0007's decisions for "the map phase", this
-one owns the file format. [`phase-1.md`](phase-1.md).
+release carries a pack; phase 2b took E over when phase 2 split. The phase closes on A–D. Of
+ADR-0007's decisions for "the map phase", this one owns the file format. [`phase-1.md`](phase-1.md).
 
 ## Phase 2 — The map
 
@@ -155,10 +155,12 @@ could not ([`phase-0.md`](phase-0.md) § 3). Its gate is phase 1's deferred phon
 ## Phase 2b — Every Region
 
 Every Region built and downloadable from a picker, with "Download all". It owns ADR-0007's Region
-list, and brings the asset-delivery library into the release build, which is phase 1's checkpoint E:
-the Console's foreground-service declaration, the data build in CI and the ODbL offer. Split from
-phase 2 when that phase opened, because the map can be built locally and this half waits on Play
-work.
+list and every Region's polygon, `tatry.poly` included, with whether a polygon follows the state
+border exactly. It brings the asset-delivery library into the release build: the Console's
+foreground-service declaration, the data build in CI and the ODbL offer. That is phase 1's
+checkpoint E, which this phase takes over, so phase 1 closes on its phone readings alone. Split
+from phase 2 when that phase opened, because the map can be built locally and this half waits on
+Play work.
 
 ## Phase 3 — Safe for a stranger
 
