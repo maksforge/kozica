@@ -44,7 +44,7 @@ let us do otherwise".">
 | Photo Picker + `TakePicture` intent, **not CameraX** | Far less code; the system camera is fine here |
 | Coil 3 images | Compose-native, local files only |
 | On-device storage only | No backend. Backup per ADR-0005 |
-| MapLibre Native (OpenGL ES) + PMTiles | Debug only in phase 1 — the gate, `docs/phase-1.md` § 1 |
+| MapLibre Native (OpenGL ES) + PMTiles | Offline, every network permission stripped — ADR-0008, `docs/phase-2.md` § 2 |
 | Play Asset Delivery | Debug only until phase 1's checkpoint E; brings WorkManager into the debug build alone (§ 3) |
 
 ## House rules
@@ -118,15 +118,19 @@ app/src/main/java/<namespace>/
                how the app hangs together rather than any one screen
   AppBackupAgent.kt   Android Auto Backup, taking control of its own file set (ADR-0005)
   data/        Room entities, DAOs, database, converters, migrations, the schema gate, preferences
+  data/regions/ every Region's state and what its PMTiles header says; each variant supplies the
+               states in RegionSource.kt
   data/backup/ export, restore, the manifest, the WAL checkpoint
   media/       MediaFiles.kt — the single path for persisting images, kind-aware
   theme/       generated palette, type scale, spacing, the night-mode window half
-  ui/          Compose screens + ViewModels, one package per area
+  ui/          Compose screens + ViewModels, one package per area; ui/map/ is Home
 
 app/src/debug/    the developer-only build: the sample-data seeder, Settings' debug section and its
-                  strings, SeedReceiver for the capture driver, the offline map gate, and
-                  data/regions/RegionFiles.kt, which asks Play for a Region's pack
-app/src/release/  only the no-op half of that seam, so main/ can call it unconditionally
+                  strings, SeedReceiver for the capture driver, and data/regions/, where
+                  RegionFiles.kt asks Play for the Tatry's pack and RegionSource.kt falls back to an
+                  archive hand-pushed to files/regions/
+app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
+                  settings, and no Region until phase 2b
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
 scripts/map/      the planetiler profile build-map-data.py runs, and decode-tile.py
 scripts/regions/  one boundary polygon per Region

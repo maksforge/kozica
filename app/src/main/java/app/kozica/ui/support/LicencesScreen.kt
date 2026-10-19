@@ -44,32 +44,47 @@ fun LicencesScreen(
         modifier = modifier,
     ) { contentModifier ->
         LazyColumn(modifier = contentModifier.fillMaxSize()) {
+            item(key = ODBL) {
+                LicenceSection("Open Database License 1.0", stringResource(R.string.map_osm_credit)) {
+                    onOpenLicence(ODBL)
+                }
+            }
+            item(key = OFL) {
+                LicenceSection("SIL Open Font License 1.1", "Noto Sans") { onOpenLicence(OFL) }
+            }
             for (group in groups) {
                 item(key = group.title) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                // Only an SPDX licence has text bundled with the binary; a vendor's
-                                // own terms can only be linked, so that row is not tappable here.
-                                .then(
-                                    if (group.spdxId != null) {
-                                        Modifier.clickable { onOpenLicence(group.spdxId!!) }
-                                    } else {
-                                        Modifier
-                                    },
-                                ),
-                    ) {
-                        SectionHeader(group.title)
-                        Text(
-                            text = group.artifacts.joinToString("\n") { it.coordinates },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = Spacing.base),
-                        )
-                    }
+                    // Only an SPDX licence has text bundled with the binary; a vendor's own terms can
+                    // only be linked, so that row is not tappable here.
+                    LicenceSection(
+                        title = group.title,
+                        subjects = group.artifacts.joinToString("\n") { it.coordinates },
+                        onClick = group.spdxId?.let { id -> { onOpenLicence(id) } },
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LicenceSection(
+    title: String,
+    subjects: String,
+    onClick: (() -> Unit)?,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+    ) {
+        SectionHeader(title)
+        Text(
+            text = subjects,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = Spacing.base),
+        )
     }
 }

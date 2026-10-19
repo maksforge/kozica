@@ -15,7 +15,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.kozica.ui.backup.BackupScreen
-import app.kozica.ui.home.HomeScreen
+import app.kozica.ui.map.MapScreen
 import app.kozica.ui.settings.SettingsScreen
 import app.kozica.ui.support.LicenceTextScreen
 import app.kozica.ui.support.LicencesScreen
@@ -78,7 +78,7 @@ fun MainNavigation(modifier: Modifier = Modifier) {
             entryProvider =
                 entryProvider {
                     entry<Home> {
-                        HomeScreen(onOpenSettings = { backStack.add(Settings) })
+                        MapScreen(onOpenSettings = { backStack.add(Settings) })
                     }
                     entry<Settings> {
                         SettingsScreen(

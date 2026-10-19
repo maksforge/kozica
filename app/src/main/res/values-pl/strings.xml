@@ -10,7 +10,10 @@
 <resources>
     <string name="action_back">Wstecz</string>
 
-    <string name="home_map_placeholder">Tu pojawi się twoja mapa.</string>
+    <string name="map_no_regions">Nie pobrano jeszcze żadnego regionu.</string>
+    <string name="map_updating">Trwa aktualizacja danych mapy.</string>
+    <string name="map_osm_credit">© Współtwórcy OpenStreetMap</string>
+    <string name="map_osm_date">Dane OSM: %1$s</string>
 
     <string name="settings_title">Ustawienia</string>
     <string name="settings_appearance">Wygląd</string>

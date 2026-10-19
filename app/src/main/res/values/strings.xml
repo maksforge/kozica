@@ -22,8 +22,12 @@
     <!-- Common actions -->
     <string name="action_back">Back</string>
 
-    <!-- Home -->
-    <string name="home_map_placeholder">Your map will appear here.</string>
+    <!-- Map -->
+    <string name="map_no_regions">No Regions downloaded yet.</string>
+    <string name="map_updating">Map data is being updated.</string>
+    <string name="map_osm_credit">© OpenStreetMap contributors</string>
+    <!-- %1$s is a date, formatted for the locale -->
+    <string name="map_osm_date">OSM data: %1$s</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

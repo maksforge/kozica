@@ -1,6 +1,5 @@
 package app.kozica.ui.settings
 
-import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,7 +19,6 @@ import app.kozica.R
 import app.kozica.data.SampleData
 import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.RegionState
-import app.kozica.debug.DebugMapActivity
 import app.kozica.theme.Spacing
 import app.kozica.ui.common.SectionHeader
 import kotlinx.coroutines.launch
@@ -38,7 +36,7 @@ fun DebugSettings() {
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val app = context.applicationContext as MainApplication
-    val regions = remember { RegionFiles(context) }
+    val regions = remember { RegionFiles.of(context) }
     val tatry by remember { regions.tatry }.collectAsStateWithLifecycle(initialValue = null)
 
     SectionHeader(stringResource(R.string.debug_section))
@@ -47,9 +45,6 @@ fun DebugSettings() {
     }
     DebugRow(stringResource(R.string.debug_wipe)) {
         scope.launch { SampleData.wipe(app.container.items) }
-    }
-    DebugRow(stringResource(R.string.debug_map)) {
-        context.startActivity(Intent(context, DebugMapActivity::class.java))
     }
     Text(
         text = tatryState(tatry),

@@ -3,6 +3,7 @@ package app.kozica.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,13 @@ enum class ThemeMode {
     LIGHT,
     DARK,
 }
+
+/** Where the map looks, as MapLibre's camera has it. */
+data class MapCamera(
+    val latitude: Double,
+    val longitude: Double,
+    val zoom: Double,
+)
 
 /**
  * Everything the app remembers that is not a row in the database.
@@ -43,6 +51,9 @@ class AppPreferences(
         val MATERIAL_YOU = booleanPreferencesKey("material_you")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val BACKUP_FOLDER_URI = stringPreferencesKey("backup_folder_uri")
+        val MAP_LATITUDE = doublePreferencesKey("map_latitude")
+        val MAP_LONGITUDE = doublePreferencesKey("map_longitude")
+        val MAP_ZOOM = doublePreferencesKey("map_zoom")
     }
 
     /**
@@ -81,6 +92,15 @@ class AppPreferences(
      */
     val backupFolderUri: Flow<String?> = store.data.map { it[Keys.BACKUP_FOLDER_URI] }
 
+    /** The camera as the map screen last stopped on, or null before it ever has. */
+    val mapCamera: Flow<MapCamera?> =
+        store.data.map { prefs ->
+            val latitude = prefs[Keys.MAP_LATITUDE] ?: return@map null
+            val longitude = prefs[Keys.MAP_LONGITUDE] ?: return@map null
+            val zoom = prefs[Keys.MAP_ZOOM] ?: return@map null
+            MapCamera(latitude, longitude, zoom)
+        }
+
     /**
      * The theme mode, read once, before any Activity exists.
      *
@@ -101,6 +121,14 @@ class AppPreferences(
 
     suspend fun setOnboardingDone(done: Boolean) {
         store.edit { it[Keys.ONBOARDING_DONE] = done }
+    }
+
+    suspend fun setMapCamera(camera: MapCamera) {
+        store.edit { prefs ->
+            prefs[Keys.MAP_LATITUDE] = camera.latitude
+            prefs[Keys.MAP_LONGITUDE] = camera.longitude
+            prefs[Keys.MAP_ZOOM] = camera.zoom
+        }
     }
 
     suspend fun setBackupFolderUri(uri: String?) {

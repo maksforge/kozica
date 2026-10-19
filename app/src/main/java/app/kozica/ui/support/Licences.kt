@@ -17,6 +17,13 @@ import kotlinx.serialization.json.Json
 /** The asset the build's `BundleLicences` task writes. Kept in step with `app/build.gradle.kts`. */
 const val LICENCES_ASSET = "licences.json"
 
+/**
+ * What the app ships that is not a dependency, so Licensee cannot list it: the map's data and the
+ * map's font. Each has its text in [LICENCE_TEXT_DIRECTORY] under its SPDX id.
+ */
+const val ODBL = "ODbL-1.0"
+const val OFL = "OFL-1.1"
+
 /** Where a licence's own text lives, when it is ours to ship — `licences/Apache-2.0.txt`. */
 const val LICENCE_TEXT_DIRECTORY = "licences"
 

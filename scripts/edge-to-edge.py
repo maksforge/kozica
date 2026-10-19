@@ -741,10 +741,10 @@ def relaunch() -> None:
     repin_rotation()  # `-S` is a force-stop, and a force-stop costs the rotation — see [repin_rotation]
 
 
-# The needle the isolation step is built on: the home screen's placeholder line, which no other
-# screen carries. Named here rather than inline so a locale run translates it with the rest of the
+# The needle the isolation step is built on: the map's OpenStreetMap credit, which no other screen
+# carries. Named here rather than inline so a locale run translates it with the rest of the
 # table.
-HOME = "Your map will appear here."
+HOME = "© OpenStreetMap contributors"
 
 # The top-level destinations, named so [tap] can tell a tab from anything else it is asked to
 # press. Two things follow from being on this list, and both are about a tab label being a *short*
