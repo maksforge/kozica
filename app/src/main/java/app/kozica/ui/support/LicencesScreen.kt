@@ -45,7 +45,7 @@ fun LicencesScreen(
     ) { contentModifier ->
         LazyColumn(modifier = contentModifier.fillMaxSize()) {
             item(key = ODBL) {
-                LicenceSection("Open Database License 1.0", stringResource(R.string.map_osm_credit)) {
+                LicenceSection("Open Database License 1.0", "OpenStreetMap") {
                     onOpenLicence(ODBL)
                 }
             }
