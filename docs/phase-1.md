@@ -329,7 +329,7 @@ read it. A reading that drives the phone waits until the owner says it is free.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL\|KozicaGate'` | |
+| R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL\|KozicaGate\|Mbgl'` | |
 | R2 | The merged debug manifest declares none of the five, and no required hardware feature | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk`; `aapt2 dump xmltree --file AndroidManifest.xml app/build/outputs/apk/debug/app-debug.apk \| grep -A2 uses-feature` | 2026-10-19, debug APK with `android-sdk-opengl` 13.7.1 (`libmaplibre.so` in all four ABIs): one permission, AndroidX's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; none of the five. One `uses-feature`, `android.hardware.wifi` with `required=false`; no `android.hardware.vulkan.version` |
 | R3 | After C, the merged debug manifest still declares none of the five with the asset-delivery library and WorkManager in. The release bundle's reading moved to E2 | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | |
 | R4 | Two builds at one pin are byte-identical | `python3 scripts/build-map-data.py --check-determinism` | |
