@@ -1,0 +1,51 @@
+package app.kozica.ui.map
+
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import java.io.File
+
+internal const val STYLE_TEMPLATE = "map/style.json"
+
+/**
+ * The template with one source per ready Region and each sourced layer repeated per Region, in the
+ * template's layer order, so one Region's land never paints over another's Trails
+ * (docs/phase-2.md § 2).
+ */
+internal fun expandStyle(
+    template: String,
+    archives: List<Pair<String, File>>,
+): String {
+    val style = Json.parseToJsonElement(template).jsonObject
+    val sources =
+        buildJsonObject {
+            for ((region, archive) in archives) {
+                put(
+                    region,
+                    buildJsonObject {
+                        put("type", "vector")
+                        put("url", "pmtiles://file://${archive.absolutePath}")
+                    },
+                )
+            }
+        }
+    val layers =
+        style.getValue("layers").jsonArray.flatMap { element ->
+            val layer = element.jsonObject
+            if ("source" !in layer) {
+                listOf(layer)
+            } else {
+                archives.map { (region, _) ->
+                    val id = layer.getValue("id").jsonPrimitive.content
+                    JsonObject(layer + mapOf("id" to JsonPrimitive("$id-$region"), "source" to JsonPrimitive(region)))
+                }
+            }
+        }
+    return JsonObject(style + mapOf("sources" to sources, "layers" to JsonArray(layers))).toString()
+}

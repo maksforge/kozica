@@ -223,7 +223,7 @@ licensee {
     // Exactly one artifact: androidx's repackaging of protobuf-javalite, pulled in behind DataStore.
     // Nobody knows this is in the build until the plugin is run — which is the argument for it.
     allow("BSD-3-Clause")
-    // MapLibre Native, debug only in phase 1; its text lives in src/debug/assets/licences/.
+    // MapLibre Native.
     allow("BSD-2-Clause")
     // Play Asset Delivery and the Play services it pulls, debug only until checkpoint E. Vendor
     // terms: the licences screen links them rather than shipping their text.
@@ -311,7 +311,9 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.maplibre.android.opengl)
+    // The OpenGL build, not the default `android-sdk`: that one is Vulkan, and its `uses-feature`
+    // would filter the app off devices on Play (docs/phase-1.md § 1).
+    implementation(libs.maplibre.android.opengl)
     debugImplementation(libs.play.asset.delivery)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

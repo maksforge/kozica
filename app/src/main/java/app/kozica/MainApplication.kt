@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
+import org.maplibre.android.MapLibre
 import java.io.File
 
 /**
@@ -102,6 +103,11 @@ class MainApplication : Application() {
         // dark. One small file read at process start is the cheaper of the two costs.
         startupThemeMode = runBlocking { preferences.themeModeNow() }
         applyThemeMode(startupThemeMode)
+
+        // Before any MapView exists: its setup asks ConnectivityManager otherwise, which throws
+        // without ACCESS_NETWORK_STATE (ADR-0008).
+        MapLibre.getInstance(this)
+        MapLibre.setConnected(false)
 
         val databaseFile = getDatabasePath(APP_DATABASE_FILE)
         val onDisk = readUserVersion(databaseFile)

@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import app.kozica.data.AppPreferences
 import app.kozica.data.ItemRepository
 import app.kozica.data.buildAppDatabase
+import app.kozica.data.regions.regionStates
 import app.kozica.media.MediaFiles
 import kotlinx.coroutines.CoroutineScope
 
@@ -53,4 +54,6 @@ class AppContainer(
     val media by lazy { MediaFiles(appContext) }
 
     val items by lazy { ItemRepository(database.itemDao(), media) }
+
+    val regions by lazy { regionStates(appContext) }
 }
