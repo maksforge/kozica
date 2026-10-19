@@ -155,21 +155,24 @@ with a build to prove it.
 
 ## Environment notes
 
-- **Two phones, so name one.** `installDebug` installs on every attached device; pass
-  `-s <serial>` or set `ANDROID_SERIAL`.
-  - **The test phone**, `mnbm7hw8ivdqzx9l`: a wiped Redmi Note 8 Pro, Android 11 (API 30), MIUI
-    12.5, Polish, on USB for good, with no SIM, Wi-Fi or lock screen. Drive it at will. Turn location
-    on per reading with `cmd location set-location-enabled true`. The map draws on it, unlike the
-    API 26 emulator.
+- **Two phones, so name one.** Gradle and adb both reach every attached device; set
+  `ANDROID_SERIAL` (both honour it) or pass `adb -s <serial>`.
+  - **The test phone**, `mnbm7hw8ivdqzx9l`: a wiped, debloated Redmi Note 8 Pro, Android 11 (API
+    30), MIUI 12.5, Polish, on USB for good, in airplane mode with no SIM. Location stays on: turning
+    it off raises a Play services popup. No lock screen; it sleeps after 5 min even on USB, and
+    `adb shell input keyevent KEYCODE_WAKEUP` wakes it. Drive it at will. The map draws on it, unlike
+    the API 26 emulator. `connectedAndroidTest` runs on it with no prompt, but its closing uninstall
+    takes the hand-pushed `files/regions/tatry.pmtiles` with it.
   - **The owner's phone**, `132bc856`: a Redmi Note 14 Pro 5G, API 36, HyperOS. It is in use, so
     ask before taking over its screen.
 - **MIUI optimisation is off on the test phone**, and that is what makes it tap-free. With it on,
   every adb install fails `INSTALL_FAILED_USER_RESTRICTED`, and the "Install via USB" fix wants a Mi
-  account and a SIM. An update can turn it back on: the toggle is at the bottom of Developer options,
-  revealed by tapping "Reset to default values" a few times.
-- **Vendor ROM behaviour.** On Xiaomi/HyperOS: split-APK installs (`connectedAndroidTest`) prompt on
-  the phone and a missed prompt fails the run with `INSTALL_FAILED_USER_RESTRICTED`; the workaround
-  is to install both APKs plain and run the instrumentation directly:
+  account and a SIM. An update can turn it back on, so check before installing:
+  `adb shell getprop persist.sys.miui_optimization` reads `false`. The toggle is at the bottom of
+  Developer options, revealed by tapping "Reset to default values" a few times.
+- **On the owner's phone (HyperOS)**, split-APK installs (`connectedAndroidTest`) prompt on the
+  phone and a missed prompt fails the run with `INSTALL_FAILED_USER_RESTRICTED`; the workaround is
+  to install both APKs plain and run the instrumentation directly:
   ```bash
   adb install -r -t app/build/outputs/apk/debug/app-debug.apk
   adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
