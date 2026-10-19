@@ -40,7 +40,7 @@ internal val Context.preferencesStore: DataStore<Preferences> by preferencesData
 class AppContainer(
     context: Context,
     val preferences: AppPreferences,
-    @Suppress("unused") private val applicationScope: CoroutineScope,
+    val applicationScope: CoroutineScope,
 ) {
     private val appContext = context.applicationContext
 

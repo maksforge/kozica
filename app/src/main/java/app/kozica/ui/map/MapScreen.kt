@@ -134,7 +134,11 @@ private fun rememberMapView(onStop: () -> Unit): MapView {
         onDispose {
             lifecycle.removeObserver(observer)
             if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) mapView.onPause()
-            if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) mapView.onStop()
+            // Leaving Home for another entry disposes it with no ON_STOP, so the stop is this.
+            if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                mapView.onStop()
+                currentOnStop()
+            }
             mapView.onDestroy()
         }
     }
