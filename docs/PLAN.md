@@ -19,7 +19,8 @@ was extracted from and the first app built from it settled on exactly this split
 - [x] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
 - [ ] **Phase P** — The pipeline: everything set up; the first *automatic* upload still to be watched
 - [ ] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; done but for the phone readings (R1, R8, R9, R10's screen), deferred on 2026-10-19 to a `DOD.md` item, and Play's reading (E)
-- [ ] **Phase 2** — The map: every Region drawn, Trails in their colours, "you are here"
+- [ ] **Phase 2** — The map: the Tatry drawn as the signposts mark them, "you are here"
+- [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", delivered by Play
 - [ ] **Phase 3** — Safe for a stranger ← **the door: closed testing opens here**
 - [ ] **Phase 4** — Elevation: contours and hillshading
 - [ ] **Phase 5** — Route planning, and search by name
@@ -143,12 +144,21 @@ one owns the file format. [`phase-1.md`](phase-1.md).
 
 ## Phase 2 — The map
 
-Every Region built and downloadable from a picker, with "Download all". The map draws Trails in their
-marking colours and symbols, Paths apart from them, Huts, Shelters, peaks, passes, springs,
+The app opens on the map, in the release build too. It draws Trails in their marking colours and
+symbols, two on one way side by side, Paths apart from them, Huts, Shelters, peaks, passes, springs,
 viewpoints, the way in and out, the land, national-park boundaries and the state border, and the
-user's position, accuracy and heading. The OSM credit and the data date sit on every map screen.
-It owns ADR-0007's other two decisions, fixed when it opens: the list of Regions and the filter. It
-also takes the palette reading phase 0 could not ([`phase-0.md`](phase-0.md) § 3).
+user's position, accuracy and heading. The OSM credit and the data date sit on the map. It is built
+and read against the Tatry, and owns ADR-0007's filter. It also takes the palette reading phase 0
+could not ([`phase-0.md`](phase-0.md) § 3). Its gate is phase 1's deferred phone readings.
+[`phase-2.md`](phase-2.md).
+
+## Phase 2b — Every Region
+
+Every Region built and downloadable from a picker, with "Download all". It owns ADR-0007's Region
+list, and brings the asset-delivery library into the release build, which is phase 1's checkpoint E:
+the Console's foreground-service declaration, the data build in CI and the ODbL offer. Split from
+phase 2 when that phase opened, because the map can be built locally and this half waits on Play
+work.
 
 ## Phase 3 — Safe for a stranger
 
