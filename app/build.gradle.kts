@@ -21,7 +21,7 @@ val releaseShapedDebug = providers.gradleProperty("releaseShapedDebug").isPresen
 
 // `assetPacks` is not per build type, so a rule keyed on the archive being on disk would put
 // OSM-derived data into any local release bundle (docs/phase-1.md § 3).
-val mapPacks = providers.gradleProperty("mapPacks").isPresent
+val mapPacks = providers.gradleProperty("mapPacks").map { it.isEmpty() || it.toBoolean() }.getOrElse(false)
 
 // versionCode = the number of commits. Monotonic, needs no file to be hand-edited, and cannot be
 // forgotten — which is the failure mode of every scheme that stores it. versionName is release-
