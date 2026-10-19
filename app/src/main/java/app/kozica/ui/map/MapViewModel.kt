@@ -13,6 +13,7 @@ import app.kozica.data.MapCamera
 import app.kozica.data.regions.GeoBounds
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,6 +76,7 @@ class MapViewModel(
     regions: Flow<List<Region>>,
     private val preferences: AppPreferences,
     private val assets: AssetManager,
+    private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     private val regions = regions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -116,7 +118,8 @@ class MapViewModel(
 
     fun storeCamera() {
         val at = (camera.value as? MapStart.At)?.camera ?: return
-        viewModelScope.launch { preferences.setMapCamera(at) }
+        // Back finishes the activity, and that cancels viewModelScope before this write would run.
+        applicationScope.launch { preferences.setMapCamera(at) }
     }
 
     companion object {
@@ -127,7 +130,7 @@ class MapViewModel(
             viewModelFactory {
                 initializer {
                     val app = this[APPLICATION_KEY] as MainApplication
-                    MapViewModel(app.container.regions, app.preferences, app.assets)
+                    MapViewModel(app.container.regions, app.preferences, app.assets, app.container.applicationScope)
                 }
             }
     }
