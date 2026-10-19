@@ -60,3 +60,11 @@ A completely green migration suite says nothing about whether a real upgrade is 
   whether the destructive button exists at all. Rendering one button that is sometimes destructive is
   how a release build ends up wiping someone's data.
 - `preserved/` is never pruned. It is small and it is the last copy.
+
+## Amendment — 2026-10-20: the variant decides, not a flag
+
+The consent screen and the refusal screen are still one composable, but the destructive button is
+no longer behind a flag. It is `ui/wipe/SchemaMismatchContinue.kt`, one file per variant: the debug
+half is the button, the release half is nothing, per CLAUDE.md's rule on developer-only surface. A
+release binary no longer carries the button or its string, so the string left `main/res` and the
+translation gate, and `SchemaMismatch` lost `wipeOnConsent`.

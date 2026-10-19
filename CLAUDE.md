@@ -131,12 +131,14 @@ app/src/main/java/<namespace>/
   ui/          Compose screens + ViewModels, one package per area; ui/map/ is Home
 
 app/src/debug/    the developer-only build: the sample-data seeder, Settings' debug section and its
-                  strings, SeedReceiver for the capture driver, data/regions/, where
-                  RegionFiles.kt asks Play for the Tatry's pack and RegionSource.kt falls back to an
-                  archive hand-pushed to files/regions/, and the position override: a long press on
-                  the map, Settings' "real position" row and PositionReceiver for scripted readings
+                  strings, the schema-mismatch screen's continue button, SeedReceiver for the
+                  capture driver, data/regions/, where RegionFiles.kt asks Play for the Tatry's
+                  pack and RegionSource.kt falls back to an archive hand-pushed to files/regions/,
+                  and the position override: a long press on the map, Settings' "real position"
+                  row and PositionReceiver for scripted readings
 app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
-                  settings, no Region until phase 2b, and the real position passed through
+                  settings, no continue button, no Region until phase 2b, and the real position
+                  passed through
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
 scripts/map/      the planetiler profile build-map-data.py runs, decode-tile.py, and the style and
                   sprite generators

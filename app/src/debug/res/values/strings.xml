@@ -31,4 +31,5 @@
     <string name="debug_tatry_download" translatable="false">Download Tatry</string>
     <string name="debug_tatry_remove" translatable="false">Remove Tatry</string>
     <string name="debug_position_real" translatable="false">Use the real position</string>
+    <string name="schema_mismatch_continue" translatable="false">Continue and start fresh</string>
 </resources>
