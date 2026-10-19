@@ -22,6 +22,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.viewinterop.AndroidView
 import app.kozica.R
+import app.kozica.data.regions.RegionFiles
 import app.kozica.theme.AppTheme
 import app.kozica.theme.Spacing
 import org.maplibre.android.MapLibre
@@ -31,15 +32,18 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import java.io.File
 
-/** Phase 1's gate (docs/phase-1.md § 1): draws a hand-pushed Tatry archive with no network permission. */
+/**
+ * Phase 1's gate (docs/phase-1.md § 1): draws the Tatry archive with no network permission, from the
+ * pack once it is downloaded and from the hand-pushed file until then.
+ */
 class DebugMapActivity : ComponentActivity() {
     private var mapView: MapView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val archive = File(filesDir, "regions/tatry.pmtiles")
+        val archive = RegionFiles(this).readyArchive() ?: File(filesDir, "regions/tatry.pmtiles")
         if (!archive.exists()) {
-            Log.w(TAG, "No archive at ${archive.absolutePath}")
+            Log.w(TAG, "No pack and no archive at ${archive.absolutePath}")
             setContent { AppTheme { MissingArchive() } }
             return
         }

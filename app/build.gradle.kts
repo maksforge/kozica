@@ -19,6 +19,10 @@ val buildingRelease = gradle.startParameter.taskNames.any { it.contains("Release
 // broke something *before* uploading, on a build you can still attach a debugger to.
 val releaseShapedDebug = providers.gradleProperty("releaseShapedDebug").isPresent
 
+// `assetPacks` is not per build type, so a rule keyed on the archive being on disk would put
+// OSM-derived data into any local release bundle (docs/phase-1.md § 3).
+val mapPacks = providers.gradleProperty("mapPacks").isPresent
+
 // versionCode = the number of commits. Monotonic, needs no file to be hand-edited, and cannot be
 // forgotten — which is the failure mode of every scheme that stores it. versionName is release-
 // please's to write (see the marker comment below); this half is git's.
@@ -144,6 +148,10 @@ android {
         }
     }
 
+    if (mapPacks) {
+        assetPacks += ":region_tatry"
+    }
+
     lint {
         // "A newer version exists" is news, not a defect. Left informational so a red lint run
         // always means something is actually wrong with the code.
@@ -217,6 +225,10 @@ licensee {
     allow("BSD-3-Clause")
     // MapLibre Native, debug only in phase 1; its text lives in src/debug/assets/licences/.
     allow("BSD-2-Clause")
+    // Play Asset Delivery and the Play services it pulls, debug only until checkpoint E. Vendor
+    // terms: the licences screen links them rather than shipping their text.
+    allowUrl("https://developer.android.com/guide/playcore/license") { because("Play Core SDK terms") }
+    allowUrl("https://developer.android.com/studio/terms.html") { because("Android SDK terms") }
 }
 
 /**
@@ -300,6 +312,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.maplibre.android.opengl)
+    debugImplementation(libs.play.asset.delivery.ktx)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 

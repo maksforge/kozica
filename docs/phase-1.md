@@ -232,7 +232,7 @@ the data. That release is E's, so the offer is too.
   timestamp, so the file carries its own date.
 - **The debug section** shows the Tatry's state and offers "Download Tatry" and "Remove Tatry". Debug
   strings, `translatable="false"`. `DebugMapScreen` reads the path from `RegionFiles` once C lands,
-  in place of the hand-pushed file.
+  and falls back to the hand-pushed file, so R1 can still be taken without R8.
 - **A build installed by `installDebug` has no pack** and shows "not downloaded", never a crash
   (ADR-0007). `bundletool build-apks --local-testing` then `install-apks` is the local path for the
   first download.
@@ -331,7 +331,7 @@ read it. A reading that drives the phone waits until the owner says it is free.
 | --- | --- | --- | --- |
 | R1 | The gate: the debug build draws the Tatry archive with all five permissions stripped, nothing thrown; lines and the label visible | `./gradlew installDebug`, push the archive with `run-as`, open the debug map; `adb exec-out screencap -p > r1.png`; `adb logcat -d \| grep -E 'SecurityException\|FATAL\|KozicaGate\|Mbgl'` | |
 | R2 | The merged debug manifest declares none of the five, and no required hardware feature | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk`; `aapt2 dump xmltree --file AndroidManifest.xml app/build/outputs/apk/debug/app-debug.apk \| grep -A2 uses-feature` | 2026-10-19, debug APK with `android-sdk-opengl` 13.7.1 (`libmaplibre.so` in all four ABIs): one permission, AndroidX's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; none of the five. One `uses-feature`, `android.hardware.wifi` with `required=false`; no `android.hardware.vulkan.version` |
-| R3 | After C, the merged debug manifest still declares none of the five with the asset-delivery library and WorkManager in. The release bundle's reading moved to E2 | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | |
+| R3 | After C, the merged debug manifest still declares none of the five with the asset-delivery library and WorkManager in. The release bundle's reading moved to E2 | `aapt2 dump permissions app/build/outputs/apk/debug/app-debug.apk` | 2026-10-19, debug APK with `asset-delivery-ktx` 2.3.0 and `work-runtime` 2.9.1: none of the five. Four new, exactly § 3's: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, beside AndroidX's `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. WorkManager's `InitializationProvider` and `SystemJobService` are merged. The release bundle is unchanged: `aab-permissions.py` passes |
 | R4 | Two builds at one pin are byte-identical | `python3 scripts/build-map-data.py --check-determinism` | 2026-10-19, pin 4942: byte-identical, 1,051,229 bytes, sha256 `7a5e28c6…9171`. The metadata carries sequence 4942 and its time, 2026-10-18T20:25:06Z, once the cut copies the replication header: `osmium extract` drops it by default |
 | R5 | The Tatry archive's size, raw and zstd | `ls -l`, `zstd -19 -c … \| wc -c` | 2026-10-19, pin 4942: 1,051,229 bytes raw, 622,694 zstd -19. Geofabrik's Poland extract stops at the state border, so `tatry.poly`'s Slovak half draws nothing; the Region's shape is phase 2's |
 | R6 | The patch between two pins a week apart, against the newer archive | `python3 scripts/build-map-data.py --patch-from <older pin>` | 2026-10-19, 4935 (2026-10-11, from `poland-261001` and ten diffs) to 4942 (2026-10-18, `poland-261018`): bsdiff patch 3,824 bytes, 0.36 % of the newer archive raw, 0.61 % of it zstd. § 4's verdict 1 |

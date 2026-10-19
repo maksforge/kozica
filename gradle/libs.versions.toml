@@ -32,6 +32,7 @@ lifecycleViewmodelNav3 = "2.10.0"
 # app renders itself. Nothing of it ships except the JSON it writes into assets.
 licensee = "1.14.1"
 maplibre = "13.7.1"
+playAssetDelivery = "2.3.0"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppCompat" }
@@ -74,9 +75,12 @@ androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecy
 
 # Debug only in phase 1: the gate in docs/phase-1.md § 1.
 maplibre-android-opengl = { module = "org.maplibre.gl:android-sdk-opengl", version.ref = "maplibre" }
+# Debug only until checkpoint E: docs/phase-1.md § 3.
+play-asset-delivery-ktx = { module = "com.google.android.play:asset-delivery-ktx", version.ref = "playAssetDelivery" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-asset-pack = { id = "com.android.asset-pack", version.ref = "androidGradlePlugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
