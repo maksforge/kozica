@@ -1,6 +1,7 @@
 package app.kozica.ui.settings
 
 import android.content.Intent
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun DebugSettings() {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val app = context.applicationContext as MainApplication
     val regions = remember { RegionFiles(context) }
@@ -56,7 +58,11 @@ fun DebugSettings() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.base, vertical = Spacing.tight),
     )
     DebugRow(stringResource(R.string.debug_tatry_download)) {
-        scope.launch { regions.download() }
+        if (tatry == RegionState.WaitingForConfirmation && activity != null) {
+            regions.confirm(activity)
+        } else {
+            scope.launch { regions.download() }
+        }
     }
     DebugRow(stringResource(R.string.debug_tatry_remove)) {
         scope.launch { regions.remove() }
@@ -70,6 +76,7 @@ private fun tatryState(state: RegionState?): String =
         RegionState.NotDownloaded -> stringResource(R.string.debug_tatry_not_downloaded)
         is RegionState.Downloading -> stringResource(R.string.debug_tatry_downloading, state.percent)
         is RegionState.UpdateInProgress -> stringResource(R.string.debug_tatry_updating, state.percent)
+        RegionState.WaitingForConfirmation -> stringResource(R.string.debug_tatry_waiting)
         is RegionState.Ready ->
             stringResource(
                 R.string.debug_tatry_ready,
