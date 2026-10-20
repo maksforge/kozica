@@ -144,14 +144,18 @@ cannot stand in.
   with its own test certificate, not the app-signing key, so a link cannot install over the
   internal-track copy: that copy is uninstalled first, which deletes its data, so anything in the
   owner's install that matters is exported first (ADR-0005). Going back to the internal track after
-  A is another uninstall. The test phone's Google account must be able to reach the app's listing,
-  so it goes on the internal testers' list for R2.
+  A is another uninstall. Who may open a link is set on the Console's *Internal app sharing* page,
+  *Uploaders and testers* tab: "Anyone you shared the link with can download", the default, or an
+  email list, which then names the test phone's Google account for R2. Google's help also says a
+  tester needs access to the app's store listing, and Kozica is on no track but testing ones, so
+  if R2's link refuses that account, it goes on the internal testers' list too.
 - The owner's phone on Wi-Fi, because internal app sharing installs through the Play Store app. The
   test phone stands in for nothing here except R2, the second API level.
 - Logcat filtered for `WM-WorkerWrapper`, `ExtractionWorker`, `AssetPack`, `KozicaPack` and
   `SecurityException`; `dumpsys jobscheduler` for the app's jobs; for the refresh, the bytes the
   Play Store app's UID receives, from `dumpsys netstats detail` read before the second link is
-  tapped and after the Tatry is Ready again.
+  tapped and after the Tatry is Ready again, with the Play Store's auto-update off for that window
+  so no other app's update is counted.
 
 ### The verdicts, decided now rather than argued about later
 
