@@ -178,12 +178,12 @@ attribution. Route planning's walking times come from the same data.
 
 The user plans a route over Trails and sees its length, ascent and walking time, entirely on the
 phone. Search by name arrives here, because picking a start and an end needs it. A second area of
-the app arrives with it, so this is the phase that brings a tab bar.
-
-An idea for this phase, raised by the owner on 2026-10-20 and not yet decided: **highlight one chosen
-route** — a planned one, or a named long-distance Trail such as the GSB — and draw the rest fainter,
-rather than a switch that hides Trails by colour. A colour names no single route, and a map that
-hides colours no longer matches the signpost at the junction.
+the app arrives with it, so this is the phase that brings a tab bar. An idea raised by the owner on
+2026-10-20, not yet decided: **highlight either a planned route, or a named Trail such as the Główny
+Szlak Beskidzki (GSB)**, and draw the rest fainter rather than hide Trails by colour, since a colour
+names no single Trail and a map that hides colours no longer matches the signpost at the junction.
+Highlighting a named Trail needs its name or relation id in the tiles, which `KozicaProfile` does
+not write today.
 
 ## Phase 6 — The hike log
 
