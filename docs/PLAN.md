@@ -17,7 +17,7 @@ was extracted from and the first app built from it settled on exactly this split
 ## Status
 
 - [x] **Phase 0** — Skeleton: the template's reminders and Items gone, the ochre palette, one map screen
-- [ ] **Phase P** — The pipeline: everything set up; the first *automatic* upload still to be watched
+- [x] **Phase P** — The pipeline: release-please releases reach internal testing by themselves
 - [x] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; Play's reading (E) moved to phase 2b
 - [x] **Phase 2** — The map: the Tatry drawn as the signposts mark them, "you are here"
 - [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", delivered by Play
@@ -126,10 +126,9 @@ drawn. [`phase-0.md`](phase-0.md).
 
 ## Phase P — The pipeline
 
-Done but for one reading: the repository, the upload key, the Play entry, the secrets and the service
-account are in place, and version 0.1.0 reached internal testing by hand. What is left is watching
-`publish-play.yml` upload a release-please release by itself
-([`RELEASING.md`](RELEASING.md)).
+The repository, the upload key, the Play entry, the secrets and the service account are in place.
+Version 0.1.0 reached internal testing by hand; 0.2.0 was the first release `publish-play.yml`
+uploaded by itself, on 2026-10-20 ([`RELEASING.md`](RELEASING.md)).
 
 ## Phase 1 — The data reaches the phone
 
