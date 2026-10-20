@@ -34,6 +34,15 @@ class WelcomeUiStateTest {
     }
 
     @Test
+    fun `nothing to choose only once the Regions are read and none is choosable`() {
+        val waiting = listOf(regions[0], regions[3])
+
+        assertFalse(WelcomeUiState().nothingToChoose)
+        assertFalse(WelcomeUiState(regions).nothingToChoose)
+        assertTrue(WelcomeUiState(waiting).nothingToChoose)
+    }
+
+    @Test
     fun `the size is unknown while one chosen size is`() {
         val state =
             WelcomeUiState(
