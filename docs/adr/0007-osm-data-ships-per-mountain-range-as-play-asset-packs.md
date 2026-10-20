@@ -192,3 +192,23 @@ the profile's, kept in step by hand. The cut goes straight to planetiler, and th
 What reaches a Region is still what the Decision names: Trails, Huts, peaks and Shelters, roads,
 villages, water and land cover. A thing the app starts to read joins the profile and the table, not
 a filter.
+
+## Amendment — 2026-10-20: nine Regions, across the border
+
+Phase 2b fixes the list of Regions ([`phase-2b.md`](../phase-2b.md) § 4): Sudety Zachodnie,
+Środkowe and Wschodnie, Beskidy Zachodnie, Gorce i Pieniny, Tatry, Beskid Niski, Bieszczady and Góry
+Świętokrzyskie, each a coarse polygon that overlaps its neighbours by a few kilometres.
+
+**The Context's "the app needs only part of the input" no longer means part of Poland.** The ranges
+cross the state border, and half the Tatry's Trails are Slovak, so Regions cross it too. The build
+takes Geofabrik's Slovakia and Czechia extracts beside Poland's, brings each to its own replication
+sequence, and joins them with `osmium merge` before the cut. Geofabrik numbers each extract on its
+own, so the pin becomes one sequence per extract, and the build fails unless the three updated
+headers carry one replication timestamp: a pin is still one moment, and that moment is the data's
+date. A release build downloads about 3.4 GB rather than 2.1. Ukraine's side of the Bieszczady and
+Germany's of the Góry Izerskie stay out, for what they would add against their size.
+
+**The ODbL offer is the database.** `publish-play.yml` attaches every Region's archive to the
+release-please GitHub release, under ODbL, and the licences screen links to it. The Decision's "it
+is the script offered under ODbL" is struck: `build-map-data.py` stays readable in the public
+repository, but the offer is the derivative database itself, which leaves the code's licence alone.

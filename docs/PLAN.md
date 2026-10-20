@@ -20,7 +20,7 @@ was extracted from and the first app built from it settled on exactly this split
 - [x] **Phase P** — The pipeline: release-please releases reach internal testing by themselves
 - [x] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; Play's reading (E) moved to phase 2b
 - [x] **Phase 2** — The map: the Tatry drawn as the signposts mark them, "you are here"
-- [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", delivered by Play
+- [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", across the border, delivered by Play
 - [ ] **Phase 3** — Safe for a stranger ← **the door: closed testing opens here**
 - [ ] **Phase 4** — Elevation: contours and hillshading
 - [ ] **Phase 5** — Route planning, and search by name
@@ -154,12 +154,13 @@ could not ([`phase-0.md`](phase-0.md) § 3). Its gate is phase 1's deferred phon
 ## Phase 2b — Every Region
 
 Every Region built and downloadable from a picker, with "Download all". It owns ADR-0007's Region
-list and every Region's polygon, `tatry.poly` included, with whether a polygon follows the state
-border exactly. It brings the asset-delivery library into the release build: the Console's
-foreground-service declaration, the data build in CI and the ODbL offer. That is phase 1's
+list and every Region's polygon, `tatry.poly` included. Regions cross into Slovakia and Czechia
+where the ranges do, which brings those two extracts into the build at the same moment as Poland's.
+It brings the asset-delivery library into the release build: the Console's foreground-service
+declaration, the data build in CI and the ODbL offer. That is phase 1's
 checkpoint E, which this phase takes over, so phase 1 closes on its phone readings alone. Split
 from phase 2 when that phase opened, because the map can be built locally and this half waits on
-Play work.
+Play work. [`phase-2b.md`](phase-2b.md).
 
 ## Phase 3 — Safe for a stranger
 
