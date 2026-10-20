@@ -161,8 +161,9 @@ with a build to prove it.
   `ANDROID_SERIAL` (both honour it) or pass `adb -s <serial>`.
   - **The test phone**, `mnbm7hw8ivdqzx9l`: a wiped, debloated Redmi Note 8 Pro, Android 11 (API
     30), MIUI 12.5, Polish, on USB for good, in airplane mode with no SIM. Location stays on: turning
-    it off raises a Play services popup. No lock screen; it sleeps after 5 min even on USB, and
-    `adb shell input keyevent KEYCODE_WAKEUP` wakes it. Drive it at will. The map draws on it, unlike
+    it off raises a Play services popup. It has a **pattern lock** (the owner has it), and `screencap`
+    returns nothing while the keyguard shows; `svc power stayon usb` keeps it awake and unlocked on
+    USB, and `adb shell input keyevent KEYCODE_WAKEUP` wakes it. Drive it at will. The map draws on it, unlike
     the API 26 emulator. `connectedAndroidTest` runs on it with no prompt, but its closing uninstall
     takes the hand-pushed `files/regions/tatry.pmtiles` with it.
   - **The owner's phone**, `132bc856`: a Redmi Note 14 Pro 5G, API 36, HyperOS. It is in use, so
