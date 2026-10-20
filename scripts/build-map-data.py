@@ -93,11 +93,20 @@ def planetiler() -> Path:
 
 
 def read_pin(path: Path) -> Pin:
+    if not path.is_file():
+        fail(f"no pin file at {path}")
     pin = {}
     for line in path.read_text().splitlines():
-        if line.strip():
-            country, sequence = line.split()
-            pin[country] = int(sequence)
+        if not line.strip():
+            continue
+        if line.strip().isdigit():
+            fail(f"{path} is a one-number pin, Poland's alone from before phase 2b; write it as `poland {line.strip()}`")
+        if not (found := re.fullmatch(r"\s*(\S+)\s+(\d+)\s*", line)):
+            fail(f"{path}: `{line}` is not `<geofabrik name> <sequence>`")
+        country, sequence = found.groups()
+        if country in pin:
+            fail(f"{path} pins {country} twice")
+        pin[country] = int(sequence)
     if not pin:
         fail(f"{path} names no extract")
     return pin
@@ -106,8 +115,13 @@ def read_pin(path: Path) -> Pin:
 def state_timestamp(country: str, sequence: int) -> str:
     digits = f"{sequence:09d}"
     url = f"{GEOFABRIK}/{country}-updates/{digits[:3]}/{digits[3:6]}/{digits[6:]}.state.txt"
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as response:
-        state = response.read().decode()
+    try:
+        with urllib.request.urlopen(url, timeout=TIMEOUT) as response:
+            state = response.read().decode()
+    except urllib.error.HTTPError as error:
+        if error.code != 404:
+            raise
+        fail(f"Geofabrik has no {country} replication at sequence {sequence}: is `{country}` its extract's name?")
     found = re.search(r"^timestamp=(.+)$", state, re.MULTILINE)
     if not found:
         fail(f"no timestamp in {url}")
@@ -242,9 +256,9 @@ def country_cuts(
             fail(f"{extract.name} is at {found}, not the pin's moment {stamp}")
         for region, path in cut(country, extract, regions, WORK / "cuts" / label / country).items():
             cuts[region].append(path)
+        log(f"cut {country}; {shutil.disk_usage(WORK).free / 1e9:.1f} GB free")
         if discarding:
             discard(country)
-        log(f"cut {country}; {shutil.disk_usage(WORK).free / 1e9:.1f} GB free")
     return stamp, cuts
 
 
@@ -257,6 +271,15 @@ def merge(stamp: str, cuts: list[Path], target: Path) -> Path:
 
 def archive_path(region: str) -> Path:
     return ROOT / f"region_{region}/src/main/assets/{region}.pmtiles"
+
+
+def install(built: dict[str, Path]) -> None:
+    """Only once every Region has built, so a failed run leaves no pack at a different pin from the rest."""
+    for region, archive in built.items():
+        target = archive_path(region)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        archive.replace(target)
+        log(f"installed {target}")
 
 
 def tile(source: Path, region: str, archive: Path) -> Path:
@@ -328,7 +351,7 @@ def main() -> None:
     args = parser.parse_args()
 
     known = sorted(path.stem for path in REGIONS.glob("*.poly"))
-    regions = args.region or known
+    regions = list(dict.fromkeys(args.region or known))
     if unknown := set(regions) - set(known):
         fail(f"no polygon for {', '.join(sorted(unknown))} in {REGIONS}")
     checked = (args.check_determinism or regions) if args.check_determinism is not None else []
@@ -354,12 +377,13 @@ def main() -> None:
         }
     stamp, cuts = country_cuts(pin, regions, "pin", args.discard_extracts)
     sources = {region: merge(stamp, cuts[region], WORK / f"merged/pin/{region}.osm.pbf") for region in regions}
-    built = {region: tile(source, region, archive_path(region)) for region, source in sources.items()}
+    built = {region: tile(source, region, WORK / f"archives/{region}.pmtiles") for region, source in sources.items()}
     if checked:
         check_determinism(stamp, {region: cuts[region] for region in checked}, sources, built)
+    install(built)
     if patching:
         for region in regions:
-            measure_patch(region, olders[region], built[region])
+            measure_patch(region, olders[region], archive_path(region))
     shutil.rmtree(WORK / "cuts", ignore_errors=True)
 
 if __name__ == "__main__":
