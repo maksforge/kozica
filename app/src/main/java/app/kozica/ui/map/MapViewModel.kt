@@ -57,7 +57,7 @@ enum class MapEmpty {
  * @param camera where a new map view opens, null until the stored camera is read.
  * @param location null until the first resume reads it.
  * @param fix the newest position, null until the first arrives or while location cannot be read.
- * @param arrival the bounds of the Regions that became ready since the map last looked, until shown.
+ * @param arrival the bounds of a newly ready Region to move the camera to, until shown.
  */
 data class MapUiState(
     val regions: List<Region>? = null,
@@ -91,6 +91,9 @@ class MapViewModel(
     private val positions: (approximateOnly: Boolean) -> Flow<Location>,
 ) : ViewModel() {
     private val arrival = MutableStateFlow<GeoBounds?>(null)
+
+    /** [AppPreferences.readyRegions] as this map has taken it in, ahead of the write that stores it. */
+    private var known: Set<String>? = null
 
     private val regions =
         regions
@@ -148,7 +151,15 @@ class MapViewModel(
     }
 
     fun arrivalShown(bounds: GeoBounds) {
-        arrival.compareAndSet(bounds, null)
+        if (!arrival.compareAndSet(bounds, null)) return
+        // The camera's destination, so a Region landing mid-animation already finds it on data.
+        camera.value = MapStart.Fit(bounds)
+        remember(
+            regions.value
+                .orEmpty()
+                .filter { it.state is RegionState.Ready }
+                .map { it.id },
+        )
     }
 
     fun cameraIdle(at: MapCamera) {
@@ -169,15 +180,37 @@ class MapViewModel(
         applicationScope.launch { preferences.setMapCamera(at) }
     }
 
-    // A Region that arrives under the zoomed-out overview draws nothing there (docs/phase-2b.md § 1).
-    // Only NotDownloaded forgets one, so a data update passing through UpdateInProgress is no arrival.
+    // The rule and why: docs/phase-2b.md § 5, "The map goes to a Region on its first download".
     private suspend fun noteArrivals(regions: List<Region>) {
-        val known = preferences.readyRegions.first()
-        val ready = regions.filter { it.state is RegionState.Ready }
-        val removed = regions.filter { it.state == RegionState.NotDownloaded }.map { it.id }
-        val now = known - removed.toSet() + ready.map { it.id }
-        if (now != known) preferences.setReadyRegions(now)
-        ready.filter { it.id !in known }.bounds()?.let { arrival.value = it }
+        val stored = known ?: preferences.readyRegions.first()
+        val removed = regions.filter { it.state == RegionState.NotDownloaded }.map { it.id }.toSet() intersect stored
+        val kept = stored - removed
+        known = kept
+        if (removed.isNotEmpty()) applicationScope.launch { preferences.removeReadyRegions(removed) }
+        val (seen, arrived) = regions.filter { it.state is RegionState.Ready }.partition { it.id in kept }
+        val target = arrived.firstNotNullOfOrNull { it.readyBounds }
+        if (target != null && looksAtAny(seen)) {
+            remember(arrived.map { it.id })
+            arrival.value = null
+        } else {
+            arrival.value = target
+        }
+    }
+
+    private suspend fun looksAtAny(regions: List<Region>): Boolean {
+        val (latitude, longitude) =
+            when (val at = camera.value) {
+                is MapStart.At -> at.camera.latitude to at.camera.longitude
+                is MapStart.Fit -> at.bounds.centre()
+                null -> preferences.mapCamera.first()?.let { it.latitude to it.longitude }
+            } ?: return false
+        return regions.any { it.readyBounds?.contains(latitude, longitude) == true }
+    }
+
+    private fun remember(ids: Collection<String>) {
+        known = known.orEmpty() + ids
+        // Back finishes the activity, and that cancels viewModelScope before this write would run.
+        applicationScope.launch { preferences.addReadyRegions(ids.toSet()) }
     }
 
     companion object {
@@ -207,6 +240,15 @@ class MapViewModel(
 
 private fun List<Region>.readyArchives(): List<Pair<String, File>> =
     mapNotNull { region -> (region.state as? RegionState.Ready)?.let { region.id to it.archive } }
+
+private val Region.readyBounds: GeoBounds? get() = (state as? RegionState.Ready)?.bounds
+
+private fun GeoBounds.contains(
+    latitude: Double,
+    longitude: Double,
+) = latitude in south..north && longitude in west..east
+
+private fun GeoBounds.centre() = (south + north) / 2 to (west + east) / 2
 
 private fun List<Region>.bounds(): GeoBounds? =
     mapNotNull { (it.state as? RegionState.Ready)?.bounds }.reduceOrNull { a, b ->

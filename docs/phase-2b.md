@@ -331,9 +331,16 @@ Polish, `translatable="false"`.
   %2$s". While any of their sizes is unknown it drops the size rather than show a partial sum. It
   is absent when nothing is left to fetch.
 - **The map goes to a Region on its first download** (§ 1's verdict): it remembers which Regions
-  were ready when it last looked and fits the camera to any that arrived since, whether the
-  download ended on this screen or while the app was closed. Only a Region not downloaded is
-  forgotten, so an update passing through "Updating" is no arrival.
+  it has taken in, and a Region ready since is an arrival, whether the download ended on this
+  screen or while the app was closed. The camera moves only when its centre lies outside every
+  Region that was already ready, so the user is not looking at downloaded data, and then fits **one**
+  arrival, the first in `REGION_NAMES` order, never their union: the union of two Regions is the
+  overview that draws nothing. So "Download all" on screen moves once, to the first Region that
+  finishes, and stays, because the centre is now inside a ready Region; off screen it fits one
+  Region. An arrival is remembered once the camera has moved to it, or straight away when the
+  camera stays, so a process killed before the map returns still moves it. Only a Region not
+  downloaded is forgotten, at once, so one downloaded again moves the camera again and an update
+  passing through "Updating" is no arrival.
 - **Remove asks first.** A Region removed on a ridge with no signal does not come back until there is
   signal. The dialog says that, in one line, and Remove is its confirming button. Download asks
   nothing: Play's own confirmation covers mobile data.
