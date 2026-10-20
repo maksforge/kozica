@@ -143,7 +143,8 @@ scripts/          the Python toolchain. project.py is the one place the app's id
 scripts/map/      the planetiler profile build-map-data.py runs, decode-tile.py, and the style and
                   sprite generators
 scripts/regions/  one boundary polygon per Region
-region_tatry/     the Tatry's on-demand asset pack; joins the build only with -PmapPacks
+region_<id>/      one on-demand asset pack per polygon in scripts/regions/, all built by
+                  gradle/region-pack.gradle.kts; they join the build only with -PmapPacks
 art/             mark.py is the identity; both generators derive from it
 ```
 

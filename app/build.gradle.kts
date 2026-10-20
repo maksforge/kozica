@@ -149,7 +149,11 @@ android {
     }
 
     if (mapPacks) {
-        assetPacks += ":region_tatry"
+        assetPacks +=
+            rootProject
+                .file("scripts/regions")
+                .listFiles { file -> file.extension == "poly" }!!
+                .map { ":region_${it.nameWithoutExtension}" }
     }
 
     lint {
