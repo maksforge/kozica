@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/srednimax/kozica/compare/v0.4.0...v0.4.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* address support mail to kozica.support@maksforge.com ([3c98266](https://github.com/srednimax/kozica/commit/3c98266ecc4a9423e4305cb6335e6291c9dc947d))
+
 ## [0.4.0](https://github.com/srednimax/kozica/compare/v0.3.0...v0.4.0) (2026-10-20)
 
 
