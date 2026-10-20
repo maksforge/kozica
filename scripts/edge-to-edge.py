@@ -1389,7 +1389,9 @@ def load_strings(locale: str | None) -> dict[str, str]:
 
 def scene_needles() -> set[str]:
     """Every string this driver will look for on screen, across all suites."""
-    needles = {HOME, PROMPT_DISMISS, *SEED_WALK}
+    needles = {HOME, *SEED_WALK}
+    if PROMPT_DISMISS is not None:
+        needles.add(PROMPT_DISMISS)
     for scene in SCENES:
         needles.update(arg for kind, arg in scene.steps if kind in ("tap", "tap?", "tap_text"))
     return needles
