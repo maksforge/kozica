@@ -1,5 +1,6 @@
 package app.kozica.ui.support
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,14 +12,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.kozica.BuildConfig
 import app.kozica.R
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.DetailScaffold
 import app.kozica.ui.common.SectionHeader
+import app.kozica.ui.common.startActivitySafely
 
 /**
  * Attribution for every dependency in *this* binary.
@@ -37,6 +42,7 @@ fun LicencesScreen(
         viewModel(factory = LicencesViewModel.Factory, extras = appViewModelExtras()),
 ) {
     val groups by viewModel.groups.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     DetailScaffold(
         title = stringResource(R.string.settings_licences),
@@ -47,6 +53,13 @@ fun LicencesScreen(
             item(key = ODBL) {
                 LicenceSection("Open Database License 1.0", "OpenStreetMap") {
                     onOpenLicence(ODBL)
+                }
+            }
+            item(key = MAP_DATA_RELEASE) {
+                MapDataOffer {
+                    context.startActivitySafely(
+                        Intent(Intent.ACTION_VIEW, "$MAP_DATA_RELEASE${BuildConfig.VERSION_NAME}".toUri()),
+                    )
                 }
             }
             item(key = OFL) {
@@ -64,6 +77,24 @@ fun LicencesScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MapDataOffer(onClick: () -> Unit) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = Spacing.base, vertical = Spacing.tight),
+    ) {
+        Text(text = stringResource(R.string.licences_map_data), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(R.string.licences_map_data_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

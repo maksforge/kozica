@@ -84,6 +84,8 @@
     <string name="backup_export_everything">Eksportuj wszystko</string>
     <string name="backup_restore">Przywróć z pliku…</string>
 
+    <string name="licences_map_data">Dane mapy tej wersji</string>
+    <string name="licences_map_data_hint">Otwiera stronę wydania tej wersji na GitHubie, gdzie pliki mapy są udostępnione na licencji Open Database License.</string>
     <string name="licence_text_missing">Treść tej licencji nie jest dołączona do aplikacji.</string>
 
     <string name="schema_mismatch_title">Te dane zapisała inna wersja</string>

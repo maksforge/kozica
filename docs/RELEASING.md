@@ -203,9 +203,16 @@ Nothing uploads on a bare push to `main`, so cutting a version is still a delibe
 this only removes the hand-build that used to follow it.
 
 What the workflow does, in order: full checkout (`fetch-depth: 0`, because `versionCode`
-is the commit count), materialise the upload key from secrets, `bundleRelease`, run all
-four `aab-*.py` artifact checks, print the signing certificate, upload the AAB **and its
-R8 mapping**, keep both as a build artifact for 90 days, delete the key.
+is the commit count), build every Region's map data at `scripts/osm-data.pin` with osmium and
+pyosmium (`build-map-data.py --discard-extracts --check-determinism tatry`, most of two hours, almost
+all of it fetching Poland's extract; nothing is cached, ADR-0007), materialise the upload key from
+secrets, `bundleRelease -PmapPacks`, run all four `aab-*.py` artifact checks, print the signing
+certificate, **attach the nine `.pmtiles` to the GitHub release** (the ODbL offer, so it comes
+before Play and a failed attach stops the run), upload the AAB **and its R8 mapping**, keep both as
+a build artifact for 90 days, delete the key. The attach is why the job has `contents: write`.
+
+A data-only refresh is a `fix:` commit that moves the pin and nothing else (ADR-0007), with its
+release-notes line like any other release.
 
 The mapping matters because R8 is on: without it every Play crash report is
 obfuscated frames.

@@ -17,8 +17,9 @@ concurrency:
   group: publish-play
   cancel-in-progress: false
 
+# write, because the map archives are attached to the GitHub release before the bundle goes to Play.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -44,6 +45,18 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+
+      - name: Install osmium and pyosmium
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q osmium-tool
+          pip install --user 'osmium>=4.2'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # docs/phase-2b.md § 6: every Region at the pin, the Tatry built twice to prove the bytes repeat.
+      # The script logs the free disk after each country's cut; R9 reads it and this step's minutes.
+      - name: Build every Region at the pin
+        run: python3 scripts/build-map-data.py --discard-extracts --check-determinism tatry
 
       # The build reads its signing coordinates from local.properties and the keystore from a
       # path outside the repo, because neither may ever be committed (RELEASING.md, *The upload key*). A CI runner
@@ -77,8 +90,9 @@ jobs:
 
       # bundleRelease, never assembleRelease: Play wants an AAB, and an AAB cannot be
       # adb install-ed — so the only build ever put on a phone is the one Play delivers.
+      # -PmapPacks fails at configuration when any Region's archive is missing.
       - name: Build the bundle
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleRelease -PmapPacks
 
       # The repo's standing rule, and the reason this step sits before the upload rather than
       # after it: read the version, the permission set and the locales back out of the
@@ -98,6 +112,15 @@ jobs:
 
       - name: Show the signing certificate
         run: keytool -printcert -jarfile app/build/outputs/bundle/release/app-release.aab
+
+      # The ODbL offer (docs/phase-2b.md § 6), before Play sees the bundle: a release on Play without
+      # its database on GitHub is what the house rule exists to prevent. --clobber lets a retry attach
+      # them again.
+      - name: Attach the map archives to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles --clobber
 
       - name: Upload to internal testing
         uses: r0adkll/upload-google-play@v1.1.5

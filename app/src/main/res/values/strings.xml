@@ -112,6 +112,8 @@
     <string name="backup_restore">Restore from a file…</string>
 
     <!-- Licences -->
+    <string name="licences_map_data">The map data of this version</string>
+    <string name="licences_map_data_hint">Opens this version\'s release on GitHub, where the map\'s files are offered under the Open Database License.</string>
     <string name="licence_text_missing">The text of this licence is not bundled with the app.</string>
 
     <!-- The schema gate's screen. Deliberately plain: someone reading it is already worried. -->
