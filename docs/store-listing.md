@@ -141,3 +141,17 @@ Kozica now opens on its own screen, with a place kept for the map, in its own wa
 ```
 Kozica otwiera się teraz na własnym ekranie, z miejscem zarezerwowanym na mapę, w nowych, ciepłych kolorach. Ustawienia są pod ikoną u góry. Przypomnienia zostały usunięte.
 ```
+
+### 0.3.0 — Regions to download
+
+**English** — 323/500:
+
+```
+Choose the mountains you need on the new Regions screen and download them one Region at a time or all nine at once, from the Karkonosze to the Bieszczady, with the Slovak and Czech sides of the border. The Play Store downloads them; after that the map works with no signal. The screen opens from the button beside Settings.
+```
+
+**Polish** — 287/500:
+
+```
+Wybierz góry, których potrzebujesz, na nowym ekranie Regiony i pobierz je po jednym regionie albo wszystkie dziewięć naraz, od Karkonoszy po Bieszczady, razem ze słowacką i czeską stroną granicy. Pobiera je Sklep Play; potem mapa działa bez zasięgu. Ekran otwiera przycisk obok Ustawień.
+```
