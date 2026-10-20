@@ -56,9 +56,9 @@ internal fun appEntryDecorators(): List<NavEntryDecorator<NavKey>> =
 fun MainNavigation(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Home)
     val activity = LocalActivity.current
-    val preferences = (LocalContext.current.applicationContext as MainApplication).preferences
-    // Null for the frame before the store answers, which draws nothing rather than flash the map.
-    val onboardingDone by preferences.onboardingDone.collectAsStateWithLifecycle(initialValue = null)
+    val app = LocalContext.current.applicationContext as MainApplication
+    // Null only before a cold start's first read lands, which draws nothing rather than flash the map.
+    val onboardingDone by app.onboardingDone.collectAsStateWithLifecycle()
 
     Scaffold(modifier = modifier) { insets ->
         when (onboardingDone) {
