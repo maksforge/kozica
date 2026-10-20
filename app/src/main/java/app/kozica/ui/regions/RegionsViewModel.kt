@@ -59,7 +59,7 @@ class RegionsViewModel(
         id: String,
         launcher: ActivityResultLauncher<IntentSenderRequest>,
     ) {
-        viewModelScope.launch { if (!files.confirm(launcher)) files.download(listOf(id)) }
+        viewModelScope.launch { if (!files.confirm(launcher)) download(listOf(id)) }
     }
 
     companion object {
