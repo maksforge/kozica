@@ -90,4 +90,15 @@
     <string name="schema_mismatch_title">This data was saved by a different version</string>
     <string name="schema_mismatch_body">The data on this phone was saved at version %1$d, and this build reads version %2$d.</string>
     <string name="schema_mismatch_copy">A copy has been kept as %1$s. Nothing has been deleted.</string>
+
+    <!-- Polish in every language, as on the signposts (docs/phase-2b.md § 4). -->
+    <string name="region_sudety_zachodnie" translatable="false">Sudety Zachodnie</string>
+    <string name="region_sudety_srodkowe" translatable="false">Sudety Środkowe</string>
+    <string name="region_sudety_wschodnie" translatable="false">Sudety Wschodnie</string>
+    <string name="region_beskidy_zachodnie" translatable="false">Beskidy Zachodnie</string>
+    <string name="region_tatry" translatable="false">Tatry</string>
+    <string name="region_gorce_pieniny" translatable="false">Gorce i Pieniny</string>
+    <string name="region_beskid_niski" translatable="false">Beskid Niski</string>
+    <string name="region_bieszczady" translatable="false">Bieszczady</string>
+    <string name="region_gory_swietokrzyskie" translatable="false">Góry Świętokrzyskie</string>
 </resources>

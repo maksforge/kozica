@@ -75,3 +75,12 @@ What outlives the deletion is the background schema check (`data/BackgroundSchem
 phase 6's recording service will ask before it touches the database, and phase 6 re-reads this ADR
 for the notification ask and the vendor-ROM facts above. If scheduled work ever returns, the
 decision above is the starting point rather than a blank page.
+
+## Amendment — 2026-10-20: WorkManager returns, as Play Asset Delivery's
+
+Phase 2b puts the asset-delivery library into the release build ([`phase-2b.md`](../phase-2b.md)
+§ 2), and it depends on WorkManager for its `ExtractionWorker`. So the artifact carries WorkManager
+again, with `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and
+`FOREGROUND_SERVICE_DATA_SYNC`; `ACCESS_NETWORK_STATE` stays stripped. Nothing of Kozica's own is
+scheduled: the work is the library's, started by a Region download, and the amendment above still
+describes the app.

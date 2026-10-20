@@ -40,12 +40,12 @@ let us do otherwise".">
 | **Navigation 3** (`androidx.navigation3`) | Replaces Navigation Compose 2.x — don't reintroduce the old one |
 | Room via KSP | DAOs return `Flow`; schema evolution per ADR-0001 |
 | Manual DI via `AppContainer`, **not Hilt** | Constructor injection is clearer at this size and easy to migrate later |
-| Nothing scheduled | Reminders and WorkManager left in phase 0 — ADR-0003's amendment |
+| Nothing of ours scheduled | Reminders left in phase 0; WorkManager is Play Asset Delivery's alone — ADR-0003's amendments |
 | Photo Picker + `TakePicture` intent, **not CameraX** | Far less code; the system camera is fine here |
 | Coil 3 images | Compose-native, local files only |
 | On-device storage only | No backend. Backup per ADR-0005 |
 | MapLibre Native (OpenGL ES) + PMTiles | Offline, every network permission stripped — ADR-0008, `docs/phase-2.md` § 2 |
-| Play Asset Delivery | Debug only until phase 1's checkpoint E; brings WorkManager into the debug build alone (§ 3) |
+| Play Asset Delivery | One on-demand pack per Region, `ACCESS_NETWORK_STATE` stripped from its WorkManager — `docs/phase-2b.md` § 1 |
 
 ## House rules
 
@@ -121,8 +121,8 @@ app/src/main/java/<namespace>/
                how the app hangs together rather than any one screen
   AppBackupAgent.kt   Android Auto Backup, taking control of its own file set (ADR-0005)
   data/        Room entities, DAOs, database, converters, migrations, the schema gate, preferences
-  data/regions/ every Region's state and what its PMTiles header says; each variant supplies the
-               states in RegionSource.kt
+  data/regions/ every Region's pack and state and what its PMTiles header says; the list itself is
+               generated from scripts/regions/ into RegionList.kt
   data/backup/ export, restore, the manifest, the WAL checkpoint
   data/location/ the app's own reader of the phone's fixes; each variant wraps it in
                PositionOverride.kt
@@ -132,13 +132,12 @@ app/src/main/java/<namespace>/
 
 app/src/debug/    the developer-only build: the sample-data seeder, Settings' debug section and its
                   strings, the schema-mismatch screen's continue button, SeedReceiver for the
-                  capture driver, data/regions/, where RegionFiles.kt asks Play for the Tatry's
-                  pack and RegionSource.kt falls back to an archive hand-pushed to files/regions/,
-                  and the position override: a long press on the map, Settings' "real position"
+                  capture driver, data/regions/'s RegionSource.kt, which falls back to an archive
+                  hand-pushed to files/regions/<id>.pmtiles, and the position override: a long press on the map, Settings' "real position"
                   row and PositionReceiver for scripted readings
 app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
-                  settings, no continue button, no Region until phase 2b, and the real position
-                  passed through
+                  settings, no continue button, and the Regions and the real position passed
+                  through
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
 scripts/map/      the planetiler profile build-map-data.py runs, decode-tile.py, and the style and
                   sprite generators

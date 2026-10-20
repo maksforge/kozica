@@ -1,7 +1,8 @@
 package app.kozica.data.regions
 
-import android.app.Activity
 import android.content.Context
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import com.google.android.gms.tasks.Task
 import com.google.android.play.core.assetpacks.AssetPackException
 import com.google.android.play.core.assetpacks.AssetPackManagerFactory
@@ -16,95 +17,102 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * The Tatry's on-demand asset pack (docs/phase-1.md § 3). Debug only until phase 2b.
+ * Every Region's on-demand asset pack (docs/phase-2b.md § 2), one pack per polygon in
+ * `scripts/regions/`, named `region_<id>` and holding `<id>.pmtiles`.
  *
- * One per process, so a download or a removal started from Settings reaches the map's collector
- * through [updates].
+ * One per process, so a download or a removal started on one screen reaches every collector through
+ * [updates].
  */
 class RegionFiles private constructor(
     context: Context,
 ) {
     private val manager = AssetPackManagerFactory.getInstance(context.applicationContext)
-    private val updates = MutableSharedFlow<RegionState>(extraBufferCapacity = 8)
+    private val updates = MutableSharedFlow<Map<String, RegionState>>(extraBufferCapacity = 16)
 
-    val tatry: Flow<RegionState> =
+    val states: Flow<List<Region>> =
         merge(
-            flow { emit(read()) },
+            flow { emit(read(REGION_NAMES.keys)) },
             updates,
             progress()
-                .map(::fromPackState)
+                .map { state -> mapOf(idOf(state.name()) to fromPackState(idOf(state.name()), state)) }
                 .catch { },
-        ).flowOn(Dispatchers.IO)
+        ).scan(emptyMap<String, RegionState>()) { known, changed -> known + changed }
+            .filter { it.keys.containsAll(REGION_NAMES.keys) }
+            .map { known -> REGION_NAMES.map { (id, name) -> Region(id, name, known.getValue(id)) } }
+            .flowOn(Dispatchers.IO)
 
-    fun readyArchive(): File? =
+    fun readyArchive(id: String): File? =
         manager
-            .getPackLocation(PACK)
+            .getPackLocation(pack(id))
             ?.assetsPath()
-            ?.let { File(it, ARCHIVE) }
+            ?.let { File(it, "$id.pmtiles") }
             ?.takeIf(File::exists)
 
-    suspend fun download() {
+    /** One request for every Region in [ids], so "Download all" is one fetch rather than nine. */
+    suspend fun download(ids: Collection<String>) {
         updates.emit(
             try {
-                manager
-                    .fetch(listOf(PACK))
-                    .await()
-                    .packStates()[PACK]
-                    ?.let(::fromPackState)
-                    ?: RegionState.NotDownloaded
+                val states = manager.fetch(ids.map(::pack)).await().packStates()
+                ids.associateWith { id -> states[pack(id)]?.let { fromPackState(id, it) } ?: RegionState.NotDownloaded }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                failure(e)
+                ids.associateWith { failure(e) }
             },
         )
     }
 
-    fun confirm(activity: Activity) {
-        manager.showConfirmationDialog(activity).addOnFailureListener { updates.tryEmit(failure(it)) }
+    /** Play's own dialog, for both [RegionState.WaitingForWifi] and [RegionState.NeedsConfirmation]. */
+    fun confirm(launcher: ActivityResultLauncher<IntentSenderRequest>) {
+        manager.showConfirmationDialog(launcher)
     }
 
-    suspend fun remove() {
+    suspend fun remove(id: String) {
         try {
-            manager.removePack(PACK).await()
+            manager.removePack(pack(id)).await()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            updates.emit(failure(e))
+            updates.emit(mapOf(id to failure(e)))
             return
         }
-        updates.emit(read())
+        updates.emit(read(listOf(id)))
     }
 
     // A build sideloaded by installDebug has no Play session and declares no pack, so a request
-    // fails or answers without the Tatry; either is "not downloaded", never a crash (ADR-0007).
-    private suspend fun read(): RegionState {
-        readyArchive()?.let { return readyRegion(it) }
-        return try {
-            manager
-                .getPackStates(listOf(PACK))
-                .await()
-                .packStates()[PACK]
-                ?.let(::fromPackState)
+    // fails or answers without the pack; either is "not downloaded", never a crash (ADR-0007).
+    private suspend fun read(ids: Collection<String>): Map<String, RegionState> {
+        val states =
+            try {
+                manager.getPackStates(ids.map(::pack)).await().packStates()
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        return ids.associateWith { id ->
+            readyArchive(id)?.let(::readyRegion)
+                ?: states[pack(id)]?.let { fromPackState(id, it) }
                 ?: RegionState.NotDownloaded
-        } catch (_: Exception) {
-            RegionState.NotDownloaded
         }
     }
 
     private fun progress(): Flow<AssetPackState> =
         callbackFlow {
-            val listener = AssetPackStateUpdateListener { state -> if (state.name() == PACK) trySend(state) }
+            val listener =
+                AssetPackStateUpdateListener { state ->
+                    if (idOf(state.name()) in REGION_NAMES) trySend(state)
+                }
             manager.registerListener(listener)
             awaitClose { manager.unregisterListener(listener) }
         }
@@ -112,19 +120,27 @@ class RegionFiles private constructor(
     private fun failure(e: Exception): RegionState =
         RegionState.Failed((e as? AssetPackException)?.errorCode ?: AssetPackErrorCode.INTERNAL_ERROR)
 
-    private fun fromPackState(state: AssetPackState): RegionState =
+    private fun fromPackState(
+        id: String,
+        state: AssetPackState,
+    ): RegionState =
         when (state.status()) {
-            AssetPackStatus.COMPLETED -> readyArchive()?.let(::readyRegion) ?: RegionState.NotDownloaded
+            AssetPackStatus.COMPLETED -> readyArchive(id)?.let(::readyRegion) ?: RegionState.NotDownloaded
             AssetPackStatus.PENDING,
             AssetPackStatus.DOWNLOADING,
             AssetPackStatus.TRANSFERRING,
             -> {
                 val percent = downloadPercent(state)
-                if (readyArchive() != null) RegionState.UpdateInProgress(percent) else RegionState.Downloading(percent)
+                if (readyArchive(id) !=
+                    null
+                ) {
+                    RegionState.UpdateInProgress(percent)
+                } else {
+                    RegionState.Downloading(percent)
+                }
             }
-            AssetPackStatus.WAITING_FOR_WIFI,
-            AssetPackStatus.REQUIRES_USER_CONFIRMATION,
-            -> RegionState.WaitingForConfirmation
+            AssetPackStatus.WAITING_FOR_WIFI -> RegionState.WaitingForWifi
+            AssetPackStatus.REQUIRES_USER_CONFIRMATION -> RegionState.NeedsConfirmation
             AssetPackStatus.FAILED -> RegionState.Failed(state.errorCode())
             else -> RegionState.NotDownloaded
         }
@@ -137,13 +153,14 @@ class RegionFiles private constructor(
         }
 
     companion object {
-        private const val PACK = "region_tatry"
-        private const val ARCHIVE = "tatry.pmtiles"
-
         @Volatile private var instance: RegionFiles? = null
 
         fun of(context: Context): RegionFiles =
             instance ?: synchronized(this) { instance ?: RegionFiles(context).also { instance = it } }
+
+        private fun pack(id: String) = "region_$id"
+
+        private fun idOf(pack: String) = pack.removePrefix("region_")
     }
 }
 

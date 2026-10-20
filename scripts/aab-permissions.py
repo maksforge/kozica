@@ -84,6 +84,10 @@ EXPECTED = {
     "*.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION": "AndroidX, signature-level",
     "android.permission.ACCESS_FINE_LOCATION": "the position button: the dot on the map",
     "android.permission.ACCESS_COARSE_LOCATION": "the position button: asked with fine, for the approximate option",
+    "android.permission.FOREGROUND_SERVICE": "Play Asset Delivery's extraction service, which unpacks a Region",
+    "android.permission.FOREGROUND_SERVICE_DATA_SYNC": "the same service's type, declared in the Console",
+    "android.permission.WAKE_LOCK": "WorkManager, which runs Play Asset Delivery's ExtractionWorker",
+    "android.permission.RECEIVE_BOOT_COMPLETED": "WorkManager, rescheduling that work after a reboot",
 }
 
 # Permissions that must never appear. Absence is what the Data safety answers
