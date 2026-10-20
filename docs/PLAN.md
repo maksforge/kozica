@@ -180,6 +180,11 @@ The user plans a route over Trails and sees its length, ascent and walking time,
 phone. Search by name arrives here, because picking a start and an end needs it. A second area of
 the app arrives with it, so this is the phase that brings a tab bar.
 
+An idea for this phase, raised by the owner on 2026-10-20 and not yet decided: **highlight one chosen
+route** — a planned one, or a named long-distance Trail such as the GSB — and draw the rest fainter,
+rather than a switch that hides Trails by colour. A colour names no single route, and a map that
+hides colours no longer matches the signpost at the junction.
+
 ## Phase 6 — The hike log
 
 Record a hike — the track, photos and notes — and look back at it. It brings the `location`
