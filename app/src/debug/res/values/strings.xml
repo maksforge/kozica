@@ -20,17 +20,15 @@
     <string name="debug_section" translatable="false">Debug</string>
     <string name="debug_seed" translatable="false">Seed sample data</string>
     <string name="debug_wipe" translatable="false">Delete all data</string>
-    <string name="debug_tatry_reading" translatable="false">Tatry: reading…</string>
-    <string name="debug_tatry_not_downloaded" translatable="false">Tatry: not downloaded</string>
-    <string name="debug_tatry_downloading" translatable="false">Tatry: downloading, %1$d %%</string>
-    <string name="debug_tatry_updating" translatable="false">Tatry: updating, %1$d %%</string>
-    <string name="debug_tatry_waiting" translatable="false">Tatry: waiting for Wi-Fi, tap Download Tatry to use mobile data</string>
-    <string name="debug_tatry_confirm" translatable="false">Tatry: Play needs a confirmation, tap Download Tatry</string>
-    <string name="debug_tatry_ready" translatable="false">Tatry: ready, OSM data of %1$s</string>
-    <string name="debug_tatry_no_date" translatable="false">unknown date</string>
-    <string name="debug_tatry_failed" translatable="false">Tatry: failed, error %1$d</string>
-    <string name="debug_tatry_download" translatable="false">Download Tatry</string>
-    <string name="debug_tatry_remove" translatable="false">Remove Tatry</string>
+    <string name="debug_region_reading" translatable="false">Regions: reading…</string>
+    <string name="debug_region_not_downloaded" translatable="false">%1$s: not downloaded</string>
+    <string name="debug_region_downloading" translatable="false">%1$s: downloading, %2$d %%</string>
+    <string name="debug_region_updating" translatable="false">%1$s: updating, %2$d %%</string>
+    <string name="debug_region_waiting" translatable="false">%1$s: waiting for Wi-Fi</string>
+    <string name="debug_region_confirm" translatable="false">%1$s: Play needs a confirmation</string>
+    <string name="debug_region_ready" translatable="false">%1$s: ready, OSM data of %2$s</string>
+    <string name="debug_region_no_date" translatable="false">unknown date</string>
+    <string name="debug_region_failed" translatable="false">%1$s: failed, error %2$d</string>
     <string name="debug_position_real" translatable="false">Use the real position</string>
     <string name="schema_mismatch_continue" translatable="false">Continue and start fresh</string>
 </resources>

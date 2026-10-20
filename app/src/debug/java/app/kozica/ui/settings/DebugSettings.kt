@@ -1,7 +1,5 @@
 package app.kozica.ui.settings
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,11 +17,11 @@ import app.kozica.MainApplication
 import app.kozica.R
 import app.kozica.data.SampleData
 import app.kozica.data.location.clearPositionOverride
+import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.RegionState
 import app.kozica.theme.Spacing
 import app.kozica.ui.common.SectionHeader
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -38,10 +36,7 @@ fun DebugSettings() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val app = context.applicationContext as MainApplication
-    val regions = remember { RegionFiles.of(context) }
-    val tatry by remember { regions.states.map { all -> all.first { it.id == TATRY }.state } }
-        .collectAsStateWithLifecycle(initialValue = null)
-    val confirmation = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
+    val regions by remember { RegionFiles.of(context).states }.collectAsStateWithLifecycle(initialValue = null)
 
     SectionHeader(stringResource(R.string.debug_section))
     DebugRow(stringResource(R.string.debug_seed)) {
@@ -50,41 +45,38 @@ fun DebugSettings() {
     DebugRow(stringResource(R.string.debug_wipe)) {
         scope.launch { SampleData.wipe(app.container.items) }
     }
-    Text(
-        text = tatryState(tatry),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.base, vertical = Spacing.tight),
-    )
-    DebugRow(stringResource(R.string.debug_tatry_download)) {
-        if (tatry == RegionState.WaitingForWifi || tatry == RegionState.NeedsConfirmation) {
-            scope.launch { regions.confirm(confirmation) }
-        } else {
-            scope.launch { regions.download(listOf(TATRY)) }
-        }
-    }
-    DebugRow(stringResource(R.string.debug_tatry_remove)) {
-        scope.launch { regions.remove(TATRY) }
-    }
+    regions?.forEach { PackState(packState(it)) } ?: PackState(stringResource(R.string.debug_region_reading))
     DebugRow(stringResource(R.string.debug_position_real), onClick = ::clearPositionOverride)
 }
 
 @Composable
-private fun tatryState(state: RegionState?): String =
-    when (state) {
-        null -> stringResource(R.string.debug_tatry_reading)
-        RegionState.NotDownloaded -> stringResource(R.string.debug_tatry_not_downloaded)
-        is RegionState.Downloading -> stringResource(R.string.debug_tatry_downloading, state.percent)
-        is RegionState.UpdateInProgress -> stringResource(R.string.debug_tatry_updating, state.percent)
-        RegionState.WaitingForWifi -> stringResource(R.string.debug_tatry_waiting)
-        RegionState.NeedsConfirmation -> stringResource(R.string.debug_tatry_confirm)
+private fun packState(region: Region): String {
+    val name = stringResource(region.name)
+    return when (val state = region.state) {
+        RegionState.NotDownloaded -> stringResource(R.string.debug_region_not_downloaded, name)
+        is RegionState.Downloading -> stringResource(R.string.debug_region_downloading, name, state.percent)
+        is RegionState.UpdateInProgress -> stringResource(R.string.debug_region_updating, name, state.percent)
+        RegionState.WaitingForWifi -> stringResource(R.string.debug_region_waiting, name)
+        RegionState.NeedsConfirmation -> stringResource(R.string.debug_region_confirm, name)
         is RegionState.Ready ->
             stringResource(
-                R.string.debug_tatry_ready,
-                state.osmDate?.toString() ?: stringResource(R.string.debug_tatry_no_date),
+                R.string.debug_region_ready,
+                name,
+                state.osmDate?.toString() ?: stringResource(R.string.debug_region_no_date),
             )
-        is RegionState.Failed -> stringResource(R.string.debug_tatry_failed, state.errorCode)
+        is RegionState.Failed -> stringResource(R.string.debug_region_failed, name, state.errorCode)
     }
+}
+
+@Composable
+private fun PackState(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.base, vertical = Spacing.hair),
+    )
+}
 
 @Composable
 private fun DebugRow(
@@ -101,5 +93,3 @@ private fun DebugRow(
                 .padding(horizontal = Spacing.base, vertical = Spacing.base),
     )
 }
-
-private const val TATRY = "tatry"

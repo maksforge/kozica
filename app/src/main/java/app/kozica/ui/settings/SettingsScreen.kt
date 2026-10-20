@@ -32,6 +32,7 @@ import app.kozica.ui.support.titleRes
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenRegions: () -> Unit,
     onOpenLicences: () -> Unit,
     onOpenSupport: () -> Unit,
     modifier: Modifier = Modifier,
@@ -47,6 +48,9 @@ fun SettingsScreen(
         modifier = modifier,
     ) { contentModifier ->
         Column(modifier = contentModifier.verticalScroll(rememberScrollState())) {
+            SectionHeader(stringResource(R.string.settings_map))
+            SettingsRow(stringResource(R.string.regions_title), onClick = onOpenRegions)
+
             SectionHeader(stringResource(R.string.settings_appearance))
 
             Row(modifier = Modifier.padding(horizontal = Spacing.base)) {

@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -56,6 +57,7 @@ enum class MapEmpty {
  * @param camera where a new map view opens, null until the stored camera is read.
  * @param location null until the first resume reads it.
  * @param fix the newest position, null until the first arrives or while location cannot be read.
+ * @param arrival the bounds of the Regions that became ready since the map last looked, until shown.
  */
 data class MapUiState(
     val regions: List<Region>? = null,
@@ -63,6 +65,7 @@ data class MapUiState(
     val camera: MapStart? = null,
     val location: LocationRead? = null,
     val fix: Location? = null,
+    val arrival: GeoBounds? = null,
 ) {
     private val ready: List<RegionState.Ready> get() = regions.orEmpty().mapNotNull { it.state as? RegionState.Ready }
 
@@ -87,7 +90,12 @@ class MapViewModel(
     private val applicationScope: CoroutineScope,
     private val positions: (approximateOnly: Boolean) -> Flow<Location>,
 ) : ViewModel() {
-    private val regions = regions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    private val arrival = MutableStateFlow<GeoBounds?>(null)
+
+    private val regions =
+        regions
+            .onEach(::noteArrivals)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val camera = MutableStateFlow<MapStart?>(null)
 
@@ -119,7 +127,9 @@ class MapViewModel(
             }.onStart { emit(null) }
 
     val state: StateFlow<MapUiState> =
-        combine(this.regions, style, camera, location, fix, ::MapUiState)
+        combine(this.regions, style, camera, location, fix) { regions, style, camera, location, fix ->
+            MapUiState(regions, style, camera, location, fix)
+        }.combine(arrival) { state, arrival -> state.copy(arrival = arrival) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     init {
@@ -135,6 +145,10 @@ class MapViewModel(
                     )
             camera.compareAndSet(null, start)
         }
+    }
+
+    fun arrivalShown(bounds: GeoBounds) {
+        arrival.compareAndSet(bounds, null)
     }
 
     fun cameraIdle(at: MapCamera) {
@@ -153,6 +167,17 @@ class MapViewModel(
         val at = (camera.value as? MapStart.At)?.camera ?: return
         // Back finishes the activity, and that cancels viewModelScope before this write would run.
         applicationScope.launch { preferences.setMapCamera(at) }
+    }
+
+    // A Region that arrives under the zoomed-out overview draws nothing there (docs/phase-2b.md § 1).
+    // Only NotDownloaded forgets one, so a data update passing through UpdateInProgress is no arrival.
+    private suspend fun noteArrivals(regions: List<Region>) {
+        val known = preferences.readyRegions.first()
+        val ready = regions.filter { it.state is RegionState.Ready }
+        val removed = regions.filter { it.state == RegionState.NotDownloaded }.map { it.id }
+        val now = known - removed.toSet() + ready.map { it.id }
+        if (now != known) preferences.setReadyRegions(now)
+        ready.filter { it.id !in known }.bounds()?.let { arrival.value = it }
     }
 
     companion object {

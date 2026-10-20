@@ -12,6 +12,7 @@ import app.kozica.data.ItemRepository
 import app.kozica.data.buildAppDatabase
 import app.kozica.data.location.positionFixes
 import app.kozica.data.location.withPositionOverride
+import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.regionStates
 import app.kozica.media.MediaFiles
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +63,8 @@ class AppContainer(
     val items by lazy { ItemRepository(database.itemDao(), media) }
 
     val regions by lazy { regionStates(appContext) }
+
+    val regionFiles by lazy { RegionFiles.of(appContext) }
 
     @RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     fun positions(approximateOnly: Boolean): Flow<Location> =

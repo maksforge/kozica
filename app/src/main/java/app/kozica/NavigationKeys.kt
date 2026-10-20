@@ -20,6 +20,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object Backup : NavKey
 
+@Serializable data object Regions : NavKey
+
 /**
  * Help and feedback, and the licences below it — both pushed from Settings' *About* section
  * rather than being roots of their own. Somewhere you go once, from the place you already go to

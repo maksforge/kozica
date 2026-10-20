@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -53,6 +54,7 @@ class AppPreferences(
         val MAP_LATITUDE = doublePreferencesKey("map_latitude")
         val MAP_LONGITUDE = doublePreferencesKey("map_longitude")
         val MAP_ZOOM = doublePreferencesKey("map_zoom")
+        val READY_REGIONS = stringSetPreferencesKey("ready_regions")
     }
 
     /**
@@ -100,6 +102,9 @@ class AppPreferences(
             MapCamera(latitude, longitude, zoom)
         }
 
+    /** The Regions the map last knew to be on the phone, so it can tell one that arrived since. */
+    val readyRegions: Flow<Set<String>> = store.data.map { it[Keys.READY_REGIONS].orEmpty() }
+
     /**
      * The theme mode, read once, before any Activity exists.
      *
@@ -128,6 +133,10 @@ class AppPreferences(
             prefs[Keys.MAP_LONGITUDE] = camera.longitude
             prefs[Keys.MAP_ZOOM] = camera.zoom
         }
+    }
+
+    suspend fun setReadyRegions(ids: Set<String>) {
+        store.edit { it[Keys.READY_REGIONS] = ids }
     }
 
     suspend fun setBackupFolderUri(uri: String?) {
