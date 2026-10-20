@@ -53,10 +53,16 @@ jobs:
           pip install --user 'osmium>=4.2'
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      # docs/phase-2b.md § 6: every Region at the pin, the Tatry built twice to prove the bytes repeat.
-      # The script logs the free disk after each country's cut; R9 reads it and this step's minutes.
-      - name: Build every Region at the pin
-        run: python3 scripts/build-map-data.py --discard-extracts --check-determinism tatry
+      # A manual run on a branch has no release to attach to; fail before the two-hour data build.
+      - name: Check the release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          if ! gh release view "${TAG}" > /dev/null; then
+            echo "::error::No GitHub release named '${TAG}'. A manual run must pick the release tag in the Run workflow dialog, not a branch."
+            exit 1
+          fi
 
       # The build reads its signing coordinates from local.properties and the keystore from a
       # path outside the repo, because neither may ever be committed (RELEASING.md, *The upload key*). A CI runner
@@ -87,6 +93,11 @@ jobs:
             echo "upload.keyAlias=${KEY_ALIAS}"
             echo "upload.keyPassword=${KEY_PASSWORD}"
           } >> local.properties
+
+      # docs/phase-2b.md § 6: every Region at the pin, the Tatry built twice to prove the bytes repeat.
+      # The script logs the free disk after each country's cut; R9 reads it and this step's minutes.
+      - name: Build every Region at the pin
+        run: python3 scripts/build-map-data.py --discard-extracts --check-determinism tatry
 
       # bundleRelease, never assembleRelease: Play wants an AAB, and an AAB cannot be
       # adb install-ed — so the only build ever put on a phone is the one Play delivers.
