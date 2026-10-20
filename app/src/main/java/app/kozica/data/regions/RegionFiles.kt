@@ -43,12 +43,12 @@ class RegionFiles private constructor(
 
     val states: Flow<List<Region>> =
         merge(
-            flow { emit(read(REGION_NAMES.keys)) },
-            updates,
+            flow { emit(StateChange(read(REGION_NAMES.keys), isFirstRead = true)) },
+            updates.map { StateChange(it) },
             progress()
-                .map { state -> mapOf(idOf(state.name()) to fromPackState(idOf(state.name()), state)) }
+                .map { state -> StateChange(mapOf(idOf(state.name()) to fromPackState(idOf(state.name()), state))) }
                 .catch { },
-        ).scan(emptyMap<String, RegionState>()) { known, changed -> known + changed }
+        ).scan(emptyMap<String, RegionState>()) { known, change -> known.mergedWith(change) }
             .filter { it.keys.containsAll(REGION_NAMES.keys) }
             .map { known -> REGION_NAMES.map { (id, name) -> Region(id, name, known.getValue(id)) } }
             .flowOn(Dispatchers.IO)
@@ -69,24 +69,28 @@ class RegionFiles private constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                ids.associateWith { failure(e) }
+                ids.associateWith { id -> readyArchive(id)?.let(::readyRegion) ?: failure(e) }
             },
         )
     }
 
-    /** Play's own dialog, for both [RegionState.WaitingForWifi] and [RegionState.NeedsConfirmation]. */
-    fun confirm(launcher: ActivityResultLauncher<IntentSenderRequest>) {
-        manager.showConfirmationDialog(launcher)
-    }
+    /**
+     * Play's own dialog, for both [RegionState.WaitingForWifi] and [RegionState.NeedsConfirmation].
+     * False when nothing was awaiting confirmation; the states are then read again, so a stale one
+     * corrects itself.
+     */
+    suspend fun confirm(launcher: ActivityResultLauncher<IntentSenderRequest>): Boolean =
+        manager.showConfirmationDialog(launcher).also { shown ->
+            if (!shown) updates.emit(read(REGION_NAMES.keys))
+        }
 
+    /** A failed removal surfaces as whatever is left: an archive still on disk stays Ready. */
     suspend fun remove(id: String) {
         try {
             manager.removePack(pack(id)).await()
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
-            updates.emit(mapOf(id to failure(e)))
-            return
+        } catch (_: Exception) {
         }
         updates.emit(read(listOf(id)))
     }
@@ -130,14 +134,9 @@ class RegionFiles private constructor(
             AssetPackStatus.DOWNLOADING,
             AssetPackStatus.TRANSFERRING,
             -> {
+                val updating = readyArchive(id) != null
                 val percent = downloadPercent(state)
-                if (readyArchive(id) !=
-                    null
-                ) {
-                    RegionState.UpdateInProgress(percent)
-                } else {
-                    RegionState.Downloading(percent)
-                }
+                if (updating) RegionState.UpdateInProgress(percent) else RegionState.Downloading(percent)
             }
             AssetPackStatus.WAITING_FOR_WIFI -> RegionState.WaitingForWifi
             AssetPackStatus.REQUIRES_USER_CONFIRMATION -> RegionState.NeedsConfirmation
@@ -163,6 +162,16 @@ class RegionFiles private constructor(
         private fun idOf(pack: String) = pack.removePrefix("region_")
     }
 }
+
+internal class StateChange(
+    val states: Map<String, RegionState>,
+    val isFirstRead: Boolean = false,
+)
+
+// The first read fills only what no update has said yet: a listener event that lands while that read
+// is pending is newer than the snapshot the read returns.
+internal fun Map<String, RegionState>.mergedWith(change: StateChange): Map<String, RegionState> =
+    if (change.isFirstRead) change.states + this else this + change.states
 
 private suspend fun <T> Task<T>.await(): T =
     suspendCancellableCoroutine { continuation ->

@@ -211,10 +211,11 @@ Phase 1 § 5's first two bullets are this checkpoint, and stand as written there
   that directory: `settings.gradle.kts` includes one pack module per polygon, `region_<id>`, from one
   shared build script rather than nine copies, and `app/build.gradle.kts` adds them all to
   `assetPacks` under `-PmapPacks`. The app's list is generated from the same directory into a Kotlin
-  source, in the order a hiker reads the mountains, west to east, with Góry Świętokrzyskie last,
-  each entry naming `R.string.region_<id>`. One list, so a Region cannot exist in the build and not in
-  the app, and one without a name does not compile. The order is a line in the generator, not a
-  field in the polygon.
+  source, in the order a hiker reads the mountains, § 4's table: west to east, with Góry
+  Świętokrzyskie last, each entry naming `R.string.region_<id>`. One list, so a Region cannot exist
+  in the build and not in the app, and one without a name does not compile. The order is a list of
+  ids in the generator, not a field in the polygon, and the build fails when that list and the
+  polygons disagree.
 - **`WaitingForConfirmation` splits in two, with one handler.** `RegionFiles` maps two Play statuses
   to it today, and they mean different things: `WAITING_FOR_WIFI` holds a large download over mobile
   data for the user's yes; `REQUIRES_USER_CONFIRMATION` means the installed app did not come from

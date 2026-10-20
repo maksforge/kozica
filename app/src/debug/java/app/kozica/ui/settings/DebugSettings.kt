@@ -58,7 +58,7 @@ fun DebugSettings() {
     )
     DebugRow(stringResource(R.string.debug_tatry_download)) {
         if (tatry == RegionState.WaitingForWifi || tatry == RegionState.NeedsConfirmation) {
-            regions.confirm(confirmation)
+            scope.launch { regions.confirm(confirmation) }
         } else {
             scope.launch { regions.download(listOf(TATRY)) }
         }

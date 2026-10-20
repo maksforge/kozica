@@ -279,15 +279,18 @@ abstract class GenerateRegionList : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val regions =
+        val ids =
             polygons
                 .get()
                 .asFile
                 .listFiles { file -> file.extension == "poly" }!!
-                .associate { it.nameWithoutExtension to meanLongitude(it) }
-                .entries
-                .sortedBy { (id, longitude) -> if (id == "gory_swietokrzyskie") Double.MAX_VALUE else longitude }
-        val entries = regions.joinToString("") { (id) -> "        \"$id\" to R.string.region_$id,\n" }
+                .map { it.nameWithoutExtension }
+                .toSet()
+        check(ids == ORDER.toSet()) {
+            "scripts/regions/ and GenerateRegionList.ORDER disagree: " +
+                "${ids - ORDER.toSet()} have no place in the order, ${ORDER.toSet() - ids} have no polygon"
+        }
+        val entries = ORDER.joinToString("") { id -> "        \"$id\" to R.string.region_$id,\n" }
         val source = outputDirectory.get().asFile.resolve("app/kozica/data/regions/RegionList.kt")
         source.parentFile.mkdirs()
         source.writeText(
@@ -296,17 +299,21 @@ abstract class GenerateRegionList : DefaultTask() {
         )
     }
 
-    private fun meanLongitude(polygon: File): Double =
-        polygon
-            .readLines()
-            .filter { it.startsWith(" ") }
-            .map {
-                it
-                    .trim()
-                    .split(Regex("\\s+"))
-                    .first()
-                    .toDouble()
-            }.average()
+    companion object {
+        /** docs/phase-2b.md § 4's table: west to east, Góry Świętokrzyskie last. */
+        val ORDER =
+            listOf(
+                "sudety_zachodnie",
+                "sudety_srodkowe",
+                "sudety_wschodnie",
+                "beskidy_zachodnie",
+                "gorce_pieniny",
+                "tatry",
+                "beskid_niski",
+                "bieszczady",
+                "gory_swietokrzyskie",
+            )
+    }
 }
 
 val generateRegionList =
