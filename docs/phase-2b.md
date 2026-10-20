@@ -243,8 +243,9 @@ Phase 1 § 5's first two bullets are this checkpoint, and stand as written there
   `NeedsConfirmation` may make Play reinstall the app and cancel every request, so the row falls
   back to Download.
 - **The Console declaration** for `FOREGROUND_SERVICE_DATA_SYNC`: the library's extraction service,
-  started by the Play Store's delivery, user-initiated by a download. It is the owner's account, so
-  it is filled through Claude in Chrome in the sitting that merges B, and recorded in
+  started by the Play Store's delivery, user-initiated by a download. The Console offers the form
+  only once a bundle declaring the permission reaches a track, so it is filled, through Claude in
+  Chrome with the owner's OK, when E and F's release is uploaded, and recorded in
   `play-app-content.md`.
 
 ## 3. Across the border

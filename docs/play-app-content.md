@@ -134,8 +134,9 @@ forbids it. Answered 2026-10-20.
 **`dataSync`, for Play Asset Delivery's extraction service**, from phase 2b's checkpoint B
 ([`phase-2b.md`](phase-2b.md) § 2). Kozica starts no foreground service of its own; the library's
 service unpacks a Region's pack after the Play Store has downloaded it. **Not yet declared in the
-Console**: it is declared in the sitting that merges B, and this section gets that date. The
-answers to give:
+Console**: the form appears only once a bundle declaring the permission reaches a track (internal
+app sharing does not count; checked 2026-10-20), so it is declared with the first release that
+carries the library, E's and F's, and this section gets that date. The answers to give:
 
 - **What the user sees:** a Region they asked to download, from the Regions screen, being made
   ready to use offline, with the system's foreground-service notification while it runs.
