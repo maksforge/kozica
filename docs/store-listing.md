@@ -144,14 +144,14 @@ Kozica otwiera się teraz na własnym ekranie, z miejscem zarezerwowanym na map�
 
 ### 0.3.0 — Regions to download
 
-**English** — 323/500:
+**English** — 410/500:
 
 ```
-Choose the mountains you need on the new Regions screen and download them one Region at a time or all nine at once, from the Karkonosze to the Bieszczady, with the Slovak and Czech sides of the border. The Play Store downloads them; after that the map works with no signal. The screen opens from the button beside Settings.
+The map now draws the mountains. Choose the ones you need on the new Regions screen and download them one Region at a time or all nine at once, from the Karkonosze to the Bieszczady, with the Slovak and Czech sides of the border. Every marked trail is drawn in the colour on its signposts, and the map works with no signal. The Play Store does the downloading. The screen opens from the button beside Settings.
 ```
 
-**Polish** — 287/500:
+**Polish** — 382/500:
 
 ```
-Wybierz góry, których potrzebujesz, na nowym ekranie Regiony i pobierz je po jednym regionie albo wszystkie dziewięć naraz, od Karkonoszy po Bieszczady, razem ze słowacką i czeską stroną granicy. Pobiera je Sklep Play; potem mapa działa bez zasięgu. Ekran otwiera przycisk obok Ustawień.
+Mapa rysuje teraz góry. Wybierz te, których potrzebujesz, na nowym ekranie Regiony i pobierz je po jednym regionie albo wszystkie dziewięć naraz, od Karkonoszy po Bieszczady, razem ze słowacką i czeską stroną granicy. Każdy znakowany szlak jest narysowany w kolorze z drogowskazów, a mapa działa bez zasięgu. Pobieraniem zajmuje się Sklep Play. Ekran otwiera przycisk obok Ustawień.
 ```
