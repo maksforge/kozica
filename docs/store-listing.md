@@ -181,5 +181,5 @@ In Settings → Help and feedback, "Report a problem" and "Suggest a feature" no
 **Polish** — 226/500:
 
 ```
-W Ustawienia → Pomoc i opinie „Zgłoś problem” i „Zaproponuj funkcję” otwierają teraz wiadomość na własny adres pomocy Kozicy, kozica.support@maksforge.com, a nie na prywatny. Tak samo „Coś brzmi nie tak?” w Ustawienia → Język.
+„Zgłoś problem” i „Zaproponuj funkcję” w Ustawienia → Pomoc i opinie otwierają teraz wiadomość na własny adres pomocy Kozicy, kozica.support@maksforge.com, a nie na prywatny. Tak samo „Coś brzmi nie tak?” w Ustawienia → Język.
 ```
