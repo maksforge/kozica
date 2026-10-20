@@ -19,7 +19,6 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
-import json
 import re
 import shutil
 import subprocess
@@ -224,22 +223,18 @@ def bounds(region: str) -> str:
 
 
 def cut(country: str, extract: Path, regions: list[str], into: Path) -> dict[str, Path]:
-    """One osmium pass writes this country's part of every Region, each keeping the extract's header."""
+    """This country's part of every Region, one osmium pass each, to fit a runner (docs/phase-2b.md § 3)."""
     shutil.rmtree(into, ignore_errors=True)
     into.mkdir(parents=True)
-    config = into / "extract.json"
-    config.write_text(json.dumps({
-        "directory": str(into),
-        "extracts": [
-            {"output": f"{region}.osm.pbf", "polygon": {"file_name": str(polygon(region)), "file_type": "poly"}}
-            for region in regions
-        ],
-    }))
-    run("osmium", "extract", "-c", config, "-s", "smart", "-O", f"--output-header={TIMESTAMP}!", extract)
     stamp = header(extract, TIMESTAMP)
-    cuts = {region: into / f"{region}.osm.pbf" for region in regions}
-    for region, path in cuts.items():
-        if header(path, TIMESTAMP) != stamp:
+    cuts = {}
+    for region in regions:
+        cuts[region] = into / f"{region}.osm.pbf"
+        run(
+            "osmium", "extract", "-p", polygon(region), "-s", "smart", "-O", "-o", cuts[region],
+            f"--output-header={TIMESTAMP}!", extract,
+        )
+        if header(cuts[region], TIMESTAMP) != stamp:
             fail(f"the {region} cut lost the replication header of {extract.name}")
     return cuts
 
