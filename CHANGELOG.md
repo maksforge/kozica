@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.0](https://github.com/srednimax/kozica/compare/v0.3.0...v0.4.0) (2026-10-20)
+
+
+### Features
+
+* ask on the first launch which Regions to download, and say where to change them ([3ec89df](https://github.com/srednimax/kozica/commit/3ec89dffa998a8a0848abc2749c2f7261430b3f4))
+
+
+### Bug Fixes
+
+* hold the first launch's answer for the process, so a recreated Activity draws on its first frame ([ff598b9](https://github.com/srednimax/kozica/commit/ff598b99ddc322b0745a914077331328dcd84a54))
+* keep an unset prompt dismissal out of the capture driver's needles so locale runs start ([7a70e80](https://github.com/srednimax/kozica/commit/7a70e80fa177e4de0e2036da8fd39c8b156633d1))
+* keep the welcome screen's ticks through process death, and open the map when no Region is left to choose ([a590bb6](https://github.com/srednimax/kozica/commit/a590bb69b1c81167813942e5088c71b85bcc9a37))
+* move the map to an arrived Region at no less than the Trails' zoom, and record R7 to R9 ([c21894d](https://github.com/srednimax/kozica/commit/c21894d3cbc323752566aa1b6a10dec59ebea1ee))
+* show All Regions as partly checked, and a fixed Region's state under its name, on the welcome screen ([20be3a6](https://github.com/srednimax/kozica/commit/20be3a6317856270da810b92417ef5a578615ce1))
+
 ## [0.3.0](https://github.com/srednimax/kozica/compare/v0.2.0...v0.3.0) (2026-10-20)
 
 
