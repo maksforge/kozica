@@ -7,14 +7,18 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.io.File
 
-/** The Tatry pack, or the archive hand-pushed to `files/regions/` as docs/phase-1.md § 1 describes. */
-fun regionStates(context: Context): Flow<List<Region>> {
-    val handPushed = File(context.filesDir, "regions/tatry.pmtiles")
-    return RegionFiles
+/** Every pack, or an archive hand-pushed to `files/regions/<id>.pmtiles` as docs/phase-1.md § 1 describes. */
+fun regionStates(context: Context): Flow<List<Region>> =
+    RegionFiles
         .of(context)
-        .tatry
-        .map { state ->
-            val tatry = if (state !is RegionState.Ready && handPushed.exists()) readyRegion(handPushed) else state
-            listOf(Region("tatry", tatry))
+        .states
+        .map { regions ->
+            regions.map { region ->
+                val handPushed = File(context.filesDir, "regions/${region.id}.pmtiles")
+                if (region.state !is RegionState.Ready && handPushed.exists()) {
+                    region.copy(state = readyRegion(handPushed))
+                } else {
+                    region
+                }
+            }
         }.flowOn(Dispatchers.IO)
-}

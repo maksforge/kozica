@@ -1,5 +1,6 @@
 package app.kozica.data.regions
 
+import androidx.annotation.StringRes
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -11,12 +12,13 @@ import java.time.Instant
 import java.util.zip.GZIPInputStream
 
 /**
- * Every Region the build knows of, with its state. Each variant supplies `regionStates(context)` in
- * `RegionSource.kt`: the debug half reads the Tatry pack, the release half has no Region until
- * phase 2b (docs/phase-2.md § 2).
+ * Every Region the build knows of, with its state, in [REGION_NAMES]' order. Each variant supplies
+ * `regionStates(context)` in `RegionSource.kt` from [RegionFiles]; the debug half adds archives
+ * pushed by hand (docs/phase-2b.md § 2).
  */
 data class Region(
     val id: String,
+    @StringRes val name: Int,
     val state: RegionState,
 )
 
@@ -31,7 +33,9 @@ sealed interface RegionState {
         val percent: Int,
     ) : RegionState
 
-    data object WaitingForConfirmation : RegionState
+    data object WaitingForWifi : RegionState
+
+    data object NeedsConfirmation : RegionState
 
     data class Ready(
         val archive: File,

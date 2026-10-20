@@ -229,8 +229,8 @@ licensee {
     allow("BSD-3-Clause")
     // MapLibre Native.
     allow("BSD-2-Clause")
-    // Play Asset Delivery and the Play services it pulls, debug only until checkpoint E. Vendor
-    // terms: the licences screen links them rather than shipping their text.
+    // Play Asset Delivery and the Play services it pulls. Vendor terms: the licences screen links
+    // them rather than shipping their text.
     allowUrl("https://developer.android.com/guide/playcore/license") { because("Play Core SDK terms") }
     allowUrl("https://developer.android.com/studio/terms.html") { because("Android SDK terms") }
 }
@@ -264,8 +264,61 @@ abstract class BundleLicences : DefaultTask() {
     }
 }
 
+/**
+ * The app's list of Regions, from the same polygons that make the packs, so a Region cannot exist in
+ * the build and not in the app, and one without a `region_<id>` name string does not compile
+ * (docs/phase-2b.md § 2).
+ */
+abstract class GenerateRegionList : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val polygons: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val regions =
+            polygons
+                .get()
+                .asFile
+                .listFiles { file -> file.extension == "poly" }!!
+                .associate { it.nameWithoutExtension to meanLongitude(it) }
+                .entries
+                .sortedBy { (id, longitude) -> if (id == "gory_swietokrzyskie") Double.MAX_VALUE else longitude }
+        val entries = regions.joinToString("") { (id) -> "        \"$id\" to R.string.region_$id,\n" }
+        val source = outputDirectory.get().asFile.resolve("app/kozica/data/regions/RegionList.kt")
+        source.parentFile.mkdirs()
+        source.writeText(
+            "package app.kozica.data.regions\n\nimport app.kozica.R\n\n" +
+                "val REGION_NAMES: Map<String, Int> =\n    linkedMapOf(\n$entries    )\n",
+        )
+    }
+
+    private fun meanLongitude(polygon: File): Double =
+        polygon
+            .readLines()
+            .filter { it.startsWith(" ") }
+            .map {
+                it
+                    .trim()
+                    .split(Regex("\\s+"))
+                    .first()
+                    .toDouble()
+            }.average()
+}
+
+val generateRegionList =
+    tasks.register<GenerateRegionList>("generateRegionList") {
+        polygons.set(rootProject.layout.projectDirectory.dir("scripts/regions"))
+        outputDirectory.set(layout.buildDirectory.dir("generated/regions"))
+    }
+
 androidComponents {
     onVariants { variant ->
+        variant.sources.kotlin?.addGeneratedSourceDirectory(generateRegionList, GenerateRegionList::outputDirectory)
+
         // The exported schemas, shipped inside the *instrumented test* APK as assets.
         // `MigrationTestHelper` reads a version's JSON at runtime to build a database at that
         // version, so `1.json` has to be readable on the device — existing in the repo is not
@@ -318,7 +371,7 @@ dependencies {
     // The OpenGL build, not the default `android-sdk`: that one is Vulkan, and its `uses-feature`
     // would filter the app off devices on Play (docs/phase-1.md § 1).
     implementation(libs.maplibre.android.opengl)
-    debugImplementation(libs.play.asset.delivery)
+    implementation(libs.play.asset.delivery)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 

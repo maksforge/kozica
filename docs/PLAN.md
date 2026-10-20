@@ -199,6 +199,7 @@ Screenshots, the production-access application and **1.0**: everything above, in
 - **Ads, paid features and sign-in.** Kozica is free. An optional tip that unlocks nothing may come
   after 1.0, through Play Billing, only once a purchase works on a phone with Billing's telemetry
   stripped as ADR-0008 requires.
-- **Data beyond Poland's border** in 1.0. A Region stops at the state border; cross-border ranges
-  would be a new ADR once the file format is settled.
-- **Reminders and scheduled work.** Nothing in the plan schedules anything.
+- **Data beyond Slovakia's and Czechia's borders** in 1.0. Regions cross into those two where the
+  ranges do (ADR-0007's amendment of 2026-10-20); Ukraine's and Germany's sides stay out.
+- **Reminders and scheduled work.** Nothing in the plan schedules anything of its own. WorkManager
+  is in the build for Play Asset Delivery's extraction alone (ADR-0003's amendment of 2026-10-20).

@@ -131,10 +131,20 @@ forbids it. Answered 2026-10-20.
 
 ## Foreground service permissions
 
-**None declared**: the artifact carries no `FOREGROUND_SERVICE` and nothing here starts one. Phase
-6's hike recording brings a `location` service. If the app gains a foreground service, this section records the
-type, the `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` text if it is `specialUse`, and the three answers the
-declaration asks for: what the user sees, why it cannot wait, and why no named type fits.
+**`dataSync`, for Play Asset Delivery's extraction service**, from phase 2b's checkpoint B
+([`phase-2b.md`](phase-2b.md) § 2). Kozica starts no foreground service of its own; the library's
+service unpacks a Region's pack after the Play Store has downloaded it. **Not yet declared in the
+Console**: it is declared in the sitting that merges B, and this section gets that date. The
+answers to give:
+
+- **What the user sees:** a Region they asked to download, from the Regions screen, being made
+  ready to use offline, with the system's foreground-service notification while it runs.
+- **Why it cannot wait:** the user asked for the map before going where there is no signal, and the
+  pack must be unpacked while the app may be in the background, or the map is missing on the trail.
+- **Type:** `dataSync`, which covers transferring data the user asked for to the device.
+
+Phase 6's hike recording brings a `location` service. Each foreground service the app gains is
+recorded here with its type and the declaration's answers.
 
 ## Privacy policy
 

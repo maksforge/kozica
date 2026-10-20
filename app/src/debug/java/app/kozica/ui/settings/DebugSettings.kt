@@ -1,6 +1,7 @@
 package app.kozica.ui.settings
 
-import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,7 @@ import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.RegionState
 import app.kozica.theme.Spacing
 import app.kozica.ui.common.SectionHeader
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -34,11 +36,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun DebugSettings() {
     val context = LocalContext.current
-    val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val app = context.applicationContext as MainApplication
     val regions = remember { RegionFiles.of(context) }
-    val tatry by remember { regions.tatry }.collectAsStateWithLifecycle(initialValue = null)
+    val tatry by remember { regions.states.map { all -> all.first { it.id == TATRY }.state } }
+        .collectAsStateWithLifecycle(initialValue = null)
+    val confirmation = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
 
     SectionHeader(stringResource(R.string.debug_section))
     DebugRow(stringResource(R.string.debug_seed)) {
@@ -54,14 +57,14 @@ fun DebugSettings() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.base, vertical = Spacing.tight),
     )
     DebugRow(stringResource(R.string.debug_tatry_download)) {
-        if (tatry == RegionState.WaitingForConfirmation && activity != null) {
-            regions.confirm(activity)
+        if (tatry == RegionState.WaitingForWifi || tatry == RegionState.NeedsConfirmation) {
+            regions.confirm(confirmation)
         } else {
-            scope.launch { regions.download() }
+            scope.launch { regions.download(listOf(TATRY)) }
         }
     }
     DebugRow(stringResource(R.string.debug_tatry_remove)) {
-        scope.launch { regions.remove() }
+        scope.launch { regions.remove(TATRY) }
     }
     DebugRow(stringResource(R.string.debug_position_real), onClick = ::clearPositionOverride)
 }
@@ -73,7 +76,8 @@ private fun tatryState(state: RegionState?): String =
         RegionState.NotDownloaded -> stringResource(R.string.debug_tatry_not_downloaded)
         is RegionState.Downloading -> stringResource(R.string.debug_tatry_downloading, state.percent)
         is RegionState.UpdateInProgress -> stringResource(R.string.debug_tatry_updating, state.percent)
-        RegionState.WaitingForConfirmation -> stringResource(R.string.debug_tatry_waiting)
+        RegionState.WaitingForWifi -> stringResource(R.string.debug_tatry_waiting)
+        RegionState.NeedsConfirmation -> stringResource(R.string.debug_tatry_confirm)
         is RegionState.Ready ->
             stringResource(
                 R.string.debug_tatry_ready,
@@ -97,3 +101,5 @@ private fun DebugRow(
                 .padding(horizontal = Spacing.base, vertical = Spacing.base),
     )
 }
+
+private const val TATRY = "tatry"
