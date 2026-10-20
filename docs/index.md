@@ -33,7 +33,7 @@ The details are in the
 
 ## Support
 
-**maksymilian.sredniawa.developer@gmail.com** — an ordinary mailbox that a person reads.
+**kozica.support@maksforge.com** — an ordinary mailbox that a person reads.
 
 ## The source
 

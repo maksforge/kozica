@@ -13,10 +13,9 @@ import app.kozica.ui.common.startActivitySafely
 /**
  * Where a report goes, **frozen the day a build leaves this machine**: a sideloaded APK is never
  * forced to update, so whatever is compiled in here keeps being mailed for as long as any build
- * survives. The Play listing's contact field carries the same address; `docs/DOD.md` still owes the
- * choice of a dedicated account.
+ * survives. The Play listing's contact field carries the same address.
  */
-private const val SUPPORT_ADDRESS = "maksymilian.sredniawa.developer@gmail.com"
+private const val SUPPORT_ADDRESS = "kozica.support@maksforge.com"
 
 /**
  * The id Play knows this app by — **a fact about the listing rather than about this build.**

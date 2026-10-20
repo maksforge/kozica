@@ -49,11 +49,12 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       after the tag, with the version already spent.
 - [x] **Choose the palette.** Chamois ochre, rock, slate and stone in `scripts/gen_scheme.py`; every
       contrast pair passes. Phase 2's R9 read it against the Trail colours on the map: no seed moved.
-- [ ] **Choose a dedicated support address.** Since 2026-10-20 `ui/support/SupportHandoff.kt`
-      compiles in the developer account's Gmail, the address the Play listing's contact field and
-      the privacy policy's *Contact* give too. A sideloaded APK keeps mailing whatever string was
-      compiled in for as long as that build survives, so a move to a dedicated account (not an alias
-      on your personal mail) changes all three together, and is the owner's choice still to make.
+- [x] **Choose a dedicated support address.** `kozica.support@maksforge.com` since 2026-10-20, on
+      the owner's own domain: Cloudflare Email Routing forwards it to the developer's Gmail, which
+      sends as it. `ui/support/SupportHandoff.kt` compiles it in, and the Play listing's contact
+      field and the privacy policy's *Contact* give it too. A sideloaded APK keeps mailing whatever
+      string was compiled in for as long as that build survives, so a later move changes all three
+      together.
 - [ ] **Write the listing.** `docs/store-listing.md` — every heading in it is parsed by a script.
 - [x] **Write the privacy policy** and confirm GitHub Pages is serving `docs/`. Play requires a
       *hosted* URL, and an offline app has no server of its own. Served at
