@@ -120,7 +120,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name || github.ref_name }}
-        run: gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles --clobber
+        run: gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles scripts/map/MAP-DATA-LICENCE.txt --clobber
 
       - name: Upload to internal testing
         uses: r0adkll/upload-google-play@v1.1.5

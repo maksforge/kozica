@@ -370,7 +370,8 @@ Phase 1 § 5's last three bullets are this checkpoint, with C's three extracts a
   decided with the owner on 2026-10-20: ADR-0007's reasons stand, and two hours inside a six-hour
   limit, unattended, is cheaper than a second workflow keeping a cache warm.
 - **The ODbL offer is the database itself.** Decided with the owner, 2026-10-20: the workflow
-  attaches the nine `.pmtiles` to the release-please GitHub release, under ODbL, and the licences
+  attaches the nine `.pmtiles` to the release-please GitHub release, under ODbL, with
+  `scripts/map/MAP-DATA-LICENCE.txt` beside them saying so, and the licences
   screen's ODbL entry links to the release page for the app's own version. That offers the
   derivative database (ODbL §4.6) without licensing the code, whose `LICENSE` stays all rights
   reserved. **The archives are attached before *Upload to internal testing***, with `gh release
