@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -41,6 +42,9 @@ class RegionFiles private constructor(
     private val manager = AssetPackManagerFactory.getInstance(context.applicationContext)
     private val updates = MutableSharedFlow<Map<String, RegionState>>(extraBufferCapacity = 16)
 
+    // Kept apart from the states because Play reports a pack's size only in some of them.
+    private val downloadSizes = ConcurrentHashMap<String, Long>()
+
     val states: Flow<List<Region>> =
         merge(
             flow { emit(StateChange(read(REGION_NAMES.keys), isFirstRead = true)) },
@@ -50,7 +54,7 @@ class RegionFiles private constructor(
                 .catch { },
         ).scan(emptyMap<String, RegionState>()) { known, change -> known.mergedWith(change) }
             .filter { it.keys.containsAll(REGION_NAMES.keys) }
-            .map { known -> REGION_NAMES.map { (id, name) -> Region(id, name, known.getValue(id)) } }
+            .map { known -> REGION_NAMES.map { (id, name) -> Region(id, name, known.getValue(id), downloadSizes[id]) } }
             .flowOn(Dispatchers.IO)
 
     fun readyArchive(id: String): File? =
@@ -127,8 +131,9 @@ class RegionFiles private constructor(
     private fun fromPackState(
         id: String,
         state: AssetPackState,
-    ): RegionState =
-        when (state.status()) {
+    ): RegionState {
+        state.totalBytesToDownload().takeIf { it > 0 }?.let { downloadSizes[id] = it }
+        return when (state.status()) {
             AssetPackStatus.COMPLETED -> readyArchive(id)?.let(::readyRegion) ?: RegionState.NotDownloaded
             AssetPackStatus.PENDING,
             AssetPackStatus.DOWNLOADING,
@@ -143,6 +148,7 @@ class RegionFiles private constructor(
             AssetPackStatus.FAILED -> RegionState.Failed(state.errorCode())
             else -> RegionState.NotDownloaded
         }
+    }
 
     private fun downloadPercent(state: AssetPackState): Int =
         if (state.status() == AssetPackStatus.TRANSFERRING) {

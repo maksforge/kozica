@@ -16,6 +16,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.kozica.ui.backup.BackupScreen
 import app.kozica.ui.map.MapScreen
+import app.kozica.ui.regions.RegionsScreen
 import app.kozica.ui.settings.SettingsScreen
 import app.kozica.ui.support.LicenceTextScreen
 import app.kozica.ui.support.LicencesScreen
@@ -78,14 +79,21 @@ fun MainNavigation(modifier: Modifier = Modifier) {
             entryProvider =
                 entryProvider {
                     entry<Home> {
-                        MapScreen(onOpenSettings = { backStack.add(Settings) })
+                        MapScreen(
+                            onOpenSettings = { backStack.add(Settings) },
+                            onOpenRegions = { backStack.add(Regions) },
+                        )
                     }
                     entry<Settings> {
                         SettingsScreen(
                             onBack = { backStack.removeLastOrNull() },
+                            onOpenRegions = { backStack.add(Regions) },
                             onOpenLicences = { backStack.add(Licences) },
                             onOpenSupport = { backStack.add(Support) },
                         )
+                    }
+                    entry<Regions> {
+                        RegionsScreen(onBack = { backStack.removeLastOrNull() })
                     }
                     entry<Backup> {
                         BackupScreen(onBack = { backStack.removeLastOrNull() })

@@ -20,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -73,6 +75,7 @@ import app.kozica.theme.LocalDarkTheme
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.WarningBanner
+import app.kozica.ui.common.osmDateLine
 import app.kozica.ui.common.startActivitySafely
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -90,9 +93,6 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -101,6 +101,7 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun MapScreen(
     onOpenSettings: () -> Unit,
+    onOpenRegions: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(factory = MapViewModel.Factory, extras = appViewModelExtras()),
 ) {
@@ -173,12 +174,14 @@ fun MapScreen(
     val approximateOnly = state.location?.grant == LocationGrant.APPROXIMATE
     val age = rememberPositionAge(state.fix, approximateOnly)
     var dotActivated by remember { mutableStateOf(false) }
+    var cameraPlaced by remember { mutableStateOf(false) }
 
     LaunchedEffect(map) {
         val map = map ?: return@LaunchedEffect
         map.addOnMapLongClickListener { overridePosition(it.latitude, it.longitude) }
         val start = shown?.let(MapStart::At) ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
+        cameraPlaced = true
         map.addOnCameraMoveStartedListener { reason ->
             if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) centreWanted = false
         }
@@ -188,6 +191,13 @@ fun MapScreen(
                 viewModel.cameraIdle(camera)
             }
         }
+    }
+
+    LaunchedEffect(map, cameraPlaced, state.arrival) {
+        val map = map?.takeIf { cameraPlaced } ?: return@LaunchedEffect
+        val arrival = state.arrival ?: return@LaunchedEffect
+        map.animateCamera(MapStart.Fit(arrival).toCameraUpdate())
+        viewModel.arrivalShown(arrival)
     }
 
     LaunchedEffect(map, state.style) {
@@ -246,13 +256,21 @@ fun MapScreen(
 
     Box(modifier.fillMaxSize()) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
-        state.empty?.let { EmptyLine(it, Modifier.align(Alignment.Center).padding(Spacing.base)) }
+        state.empty?.let { EmptyLine(it, onOpenRegions, Modifier.align(Alignment.Center).padding(Spacing.base)) }
         Column(Modifier.align(Alignment.TopCenter).fillMaxWidth()) {
-            FilledTonalIconButton(
-                onClick = onOpenSettings,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
                 modifier = Modifier.align(Alignment.End).padding(Spacing.tight),
             ) {
-                Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                FilledTonalIconButton(onClick = onOpenRegions) {
+                    Icon(
+                        painterResource(R.drawable.ic_download),
+                        contentDescription = stringResource(R.string.regions_title),
+                    )
+                }
+                FilledTonalIconButton(onClick = onOpenSettings) {
+                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                }
             }
             LocationBanner(
                 read = state.location,
@@ -421,20 +439,28 @@ private fun Duration.short(locale: Locale): String =
 @Composable
 private fun EmptyLine(
     empty: MapEmpty,
+    onOpenRegions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     MapLabel(modifier) {
-        Text(
-            text =
-                stringResource(
-                    when (empty) {
-                        MapEmpty.NO_REGIONS -> R.string.map_no_regions
-                        MapEmpty.UPDATING -> R.string.map_updating
-                    },
-                ),
-            style = MaterialTheme.typography.bodyLarge,
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(horizontal = Spacing.base, vertical = Spacing.tight),
-        )
+        ) {
+            Text(
+                text =
+                    stringResource(
+                        when (empty) {
+                            MapEmpty.NO_REGIONS -> R.string.map_no_regions
+                            MapEmpty.UPDATING -> R.string.map_updating
+                        },
+                    ),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            if (empty == MapEmpty.NO_REGIONS) {
+                TextButton(onClick = onOpenRegions) { Text(stringResource(R.string.map_choose_regions)) }
+            }
+        }
     }
 }
 
@@ -445,7 +471,6 @@ private fun OsmCredit(
 ) {
     val context = LocalContext.current
     val credit = stringResource(R.string.map_osm_credit)
-    val locale = LocalConfiguration.current.locales[0]
     MapLabel(modifier) {
         Column(
             horizontalAlignment = Alignment.End,
@@ -464,13 +489,7 @@ private fun OsmCredit(
                 style = MaterialTheme.typography.labelSmall,
             )
             if (osmDate != null) {
-                val date =
-                    DateTimeFormatter
-                        .ofLocalizedDate(FormatStyle.MEDIUM)
-                        .withLocale(locale)
-                        .withZone(ZoneId.systemDefault())
-                        .format(osmDate)
-                Text(stringResource(R.string.map_osm_date, date), style = MaterialTheme.typography.labelSmall)
+                Text(osmDateLine(osmDate), style = MaterialTheme.typography.labelSmall)
             }
         }
     }

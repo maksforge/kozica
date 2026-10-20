@@ -315,14 +315,25 @@ Polish, `translatable="false"`.
 
 - **A `Regions` NavKey** and `ui/regions/`, one `ViewModel`, one immutable UI state: every Region with
   its state and its download size. Reached from a download button on the map, beside Settings, and
-  from the empty state, which gains the button phase 2 left for this phase ("Choose Regions").
+  from the empty state, which gains the button phase 2 left for this phase ("Choose Regions"), and
+  from a "Regions" row in a new *Map* section at the top of Settings (decided with the owner,
+  2026-10-20).
 - **A row** is the Region's name, then its state: the size to download; downloading with a percent;
   waiting for Wi-Fi, with the button that opens Play's confirmation; needing confirmation, with the
   same button; update in progress; ready, with its OSM date, phase 2's "OSM data: %1$s"; failed,
   with Retry. Download or Remove sits at the row's end. The size is
-  `AssetPackState.totalBytesToDownload()`, which Play reports before anything is fetched.
-- **"Download all"** fetches every Region not ready, in one `fetch` call, and says how many and how
-  large: "Download all — %1$d Regions, %2$s". It is absent when nothing is left to fetch.
+  `AssetPackState.totalBytesToDownload()`, which Play reports before anything is fetched; a build
+  with no Play session (`installDebug`) has none, and the row shows the name alone.
+- **"Confirm" when nothing awaits confirmation** asks for the Region again: the state shown was
+  stale, and the tap meant "download it".
+- **"Download all"** fetches every Region neither ready nor already on its way (not downloaded, or
+  failed), in one `fetch` call, and says how many and how large: "Download all — %1$d Regions,
+  %2$s". While any of their sizes is unknown it drops the size rather than show a partial sum. It
+  is absent when nothing is left to fetch.
+- **The map goes to a Region on its first download** (§ 1's verdict): it remembers which Regions
+  were ready when it last looked and fits the camera to any that arrived since, whether the
+  download ended on this screen or while the app was closed. Only a Region not downloaded is
+  forgotten, so an update passing through "Updating" is no arrival.
 - **Remove asks first.** A Region removed on a ridge with no signal does not come back until there is
   signal. The dialog says that, in one line, and Remove is its confirming button. Download asks
   nothing: Play's own confirmation covers mobile data.
@@ -330,8 +341,8 @@ Polish, `translatable="false"`.
   is still phase 2's: "Map data is being updated." during an update, "No Regions downloaded yet."
   otherwise, now with the button under it.
 
-Copy: "Regions", "Choose Regions", "Download", "Remove", "Retry", "Download all — %1$d Regions,
-%2$s" (a plural), "Downloading — %1$d%%", "Waiting for Wi-Fi", "Download over mobile data",
+Copy: "Regions", "Map" (the Settings section), "Choose Regions", "Download", "Remove", "Retry", "Download all — %1$d Regions,
+%2$s" (a plural) and its sizeless twin "Download all — %1$d Regions", "Downloading — %1$d%%", "Waiting for Wi-Fi", "Download over mobile data",
 "Play needs your confirmation", "Confirm", "Updating", "Remove %1$s?", "You won't see this Region's
 map until you download it again, which needs a connection.", "Download failed". The Region names
 are not copy.

@@ -15,11 +15,14 @@ import java.util.zip.GZIPInputStream
  * Every Region the build knows of, with its state, in [REGION_NAMES]' order. Each variant supplies
  * `regionStates(context)` in `RegionSource.kt` from [RegionFiles]; the debug half adds archives
  * pushed by hand (docs/phase-2b.md § 2).
+ *
+ * @param downloadSize the bytes Play reports a fetch would cost, null until Play has said.
  */
 data class Region(
     val id: String,
     @StringRes val name: Int,
     val state: RegionState,
+    val downloadSize: Long? = null,
 )
 
 sealed interface RegionState {

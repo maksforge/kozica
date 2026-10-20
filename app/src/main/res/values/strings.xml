@@ -37,9 +37,37 @@
     <string name="map_position_stale">Last position %1$s ago.</string>
     <!-- Opens Android's settings, not the app's own Settings screen. -->
     <string name="map_location_settings">Settings</string>
+    <string name="map_choose_regions">Choose Regions</string>
+
+    <!-- Regions. "Play" is the Google Play Store app, which downloads every Region. -->
+    <string name="regions_title">Regions</string>
+    <string name="regions_download">Download</string>
+    <string name="regions_remove">Remove</string>
+    <string name="regions_retry">Retry</string>
+    <!-- %2$s is a size from the platform, such as "230 MB" -->
+    <plurals name="regions_download_all">
+        <item quantity="one">Download all — %1$d Region, %2$s</item>
+        <item quantity="other">Download all — %1$d Regions, %2$s</item>
+    </plurals>
+    <!-- The same, while Play has not yet said how large the Regions are -->
+    <plurals name="regions_download_all_unsized">
+        <item quantity="one">Download all — %1$d Region</item>
+        <item quantity="other">Download all — %1$d Regions</item>
+    </plurals>
+    <string name="regions_downloading">Downloading — %1$d%%</string>
+    <string name="regions_waiting_for_wifi">Waiting for Wi-Fi</string>
+    <string name="regions_mobile_data">Download over mobile data</string>
+    <string name="regions_needs_confirmation">Play needs your confirmation</string>
+    <string name="regions_confirm">Confirm</string>
+    <string name="regions_updating">Updating</string>
+    <!-- %1$s is a Region's name, such as "Tatry" or "Beskid Niski" -->
+    <string name="regions_remove_title">Remove %1$s?</string>
+    <string name="regions_remove_body">You won\'t see this Region\'s map until you download it again, which needs a connection.</string>
+    <string name="regions_failed">Download failed</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_map">Map</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
