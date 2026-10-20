@@ -66,8 +66,8 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       § *The upload key*.
 - [x] **Set up the GitHub repository.** The `main: require CI` ruleset, rebase merges, Pages and
       `RELEASE_PLEASE_TOKEN`.
-- [x] **Set the five Play secrets and create the service account.** All in place; the first
-      automatic upload is still to be watched (`PLAN.md`, phase P).
+- [x] **Set the five Play secrets and create the service account.** All in place; 0.2.0 reached
+      internal testing by itself on 2026-10-20.
 - [ ] **Plan the closed test.** A new personal developer account reaches production only after a
       closed test — at the time of writing 12 testers opted in for 14 continuous days, then an access
       application. Recruit the testers before the build is ready, not after; `publish-play-closed.yml`
