@@ -88,7 +88,7 @@ neighbours by a few kilometres, and are drawn coarsely, in tens of points, not h
 | **B** | **The library in `main/`** — `RegionFiles` for any pack, the release half of the seam, the declaration, the four permission rows | `chore:` | A |
 | **C** | **Across the border** — Slovakia and Czechia merged into the build at one moment, a pin per extract | `chore:` | — |
 | **D** | **Nine Regions** — the polygons, one pack module per polygon, built and measured | `chore:` | C |
-| **E** | **The Regions screen** — the list, Download, Remove, "Download all", the map's button and the empty state's | `feat:` | B |
+| **E** | **The Regions screen** — the list, Download, Remove, "Download all", the map's button and the empty state's | `feat:` | B, D |
 | **F** | **Play delivers it** — the data build in `publish-play.yml`, `-PmapPacks`, the archives on the GitHub release, the licences screen's offer | `feat:` | B, D, E |
 
 **A reads B's branch before B merges.** The question is whether the release build may carry the
@@ -101,11 +101,12 @@ internal-sharing link reaches the owner alone. If A takes verdict 2, B does not 
 It goes before D so the nine polygons are drawn once, already across the border, rather than drawn
 to the border and redrawn.
 
-**B, C and D cut no release; E and F do.** B puts the library into the release while the release
-still carries no pack, so a user sees nothing. E is the first thing a user sees, and on its own it
-shows nine Regions none of which can arrive. That is honest for the few hours between E and F on the
-internal track, and E and F may merge in one release-please release if they land together. F is the
-first release that conveys OSM-derived data, so the ODbL offer ships in F's commit, not after it.
+**B, C and D cut no release; E and F cut one together.** B puts the library into the release while
+the release still carries no pack, so a user sees nothing. E is the first thing a user sees, and on
+its own it shows nine Regions whose every Download fails, because no pack is in the bundle until F.
+So release-please's release PR stays unmerged from E's merge until F's, and E and F reach Play in
+one release. F is the first release that conveys OSM-derived data, so the ODbL offer ships in F's
+commit, not after it.
 
 ---
 
@@ -131,35 +132,64 @@ cannot stand in.
   and at the newest pin Geofabrik serves on the day, each with the Tatry archive built by
   `build-map-data.py` at that pin. Both are Poland-only; C does not wait for A, and A does not wait
   for C. The second carries a higher `versionCode` by hand on the branch, never committed.
+- **Two more hand edits on the branch, never committed**, because a release bundle has neither the
+  debug section nor E's screen: tapping the empty state's line fetches the Tatry, and `RegionFiles`
+  logs every `AssetPackState` under the tag `KozicaPack`, with its status, `bytesDownloaded()` and
+  `totalBytesToDownload()`. Neither touches the manifest or a dependency, so the build stays
+  release-shaped where the gate looks.
 - Internal app sharing, enabled in the Console with the owner as an uploader. Each bundle goes up on
   the Console's page through Claude in Chrome; two uploads do not earn a script.
+- **Each phone set up for the links.** The Play Store's *Internal app sharing* switch on (Settings ›
+  About, the Play Store version tapped seven times). Play re-signs every internal-sharing upload
+  with its own test certificate, not the app-signing key, so a link cannot install over the
+  internal-track copy: that copy is uninstalled first, which deletes its data, so anything in the
+  owner's install that matters is exported first (ADR-0005). Going back to the internal track after
+  A is another uninstall. The test phone's Google account must be able to reach the app's listing,
+  so it goes on the internal testers' list for R2.
 - The owner's phone on Wi-Fi, because internal app sharing installs through the Play Store app. The
   test phone stands in for nothing here except R2, the second API level.
-- Logcat filtered for `WM-WorkerWrapper`, `ExtractionWorker`, `AssetPack` and `SecurityException`;
-  `dumpsys jobscheduler` for the app's jobs; Play's download size from the Play Store app's update
-  sheet, and the pack's bytes from `AssetPackState.bytesDownloaded()`, logged by the debug section's
-  state row, which B moves to read any pack.
+- Logcat filtered for `WM-WorkerWrapper`, `ExtractionWorker`, `AssetPack`, `KozicaPack` and
+  `SecurityException`; `dumpsys jobscheduler` for the app's jobs; for the refresh, the bytes the
+  Play Store app's UID receives, from `dumpsys netstats detail` read before the second link is
+  tapped and after the Tatry is Ready again.
 
 ### The verdicts, decided now rather than argued about later
 
-1. **The Tatry reaches Ready, the map draws from the pack, and no `SecurityException` is logged on
-   API 36, whether or not `ExtractionWorker` ran.** → The strip stands, and B merges. Which of the
-   two paths delivered the pack is recorded, because it says whether this question can return with
-   a later library version.
-2. **Extraction fails for want of `ACCESS_NETWORK_STATE`.** → Phase 1 § 3's verdict 2, unchanged:
-   no workaround in code. The owner chooses between a narrow ADR-0008 amendment that allows
-   `ACCESS_NETWORK_STATE` alone, since it opens no connection and changes no Data safety answer, and
-   a different delivery for map data. B does not merge until then; C and D go on.
-And for the refresh, R3:
+Verdicts 1 and 2 are taken across both installs, R1 and R3. The first install can pass with
+`ExtractionWorker` never having run, and the refresh, where Play patches the pack while the app may
+be closed, is where it is most likely to.
+
+1. **On API 36, the Tatry reaches Ready and the map draws from the pack after the first install and
+   again after the refresh, and no `SecurityException` is logged in either, whether or not
+   `ExtractionWorker` ran.** → The strip stands, and B merges. Which of the two paths delivered the
+   pack each time is recorded, because it says whether this question can return with a later
+   library version.
+2. **Extraction fails for want of `ACCESS_NETWORK_STATE`, in either install.** → Phase 1 § 3's
+   verdict 2, unchanged: no workaround in code. The owner chooses between a narrow ADR-0008
+   amendment that allows `ACCESS_NETWORK_STATE` alone, since it opens no connection and changes no
+   Data safety answer, and a different delivery for map data. B does not merge until then; C and D
+   go on.
+
+And for the refresh's size, R3:
 
 3. **The pack arrives, but the refresh costs close to the whole pack.** → The format question goes
    back to the owner before F, as phase 1 § 4's verdict 2 says: determinism first (`--check-determinism`
    at both pins), then the layout. A refresh that costs the whole pack every release is not a reason
    to stop the phase, but it is a reason to know before the first user pays it.
 
-"Close to the whole pack" is above 25 % of the Tatry pack's compressed size. R6's bsdiff said 0.6 %,
-and Play is free to do worse than bsdiff; it is not free to do forty times worse without that being
-the finding.
+**The number that decides is the Play Store app's received bytes** across the second install, from
+`dumpsys netstats`. The update sheet may show the APK's update alone, and a completed pack's
+`bytesDownloaded()` may count the whole pack rather than the patch; both are recorded beside it. The
+netstats figure includes the APK's patch, so it overstates the pack's, which errs towards verdict 3.
+
+"Close to the whole pack" is above 25 % of the Tatry pack's compressed size. The baseline is a
+bsdiff between the two archives actually uploaded, `build-map-data.py --patch-from 4942` at the
+second bundle's pin: phase 1's R6 measured the thin schema of 1 MB, and phase 2's 7.3 MB schema has
+never had one. Play is free to do worse than bsdiff; it is not free to do forty times worse without
+that being the finding. Internal app sharing is not documented to patch as a track does, so a
+number above 25 % goes to the owner with that said. Confirming it on the closed track, where an
+install updates in place, needs a release that carries packs, which is F; so the owner chooses
+between reopening the format now and reading F's first data refresh there before reopening it.
 
 ### The verdict, taken *(date)*
 
@@ -181,9 +211,14 @@ Phase 1 § 5's first two bullets are this checkpoint, and stand as written there
   each entry naming `R.string.region_<id>`. One list, so a Region cannot exist in the build and not in
   the app, and one without a name does not compile. The order is a line in the generator, not a
   field in the polygon.
-- **`WaitingForConfirmation` gets its handler.** Over mobile data Play holds a large download for the
-  user's yes. `AssetPackManager.showConfirmationDialog` needs an `ActivityResultLauncher`, so the
-  Regions screen registers one; the map's state row only names the state.
+- **`WaitingForConfirmation` splits in two, with one handler.** `RegionFiles` maps two Play statuses
+  to it today, and they mean different things: `WAITING_FOR_WIFI` holds a large download over mobile
+  data for the user's yes; `REQUIRES_USER_CONFIRMATION` means the installed app did not come from
+  Play. So they become `WaitingForWifi` and `NeedsConfirmation`, each with its own copy in § 5.
+  `AssetPackManager.showConfirmationDialog` answers both and needs an `ActivityResultLauncher`, so
+  the Regions screen registers one; the map's state row only names the state. Confirming
+  `NeedsConfirmation` may make Play reinstall the app and cancel every request, so the row falls
+  back to Download.
 - **The Console declaration** for `FOREGROUND_SERVICE_DATA_SYNC`: the library's extraction service,
   started by the Play Store's delivery, user-initiated by a download. It is the owner's account, so
   it is filled through Claude in Chrome in the sitting that merges B, and recorded in
@@ -201,11 +236,20 @@ Phase 1 § 5's first two bullets are this checkpoint, and stand as written there
   before it, by `pyosmium-up-to-date --end-id`, then checked against its line of the pin. Sizes read
   2026-10-20: Poland 2.11 GB, Czechia 0.95 GB, Slovakia 0.35 GB, so a release build downloads about
   3.4 GB, not 2.1.
-- **`osmium merge` joins them before the cut.** Geofabrik's extracts overlap a little at the borders,
-  and `merge` keeps one copy of an object present in two. The merged file carries the shared
-  replication header, written with `--output-header`, as phase 1 § 4's edit does, or planetiler
-  would read no date.
-- **Determinism is re-read.** `--check-determinism` builds twice from the merged file. A merge whose
+- **Each country is cut once, for all nine Regions, before anything is merged.** One `osmium extract
+  --config` per country writes that country's part of every Region in one run, each keeping the
+  country's replication header. With `--discard-extracts`, which `publish-play.yml` passes, the
+  country's dated and updated extracts are deleted as soon as its cuts are written, so the build's
+  disk peak is Poland's two, about 4.2 GB, not three countries' full extracts and a merged copy. On
+  a workstation they stay, as today, a cache re-verified on every run.
+- **`osmium merge` then joins each Region's three cuts.** Geofabrik's extracts overlap a little at
+  the borders, and `merge` keeps one copy of an object present in two.
+- **The merged file carries the shared timestamp, and no sequence.** The three sequences differ, so
+  no one of them is the data's. `osmosis_replication_timestamp` is written with `--output-header`,
+  as phase 1 § 4's edit does, or planetiler would read no date, and the app reads only that
+  (`planetiler:osm:osmosisreplicationtime` in `Regions.kt`). `tile()`'s check that the cut kept the
+  extract's header moves from the sequence to the timestamp.
+- **Determinism is re-read.** `--check-determinism` builds twice from the merged cuts. A merge whose
   output order depended on input order would be the stray timestamp ADR-0007 warns of.
 - **A data refresh is still one `fix:` commit** that moves the pin: now three numbers, one moment.
 - **The profile is unchanged.** Slovakia's and Czechia's Trails use the same four colours and the
@@ -244,8 +288,9 @@ Polish, `translatable="false"`.
   its state and its download size. Reached from a download button on the map, beside Settings, and
   from the empty state, which gains the button phase 2 left for this phase ("Choose Regions").
 - **A row** is the Region's name, then its state: the size to download; downloading with a percent;
-  waiting for Wi-Fi, with the button that opens Play's confirmation; update in progress; ready, with
-  its OSM date, phase 2's "OSM data: %1$s"; failed, with Retry. Download or Remove sits at the row's end. The size is
+  waiting for Wi-Fi, with the button that opens Play's confirmation; needing confirmation, with the
+  same button; update in progress; ready, with its OSM date, phase 2's "OSM data: %1$s"; failed,
+  with Retry. Download or Remove sits at the row's end. The size is
   `AssetPackState.totalBytesToDownload()`, which Play reports before anything is fetched.
 - **"Download all"** fetches every Region not ready, in one `fetch` call, and says how many and how
   large: "Download all — %1$d Regions, %2$s". It is absent when nothing is left to fetch.
@@ -258,22 +303,29 @@ Polish, `translatable="false"`.
 
 Copy: "Regions", "Choose Regions", "Download", "Remove", "Retry", "Download all — %1$d Regions,
 %2$s" (a plural), "Downloading — %1$d%%", "Waiting for Wi-Fi", "Download over mobile data",
-"Updating", "Remove %1$s?", "You won't see this Region's map until you download it
-again, which needs a connection.", "Download failed". The Region names are not copy.
+"Play needs your confirmation", "Confirm", "Updating", "Remove %1$s?", "You won't see this Region's
+map until you download it again, which needs a connection.", "Download failed". The Region names
+are not copy.
 
 ## 6. Play delivers it
 
 Phase 1 § 5's last three bullets are this checkpoint, with C's three extracts and D's nine packs:
 
-- **The data build joins `publish-play.yml`** before `bundleRelease`: `build-map-data.py` for every
-  Region at the pin, `--check-determinism` on one of them (the Tatry, which changes in every
-  refresh), then `bundleRelease -PmapPacks`, which fails when an archive is missing.
+- **The data build joins `publish-play.yml`** before `bundleRelease`: `osmium-tool` from apt and
+  pyosmium 4.2 or newer from pip, then `build-map-data.py --discard-extracts` for every Region at
+  the pin, `--check-determinism` on one of them (the Tatry, which changes in every refresh), then
+  `bundleRelease -PmapPacks`, which fails when an archive is missing. A hosted `ubuntu-latest`
+  runner guarantees 14 GB of SSD and a job may run six hours, so the build logs the runner's free
+  disk after each country's cut, and R9 records the peak and the minutes.
 - **The ODbL offer is the database itself.** Decided with the owner, 2026-10-20: the workflow
   attaches the nine `.pmtiles` to the release-please GitHub release, under ODbL, and the licences
   screen's ODbL entry links to the release page for the app's own version. That offers the
   derivative database (ODbL §4.6) without licensing the code, whose `LICENSE` stays all rights
-  reserved. The workflow fails if the upload fails: a release on Play without its offer on GitHub
-  is the one outcome the house rule exists to prevent.
+  reserved. **The archives are attached before *Upload to internal testing***, with `gh release
+  upload --clobber` so a retry can attach them again, and the job gains `contents: write`, which a
+  release upload needs and the workflow's `contents: read` refuses. A failed attach then stops the
+  run before Play sees the bundle: a release on Play without its offer on GitHub is the one outcome
+  the house rule exists to prevent.
 - **The listing and the policy say where the data comes from.** The privacy policy gains one
   sentence: map data is downloaded by the Play Store app, under Google's terms; Kozica opens no
   connection. The listing's description names both sides of the border.
@@ -302,7 +354,11 @@ not unit tests stand where tests might be expected:
   scheduled", ADR-0003's amendment, `PLAN.md`'s "Reminders and scheduled work",
   `play-app-content.md` § *Foreground service permissions*, and `aab-permissions.py`'s four EXPECTED
   rows. `CLAUDE.md`'s layout: `region_tatry/` becomes one `region_<id>/` per polygon, and
-  `data/regions/` loses "each variant supplies the states".
+  `data/regions/` loses "each variant supplies the states". ADR-0008's list of libraries known to
+  merge a forbidden permission gains a third, the asset-delivery library with WorkManager, naming
+  A's verdict.
+- **With D**: `.gitignore`'s two `/region_tatry/` lines become `/region_*/src/main/assets/` and
+  `/region_*/build/`, so no Region's archive can be committed (ADR-0007).
 - **With F**: `CLAUDE.md`'s OSM house rule names the offer this phase chose; `docs/privacy-policy.md`
   and `docs/store-listing.md` per § 6; `RELEASING.md` gains the data build and the release assets.
 
@@ -314,8 +370,6 @@ not unit tests stand where tests might be expected:
   for the same reason, a tag ref. Minutes of runner time per release are the price of a build anyone
   can repeat.
 - **Ukraine's and Germany's sides are missing.** Named above, with their reasons.
-- **E alone shows a list nothing arrives from.** Between E's release and F's, on the internal track
-  only.
 
 ## Readings
 
@@ -325,11 +379,12 @@ Play needs Wi-Fi on; the test phone's goes off again after.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: the Tatry through internal app sharing on API 36 reaches Ready and draws, no `SecurityException`, and whether `ExtractionWorker` ran | `adb -s 132bc856 logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|AssetPack\|SecurityException'`; `adb -s 132bc856 shell dumpsys jobscheduler \| grep io.github.srednimax.kozica`; `adb -s 132bc856 exec-out screencap -p > r1.png` | |
+| R1 | The gate: the Tatry through internal app sharing on API 36 reaches Ready and draws, no `SecurityException`, and whether `ExtractionWorker` ran | `adb -s 132bc856 logcat -d \| grep -E 'WM-WorkerWrapper\|ExtractionWorker\|AssetPack\|KozicaPack\|SecurityException'`; `adb -s 132bc856 shell dumpsys jobscheduler \| grep io.github.srednimax.kozica`; `adb -s 132bc856 exec-out screencap -p > r1.png` | |
 | R2 | The same install on the test phone, API 30: the second API level, below JobScheduler's check | as R1, with `-s mnbm7hw8ivdqzx9l` | |
-| R3 | *(phase 1's E1)* The update size Play reports for a one-pin refresh of the Tatry, against R6 of phase 1, and the pack back to Ready unasked | internal app sharing, the second link over the first; Play Store's update sheet; the debug section's logged `bytesDownloaded` | |
+| R3 | *(phase 1's E1)* The bytes a one-pin refresh of the Tatry costs through Play, against a bsdiff of the same two archives; the pack back to Ready unasked; no `SecurityException` | internal app sharing, the second link over the first; `adb -s 132bc856 shell dumpsys netstats detail` for the Play Store's UID before and after; the update sheet and `KozicaPack`'s `bytesDownloaded` beside it; `python3 scripts/build-map-data.py --patch-from 4942`; R1's logcat filter | |
 | R4 | *(phase 1's E2)* The release bundle declares none of the FORBIDDEN permissions with the library and WorkManager in, and exactly the four new EXPECTED rows | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
 | R5 | Across the border: the three extracts at one moment, the merged build deterministic, and the Tatry's Slovak Trails drawn | `python3 scripts/build-map-data.py --check-determinism`; push the archive; `adb exec-out screencap -p > r5.png` over Štrbské Pleso | |
 | R6 | Every Region's archive size, raw and zstd, at one pin | `ls -l`, `zstd -19 -c … \| wc -c` per archive | |
 | R7 | The Regions screen on the phone: one Region downloaded, removed with its dialog, then "Download all" to every Region ready, from a build Play delivers | F's release on the internal track, uninstalled and reinstalled from Play; `adb exec-out screencap -p` per state | |
 | R8 | The ODbL offer: the release page holds nine archives whose hashes match the bundle's packs | `gh release view v<x.y.z> --json assets`; `sha256sum` against `bundletool`'s extracted packs | |
+| R9 | The data build in CI: the runner's free disk at its peak, and its minutes | the free disk `build-map-data.py` logs after each country's cut; the step's duration in F's first `publish-play.yml` run | |
