@@ -71,6 +71,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
 import app.kozica.data.MapCamera
 import app.kozica.data.location.overridePosition
+import app.kozica.data.regions.GeoBounds
 import app.kozica.theme.LocalDarkTheme
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
@@ -196,7 +197,7 @@ fun MapScreen(
     LaunchedEffect(map, cameraPlaced, state.arrival) {
         val map = map?.takeIf { cameraPlaced } ?: return@LaunchedEffect
         val arrival = state.arrival ?: return@LaunchedEffect
-        map.animateCamera(MapStart.Fit(arrival).toCameraUpdate())
+        map.animateCamera(map.cameraOnto(arrival))
         viewModel.arrivalShown(arrival)
     }
 
@@ -517,6 +518,19 @@ private val CameraSaver =
 
 private const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 
+// A whole Region fits at about zoom 8.3 to 9, where the archive draws next to nothing and no Trail
+// (docs/phase-2b.md § 5, R7), so the camera goes to its middle at no less than the Trails' zoom.
+private fun MapLibreMap.cameraOnto(bounds: GeoBounds): CameraUpdate {
+    val fitted = getCameraForLatLngBounds(bounds.toLatLngBounds())?.zoom ?: TRAIL_ZOOM
+    val middle = LatLng((bounds.south + bounds.north) / 2, (bounds.west + bounds.east) / 2)
+    return CameraUpdateFactory.newLatLngZoom(middle, maxOf(fitted, TRAIL_ZOOM))
+}
+
+private fun GeoBounds.toLatLngBounds(): LatLngBounds = LatLngBounds.from(north, east, south, west)
+
+/** `KozicaProfile.java`'s minimum zoom for a Trail. */
+private const val TRAIL_ZOOM = 10.0
+
 private fun MapStart.toCameraUpdate(): CameraUpdate =
     when (this) {
         is MapStart.At ->
@@ -528,10 +542,7 @@ private fun MapStart.toCameraUpdate(): CameraUpdate =
                     .build(),
             )
         is MapStart.Fit ->
-            CameraUpdateFactory.newLatLngBounds(
-                LatLngBounds.from(bounds.north, bounds.east, bounds.south, bounds.west),
-                0,
-            )
+            CameraUpdateFactory.newLatLngBounds(bounds.toLatLngBounds(), 0)
     }
 
 private fun CameraPosition.toMapCamera(): MapCamera? = target?.let { MapCamera(it.latitude, it.longitude, zoom) }
