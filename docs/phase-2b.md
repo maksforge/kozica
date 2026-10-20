@@ -366,8 +366,9 @@ Phase 1 § 5's last three bullets are this checkpoint, with C's three extracts a
   disk after each country's cut, and R9 records the peak and the minutes.
 - **The refresh size is read here**, on the closed track, where an install updates in place: the
   first release after F that only moves the pin, installed over F's, read as R3 was (§ 1's verdict).
-  Gate A's CI run spent 1 h 46 min on the data alone (R9), most of it fetching Poland; a cache of the
-  extracts is a question F answers before it lands, not after.
+  Gate A's CI run spent 1 h 46 min on the data alone (R9), most of it fetching Poland. **No cache**,
+  decided with the owner on 2026-10-20: ADR-0007's reasons stand, and two hours inside a six-hour
+  limit, unattended, is cheaper than a second workflow keeping a cache warm.
 - **The ODbL offer is the database itself.** Decided with the owner, 2026-10-20: the workflow
   attaches the nine `.pmtiles` to the release-please GitHub release, under ODbL, and the licences
   screen's ODbL entry links to the release page for the app's own version. That offers the

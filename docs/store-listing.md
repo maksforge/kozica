@@ -49,10 +49,10 @@ The line that appears under the name in search results, and the most-read text i
 Offline trail map of the Polish mountains, drawn in the signposts' own colours.
 ```
 
-### Full description — 844/4000
+### Full description — 943/4000
 
 ```
-Kozica is a hiking map of the Polish mountains. Download the ranges you need before you go, and it works with no signal at all.
+Kozica is a hiking map of the Polish mountains. Download the ranges you need before you go, from the Karkonosze to the Bieszczady and across the Czech and Slovak borders where the ranges do, and it works with no signal at all.
 
 Every marked trail is drawn in the colour on its signposts — red, blue, green, yellow or black — with its symbol along the line. Where two trails share a path, both are drawn side by side, so you can see which one you are on.
 
@@ -77,10 +77,10 @@ Kozica
 Mapa szlaków w polskich górach bez internetu, w kolorach z drogowskazów.
 ```
 
-### Full description — 865/4000
+### Full description — 942/4000
 
 ```
-Kozica to mapa turystyczna polskich gór. Pobierz potrzebne pasma przed wyjściem, a zadziała bez zasięgu.
+Kozica to mapa turystyczna polskich gór. Pobierz potrzebne pasma przed wyjściem, od Karkonoszy po Bieszczady, także po czeskiej i słowackiej stronie granicy, a zadziała bez zasięgu.
 
 Każdy znakowany szlak jest narysowany w kolorze z drogowskazów — czerwonym, niebieskim, zielonym, żółtym albo czarnym — ze swoim znakiem wzdłuż linii. Gdy dwa szlaki biegną jedną ścieżką, oba są narysowane obok siebie, więc widać, którym idziesz.
 
