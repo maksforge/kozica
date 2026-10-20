@@ -197,6 +197,18 @@ between reopening the format now and reading F's first data refresh there before
 
 ### The verdict, taken *(date)*
 
+**Not yet: R1, on API 36, is still owed**, and B waits on it. What 2026-10-20 settled on the test
+phone, API 30 (R2, R3):
+
+- **Play delivers a pack to the release build with `ACCESS_NETWORK_STATE` stripped.** The Play Store
+  extracts through the app's own `AssetPackExtractionService`; no `ExtractionWorker` ran. Below API 34
+  that is not the gate's answer, but it is the path R1 will read.
+- **The refresh: verdict 3, decided by the owner the same day.** Internal app sharing downloaded the
+  refreshed pack whole, and the app's own APKs whole with it, so its number says how internal sharing
+  delivers rather than how the format patches. The format stands; the refresh is read again on F's
+  first data refresh through the closed track (§ 6), and the format is reopened only if it is whole
+  there too.
+
 ## 2. The library in `main/`
 
 Phase 1 § 5's first two bullets are this checkpoint, and stand as written there. What this phase adds:
@@ -327,6 +339,10 @@ Phase 1 § 5's last three bullets are this checkpoint, with C's three extracts a
   `bundleRelease -PmapPacks`, which fails when an archive is missing. A hosted `ubuntu-latest`
   runner guarantees 14 GB of SSD and a job may run six hours, so the build logs the runner's free
   disk after each country's cut, and R9 records the peak and the minutes.
+- **The refresh size is read here**, on the closed track, where an install updates in place: the
+  first release after F that only moves the pin, installed over F's, read as R3 was (§ 1's verdict).
+  Gate A's CI run spent 1 h 46 min on the data alone (R9), most of it fetching Poland; a cache of the
+  extracts is a question F answers before it lands, not after.
 - **The ODbL offer is the database itself.** Decided with the owner, 2026-10-20: the workflow
   attaches the nine `.pmtiles` to the release-please GitHub release, under ODbL, and the licences
   screen's ODbL entry links to the release page for the app's own version. That offers the
