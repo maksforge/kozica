@@ -18,7 +18,7 @@ of ours.
 **The merged manifest of every build declares no `INTERNET` permission**, and no
 `ACCESS_NETWORK_STATE` or `ACCESS_WIFI_STATE` either. `scripts/aab-permissions.py` forbids all three.
 A dependency that merges one has it removed with `tools:node="remove"` and must work without it; a
-library that cannot is not used. Two are known:
+library that cannot is not used. Three are known:
 
 - **MapLibre** (`android-sdk` 13.7.1) merges all three, and the fine and coarse location pair that
   phase 2's ask uses, the moment it becomes a dependency.
@@ -28,6 +28,11 @@ library that cannot is not used. Two are known:
   the permissions alone would ship an SDK that still tries to upload on a schedule, so both
   components are removed too, and the tip ships only after a purchase is confirmed on a phone
   without them.
+- **Play Asset Delivery** (`asset-delivery` 2.3.0) brings WorkManager, which merges
+  `ACCESS_NETWORK_STATE`. The main manifest's removal covers it. Read through Play on API 30 and 36
+  on 2026-10-20 ([`phase-2b.md`](../phase-2b.md) § 1, verdict 1): the Play Store extracts a pack
+  through the library's own services, no `ExtractionWorker` runs, and nothing asks for network
+  state.
 
 **Live information is a hand-off.** Where the user needs something only the network has, the app
 opens another app with an intent and claims nothing about the result:
