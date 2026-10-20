@@ -8,18 +8,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.triStateToggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.state.ToggleableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
@@ -49,11 +52,13 @@ fun WelcomeScreen(
             }
             if (state.choosable.isNotEmpty()) {
                 item {
-                    ChoiceRow(
-                        label = stringResource(R.string.welcome_all),
-                        detail = null,
-                        checked = state.allSelected,
-                        enabled = true,
+                    AllRow(
+                        state =
+                            when {
+                                state.allSelected -> ToggleableState.On
+                                state.chosen.isEmpty() -> ToggleableState.Off
+                                else -> ToggleableState.Indeterminate
+                            },
                         onToggle = viewModel::toggleAll,
                     )
                 }
@@ -62,7 +67,8 @@ fun WelcomeScreen(
                 val choosable = region in state.choosable
                 ChoiceRow(
                     label = stringResource(region.name),
-                    detail = if (choosable) region.downloadSize?.let { fileSize(it) } else stateLine(region),
+                    size = if (choosable) region.downloadSize?.let { fileSize(it) } else null,
+                    stateLine = if (choosable) null else stateLine(region),
                     checked = !choosable || region.id in state.selected,
                     enabled = choosable,
                     onToggle = { viewModel.toggle(region.id) },
@@ -105,17 +111,31 @@ private fun downloadLabel(
     }
 
 @Composable
+private fun AllRow(
+    state: ToggleableState,
+    onToggle: () -> Unit,
+) {
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.welcome_all)) },
+        leadingContent = { TriStateCheckbox(state = state, onClick = null) },
+        modifier = Modifier.triStateToggleable(state = state, role = Role.Checkbox, onClick = onToggle),
+    )
+}
+
+@Composable
 private fun ChoiceRow(
     label: String,
-    detail: String?,
+    size: String?,
+    stateLine: String?,
     checked: Boolean,
     enabled: Boolean,
     onToggle: () -> Unit,
 ) {
     ListItem(
         headlineContent = { Text(label) },
+        supportingContent = stateLine?.let { { Text(it) } },
         leadingContent = { Checkbox(checked = checked, onCheckedChange = null, enabled = enabled) },
-        trailingContent = detail?.let { { Text(it) } },
+        trailingContent = size?.let { { Text(it) } },
         modifier =
             Modifier.toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = {
                 onToggle()
