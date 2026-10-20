@@ -128,10 +128,10 @@ cannot stand in.
 
 ### The apparatus
 
-- B's branch, built with `./gradlew bundleRelease -PmapPacks` and the upload key, twice: at pin 4942
-  and at the newest pin Geofabrik serves on the day, each with the Tatry archive built by
-  `build-map-data.py` at that pin. Both are Poland-only; C does not wait for A, and A does not wait
-  for C. The second carries a higher `versionCode` by hand on the branch, never committed.
+- B's branch, built with `./gradlew bundleRelease -PmapPacks` and the upload key, twice: at the pin
+  on `main` and at the newest pin Geofabrik serves on the day, each with the Tatry archive built by
+  `build-map-data.py --region tatry` at that pin. Whether they cross the border depends on whether
+  C has merged; A does not wait for C, and C does not wait for A. The second carries a higher `versionCode` by hand on the branch, never committed.
 - **Two more hand edits on the branch, never committed**, because a release bundle has neither the
   debug section nor E's screen: tapping the empty state's line fetches the Tatry, and `RegionFiles`
   logs every `AssetPackState` under the tag `KozicaPack`, with its status, `bytesDownloaded()` and
@@ -187,8 +187,8 @@ And for the refresh's size, R3:
 netstats figure includes the APK's patch, so it overstates the pack's, which errs towards verdict 3.
 
 "Close to the whole pack" is above 25 % of the Tatry pack's compressed size. The baseline is a
-bsdiff between the two archives actually uploaded, `build-map-data.py --patch-from 4942` at the
-second bundle's pin: phase 1's R6 measured the thin schema of 1 MB, and phase 2's 7.3 MB schema has
+bsdiff between the two archives actually uploaded, `build-map-data.py --region tatry --patch-from
+<the first bundle's pin file>` at the second bundle's pin: phase 1's R6 measured the thin schema of 1 MB, and phase 2's 7.3 MB schema has
 never had one. Play is free to do worse than bsdiff; it is not free to do forty times worse without
 that being the finding. Internal app sharing is not documented to patch as a track does, so a
 number above 25 % goes to the owner with that said. Confirming it on the closed track, where an
@@ -387,7 +387,7 @@ Play needs Wi-Fi on; the test phone's goes off again after.
 | R2 | The same install on the test phone, API 30: the second API level, below JobScheduler's check | as R1, with `-s mnbm7hw8ivdqzx9l` | |
 | R3 | *(phase 1's E1)* The bytes a one-pin refresh of the Tatry costs through Play, against a bsdiff of the same two archives; the pack back to Ready unasked; no `SecurityException` | internal app sharing, the second link over the first; `adb -s 132bc856 shell dumpsys netstats detail` for the Play Store's UID before and after; the update sheet and `KozicaPack`'s `bytesDownloaded` beside it; `python3 scripts/build-map-data.py --patch-from 4942`; R1's logcat filter | |
 | R4 | *(phase 1's E2)* The release bundle declares none of the FORBIDDEN permissions with the library and WorkManager in, and exactly the four new EXPECTED rows | `./gradlew bundleRelease && python3 scripts/aab-permissions.py` | |
-| R5 | Across the border: the three extracts at one moment, the merged build deterministic, and the Tatry's Slovak Trails drawn | `python3 scripts/build-map-data.py --check-determinism`; push the archive; `adb exec-out screencap -p > r5.png` over Štrbské Pleso | |
+| R5 | Across the border: the three extracts at one moment, the merged build deterministic, and the Tatry's Slovak Trails drawn | `python3 scripts/build-map-data.py --check-determinism`; push the archive; `adb exec-out screencap -p > r5.png` over Štrbské Pleso | 2026-10-20, pin `poland 4942`, `slovakia 4942`, `czech-republic 4943`, one moment 2026-10-18T20:25:06Z: the dated extracts already at their sequences, so no update ran. Two builds of the Tatry byte-identical, 11,594,670 bytes (7,544,813 zstd -19) against phase 2's 7,274,738 for Poland alone, sha256 `c628cb98…376a`; the metadata's `osmosisreplicationtime` is the moment, its sequence 0. Tile 14/9104/5618, wholly Slovak, at Štrbské Pleso: Trails in green, blue, red and yellow. Of the merged cut's 298 hiking relations, 7 reach the colour fallback, none for a Slovak colour word: 3 stages of Via Slovakia, a route over other Trails' marks, 1 Slovak educational path and 2 Polish relations with neither tag, and the E3's `:blue::E3:yellow`. **The screen is not yet read**: the test phone's keyguard has gained a credential and `screencap` fails under it |
 | R6 | Every Region's archive size, raw and zstd, at one pin | `ls -l`, `zstd -19 -c … \| wc -c` per archive | |
 | R7 | The Regions screen on the phone: one Region downloaded, removed with its dialog, then "Download all" to every Region ready, from a build Play delivers | F's release on the internal track, uninstalled and reinstalled from Play; `adb exec-out screencap -p` per state | |
 | R8 | The ODbL offer: the release page holds nine archives whose hashes match the bundle's packs | `gh release view v<x.y.z> --json assets`; `sha256sum` against `bundletool`'s extracted packs | |
