@@ -169,3 +169,17 @@ On the first launch Kozica now asks which Regions to download, so you can get ev
 ```
 Przy pierwszym uruchomieniu Kozica pyta teraz, które regiony pobrać, więc możesz pobrać potrzebne albo wszystkie przed wyjściem. Zmienisz to w każdej chwili przyciskiem pobierania na mapie albo w Ustawienia → Regiony.
 ```
+
+### 0.4.1 — a support address of its own
+
+**English** — 239/500:
+
+```
+In Settings → Help and feedback, "Report a problem" and "Suggest a feature" now open an email to Kozica's own support address, kozica.support@maksforge.com, instead of a personal one. So does "Something read wrong?" in Settings → Language.
+```
+
+**Polish** — 226/500:
+
+```
+W Ustawienia → Pomoc i opinie „Zgłoś problem” i „Zaproponuj funkcję” otwierają teraz wiadomość na własny adres pomocy Kozicy, kozica.support@maksforge.com, a nie na prywatny. Tak samo „Coś brzmi nie tak?” w Ustawienia → Język.
+```
