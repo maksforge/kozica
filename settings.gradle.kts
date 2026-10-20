@@ -31,12 +31,20 @@ plugins {
 
 rootProject.name = "bunny-app"
 include(":app")
-// docs/phase-1.md § 3: the pack joins only on request, never because its archive is on disk.
+// docs/phase-1.md § 3: the packs join only on request, never because an archive is on disk.
 if (providers
         .gradleProperty("mapPacks")
         .map {
             it.isEmpty() || it.toBoolean()
         }.getOrElse(false)
 ) {
-    include(":region_tatry")
+    file("scripts/regions").listFiles { file -> file.extension == "poly" }!!.forEach { polygon ->
+        val region = polygon.nameWithoutExtension
+        val archive = file("region_$region/src/main/assets/$region.pmtiles")
+        check(archive.exists()) {
+            "-PmapPacks needs $archive. Build it with `python3 scripts/build-map-data.py`."
+        }
+        include(":region_$region")
+        project(":region_$region").buildFileName = "../gradle/region-pack.gradle.kts"
+    }
 }
