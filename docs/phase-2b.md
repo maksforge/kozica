@@ -347,7 +347,8 @@ Polish, `translatable="false"`.
   0.3.0, shows ticked and fixed. "Download" fetches the ticked ones in one call and opens the Regions
   screen, which shows their progress and Play's confirmation; "Not now" opens the map. Either answer
   stores `onboarding_done`, so the screen never returns; one line names the map's button and Settings'
-  row as the places to change it later.
+  row as the places to change it later. With every Region already ready or on its way there is
+  nothing to ask: once the Regions are read, `onboarding_done` is stored and the map opens.
 - **Remove asks first.** A Region removed on a ridge with no signal does not come back until there is
   signal. The dialog says that, in one line, and Remove is its confirming button. Download asks
   nothing: Play's own confirmation covers mobile data.
