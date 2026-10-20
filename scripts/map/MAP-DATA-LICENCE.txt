@@ -1,0 +1,20 @@
+Kozica map data
+
+The .pmtiles files attached to this release are a derivative database of
+OpenStreetMap.
+
+© OpenStreetMap contributors
+https://www.openstreetmap.org/copyright
+
+They are made available under the Open Database License 1.0:
+https://opendatacommons.org/licenses/odbl/1-0/
+
+As with OpenStreetMap itself, the individual contents of the database are
+made available under the Database Contents License 1.0:
+https://opendatacommons.org/licenses/dbcl/1-0/
+
+They were built by scripts/build-map-data.py at the extracts pinned in
+scripts/osm-data.pin, both at this release's tag.
+
+This notice covers the map data only. The app's source code is not covered
+by it.

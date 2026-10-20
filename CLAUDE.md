@@ -54,7 +54,7 @@ let us do otherwise".">
   ODbL. Shipping a modified or filtered OSM extract, or publicly conveying maps produced from one, is
   public use of a derivative database: from that first release, offer the database or the script that
   builds it under ODbL (§4.6). Ours is the database itself: `publish-play.yml` attaches every
-  Region's `.pmtiles` to the version's GitHub release before Play sees the bundle, and the licences
+  Region's `.pmtiles`, with its ODbL notice, to the version's GitHub release before Play sees the bundle, and the licences
   screen links there (`docs/phase-2b.md` § 6). The app's own data (tracks, photos, notes) stays an independent
   database, never merged into OSM-derived data. We build OSM data ourselves from Geofabrik extracts,
   never from `tile.openstreetmap.org` or the public Overpass instance. The code's `LICENSE` stays all
