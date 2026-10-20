@@ -68,7 +68,7 @@ Uninstalling the app removes everything it stored on the phone. A copy can be in
   phone's backup settings.
 - **A mail you sent the developer.** It is kept in the developer's mailbox, with your email address
   and what the draft carried, until you ask for it to be deleted. Write to the address below and it
-  will be, including a mail sent to the developer's earlier address before this one replaced it.
+  will be, including a mail sent to the developer's earlier address.
 
 ## Changes
 

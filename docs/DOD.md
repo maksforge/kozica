@@ -52,9 +52,11 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 - [x] **Choose a dedicated support address.** `kozica.support@maksforge.com` since 2026-10-20, on
       the owner's own domain: Cloudflare Email Routing forwards it to the developer's Gmail, which
       sends as it. `ui/support/SupportHandoff.kt` compiles it in, and the Play listing's contact
-      field and the privacy policy's *Contact* give it too. A sideloaded APK keeps mailing whatever
-      string was compiled in for as long as that build survives, so a later move changes all three
-      together.
+      field and the privacy policy's *Contact* give it too. The item once ruled out an alias on
+      personal mail, and this is one (replies still carry the Gmail in `Return-Path`); it was relaxed
+      because what a build freezes is the address, not the mailbox. Moving the mailbox is now only a
+      change to the Cloudflare route; all three change only if the address does. v0.2.0 and v0.3.0
+      compile in the Gmail itself, so that inbox stays read for as long as either build survives.
 - [ ] **Write the listing.** `docs/store-listing.md` — every heading in it is parsed by a script.
 - [x] **Write the privacy policy** and confirm GitHub Pages is serving `docs/`. Play requires a
       *hosted* URL, and an offline app has no server of its own. Served at
