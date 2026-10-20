@@ -240,15 +240,17 @@ Phase 1 § 5's first two bullets are this checkpoint, and stand as written there
   before it, by `pyosmium-up-to-date --end-id`, then checked against its line of the pin. Sizes read
   2026-10-20: Poland 2.11 GB, Czechia 0.95 GB, Slovakia 0.35 GB, so a release build downloads about
   3.4 GB, not 2.1.
-- **Each country is cut into every Region before anything is merged**, one `osmium extract` pass
-  per Region, each keeping the country's replication header. Not one `--config` pass for all nine:
+- **Each country is cut into every Region before anything is merged**, one `osmium extract` pass per
+  Region, each keeping the country's replication header. Not one `--config` pass for all nine:
   osmium keeps ID sets per polygon sized to OSM's largest IDs, and Poland cut for nine Regions in
   one pass peaked at 29.4 GB (`smart`; 17.8 GB even with `simple`), against 4.0 GB for one and
-  11.7 GB for three, read 2026-10-20 with `/usr/bin/time -f %M`. A hosted runner has 16 GB, and
-  the nine passes over Poland cost about 80 s more than one. With `--discard-extracts`, which `publish-play.yml` passes, the
-  country's dated and updated extracts are deleted as soon as its cuts are written, so the build's
-  disk peak is Poland's two, about 4.2 GB, not three countries' full extracts and a merged copy. On
-  a workstation they stay, as today, a cache re-verified on every run.
+  11.7 GB for three, read 2026-10-20 with `/usr/bin/time -f %M`. A hosted runner has 16 GB. The nine
+  passes over Poland cost about 80 s more than one, and Slovakia's and Czechia's smaller extracts
+  add little: a full build of all nine Regions at the current pin took 198 s, with a 4.1 GB memory
+  peak. With `--discard-extracts`, which `publish-play.yml` passes, the country's dated and updated
+  extracts are deleted as soon as its cuts are written, so the build's disk peak is Poland's two,
+  about 4.2 GB, not three countries' full extracts and a merged copy. On a workstation they stay, as
+  today, a cache re-verified on every run.
 - **`osmium merge` then joins each Region's three cuts.** Geofabrik's extracts overlap a little at
   the borders, and `merge` keeps one copy of an object present in two.
 - **The merged file carries the shared timestamp, and no sequence.** The three sequences differ, so
