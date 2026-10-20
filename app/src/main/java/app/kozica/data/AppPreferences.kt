@@ -102,7 +102,7 @@ class AppPreferences(
             MapCamera(latitude, longitude, zoom)
         }
 
-    /** The Regions the map last knew to be on the phone, so it can tell one that arrived since. */
+    /** The Regions the map has already taken in, so it can tell one that arrived since. */
     val readyRegions: Flow<Set<String>> = store.data.map { it[Keys.READY_REGIONS].orEmpty() }
 
     /**
@@ -135,8 +135,12 @@ class AppPreferences(
         }
     }
 
-    suspend fun setReadyRegions(ids: Set<String>) {
-        store.edit { it[Keys.READY_REGIONS] = ids }
+    suspend fun addReadyRegions(ids: Set<String>) {
+        store.edit { it[Keys.READY_REGIONS] = it[Keys.READY_REGIONS].orEmpty() + ids }
+    }
+
+    suspend fun removeReadyRegions(ids: Set<String>) {
+        store.edit { it[Keys.READY_REGIONS] = it[Keys.READY_REGIONS].orEmpty() - ids }
     }
 
     suspend fun setBackupFolderUri(uri: String?) {
