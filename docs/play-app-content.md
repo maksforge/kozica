@@ -158,9 +158,9 @@ app it describes ships rather than after.
 - **Category:** Maps & navigation, set 2026-10-20. Not Travel & local, which is bookings and guides,
   and not Health & fitness, whose claims this file keeps out of the listing.
 - **Tags:** none.
-- **Contact email:** the developer account's Gmail for now, public on the listing and the same
-  address `SupportHandoff.kt` compiles in. The owner may move it to a dedicated address; the Console
-  field changes without a release, and the app's copy needs one.
+- **Contact email:** `kozica.support@maksforge.com`, public on the listing and the same address
+  `SupportHandoff.kt` compiles in. The Console field changes without a release; the app's copy needs
+  one.
 
 ## Production access — the application, and the answers it was given
 
