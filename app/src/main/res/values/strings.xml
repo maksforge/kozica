@@ -69,7 +69,7 @@
     <string name="welcome_title">Welcome to Kozica</string>
     <string name="welcome_body">Download the mountains you need before you go. After that the map works with no signal.</string>
     <string name="welcome_all">All Regions</string>
-    <!-- Names the map's download button and the Settings → Regions row by their own words -->
+    <!-- The map's download button shows only an icon, so it is described rather than quoted; "Settings → Regions" quotes those two strings exactly -->
     <string name="welcome_later">You can change this any time with the download button on the map, or in Settings → Regions.</string>
     <!-- %2$s is a size from the platform, such as "230 MB" -->
     <plurals name="welcome_download">
