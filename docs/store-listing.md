@@ -155,3 +155,17 @@ The map now draws the mountains. Choose the ones you need on the new Regions scr
 ```
 Mapa rysuje teraz góry. Wybierz te, których potrzebujesz, na nowym ekranie Regiony i pobierz je po jednym regionie albo wszystkie dziewięć naraz, od Karkonoszy po Bieszczady, razem ze słowacką i czeską stroną granicy. Każdy znakowany szlak jest narysowany w kolorze z drogowskazów, a mapa działa bez zasięgu. Pobieraniem zajmuje się Sklep Play. Ekran otwiera przycisk obok Ustawień.
 ```
+
+### 0.4.0 — choose Regions on the first launch
+
+**English** — 220/500:
+
+```
+On the first launch Kozica now asks which Regions to download, so you can get every one you need, or all of them, before you go. You can change them any time with the download button on the map, or in Settings → Regions.
+```
+
+**Polish** — 217/500:
+
+```
+Przy pierwszym uruchomieniu Kozica pyta teraz, które regiony pobrać, więc możesz pobrać potrzebne albo wszystkie przed wyjściem. Zmienisz to w każdej chwili przyciskiem pobierania na mapie albo w Ustawienia → Regiony.
+```

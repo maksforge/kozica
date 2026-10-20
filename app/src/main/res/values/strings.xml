@@ -65,6 +65,23 @@
     <string name="regions_remove_body">You won\'t see this Region\'s map until you download it again, which needs a connection.</string>
     <string name="regions_failed">Download failed</string>
 
+    <!-- The first launch's welcome screen -->
+    <string name="welcome_title">Welcome to Kozica</string>
+    <string name="welcome_body">Download the mountains you need before you go. After that the map works with no signal.</string>
+    <string name="welcome_all">All Regions</string>
+    <!-- Names the map's download button and the Settings → Regions row by their own words -->
+    <string name="welcome_later">You can change this any time with the download button on the map, or in Settings → Regions.</string>
+    <!-- %2$s is a size from the platform, such as "230 MB" -->
+    <plurals name="welcome_download">
+        <item quantity="one">Download %1$d Region, %2$s</item>
+        <item quantity="other">Download %1$d Regions, %2$s</item>
+    </plurals>
+    <plurals name="welcome_download_unsized">
+        <item quantity="one">Download %1$d Region</item>
+        <item quantity="other">Download %1$d Regions</item>
+    </plurals>
+    <string name="welcome_not_now">Not now</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_map">Map</string>

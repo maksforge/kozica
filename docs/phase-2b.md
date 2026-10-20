@@ -341,6 +341,13 @@ Polish, `translatable="false"`.
   camera stays, so a process killed before the map returns still moves it. Only a Region not
   downloaded is forgotten, at once, so one downloaded again moves the camera again and an update
   passing through "Updating" is no arrival.
+- **The first launch asks which Regions to download** (decided with the owner, 2026-10-20, after
+  E shipped): a welcome screen in the map's place, every Region with a box and its size, "All
+  Regions" over them, nothing ticked. A Region already ready or on its way, as after an update from
+  0.3.0, shows ticked and fixed. "Download" fetches the ticked ones in one call and opens the Regions
+  screen, which shows their progress and Play's confirmation; "Not now" opens the map. Either answer
+  stores `onboarding_done`, so the screen never returns; one line names the map's button and Settings'
+  row as the places to change it later.
 - **Remove asks first.** A Region removed on a ridge with no signal does not come back until there is
   signal. The dialog says that, in one line, and Remove is its confirming button. Download asks
   nothing: Play's own confirmation covers mobile data.
@@ -351,8 +358,10 @@ Polish, `translatable="false"`.
 Copy: "Regions", "Map" (the Settings section), "Choose Regions", "Download", "Remove", "Retry", "Download all — %1$d Regions,
 %2$s" (a plural) and its sizeless twin "Download all — %1$d Regions", "Downloading — %1$d%%", "Waiting for Wi-Fi", "Download over mobile data",
 "Play needs your confirmation", "Confirm", "Updating", "Remove %1$s?", "You won't see this Region's
-map until you download it again, which needs a connection.", "Download failed". The Region names
-are not copy.
+map until you download it again, which needs a connection.", "Download failed". The welcome screen's: "Welcome to Kozica", "Download the mountains you need before you go.
+After that the map works with no signal.", "All Regions", "You can change this any time with the
+download button on the map, or in Settings → Regions.", "Download %1$d Regions, %2$s" (a plural) and
+its sizeless twin, "Not now". The Region names are not copy.
 
 ## 6. Play delivers it
 

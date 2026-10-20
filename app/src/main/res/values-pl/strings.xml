@@ -49,6 +49,24 @@
     <string name="regions_remove_body">Nie zobaczysz mapy tego regionu, dopóki nie pobierzesz go ponownie, a do tego potrzebne jest połączenie z internetem.</string>
     <string name="regions_failed">Pobieranie nie powiodło się</string>
 
+    <string name="welcome_title">Witaj w Kozicy</string>
+    <string name="welcome_body">Pobierz góry, których potrzebujesz, przed wyjściem. Potem mapa działa bez zasięgu.</string>
+    <string name="welcome_all">Wszystkie regiony</string>
+    <string name="welcome_later">Możesz to zmienić w każdej chwili przyciskiem pobierania na mapie albo w Ustawienia → Regiony.</string>
+    <plurals name="welcome_download">
+        <item quantity="one">Pobierz %1$d region, %2$s</item>
+        <item quantity="few">Pobierz %1$d regiony, %2$s</item>
+        <item quantity="many">Pobierz %1$d regionów, %2$s</item>
+        <item quantity="other">Pobierz %1$d regionu, %2$s</item>
+    </plurals>
+    <plurals name="welcome_download_unsized">
+        <item quantity="one">Pobierz %1$d region</item>
+        <item quantity="few">Pobierz %1$d regiony</item>
+        <item quantity="many">Pobierz %1$d regionów</item>
+        <item quantity="other">Pobierz %1$d regionu</item>
+    </plurals>
+    <string name="welcome_not_now">Nie teraz</string>
+
     <string name="settings_title">Ustawienia</string>
     <string name="settings_map">Mapa</string>
     <string name="settings_appearance">Wygląd</string>

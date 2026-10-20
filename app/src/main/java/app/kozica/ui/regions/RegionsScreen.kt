@@ -80,7 +80,7 @@ fun RegionsScreen(
 }
 
 @Composable
-private fun downloadAllLabel(
+internal fun downloadAllLabel(
     count: Int,
     bytes: Long?,
 ): String =
@@ -118,7 +118,7 @@ private fun RegionRow(
 }
 
 @Composable
-private fun stateLine(region: Region): String? =
+internal fun stateLine(region: Region): String? =
     when (val state = region.state) {
         RegionState.NotDownloaded -> region.downloadSize?.let { fileSize(it) }
         is RegionState.Downloading -> stringResource(R.string.regions_downloading, state.percent)
@@ -145,4 +145,4 @@ private fun RemoveDialog(
 }
 
 @Composable
-private fun fileSize(bytes: Long): String = Formatter.formatShortFileSize(LocalContext.current, bytes)
+internal fun fileSize(bytes: Long): String = Formatter.formatShortFileSize(LocalContext.current, bytes)
