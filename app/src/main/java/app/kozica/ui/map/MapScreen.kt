@@ -518,8 +518,8 @@ private val CameraSaver =
 
 private const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 
-// A whole Region fits at about zoom 8.3 to 9, where the archive draws next to nothing and no Trail
-// (docs/phase-2b.md § 5, R7), so the camera goes to its middle at no less than the Trails' zoom.
+// A whole Region fits at about zoom 7.3 to 8.1, where the archive draws next to nothing and no
+// Trail (docs/phase-2b.md § 5, R7), so the camera goes to its middle at the Trails' zoom or above.
 private fun MapLibreMap.cameraOnto(bounds: GeoBounds): CameraUpdate {
     val fitted = getCameraForLatLngBounds(bounds.toLatLngBounds())?.zoom ?: TRAIL_ZOOM
     val middle = LatLng((bounds.south + bounds.north) / 2, (bounds.west + bounds.east) / 2)
