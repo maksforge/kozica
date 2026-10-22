@@ -14,7 +14,7 @@ user-facing word genuinely differ, both are written here with the difference sta
 | **Path** | Any footway on the map, marked or not. A Path is never drawn or named as if it were a Trail. Polish UI: *ścieżka*. | "trail" for an unmarked way |
 | **Hut** | A staffed mountain hut. Polish UI: *schronisko*. | "shelter", "refuge", "hostel" |
 | **Shelter** | An unstaffed roof on or near a Trail. Polish UI: *wiata*. A staffed *chatka* is a Hut. | "hut", *chatka* |
-| **Region** | A group of neighbouring mountain ranges that the user downloads or removes as one unit, e.g. *Beskidy Zachodnie*. Its boundary follows the ranges, not administrative borders, and crosses into Slovakia and Czechia where the ranges do; it stops at Ukraine's and Germany's. | "area", "pack", "map" (a Region is what the map shows, not the map itself) |
+| **Region** | A group of neighbouring mountain ranges that the map data is built and delivered in, e.g. *Beskidy Zachodnie*. Its boundary follows the ranges, not administrative borders, and crosses into Slovakia and Czechia where the ranges do; it stops at Ukraine's and Germany's. The user never picks one: every Region arrives with the app. | "area", "pack", "map" (a Region is what the map shows, not the map itself) |
 
 ## Words we deliberately avoid
 
