@@ -92,19 +92,22 @@ of `publish-play-production.yml` with `update_listing: true`, which needs *Manag
 `PLAN.md` opens closed testing when this phase closes and the items below, from `DOD.md`'s *Before
 the first upload*, are done. Those still open on 2026-10-22:
 
-- **The developer's:** checkpoint E's refresh reading ([`phase-2b.md`](phase-2b.md) § 6), which can
-  only be taken on the closed track itself. Done on 2026-10-22: nothing more to delete (phase 0
-  kept Room, photos and backup for phase 6), and the four `aab-*.py` gates pass on every release
-  bundle in `publish-play.yml` (`DOD.md`).
+- **The developer's:** none. Closed on 2026-10-22 (`DOD.md`): nothing more to delete (phase 0 kept
+  Room for phase 5's routes, photos and backup for phase 6's hike log), and the artifact gates,
+  overtaken by v0.2.0 passing all four in `publish-play.yml`.
 - **The owner's:** the mark and its provenance (`art/`); the licence in `LICENSE` and `README.md`;
-  the closed test and its testers; and pushing the listing with B's sentence.
+  the closed test and its testers; pushing the listing with B's sentence; and checkpoint E's
+  foreground-service declaration for `dataSync`, dated in `play-app-content.md`.
 - **Not a gate:** the dormant `items` table, which phase 5's `MIGRATION_1_2` replaces under the
-  standing schema gate.
+  standing schema gate; and checkpoint E's refresh size ([`phase-2b.md`](phase-2b.md) § 6), which
+  only the closed track can read, so it is a reading the first pin-only release after the door owes.
 
-**What the door freezes** is what a tester's install keeps. From the first one, deleting Room, photos
-or backup loses a tester's data instead of costing nothing, which is why the deletion comes first. The
-`applicationId` and the upload key were fixed when Play took the first bundle. And a build on a tester's
-phone keeps its compiled-in support address and Safety targets, so a target that moves is put right
+**What the door freezes** is what a tester's install keeps. Room's schema is the first of it: phase
+5's `MIGRATION_1_2` carries every tester's database forward from the dormant `items` table. From
+phases 5 and 6 those installs hold the user's routes, hikes and photos, and deleting Room, photos or
+backup then loses a tester's data instead of costing nothing, which is why keeping them was decided
+before the door. The `applicationId` and the upload key were fixed when Play took the first bundle.
+And a build on a tester's phone keeps its compiled-in support address and Safety targets, so a target that moves is put right
 for them only by an update.
 
 ---
