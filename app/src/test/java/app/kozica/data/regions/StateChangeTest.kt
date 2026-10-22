@@ -1,6 +1,7 @@
 package app.kozica.data.regions
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StateChangeTest {
@@ -25,5 +26,20 @@ class StateChangeTest {
         val failed = StateChange(mapOf("tatry" to RegionState.Failed(-6)))
 
         assertEquals(mapOf("tatry" to RegionState.Failed(-6)), known.mergedWith(failed))
+    }
+
+    @Test
+    fun `a Region still not downloaded once Play has been asked for it has failed`() {
+        assertTrue(RegionState.NotDownloaded.afterAsking(asked = true) is RegionState.Failed)
+    }
+
+    @Test
+    fun `a Region not asked for yet stays not downloaded`() {
+        assertEquals(RegionState.NotDownloaded, RegionState.NotDownloaded.afterAsking(asked = false))
+    }
+
+    @Test
+    fun `asking leaves a moving download alone`() {
+        assertEquals(RegionState.Downloading(40), RegionState.Downloading(40).afterAsking(asked = true))
     }
 }

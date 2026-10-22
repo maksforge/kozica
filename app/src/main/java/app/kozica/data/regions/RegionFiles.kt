@@ -44,6 +44,7 @@ class RegionFiles private constructor(
 
     // Kept apart from the states because Play reports a pack's size only in some of them.
     private val downloadSizes = ConcurrentHashMap<String, Long>()
+    private val asked = ConcurrentHashMap.newKeySet<String>()
 
     val states: Flow<List<Region>> =
         merge(
@@ -54,8 +55,11 @@ class RegionFiles private constructor(
                 .catch { },
         ).scan(emptyMap<String, RegionState>()) { known, change -> known.mergedWith(change) }
             .filter { it.keys.containsAll(REGION_NAMES.keys) }
-            .map { known -> REGION_NAMES.map { (id, name) -> Region(id, name, known.getValue(id), downloadSizes[id]) } }
-            .flowOn(Dispatchers.IO)
+            .map { known ->
+                REGION_NAMES.map { (id, name) ->
+                    Region(id, name, known.getValue(id).afterAsking(id in asked), downloadSizes[id])
+                }
+            }.flowOn(Dispatchers.IO)
 
     fun readyArchive(id: String): File? =
         manager
@@ -67,16 +71,22 @@ class RegionFiles private constructor(
     /** One request for every Region in [ids], rather than one per Region. */
     suspend fun download(ids: Collection<String>) {
         Log.i(TAG, "fetch ${ids.joinToString()}")
-        updates.emit(
+        val answer =
             try {
                 val states = manager.fetch(ids.map(::pack)).await().packStates()
+                ids.forEach { id ->
+                    val state = states[pack(id)]
+                    Log.i(TAG, "fetched $id: status ${state?.status()} error ${state?.errorCode()}")
+                }
                 ids.associateWith { id -> states[pack(id)]?.let { fromPackState(id, it) } ?: RegionState.NotDownloaded }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                Log.w(TAG, "fetch failed: error ${errorCodeOf(e)}", e)
                 ids.associateWith { id -> readyArchive(id)?.let(::readyRegion) ?: failure(e) }
-            },
-        )
+            }
+        asked += ids
+        updates.emit(answer)
     }
 
     /**
@@ -90,7 +100,7 @@ class RegionFiles private constructor(
         }
 
     // A build sideloaded by installDebug has no Play session and declares no pack, so a request
-    // fails or answers without the pack; either is "not downloaded", never a crash (ADR-0007).
+    // fails or answers without the pack; either is a failure, never a crash (ADR-0007).
     // docs/phase-2c.md R1 reads the first launch's states from a Play install, so this logs in release.
     private suspend fun read(
         ids: Collection<String>,
@@ -99,7 +109,8 @@ class RegionFiles private constructor(
         val states =
             try {
                 manager.getPackStates(ids.map(::pack)).await().packStates()
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.w(TAG, "state read failed: error ${errorCodeOf(e)}", e)
                 emptyMap()
             }
         if (logged) ids.forEach { Log.i(TAG, "$it: status ${states[pack(it)]?.status()}") }
@@ -120,8 +131,10 @@ class RegionFiles private constructor(
             awaitClose { manager.unregisterListener(listener) }
         }
 
+    private fun errorCodeOf(e: Exception): Int? = (e as? AssetPackException)?.errorCode
+
     private fun failure(e: Exception): RegionState =
-        RegionState.Failed((e as? AssetPackException)?.errorCode ?: AssetPackErrorCode.INTERNAL_ERROR)
+        RegionState.Failed(errorCodeOf(e) ?: AssetPackErrorCode.INTERNAL_ERROR)
 
     private fun fromPackState(
         id: String,
@@ -176,6 +189,12 @@ internal class StateChange(
 // is pending is newer than the snapshot the read returns.
 internal fun Map<String, RegionState>.mergedWith(change: StateChange): Map<String, RegionState> =
     if (change.isFirstRead) change.states + this else this + change.states
+
+// Play has been asked, so a pack it still calls not downloaded — left out of the answer, installed with
+// no archive, NOT_INSTALLED from the listener — has nothing coming, and the line offers Retry instead
+// of reading as downloading for good.
+internal fun RegionState.afterAsking(asked: Boolean): RegionState =
+    if (asked && this == RegionState.NotDownloaded) RegionState.Failed(AssetPackErrorCode.PACK_UNAVAILABLE) else this
 
 private suspend fun <T> Task<T>.await(): T =
     suspendCancellableCoroutine { continuation ->
