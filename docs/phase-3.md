@@ -16,12 +16,13 @@ every row on the test phone opens what its hint says it opens, and nothing is di
 presses the dialler's own call button.
 
 **`PLAN.md`'s paragraph is wrong in two places, and is amended with this file.** It lists Poland's
-four hand-offs only; phase 2b's Regions put half the Tatry's Trails, the Slovak Pieniny and Beskidy
-and the Czech Karkonosze on the map, where 985 and Ratunek are the wrong first call. Decided with the
-owner on 2026-10-22: **a section per country, in a fixed order, chosen by nobody's position.** And
-three of its other items are already done or are the owner's alone: the privacy policy and the App
-content answers closed in phase P, and the support address is a `DOD.md` item that waits on the
-owner's choice of account, not on code.
+four hand-offs only; phase 2b's Regions put half the Tatry's Trails and the Slovak Pieniny and
+Beskidy on the map, and on the Czech side the Karkonosze, Góry Izerskie, Broumovsko and Góry
+Orlickie, the Jesioniki with Śnieżnik, and Beskid Śląsko-Morawski (point-in-polygon on
+`scripts/regions/*.poly`), where 985 and Ratunek are the wrong first call. Decided with the owner on
+2026-10-22: **a section per country, in a fixed order, chosen by nobody's position.** And its other
+items are already done: the listing, the privacy policy and the App content answers in phase P, the
+support address on 2026-10-20 (`DOD.md`).
 
 ---
 
@@ -40,8 +41,11 @@ owner's choice of account, not on code.
 ## What is in, and what is deliberately not
 
 **In:** the Safety screen with its three country sections and 112; the map's button for it; package
-visibility for the three apps; one sentence in the store listing's full description, in both
-languages. ADR-0008's amendment.
+visibility for the three apps, with the manifest's `<queries>` comment amended to say what every
+entry is for, since it now claims they exist only for mail, Play and the browser; the screen's
+`scripts/edge-to-edge.py` scenes, `safety` and `safety-bottom` (scrolled to the end, since three
+sections and 112 scroll); one sentence in the store listing's full description, in both languages.
+ADR-0008's amendment.
 
 **Not in, and each with a reason rather than a phase:**
 
@@ -73,44 +77,83 @@ button is in the top row with the other two.
 
 No gate: every target is an ordinary intent that the platform resolves or refuses, and
 `startActivitySafely` already handles the refusal. What could go wrong is a wrong number or a dead
-link, and that is checked against the source (§ 3) and read on the phone (R1), not gated.
+link, and that is checked against the source (§ 2) and read on the phone (R1), not gated.
 
 **A cuts a release on its own.** A stranger is not yet installing, so A reaches the internal track as
-an ordinary `feat:` release, and B rides the release after it or the same one.
+an ordinary `feat:` release.
+
+**B closes when its sentence is merged into `docs/store-listing.md`.** No release carries it to Play:
+`publish-play.yml` sends the bundle and its mapping only, and the description changes only on a run
+of `publish-play-production.yml` with `update_listing: true`, which needs *Manage store presence*
+([`RELEASING.md`](RELEASING.md)). That push is the owner's, and one of the door's items below.
+
+## The door to closed testing
+
+`PLAN.md` opens closed testing when this phase closes, but the door is `DOD.md`'s *Before the first
+upload*, not this phase alone. Its items still open on 2026-10-22:
+
+- **The developer's:** delete what the app does not need ([`optional-modules.md`](optional-modules.md));
+  run the four `aab-*.py` gates against the bundle the testers get; checkpoint E
+  ([`phase-2b.md`](phase-2b.md)), if that bundle carries a map pack or the asset-delivery library.
+- **The owner's:** the mark and its provenance (`art/`); the licence in `LICENSE` and `README.md`;
+  the closed test and its testers; and pushing the listing with B's sentence.
+- **Not a gate:** the dormant `items` table, which phase 5's `MIGRATION_1_2` replaces under the
+  standing schema gate.
+
+**What the door freezes** is what a tester's install keeps. From the first one, deleting Room, photos
+or backup loses a tester's data instead of costing nothing, which is why the deletion comes first. The
+`applicationId` and the upload key were fixed when Play took the first bundle. And a build a tester
+keeps keeps its compiled-in support address and Safety targets, so a target that moves is put right
+for them only by an update.
 
 ---
 
 ## 1. The Safety screen
 
 A detail screen, `ui/safety/`, pushed from the map's top row: **Regions, Safety, Settings**, with
-Material's `emergency` icon. No `ViewModel`: the only state is whether each app is installed, read on
-every resume (the user installs it and comes back), and which tap last found nothing, as on Support.
+Material's `emergency` glyph as one vector drawable, `ic_emergency.xml`, beside `ic_download.xml` and
+`ic_my_location.xml`: the app ships the core icon set only, and `material-icons-extended` is not
+added for one glyph. No `ViewModel`: the only state is whether each app is installed, read on every
+resume (the user installs it and comes back), and which tap last found nothing, as on Support.
 
 From the top:
 
-1. One line: Kozica works offline; these rows open other apps, and everything but the dialler needs
-   signal.
-2. **112**, a dial row, "if no other number connects".
+1. One line: Kozica works without signal; these rows open other apps and pages, and a call or a page
+   needs signal.
+2. **112**, a dial row for all three countries and any network: for a hiker who is not sure which
+   country they are in, and for when no other number connects.
 3. A section per country, **Poland, Slovakia, Czechia**, each with the same four kinds of row, in
    this order: the rescue number, the rescue app, the avalanche bulletin, the mountain weather.
+   Poland's second number row is the fallback for when 985 does not connect.
 
-| Kind | Opens | Hint shows |
-| --- | --- | --- |
-| Rescue number | `ACTION_DIAL` with `tel:<number>` | the number, and that the call is placed by the user |
-| Rescue app | the app if installed; otherwise its Play page, pinned to Play, then the browser | "installed", or "not installed — install it before you set out" |
-| Avalanche bulletin | `ACTION_VIEW` on the page | the page's host |
-| Mountain weather | `ACTION_VIEW` on the page | the page's host |
+| Kind | Title | Opens | Hint shows |
+| --- | --- | --- | --- |
+| Rescue number | "Call mountain rescue", or the fallback's "if 985 does not connect" | `ACTION_DIAL` with `tel:<number>` | the number as published, and that the phone app opens with it typed and the user places the call |
+| Rescue app | the app's name | the app if installed; otherwise its Play page, pinned to Play, then the browser | whether it is installed, and that it must be set up before the user sets out |
+| Avalanche bulletin | "Avalanche bulletin, " and the issuer | `ACTION_VIEW` on the page | the page's host |
+| Mountain weather | "Mountain weather, " and the issuer; ČHMÚ's "Weather model charts for the mountains" | `ACTION_VIEW` on the page | the page's host |
 
 **The host in the hint** tells the user where a tap goes before they make it, and gives them
 something to type on another device when this one has no browser.
 
-**The numbers and URLs are code, not strings.** They are not prose, a translator must never be able
-to change them, and `SafetyTest` (§ Tests) reads them from one table. The rows' words are strings.
+**The numbers, URLs, app names and issuers are code, not strings.** They are not prose, a translator
+must never be able to change them, and `SafetyTest` (§ Tests) reads the numbers from one table. The
+rows' words are strings.
+
+**The issuer names the range** where a page covers only some: TOPR (Tatry), GOPR (Karkonosze, Babia
+Góra, Bieszczady), SHMÚ (Tatry), Horská služba (Karkonosze) and Horská služba (Jesioniki). The ranges
+are in the Polish the Regions' names use (`region_*`, `translatable="false"`), so the qualifier lives
+in code with its URL and needs no string.
 
 **Not installed is a state, not an error.** Each rescue app's hint says whether it is installed,
 read with `PackageManager.getLaunchIntentForPackage`, which needs the three `<package>` entries in
-`<queries>` (from API 30, package visibility). A missing dialler or browser is an error, and says so
-inline, as on Support.
+`<queries>` (from API 30, package visibility). A missing phone app or browser is an error, and says
+so inline, as on Support; a missing Play and browser reuses Support's `support_no_play`.
+
+**Installed is not ready.** HZS's app registers the user's phone number with an SMS code, and
+registration needs signal, so an app installed and never opened is no use on the ridge. Neither hint
+promises readiness: both say to set the app up before setting out. What each app asks at first run is
+read in R2.
 
 ## 2. The targets
 
@@ -119,36 +162,48 @@ target that moves is fixed in an ordinary release.
 
 | Country | Rescue number | Rescue app | Avalanche bulletin | Mountain weather |
 | --- | --- | --- | --- | --- |
-| Poland | **985**, and **+48 601 100 300**, the same service on an ordinary mobile number, which also answers a foreign SIM (gopr.pl, topr.pl) | Ratunek, `com.pagasolutions.emergencycall_pl` | TOPR, `https://lawiny.topr.pl` for the Tatry; GOPR, `https://lawiny.gopr.pl` for the Karkonosze, Babia Góra, the Bieszczady and the simplified bulletins | IMGW, `https://gory.imgw.pl` |
-| Slovakia | **18 300** (hzs.sk) | Horská záchranná služba, `hzs.sk.hzs` | `https://www.laviny.sk` | SHMÚ's Tatras forecast, `https://www.shmu.sk/sk/?page=107` |
-| Czechia | **+420 1210** (horskasluzba.cz, published in this form) | Záchranka, `com.medicalit.zachranka`, which calls Horská služba | Horská služba, `https://www.horskasluzba.cz/cz/pocasi-na-horach/lavinova-predpoved/krkonose` | ČHMÚ, `https://www.chmi.cz/predpoved-pocasi/lyzarska-strediska-a-hory/` |
+| Poland | **985**, and **+48 601 100 300**, the same service on an ordinary mobile number, for any phone 985 does not reach: a foreign SIM, or a Polish one roamed onto a Slovak or Czech network on the ridge (gopr.pl, topr.pl) | Ratunek, `com.pagasolutions.emergencycall_pl` | TOPR (Tatry), `https://lawiny.topr.pl`; GOPR (Karkonosze, Babia Góra, Bieszczady), `https://lawiny.gopr.pl`, which also carries the simplified bulletins | IMGW, `https://gory.imgw.pl` |
+| Slovakia | **18 300** (hzs.sk) | Horská záchranná služba, `hzs.sk.hzs` | HZS, `https://www.laviny.sk` | SHMÚ (Tatry), `https://www.shmu.sk/sk/?page=107` |
+| Czechia | **+420 1210** (horskasluzba.cz, published in this form) | Záchranka, `com.medicalit.zachranka`, which calls Horská služba | Horská služba (Karkonosze), `https://www.horskasluzba.cz/cz/pocasi-na-horach/lavinova-predpoved/krkonose`; Horská služba (Jesioniki), `https://www.horskasluzba.cz/cz/pocasi-na-horach/lavinova-predpoved/jeseniky` | ČHMÚ, `https://www.chmi.cz/predpoved-pocasi/meteogramy-aladin/hory-a-lyzarska-strediska` |
 
-Poland therefore has two number rows and two bulletin rows; the other two countries one of each.
-**SHMÚ's forecast covers the Tatras alone**, and no Slovak forecast for the Pieniny or Beskidy was
-found; the row says "Tatras" rather than promising more. **The Czech bulletin row opens the
-Krkonoše**, the one Czech range a Region reaches that has a bulletin of its own; Jeseníky is outside
-every Region.
+Poland therefore has two number rows and two bulletin rows, Czechia two bulletin rows, Slovakia one
+of each. **SHMÚ's forecast covers the Tatras alone**, and no Slovak forecast for the Pieniny or
+Beskidy was found; the row says "Tatry" rather than promising more. **Horská služba publishes two
+avalanche bulletins, the Krkonoše's and the Jeseníky's**, and a Region reaches each
+(`sudety_zachodnie`, `sudety_wschodnie`); the other Czech ranges on the map have none. **ČHMÚ's row is
+model output**: meteograms of its ALADIN model for each mountain range, not a written forecast like
+IMGW's or SHMÚ's, so its title says so. The URL is the one the old
+`…/predpoved-pocasi/lyzarska-strediska-a-hory/` redirects to.
 
 ## 3. The copy
 
 English, then Polish per [`translator-brief.md`](translator-brief.md). Country names are translated;
-the services' and apps' names are not.
+the services', apps' and ranges' names are not. The user-facing word is *phone app*
+(*aplikacja Telefon*), never *dialler*, and no string needs the user's gender (§ 6.2). The map's
+button reads `safety_title` as its content description.
 
-| Key | English |
-| --- | --- |
-| `safety_title` | Safety |
-| `safety_intro` | Kozica works without signal. These rows open other apps and pages, and all but the dialler need signal. |
-| `safety_112` | Emergency number 112 |
-| `safety_112_hint` | If no other number connects. Opens the dialler; you place the call. |
-| `safety_rescue` | Call mountain rescue |
-| `safety_rescue_hint` | %1$s. Opens the dialler; you place the call. |
-| `safety_rescue_foreign` | Call mountain rescue from a foreign phone |
-| `safety_app_installed` | Installed |
-| `safety_app_missing` | Not installed. Install it before you set out. |
-| `safety_avalanche` | Avalanche bulletin |
-| `safety_weather` | Mountain weather |
-| `safety_opens_browser` | %1$s, in your browser |
-| `safety_no_dialler` / `safety_no_browser` | No dialler on this phone. / No browser on this phone. |
+| Key | English | Polish |
+| --- | --- | --- |
+| `safety_title` | Safety | Bezpieczeństwo |
+| `safety_intro` | Kozica works without signal. These rows open other apps and pages; a call or a page needs signal. | Kozica działa bez zasięgu. Te wiersze otwierają inne aplikacje i strony; połączenie i strona wymagają zasięgu. |
+| `safety_emergency` | Emergency number, in all three countries | Numer alarmowy we wszystkich trzech krajach |
+| `safety_emergency_hint` | %1$s, on any network: when you are not sure which country you are in, or no other number connects. Opens the phone app with the number typed; you place the call. | %1$s, w każdej sieci: gdy nie wiesz, w którym kraju jesteś, lub inny numer się nie łączy. Otwiera aplikację Telefon z wpisanym numerem; połączenie wykonujesz Ty. |
+| `safety_poland` / `safety_slovakia` / `safety_czechia` | Poland / Slovakia / Czechia | Polska / Słowacja / Czechy |
+| `safety_rescue` | Call mountain rescue | Wezwij ratowników górskich |
+| `safety_dial_hint` | %1$s. Opens the phone app with the number typed; you place the call. | %1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie wykonujesz Ty. |
+| `safety_rescue_fallback` | Call mountain rescue if %1$s does not connect | Wezwij ratowników górskich, gdy %1$s się nie łączy |
+| `safety_rescue_fallback_hint` | %1$s, from any phone on any network. Opens the phone app with the number typed; you place the call. | %1$s, z każdego telefonu i w każdej sieci. Otwiera aplikację Telefon z wpisanym numerem; połączenie wykonujesz Ty. |
+| `safety_app_installed` | Installed. Open it before you set out to check it is set up. | Zainstalowana. Otwórz ją przed wyjściem w góry i sprawdź, czy jest skonfigurowana. |
+| `safety_app_missing` | Not installed. Install it from Google Play and set it up before you set out. | Niezainstalowana. Zainstaluj ją z Google Play i skonfiguruj przed wyjściem w góry. |
+| `safety_avalanche` | Avalanche bulletin, %1$s | Komunikat lawinowy, %1$s |
+| `safety_weather` | Mountain weather, %1$s | Pogoda w górach, %1$s |
+| `safety_weather_model` | Weather model charts for the mountains, %1$s | Wykresy modelu pogody dla gór, %1$s |
+| `safety_opens_browser` | %1$s, in your browser | %1$s, w przeglądarce |
+| `safety_no_dialler` | No phone app on this phone to open. | Na tym telefonie nie ma aplikacji Telefon do otwarcia. |
+| `safety_no_browser` | No web browser on this phone to open. | Na tym telefonie nie ma przeglądarki do otwarcia. |
+
+`safety_rescue_fallback`'s argument is the country's first number as shown (985), and every
+`%1$s` in a hint is a number or a host.
 
 ---
 
@@ -156,13 +211,16 @@ the services' and apps' names are not.
 
 **`SafetyTest`, for a safety value** (`PLAN.md` rule 3). The numbers are not computed, but they are
 the one thing on the screen whose error is the failure the app exists to prevent, and they are
-edited by hand. It holds every rescue number's `tel:` URI to the table in § 2, digits only after an
-optional `+`, and every country to exactly one rescue row and one app. It fails in the direction of a
-number edited by accident, which no build and no reading on a phone without a SIM would notice.
+edited by hand. It holds every dialled number to the table in § 2 — 112; Poland exactly 985, then
++48 601 100 300; Slovakia 18 300; Czechia +420 1210 — as digits after an optional `+`, and every
+country to at least one number, led by the one a local phone dials rather than the fallback. It
+fails in the direction of a number edited by accident, which no build and no reading on a phone
+without a SIM would notice.
 
 ## Documents this phase amends
 
-- **`PLAN.md`**: phase 3's paragraph, with this file: three countries, and what is already done.
+- **`PLAN.md`**: phase 3's paragraph, with this file: three countries, what is already done, and
+  that the door is `DOD.md`'s list.
 - **ADR-0008**: a dated amendment with this file: the hand-offs per country, and the reasons above.
 - **`docs/store-listing.md`**: one sentence in each full description (B).
 - **`DOD.md`**: "Write the listing" is ticked; it was written in phase P and has had release notes
@@ -173,12 +231,14 @@ number edited by accident, which no build and no reading on a phone without a SI
 - **Whether 985 connects on a foreign SIM in Poland is not verified**, which is why the Polish section
   also has +48 601 100 300. The same question for 18 300 has no published answer; 112 is above it.
 - **Ratunek's Play listing was last updated in April 2025.** It is still the app GOPR's site links.
-- **The test phone has no SIM**, so no row is ever dialled in a reading. The dialler opening with the
-  number typed is the whole claim.
+- **The test phone has no SIM**, so no row is ever dialled in a reading. The phone app opening with
+  the number typed is the whole claim, and no rescue app's SMS registration is completed there.
+- **ČHMÚ has no written mountain forecast to link.** Its range pages hold a slot for one that read
+  "not available" on 2026-10-22; the row opens the meteograms and says so.
 
 ## Readings
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | Every row on the test phone opens what its hint says: the dialler with the number typed, Play on each app's page, the browser on each page | `adb -s mnbm7hw8ivdqzx9l exec-out screencap -p` per row; `adb shell dumpsys activity activities \| grep -m1 mResumedActivity` | |
-| R2 | An installed rescue app opens, and its hint reads "Installed" after a return from Play | install one app over Wi-Fi from its Play page, back to Kozica | |
+| R1 | Every row on the test phone opens what its hint says: the phone app with the number typed, Play on each app's page, the browser on each page **loaded**, not a "no connection" error that a dead link would also show. Wi-Fi on for the reading and off after; the phone stays in airplane mode | `adb -s mnbm7hw8ivdqzx9l shell svc wifi enable`; `adb -s mnbm7hw8ivdqzx9l exec-out screencap -p` per row; `adb -s mnbm7hw8ivdqzx9l shell dumpsys activity activities \| grep -m1 mResumedActivity`; `adb -s mnbm7hw8ivdqzx9l shell svc wifi disable` | |
+| R2 | An installed rescue app opens, and its hint reads "Installed" after a return from Play; each app's first run, and whether it asks for a phone number before it works | install each app over Wi-Fi from its Play page, open it once, back to Kozica | |
