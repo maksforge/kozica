@@ -49,7 +49,18 @@ class MapProgressTest {
 
     @Test
     fun `a failure with nothing moving offers Retry`() {
-        assertEquals(MapProgress.Failed, mapProgress(listOf(region(READY), region(FAILED))))
+        assertEquals(
+            MapProgress.Failed(size = 31_000_000),
+            mapProgress(listOf(region(READY), Region("tatry", name = 0, FAILED, downloadSize = 31_000_000))),
+        )
+    }
+
+    @Test
+    fun `Retry drops the size while any failed Region's is unknown`() {
+        assertEquals(
+            MapProgress.Failed(size = null),
+            mapProgress(listOf(Region("a", name = 0, FAILED, downloadSize = 31_000_000), region(FAILED))),
+        )
     }
 
     @Test
@@ -61,7 +72,7 @@ class MapProgressTest {
     }
 
     @Test
-    fun `only Regions not asked for or failed are fetched`() {
+    fun `only Regions never asked for are fetched unasked`() {
         val regions =
             listOf(
                 Region("a", name = 0, RegionState.NotDownloaded),
@@ -71,7 +82,7 @@ class MapProgressTest {
                 Region("e", name = 0, RegionState.UpdateInProgress(percent = 10)),
                 Region("f", name = 0, RegionState.WaitingForWifi),
             )
-        assertEquals(listOf("a", "b"), toFetch(regions))
+        assertEquals(listOf("a"), toFetch(regions))
     }
 }
 

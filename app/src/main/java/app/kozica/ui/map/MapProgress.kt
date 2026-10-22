@@ -14,7 +14,10 @@ sealed interface MapProgress {
 
     data object NeedsConfirmation : MapProgress
 
-    data object Failed : MapProgress
+    /** @param size what Retry would fetch, null while Play has not said for every failed Region. */
+    data class Failed(
+        val size: Long?,
+    ) : MapProgress
 
     data object Updating : MapProgress
 }
@@ -30,11 +33,20 @@ fun mapProgress(regions: List<Region>): MapProgress? {
             MapProgress.Downloading(ready, states.size)
         RegionState.WaitingForWifi in states -> MapProgress.WaitingForWifi
         RegionState.NeedsConfirmation in states -> MapProgress.NeedsConfirmation
-        states.any { it is RegionState.Failed } -> MapProgress.Failed
+        states.any { it is RegionState.Failed } ->
+            MapProgress.Failed(
+                regions.filter { it.state is RegionState.Failed }.sumOf {
+                    it.downloadSize
+                        ?: return MapProgress.Failed(null)
+                },
+            )
         else -> MapProgress.Updating
     }
 }
 
-/** What the app asks Play for: a Region already moving or updating needs no asking. */
+/**
+ * What the app asks Play for unasked: only a Region never asked for. A failed or cancelled one waits
+ * for Retry, which shows its size, so a download the user stopped is not started again behind them.
+ */
 fun toFetch(regions: List<Region>): List<String> =
-    regions.filter { it.state == RegionState.NotDownloaded || it.state is RegionState.Failed }.map { it.id }
+    regions.filter { it.state == RegionState.NotDownloaded }.map { it.id }
