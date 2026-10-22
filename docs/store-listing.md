@@ -49,7 +49,7 @@ The line that appears under the name in search results, and the most-read text i
 Offline trail map of the Polish mountains, drawn in the signposts' own colours.
 ```
 
-### Full description — 1178/4000
+### Full description — 1332/4000
 
 ```
 Kozica is a hiking map of the Polish mountains. Download the ranges you need before you go, from the Karkonosze to the Bieszczady and across the Czech and Slovak borders where the ranges do, and it works with no signal at all.
@@ -60,7 +60,7 @@ The map also shows paths, huts and shelters, peaks, passes, springs, viewpoints,
 
 Tap the position button to see where you are, with the accuracy and the direction you are facing. Your location stays on your phone: Kozica has no permission to use the internet, no account and no ads, and it collects nothing.
 
-The Safety button puts 112 one tap away, and for Poland, Slovakia and Czechia the mountain-rescue number, the rescue app, the avalanche bulletin and the mountain weather. They open in your phone app and your browser, and need signal.
+The Safety button opens 112 and, for Poland, Slovakia and Czechia, the mountain-rescue number, the rescue app, the avalanche bulletin and the mountain weather. Kozica types the number into your phone app and you place the call. The rescue app opens directly, or on Google Play if it is not installed, and the bulletin and the weather open in your browser. The apps and pages need signal.
 
 Map data © OpenStreetMap contributors, available under the Open Database License.
 ```
@@ -79,7 +79,7 @@ Kozica
 Mapa szlaków w polskich górach bez internetu, w kolorach z drogowskazów.
 ```
 
-### Full description — 1177/4000
+### Full description — 1345/4000
 
 ```
 Kozica to mapa turystyczna polskich gór. Pobierz potrzebne pasma przed wyjściem, od Karkonoszy po Bieszczady, także po czeskiej i słowackiej stronie granicy, a zadziała bez zasięgu.
@@ -90,7 +90,7 @@ Na mapie są też ścieżki, schroniska i wiaty, szczyty, przełęcze, źródła
 
 Dotknij przycisku pozycji, aby zobaczyć, gdzie jesteś, z dokładnością i kierunkiem, w którym patrzysz. Twoja lokalizacja zostaje w telefonie: Kozica nie ma uprawnienia do internetu, nie wymaga konta, nie wyświetla reklam i niczego nie zbiera.
 
-Przycisk Bezpieczeństwo daje pod ręką 112, a dla Polski, Słowacji i Czech numer ratownictwa górskiego, aplikację ratunkową, komunikat lawinowy i pogodę w górach. Otwierają się w aplikacji Telefon i w przeglądarce, i wymagają zasięgu.
+Przycisk Bezpieczeństwo otwiera 112, a dla Polski, Słowacji i Czech numer ratownictwa górskiego, aplikację ratunkową, komunikat lawinowy i pogodę w górach. Kozica wpisuje numer w aplikacji Telefon, a połączenie nawiązujesz samodzielnie. Aplikacja ratunkowa otwiera się od razu albo, jeśli nie jest zainstalowana, w Google Play, a komunikat i pogoda w przeglądarce. Aplikacje i strony wymagają zasięgu.
 
 Dane mapy © Współtwórcy OpenStreetMap, dostępne na licencji Open Database License.
 ```
@@ -126,7 +126,7 @@ default.
 The first release.
 ```
 
-**Polish** — 18/500:
+**Polish** — 17/500:
 
 ```
 Pierwsze wydanie.
