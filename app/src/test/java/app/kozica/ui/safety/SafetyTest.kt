@@ -31,7 +31,7 @@ class SafetyTest {
 
     @Test
     fun `every country leads with a number that answers a local phone`() {
-        for (country in Country.entries) assertTrue(country.name, !country.rescue.first().fromForeignPhone)
+        for (country in Country.entries) assertTrue(country.name, !country.rescue.first().fallback)
     }
 
     @Test
@@ -50,5 +50,18 @@ class SafetyTest {
                 .host,
         )
         assertEquals("gory.imgw.pl", Country.Poland.weather.host)
+    }
+
+    @Test
+    fun `Poland and Czechia each list two avalanche bulletins, Slovakia one`() {
+        assertEquals(
+            mapOf(Country.Poland to 2, Country.Slovakia to 1, Country.Czechia to 2),
+            Country.entries.associateWith { it.avalanche.size },
+        )
+    }
+
+    @Test
+    fun `only ČHMÚ's weather row is model charts`() {
+        assertEquals(listOf(Country.Czechia), Country.entries.filter { it.weather.modelCharts })
     }
 }

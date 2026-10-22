@@ -18,18 +18,22 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <!--
-        The three <intent> entries are for hand-offs to a mail app, Play and a browser. None of the
-        launches needs them — package visibility has never blocked `startActivity`, and each launch
-        is a try/catch around `ActivityNotFoundException`. What visibility *does* block is
-        `resolveActivity`, which would answer "no mail app" on every phone that has one. Nothing
-        performs such a pre-check today; these entries exist so one added later cannot silently lie.
+        The <intent> entries are for hand-offs to the phone app (DIAL on tel:), a mail app, Play and
+        a browser. None of the launches needs them — package visibility has never blocked
+        `startActivity`, and each launch is a try/catch around `ActivityNotFoundException`. What
+        visibility *does* block is `resolveActivity`, which would answer "no mail app" on every phone
+        that has one. Nothing performs such a pre-check today; these entries exist so one added later
+        cannot silently lie.
+
+        The three <package> entries are the Safety screen's rescue apps, and they are load-bearing:
+        `getLaunchIntentForPackage` returns null for a package this app cannot see, and that null is
+        how the screen tells an installed app from a missing one.
     -->
     <queries>
         <intent>
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />
         </intent>
-        <!-- The Safety screen's rescue apps, so it can say whether each is installed. -->
         <package android:name="com.pagasolutions.emergencycall_pl" />
         <package android:name="hzs.sk.hzs" />
         <package android:name="com.medicalit.zachranka" />

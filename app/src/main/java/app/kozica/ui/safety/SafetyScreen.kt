@@ -63,10 +63,11 @@ fun SafetyScreen(
     @Composable
     fun DialRow(
         title: String,
+        @StringRes hint: Int,
         number: RescueNumber,
     ) = SafetyRow(
         title = title,
-        hint = stringResource(R.string.safety_dial_hint, number.shown),
+        hint = stringResource(hint, number.shown),
         error = failed?.takeIf { it.first == number.dialled }?.second,
         onClick = { handOff(number.dialled, R.string.safety_no_dialler) { context.dial(number) } },
     )
@@ -98,32 +99,35 @@ fun SafetyScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(horizontal = Spacing.base, vertical = Spacing.snug),
             )
-            DialRow(stringResource(R.string.safety_emergency), EMERGENCY)
+            DialRow(stringResource(R.string.safety_emergency), R.string.safety_emergency_hint, EMERGENCY)
 
             for (country in Country.entries) {
                 SectionHeader(stringResource(country.labelRes()))
                 for (number in country.rescue) {
-                    val title = if (number.fromForeignPhone) R.string.safety_rescue_foreign else R.string.safety_rescue
-                    DialRow(stringResource(title), number)
+                    if (number.fallback) {
+                        DialRow(
+                            stringResource(R.string.safety_rescue_fallback, country.rescue.first().shown),
+                            R.string.safety_rescue_fallback_hint,
+                            number,
+                        )
+                    } else {
+                        DialRow(stringResource(R.string.safety_rescue), R.string.safety_dial_hint, number)
+                    }
                 }
                 val app = country.app
+                val isInstalled = app.packageId in installed
                 SafetyRow(
-                    title = app.name,
+                    title = stringResource(R.string.safety_rescue_app, app.name),
                     hint =
                         stringResource(
-                            if (app.packageId in
-                                installed
-                            ) {
-                                R.string.safety_app_installed
-                            } else {
-                                R.string.safety_app_missing
-                            },
+                            if (isInstalled) R.string.safety_app_installed else R.string.safety_app_missing,
                         ),
                     error = failed?.takeIf { it.first == app.packageId }?.second,
                     onClick = { handOff(app.packageId, R.string.support_no_play) { context.openRescueApp(app) } },
                 )
                 for (page in country.avalanche) PageRow(R.string.safety_avalanche, page)
-                PageRow(R.string.safety_weather, country.weather)
+                val weather = country.weather
+                PageRow(if (weather.modelCharts) R.string.safety_weather_model else R.string.safety_weather, weather)
             }
         }
     }
