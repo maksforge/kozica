@@ -2,6 +2,8 @@ package app.kozica.ui.map
 
 import android.annotation.SuppressLint
 import android.location.Location
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -11,7 +13,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.kozica.MainApplication
 import app.kozica.data.AppPreferences
 import app.kozica.data.MapCamera
-import app.kozica.data.regions.GeoBounds
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
 import kotlinx.coroutines.CoroutineScope
@@ -29,27 +30,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
-
-sealed interface MapStart {
-    data class At(
-        val camera: MapCamera,
-    ) : MapStart
-
-    data class Fit(
-        val bounds: GeoBounds,
-    ) : MapStart
-}
-
-enum class MapEmpty {
-    NO_REGIONS,
-    UPDATING,
-}
 
 /**
  * @param regions null until the first read of the phone's Regions.
@@ -57,27 +42,17 @@ enum class MapEmpty {
  * @param camera where a new map view opens, null until the stored camera is read.
  * @param location null until the first resume reads it.
  * @param fix the newest position, null until the first arrives or while location cannot be read.
- * @param arrival the bounds of a newly ready Region to move the camera to, until shown.
  */
 data class MapUiState(
     val regions: List<Region>? = null,
     val style: String? = null,
-    val camera: MapStart? = null,
+    val camera: MapCamera? = null,
     val location: LocationRead? = null,
     val fix: Location? = null,
-    val arrival: GeoBounds? = null,
 ) {
     private val ready: List<RegionState.Ready> get() = regions.orEmpty().mapNotNull { it.state as? RegionState.Ready }
 
-    // Play invalidates every pack in one app update, so a Region updating beside a ready one is not
-    // named here (docs/phase-2.md § 2).
-    val empty: MapEmpty?
-        get() =
-            when {
-                regions == null || ready.isNotEmpty() -> null
-                regions.any { it.state is RegionState.UpdateInProgress } -> MapEmpty.UPDATING
-                else -> MapEmpty.NO_REGIONS
-            }
+    val progress: MapProgress? get() = regions?.let(::mapProgress)
 
     /** The stalest ready Region's date, because the map is no fresher than its oldest part. */
     val osmDate: Instant? get() = ready.mapNotNull { it.osmDate }.minOrNull()
@@ -89,18 +64,12 @@ class MapViewModel(
     private val readAsset: (path: String) -> String,
     private val applicationScope: CoroutineScope,
     private val positions: (approximateOnly: Boolean) -> Flow<Location>,
+    private val fetch: suspend (ids: List<String>) -> Unit,
+    private val confirmFetch: suspend (ActivityResultLauncher<IntentSenderRequest>) -> Boolean,
 ) : ViewModel() {
-    private val arrival = MutableStateFlow<GeoBounds?>(null)
+    private val regions = regions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** [AppPreferences.readyRegions] as this map has taken it in, ahead of the write that stores it. */
-    private var known: Set<String>? = null
-
-    private val regions =
-        regions
-            .onEach(::noteArrivals)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-    private val camera = MutableStateFlow<MapStart?>(null)
+    private val camera = MutableStateFlow<MapCamera?>(null)
 
     private val dark = MutableStateFlow<Boolean?>(null)
 
@@ -132,38 +101,39 @@ class MapViewModel(
     val state: StateFlow<MapUiState> =
         combine(this.regions, style, camera, location, fix) { regions, style, camera, location, fix ->
             MapUiState(regions, style, camera, location, fix)
-        }.combine(arrival) { state, arrival -> state.copy(arrival = arrival) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     init {
+        viewModelScope.launch { camera.compareAndSet(null, preferences.mapCamera.first() ?: TATRY) }
+        // Play fetches fast-follow packs by itself; this covers one it has not started, one the user
+        // cancelled in the Play Store, and a Region a later build adds (docs/phase-2c.md § 1).
         viewModelScope.launch {
-            val start =
-                preferences.mapCamera.first()?.let(MapStart::At)
-                    ?: MapStart.Fit(
-                        this@MapViewModel
-                            .regions
-                            .filterNotNull()
-                            .first()
-                            .bounds() ?: SOUTHERN_POLAND,
-                    )
-            camera.compareAndSet(null, start)
+            val missing = toFetch(this@MapViewModel.regions.filterNotNull().first())
+            if (missing.isNotEmpty()) applicationScope.launch { fetch(missing) }
         }
     }
 
-    fun arrivalShown(bounds: GeoBounds) {
-        if (!arrival.compareAndSet(bounds, null)) return
-        // The camera's destination, so a Region landing mid-animation already finds it on data.
-        camera.value = MapStart.Fit(bounds)
-        remember(
+    fun retry() {
+        val failed =
             regions.value
                 .orEmpty()
-                .filter { it.state is RegionState.Ready }
-                .map { it.id },
-        )
+                .filter { it.state is RegionState.Failed }
+                .map { it.id }
+        applicationScope.launch { fetch(failed) }
+    }
+
+    /** Nothing awaiting confirmation means the state shown was stale, so what showed it is asked for again. */
+    fun confirm(launcher: ActivityResultLauncher<IntentSenderRequest>) {
+        val waiting =
+            regions.value
+                .orEmpty()
+                .filter { it.state == RegionState.WaitingForWifi || it.state == RegionState.NeedsConfirmation }
+                .map { it.id }
+        viewModelScope.launch { if (!confirmFetch(launcher)) applicationScope.launch { fetch(waiting) } }
     }
 
     fun cameraIdle(at: MapCamera) {
-        camera.value = MapStart.At(at)
+        camera.value = at
     }
 
     fun darkTheme(on: Boolean) {
@@ -175,47 +145,14 @@ class MapViewModel(
     }
 
     fun storeCamera() {
-        val at = (camera.value as? MapStart.At)?.camera ?: return
+        val at = camera.value ?: return
         // Back finishes the activity, and that cancels viewModelScope before this write would run.
         applicationScope.launch { preferences.setMapCamera(at) }
     }
 
-    // The rule and why: docs/phase-2b.md § 5, "The map goes to a Region on its first download".
-    private suspend fun noteArrivals(regions: List<Region>) {
-        val stored = known ?: preferences.readyRegions.first()
-        val removed = regions.filter { it.state == RegionState.NotDownloaded }.map { it.id }.toSet() intersect stored
-        val kept = stored - removed
-        known = kept
-        if (removed.isNotEmpty()) applicationScope.launch { preferences.removeReadyRegions(removed) }
-        val (seen, arrived) = regions.filter { it.state is RegionState.Ready }.partition { it.id in kept }
-        val target = arrived.firstNotNullOfOrNull { it.readyBounds }
-        if (target != null && looksAtAny(seen)) {
-            remember(arrived.map { it.id })
-            arrival.value = null
-        } else {
-            arrival.value = target
-        }
-    }
-
-    private suspend fun looksAtAny(regions: List<Region>): Boolean {
-        val (latitude, longitude) =
-            when (val at = camera.value) {
-                is MapStart.At -> at.camera.latitude to at.camera.longitude
-                is MapStart.Fit -> at.bounds.centre()
-                null -> preferences.mapCamera.first()?.let { it.latitude to it.longitude }
-            } ?: return false
-        return regions.any { it.readyBounds?.contains(latitude, longitude) == true }
-    }
-
-    private fun remember(ids: Collection<String>) {
-        known = known.orEmpty() + ids
-        // Back finishes the activity, and that cancels viewModelScope before this write would run.
-        applicationScope.launch { preferences.addReadyRegions(ids.toSet()) }
-    }
-
     companion object {
-        /** From the Karkonosze to the Bieszczady, for a phone with no Region and no stored camera. */
-        private val SOUTHERN_POLAND = GeoBounds(south = 49.0, west = 14.8, north = 50.9, east = 23.0)
+        /** The first launch's camera, before any is stored: the Tatry at a zoom where Trails draw. */
+        private val TATRY = MapCamera(latitude = 49.23, longitude = 20.0, zoom = 11.0)
 
         val Factory: ViewModelProvider.Factory =
             viewModelFactory {
@@ -232,6 +169,8 @@ class MapViewModel(
                         },
                         app.container.applicationScope,
                         app.container::positions,
+                        app.container.regionFiles::download,
+                        app.container.regionFiles::confirm,
                     )
                 }
             }
@@ -240,22 +179,3 @@ class MapViewModel(
 
 private fun List<Region>.readyArchives(): List<Pair<String, File>> =
     mapNotNull { region -> (region.state as? RegionState.Ready)?.let { region.id to it.archive } }
-
-private val Region.readyBounds: GeoBounds? get() = (state as? RegionState.Ready)?.bounds
-
-private fun GeoBounds.contains(
-    latitude: Double,
-    longitude: Double,
-) = latitude in south..north && longitude in west..east
-
-private fun GeoBounds.centre() = (south + north) / 2 to (west + east) / 2
-
-private fun List<Region>.bounds(): GeoBounds? =
-    mapNotNull { (it.state as? RegionState.Ready)?.bounds }.reduceOrNull { a, b ->
-        GeoBounds(
-            south = minOf(a.south, b.south),
-            west = minOf(a.west, b.west),
-            north = maxOf(a.north, b.north),
-            east = maxOf(a.east, b.east),
-        )
-    }

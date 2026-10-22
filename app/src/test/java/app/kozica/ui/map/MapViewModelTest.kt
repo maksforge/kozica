@@ -27,7 +27,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -52,6 +51,8 @@ class MapViewModelTest {
                     readAsset = { """{"version":8,"sources":{},"layers":[]}""" },
                     applicationScope = CoroutineScope(Dispatchers.Unconfined),
                     positions = { MutableSharedFlow<Location>() },
+                    fetch = {},
+                    confirmFetch = { false },
                 )
             viewModel.darkTheme(false)
             viewModel.locationRead(LocationRead(LocationGrant.PRECISE, on = true))
@@ -65,133 +66,68 @@ class MapViewModelTest {
         }
 
     @Test
-    fun `a Region that arrives is shown once`() =
+    fun `the first launch opens on the Tatry`() =
         runTest {
-            val regions = MutableStateFlow(listOf(tatry(RegionState.NotDownloaded)))
-            val viewModel = mapViewModel(regions)
+            val viewModel = mapViewModel(flowOf(listOf(tatry(READY))))
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
 
-            regions.value = listOf(tatry(READY))
-            assertEquals(TATRY_BOUNDS, viewModel.state.value.arrival)
-
-            viewModel.arrivalShown(TATRY_BOUNDS)
-            assertNull(viewModel.state.value.arrival)
-        }
-
-    // Play invalidates every pack in an app update, which brings each Region back to Ready.
-    @Test
-    fun `a Region updated in place is no arrival`() =
-        runTest {
-            val regions = MutableStateFlow(listOf(tatry(READY)))
-            val viewModel = mapViewModel(regions)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
-            viewModel.arrivalShown(TATRY_BOUNDS)
-
-            regions.value = listOf(tatry(RegionState.UpdateInProgress(percent = 40)))
-            regions.value = listOf(tatry(READY))
-
-            assertNull(viewModel.state.value.arrival)
+            assertEquals(
+                49.23,
+                viewModel.state.value.camera
+                    ?.latitude,
+            )
+            assertEquals(
+                11.0,
+                viewModel.state.value.camera
+                    ?.zoom,
+            )
         }
 
     @Test
-    fun `a Region removed and downloaded again is an arrival`() =
-        runTest {
-            val regions = MutableStateFlow(listOf(tatry(RegionState.NotDownloaded)))
-            val viewModel = mapViewModel(regions)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
-            regions.value = listOf(tatry(READY))
-            viewModel.arrivalShown(TATRY_BOUNDS)
-
-            regions.value = listOf(tatry(RegionState.NotDownloaded))
-            regions.value = listOf(tatry(READY))
-
-            assertEquals(TATRY_BOUNDS, viewModel.state.value.arrival)
-        }
-
-    @Test
-    fun `a Region shown before a restart is no arrival after it`() =
+    fun `a stored camera wins over the Tatry`() =
         runTest {
             val preferences = AppPreferences(MemoryPreferences())
-            val regions = MutableStateFlow(listOf(tatry(RegionState.NotDownloaded)))
-            val before = mapViewModel(regions, preferences)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { before.state.collect {} }
-            regions.value = listOf(tatry(READY))
-            before.arrivalShown(TATRY_BOUNDS)
+            val stored = MapCamera(latitude = 50.74, longitude = 15.74, zoom = 13.0)
+            preferences.setMapCamera(stored)
+            val viewModel = mapViewModel(flowOf(listOf(tatry(READY))), preferences)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
 
-            val after = mapViewModel(regions, preferences)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { after.state.collect {} }
-
-            assertNull(after.state.value.arrival)
-        }
-
-    // Process death between the download and the map's return.
-    @Test
-    fun `an arrival never shown survives a restart`() =
-        runTest {
-            val preferences = AppPreferences(MemoryPreferences())
-            val regions = MutableStateFlow(listOf(tatry(RegionState.NotDownloaded)))
-            val before = mapViewModel(regions, preferences)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { before.state.collect {} }
-            regions.value = listOf(tatry(READY))
-
-            val after = mapViewModel(regions, preferences)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { after.state.collect {} }
-
-            assertEquals(TATRY_BOUNDS, after.state.value.arrival)
+            assertEquals(stored, viewModel.state.value.camera)
         }
 
     @Test
-    fun `Regions that arrive together fit the first, not their union`() =
+    fun `the map asks once for every Region not ready and not on its way`() =
         runTest {
+            val fetched = mutableListOf<List<String>>()
             val regions =
-                MutableStateFlow(listOf(tatry(RegionState.NotDownloaded), bieszczady(RegionState.NotDownloaded)))
-            val viewModel = mapViewModel(regions)
+                MutableStateFlow(
+                    listOf(
+                        tatry(RegionState.NotDownloaded),
+                        bieszczady(RegionState.Downloading(percent = 30)),
+                        Region("beskid_niski", name = 0, RegionState.Failed(errorCode = -6)),
+                    ),
+                )
+            val viewModel = mapViewModel(regions, fetch = { fetched += it })
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
 
-            regions.value = listOf(tatry(READY), bieszczady(BIESZCZADY_READY))
+            regions.value = listOf(tatry(RegionState.Downloading(percent = 0)), bieszczady(BIESZCZADY_READY))
 
-            assertEquals(TATRY_BOUNDS, viewModel.state.value.arrival)
-        }
-
-    @Test
-    fun `a Region that arrives while the map shows a ready one leaves the camera`() =
-        runTest {
-            val regions =
-                MutableStateFlow(listOf(tatry(RegionState.NotDownloaded), bieszczady(RegionState.NotDownloaded)))
-            val viewModel = mapViewModel(regions)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
-            regions.value = listOf(tatry(READY), bieszczady(RegionState.NotDownloaded))
-            viewModel.arrivalShown(TATRY_BOUNDS)
-
-            regions.value = listOf(tatry(READY), bieszczady(BIESZCZADY_READY))
-
-            assertNull(viewModel.state.value.arrival)
-        }
-
-    @Test
-    fun `a Region that arrives while the map looks elsewhere is an arrival`() =
-        runTest {
-            val regions = MutableStateFlow(listOf(tatry(READY), bieszczady(RegionState.NotDownloaded)))
-            val viewModel = mapViewModel(regions)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
-            viewModel.arrivalShown(TATRY_BOUNDS)
-            viewModel.cameraIdle(MapCamera(latitude = 50.06, longitude = 19.94, zoom = 10.0))
-
-            regions.value = listOf(tatry(READY), bieszczady(BIESZCZADY_READY))
-
-            assertEquals(BIESZCZADY_BOUNDS, viewModel.state.value.arrival)
+            assertEquals(listOf(listOf("tatry", "beskid_niski")), fetched)
         }
 }
 
 private fun mapViewModel(
     regions: Flow<List<Region>>,
     preferences: AppPreferences = AppPreferences(MemoryPreferences()),
+    fetch: suspend (List<String>) -> Unit = {},
 ) = MapViewModel(
     regions = regions,
     preferences = preferences,
     readAsset = { "" },
     applicationScope = CoroutineScope(Dispatchers.Unconfined),
     positions = { MutableSharedFlow<Location>() },
+    fetch = fetch,
+    confirmFetch = { false },
 )
 
 private fun tatry(state: RegionState) = Region("tatry", name = 0, state)

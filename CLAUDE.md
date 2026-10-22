@@ -45,7 +45,7 @@ let us do otherwise".">
 | Coil 3 images | Compose-native, local files only |
 | On-device storage only | No backend. Backup per ADR-0005 |
 | MapLibre Native (OpenGL ES) + PMTiles | Offline, every network permission stripped — ADR-0008, `docs/phase-2.md` § 2 |
-| Play Asset Delivery | One on-demand pack per Region, `ACCESS_NETWORK_STATE` stripped from its WorkManager — `docs/phase-2b.md` § 1 |
+| Play Asset Delivery | One fast-follow pack per Region, `ACCESS_NETWORK_STATE` stripped from its WorkManager — `docs/phase-2b.md` § 1, `docs/phase-2c.md` |
 
 ## House rules
 
@@ -145,7 +145,7 @@ scripts/          the Python toolchain. project.py is the one place the app's id
 scripts/map/      the planetiler profile build-map-data.py runs, decode-tile.py, and the style and
                   sprite generators
 scripts/regions/  one boundary polygon per Region
-region_<id>/      one on-demand asset pack per polygon in scripts/regions/, all built by
+region_<id>/      one fast-follow asset pack per polygon in scripts/regions/, all built by
                   gradle/region-pack.gradle.kts; they join the build only with -PmapPacks
 art/             mark.py is the identity; both generators derive from it
 ```

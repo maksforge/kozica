@@ -10,7 +10,7 @@
 <resources>
     <string name="action_back">Wstecz</string>
 
-    <string name="map_no_regions">Nie pobrano jeszcze żadnego regionu.</string>
+    <string name="map_downloading">Pobieranie map — %1$d z %2$d</string>
     <string name="map_updating">Trwa aktualizacja danych mapy.</string>
     <string name="map_osm_credit">© Współtwórcy OpenStreetMap</string>
     <string name="map_osm_date">Dane OSM: %1$s</string>
@@ -21,54 +21,16 @@
     <string name="map_location_off">Lokalizacja jest wyłączona.</string>
     <string name="map_position_stale">Ostatnia pozycja %1$s temu.</string>
     <string name="map_location_settings">Ustawienia</string>
-    <string name="map_choose_regions">Wybierz regiony</string>
 
-    <string name="regions_title">Regiony</string>
-    <string name="regions_download">Pobierz</string>
-    <string name="regions_remove">Usuń</string>
-    <string name="regions_retry">Spróbuj ponownie</string>
-    <plurals name="regions_download_all">
-        <item quantity="one">Pobierz wszystkie — %1$d region, %2$s</item>
-        <item quantity="few">Pobierz wszystkie — %1$d regiony, %2$s</item>
-        <item quantity="many">Pobierz wszystkie — %1$d regionów, %2$s</item>
-        <item quantity="other">Pobierz wszystkie — %1$d regionu, %2$s</item>
-    </plurals>
-    <plurals name="regions_download_all_unsized">
-        <item quantity="one">Pobierz wszystkie — %1$d region</item>
-        <item quantity="few">Pobierz wszystkie — %1$d regiony</item>
-        <item quantity="many">Pobierz wszystkie — %1$d regionów</item>
-        <item quantity="other">Pobierz wszystkie — %1$d regionu</item>
-    </plurals>
-    <string name="regions_downloading">Pobieranie — %1$d%%</string>
-    <string name="regions_waiting_for_wifi">Oczekiwanie na Wi-Fi</string>
-    <string name="regions_mobile_data">Pobierz przez dane komórkowe</string>
-    <string name="regions_needs_confirmation">Sklep Play czeka na twoje potwierdzenie</string>
-    <string name="regions_confirm">Potwierdź</string>
-    <string name="regions_updating">Aktualizowanie</string>
-    <string name="regions_remove_title">Usunąć %1$s?</string>
-    <string name="regions_remove_body">Nie zobaczysz mapy tego regionu, dopóki nie pobierzesz go ponownie, a do tego potrzebne jest połączenie z internetem.</string>
-    <string name="regions_failed">Pobieranie nie powiodło się</string>
+    <string name="map_retry">Spróbuj ponownie</string>
+    <string name="map_waiting_for_wifi">Oczekiwanie na Wi-Fi</string>
+    <string name="map_mobile_data">Pobierz przez dane komórkowe</string>
+    <string name="map_needs_confirmation">Sklep Play czeka na twoje potwierdzenie</string>
+    <string name="map_confirm">Potwierdź</string>
+    <string name="map_download_failed">Pobieranie nie powiodło się</string>
 
-    <string name="welcome_title">Witaj w Kozicy</string>
-    <string name="welcome_body">Pobierz góry, których potrzebujesz, przed wyjściem. Potem mapa działa bez zasięgu.</string>
-    <string name="welcome_all">Wszystkie regiony</string>
-    <string name="welcome_later">Możesz to zmienić w każdej chwili przyciskiem pobierania na mapie albo w Ustawienia → Regiony.</string>
-    <plurals name="welcome_download">
-        <item quantity="one">Pobierz %1$d region, %2$s</item>
-        <item quantity="few">Pobierz %1$d regiony, %2$s</item>
-        <item quantity="many">Pobierz %1$d regionów, %2$s</item>
-        <item quantity="other">Pobierz %1$d regionu, %2$s</item>
-    </plurals>
-    <plurals name="welcome_download_unsized">
-        <item quantity="one">Pobierz %1$d region</item>
-        <item quantity="few">Pobierz %1$d regiony</item>
-        <item quantity="many">Pobierz %1$d regionów</item>
-        <item quantity="other">Pobierz %1$d regionu</item>
-    </plurals>
-    <string name="welcome_not_now">Nie teraz</string>
 
     <string name="settings_title">Ustawienia</string>
-    <string name="settings_map">Mapa</string>
     <string name="settings_appearance">Wygląd</string>
     <string name="settings_theme_system">Systemowy</string>
     <string name="settings_theme_light">Jasny</string>

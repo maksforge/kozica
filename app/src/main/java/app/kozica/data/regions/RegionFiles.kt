@@ -30,11 +30,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * Every Region's on-demand asset pack (docs/phase-2b.md § 2), one pack per polygon in
+ * Every Region's fast-follow asset pack (docs/phase-2c.md § 1), one pack per polygon in
  * `scripts/regions/`, named `region_<id>` and holding `<id>.pmtiles`.
  *
- * One per process, so a download or a removal started on one screen reaches every collector through
- * [updates].
+ * One per process, so a fetch started on one screen reaches every collector through [updates].
  */
 class RegionFiles private constructor(
     context: Context,
@@ -64,7 +63,7 @@ class RegionFiles private constructor(
             ?.let { File(it, "$id.pmtiles") }
             ?.takeIf(File::exists)
 
-    /** One request for every Region in [ids], so "Download all" is one fetch rather than nine. */
+    /** One request for every Region in [ids], rather than one per Region. */
     suspend fun download(ids: Collection<String>) {
         updates.emit(
             try {
@@ -87,17 +86,6 @@ class RegionFiles private constructor(
         manager.showConfirmationDialog(launcher).also { shown ->
             if (!shown) updates.emit(read(REGION_NAMES.keys))
         }
-
-    /** A failed removal surfaces as whatever is left: an archive still on disk stays Ready. */
-    suspend fun remove(id: String) {
-        try {
-            manager.removePack(pack(id)).await()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-        }
-        updates.emit(read(listOf(id)))
-    }
 
     // A build sideloaded by installDebug has no Play session and declares no pack, so a request
     // fails or answers without the pack; either is "not downloaded", never a crash (ADR-0007).

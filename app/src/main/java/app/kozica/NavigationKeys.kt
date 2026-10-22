@@ -20,8 +20,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object Backup : NavKey
 
-@Serializable data object Regions : NavKey
-
 @Serializable data object Safety : NavKey
 
 /**

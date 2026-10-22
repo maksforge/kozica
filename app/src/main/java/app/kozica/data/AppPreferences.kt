@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -49,12 +48,10 @@ class AppPreferences(
     private object Keys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MATERIAL_YOU = booleanPreferencesKey("material_you")
-        val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val BACKUP_FOLDER_URI = stringPreferencesKey("backup_folder_uri")
         val MAP_LATITUDE = doublePreferencesKey("map_latitude")
         val MAP_LONGITUDE = doublePreferencesKey("map_longitude")
         val MAP_ZOOM = doublePreferencesKey("map_zoom")
-        val READY_REGIONS = stringSetPreferencesKey("ready_regions")
     }
 
     /**
@@ -80,9 +77,6 @@ class AppPreferences(
      */
     val materialYou: Flow<Boolean> = store.data.map { it[Keys.MATERIAL_YOU] ?: false }
 
-    /** Whether first-run setup has been completed. */
-    val onboardingDone: Flow<Boolean> = store.data.map { it[Keys.ONBOARDING_DONE] ?: false }
-
     /**
      * The tree Uri the user picked for automatic backups, if any.
      *
@@ -102,9 +96,6 @@ class AppPreferences(
             MapCamera(latitude, longitude, zoom)
         }
 
-    /** The Regions the map has already taken in, so it can tell one that arrived since. */
-    val readyRegions: Flow<Set<String>> = store.data.map { it[Keys.READY_REGIONS].orEmpty() }
-
     /**
      * The theme mode, read once, before any Activity exists.
      *
@@ -123,24 +114,12 @@ class AppPreferences(
         store.edit { it[Keys.MATERIAL_YOU] = enabled }
     }
 
-    suspend fun setOnboardingDone(done: Boolean) {
-        store.edit { it[Keys.ONBOARDING_DONE] = done }
-    }
-
     suspend fun setMapCamera(camera: MapCamera) {
         store.edit { prefs ->
             prefs[Keys.MAP_LATITUDE] = camera.latitude
             prefs[Keys.MAP_LONGITUDE] = camera.longitude
             prefs[Keys.MAP_ZOOM] = camera.zoom
         }
-    }
-
-    suspend fun addReadyRegions(ids: Set<String>) {
-        store.edit { it[Keys.READY_REGIONS] = it[Keys.READY_REGIONS].orEmpty() + ids }
-    }
-
-    suspend fun removeReadyRegions(ids: Set<String>) {
-        store.edit { it[Keys.READY_REGIONS] = it[Keys.READY_REGIONS].orEmpty() - ids }
     }
 
     suspend fun setBackupFolderUri(uri: String?) {

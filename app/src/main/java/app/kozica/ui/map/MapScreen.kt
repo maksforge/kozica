@@ -71,7 +71,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
 import app.kozica.data.MapCamera
 import app.kozica.data.location.overridePosition
-import app.kozica.data.regions.GeoBounds
 import app.kozica.theme.LocalDarkTheme
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
@@ -85,7 +84,6 @@ import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdate
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.location.LocationComponent
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.LocationComponentOptions
@@ -102,7 +100,6 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun MapScreen(
     onOpenSettings: () -> Unit,
-    onOpenRegions: () -> Unit,
     onOpenSafety: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(factory = MapViewModel.Factory, extras = appViewModelExtras()),
@@ -116,6 +113,7 @@ fun MapScreen(
     // Saved state rather than the ViewModel's, so the camera also survives process death.
     var shown by rememberSaveable(stateSaver = CameraSaver) { mutableStateOf<MapCamera?>(null) }
     val mapView = rememberMapView(onStop = viewModel::storeCamera)
+    val confirmation = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
     val map by produceState<MapLibreMap?>(null, mapView) {
         mapView.getMapAsync { map ->
             map.uiSettings.isAttributionEnabled = false
@@ -176,14 +174,12 @@ fun MapScreen(
     val approximateOnly = state.location?.grant == LocationGrant.APPROXIMATE
     val age = rememberPositionAge(state.fix, approximateOnly)
     var dotActivated by remember { mutableStateOf(false) }
-    var cameraPlaced by remember { mutableStateOf(false) }
 
     LaunchedEffect(map) {
         val map = map ?: return@LaunchedEffect
         map.addOnMapLongClickListener { overridePosition(it.latitude, it.longitude) }
-        val start = shown?.let(MapStart::At) ?: viewModel.state.mapNotNull { it.camera }.first()
+        val start = shown ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
-        cameraPlaced = true
         map.addOnCameraMoveStartedListener { reason ->
             if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) centreWanted = false
         }
@@ -193,13 +189,6 @@ fun MapScreen(
                 viewModel.cameraIdle(camera)
             }
         }
-    }
-
-    LaunchedEffect(map, cameraPlaced, state.arrival) {
-        val map = map?.takeIf { cameraPlaced } ?: return@LaunchedEffect
-        val arrival = state.arrival ?: return@LaunchedEffect
-        map.animateCamera(map.cameraOnto(arrival))
-        viewModel.arrivalShown(arrival)
     }
 
     LaunchedEffect(map, state.style) {
@@ -258,18 +247,11 @@ fun MapScreen(
 
     Box(modifier.fillMaxSize()) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
-        state.empty?.let { EmptyLine(it, onOpenRegions, Modifier.align(Alignment.Center).padding(Spacing.base)) }
         Column(Modifier.align(Alignment.TopCenter).fillMaxWidth()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
                 modifier = Modifier.align(Alignment.End).padding(Spacing.tight),
             ) {
-                FilledTonalIconButton(onClick = onOpenRegions) {
-                    Icon(
-                        painterResource(R.drawable.ic_download),
-                        contentDescription = stringResource(R.string.regions_title),
-                    )
-                }
                 FilledTonalIconButton(onClick = onOpenSafety) {
                     Icon(
                         painterResource(R.drawable.ic_emergency),
@@ -279,6 +261,14 @@ fun MapScreen(
                 FilledTonalIconButton(onClick = onOpenSettings) {
                     Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
                 }
+            }
+            state.progress?.let {
+                ProgressLine(
+                    progress = it,
+                    onRetry = viewModel::retry,
+                    onConfirm = { viewModel.confirm(confirmation) },
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = Spacing.base),
+                )
             }
             LocationBanner(
                 read = state.location,
@@ -445,9 +435,10 @@ private fun Duration.short(locale: Locale): String =
     }
 
 @Composable
-private fun EmptyLine(
-    empty: MapEmpty,
-    onOpenRegions: () -> Unit,
+private fun ProgressLine(
+    progress: MapProgress,
+    onRetry: () -> Unit,
+    onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     MapLabel(modifier) {
@@ -457,16 +448,27 @@ private fun EmptyLine(
         ) {
             Text(
                 text =
-                    stringResource(
-                        when (empty) {
-                            MapEmpty.NO_REGIONS -> R.string.map_no_regions
-                            MapEmpty.UPDATING -> R.string.map_updating
-                        },
-                    ),
+                    when (progress) {
+                        is MapProgress.Downloading ->
+                            stringResource(
+                                R.string.map_downloading,
+                                progress.ready,
+                                progress.total,
+                            )
+                        MapProgress.WaitingForWifi -> stringResource(R.string.map_waiting_for_wifi)
+                        MapProgress.NeedsConfirmation -> stringResource(R.string.map_needs_confirmation)
+                        MapProgress.Failed -> stringResource(R.string.map_download_failed)
+                        MapProgress.Updating -> stringResource(R.string.map_updating)
+                    },
                 style = MaterialTheme.typography.bodyLarge,
             )
-            if (empty == MapEmpty.NO_REGIONS) {
-                TextButton(onClick = onOpenRegions) { Text(stringResource(R.string.map_choose_regions)) }
+            when (progress) {
+                MapProgress.WaitingForWifi ->
+                    TextButton(onClick = onConfirm) { Text(stringResource(R.string.map_mobile_data)) }
+                MapProgress.NeedsConfirmation ->
+                    TextButton(onClick = onConfirm) { Text(stringResource(R.string.map_confirm)) }
+                MapProgress.Failed -> TextButton(onClick = onRetry) { Text(stringResource(R.string.map_retry)) }
+                is MapProgress.Downloading, MapProgress.Updating -> Unit
             }
         }
     }
@@ -525,31 +527,13 @@ private val CameraSaver =
 
 private const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 
-// A whole Region fits at about zoom 7.3 to 8.1, where the archive draws next to nothing and no
-// Trail (docs/phase-2b.md § 5, R7), so the camera goes to its middle at the Trails' zoom or above.
-private fun MapLibreMap.cameraOnto(bounds: GeoBounds): CameraUpdate {
-    val fitted = getCameraForLatLngBounds(bounds.toLatLngBounds())?.zoom ?: TRAIL_ZOOM
-    val middle = LatLng((bounds.south + bounds.north) / 2, (bounds.west + bounds.east) / 2)
-    return CameraUpdateFactory.newLatLngZoom(middle, maxOf(fitted, TRAIL_ZOOM))
-}
-
-private fun GeoBounds.toLatLngBounds(): LatLngBounds = LatLngBounds.from(north, east, south, west)
-
-/** `KozicaProfile.java`'s minimum zoom for a Trail. */
-private const val TRAIL_ZOOM = 10.0
-
-private fun MapStart.toCameraUpdate(): CameraUpdate =
-    when (this) {
-        is MapStart.At ->
-            CameraUpdateFactory.newCameraPosition(
-                CameraPosition
-                    .Builder()
-                    .target(LatLng(camera.latitude, camera.longitude))
-                    .zoom(camera.zoom)
-                    .build(),
-            )
-        is MapStart.Fit ->
-            CameraUpdateFactory.newLatLngBounds(bounds.toLatLngBounds(), 0)
-    }
+private fun MapCamera.toCameraUpdate(): CameraUpdate =
+    CameraUpdateFactory.newCameraPosition(
+        CameraPosition
+            .Builder()
+            .target(LatLng(latitude, longitude))
+            .zoom(zoom)
+            .build(),
+    )
 
 private fun CameraPosition.toMapCamera(): MapCamera? = target?.let { MapCamera(it.latitude, it.longitude, zoom) }
