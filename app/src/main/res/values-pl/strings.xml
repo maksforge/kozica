@@ -111,15 +111,19 @@
     <string name="schema_mismatch_copy">Kopia została zachowana jako %1$s. Nic nie zostało usunięte.</string>
 
     <string name="safety_title">Bezpieczeństwo</string>
-    <string name="safety_intro">Kozica działa bez zasięgu. Te wiersze otwierają inne aplikacje i strony, a wszystkie poza aplikacją Telefon potrzebują zasięgu.</string>
-    <string name="safety_emergency">Numer alarmowy, gdy inny się nie łączy</string>
-    <string name="safety_dial_hint">%1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie wykonujesz Ty.</string>
+    <string name="safety_intro">Kozica działa bez zasięgu. Poniższe opcje otwierają inne aplikacje i strony; połączenie i strona wymagają zasięgu.</string>
+    <string name="safety_emergency">Numer alarmowy we wszystkich trzech krajach</string>
+    <string name="safety_emergency_hint">%1$s, w każdej sieci: gdy nie wiesz, w którym kraju jesteś, lub inny numer się nie łączy. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie.</string>
     <string name="safety_rescue">Wezwij ratowników górskich</string>
-    <string name="safety_rescue_foreign">Wezwij ratowników górskich z zagranicznej karty SIM</string>
-    <string name="safety_app_installed">Zainstalowana. Otwiera aplikację.</string>
-    <string name="safety_app_missing">Niezainstalowana. Zainstaluj ją z Google Play przed wyjściem w góry.</string>
+    <string name="safety_dial_hint">%1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie.</string>
+    <string name="safety_rescue_fallback">Wezwij ratowników górskich, gdy %1$s się nie łączy</string>
+    <string name="safety_rescue_fallback_hint">%1$s, z każdego telefonu i w każdej sieci. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie.</string>
+    <string name="safety_rescue_app">Aplikacja ratunkowa: %1$s</string>
+    <string name="safety_app_installed">Zainstalowana. Otwórz ją przed wyjściem w góry i sprawdź, czy jest skonfigurowana.</string>
+    <string name="safety_app_missing">Niezainstalowana. Zainstaluj ją z Google Play i skonfiguruj przed wyjściem w góry.</string>
     <string name="safety_avalanche">Komunikat lawinowy, %1$s</string>
     <string name="safety_weather">Pogoda w górach, %1$s</string>
+    <string name="safety_weather_model">Wykresy modelu pogody dla gór, %1$s</string>
     <string name="safety_opens_browser">%1$s, w przeglądarce</string>
     <string name="safety_no_dialler">Na tym telefonie nie ma aplikacji Telefon do otwarcia.</string>
     <string name="safety_no_browser">Na tym telefonie nie ma przeglądarki do otwarcia.</string>

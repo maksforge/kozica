@@ -11,7 +11,7 @@ package app.kozica.ui.safety
 internal data class RescueNumber(
     /** As the service publishes it, spaces included, because that is how the hint shows it. */
     val shown: String,
-    val fromForeignPhone: Boolean = false,
+    val fallback: Boolean = false,
 ) {
     val dialled: String get() = shown.filterNot(Char::isWhitespace)
 }
@@ -21,10 +21,14 @@ internal data class RescueApp(
     val packageId: String,
 )
 
-/** A page that opens in the browser; [issuer] is the body that publishes it, never translated. */
+/**
+ * A page that opens in the browser. [issuer] is the body that publishes it, with the range in the
+ * Regions' Polish where it covers only some, never translated (`docs/phase-3.md` § 1).
+ */
 internal data class Page(
     val issuer: String,
     val url: String,
+    val modelCharts: Boolean = false,
 ) {
     val host: String get() = url.substringAfter("://").substringBefore('/').removePrefix("www.")
 }
@@ -42,9 +46,13 @@ internal enum class Country(
     val weather: Page,
 ) {
     Poland(
-        rescue = listOf(RescueNumber("985"), RescueNumber("+48 601 100 300", fromForeignPhone = true)),
+        rescue = listOf(RescueNumber("985"), RescueNumber("+48 601 100 300", fallback = true)),
         app = RescueApp("Ratunek", "com.pagasolutions.emergencycall_pl"),
-        avalanche = listOf(Page("TOPR (Tatry)", "https://lawiny.topr.pl"), Page("GOPR", "https://lawiny.gopr.pl")),
+        avalanche =
+            listOf(
+                Page("TOPR (Tatry)", "https://lawiny.topr.pl"),
+                Page("GOPR (Karkonosze, Babia Góra, Bieszczady)", "https://lawiny.gopr.pl"),
+            ),
         weather = Page("IMGW", "https://gory.imgw.pl"),
     ),
     Slovakia(
@@ -62,7 +70,16 @@ internal enum class Country(
                     "Horská služba (Karkonosze)",
                     "https://www.horskasluzba.cz/cz/pocasi-na-horach/lavinova-predpoved/krkonose",
                 ),
+                Page(
+                    "Horská služba (Jesioniki)",
+                    "https://www.horskasluzba.cz/cz/pocasi-na-horach/lavinova-predpoved/jeseniky",
+                ),
             ),
-        weather = Page("ČHMÚ", "https://www.chmi.cz/predpoved-pocasi/lyzarska-strediska-a-hory/"),
+        weather =
+            Page(
+                "ČHMÚ",
+                "https://www.chmi.cz/predpoved-pocasi/meteogramy-aladin/hory-a-lyzarska-strediska",
+                modelCharts = true,
+            ),
     ),
 }

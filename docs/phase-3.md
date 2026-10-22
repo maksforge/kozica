@@ -129,7 +129,7 @@ From the top:
 | Kind | Title | Opens | Hint shows |
 | --- | --- | --- | --- |
 | Rescue number | "Call mountain rescue", or the fallback's "if 985 does not connect" | `ACTION_DIAL` with `tel:<number>` | the number as published, and that the phone app opens with it typed and the user places the call |
-| Rescue app | the app's name | the app if installed; otherwise its Play page, pinned to Play, then the browser | whether it is installed, and that it must be set up before the user sets out |
+| Rescue app | "Rescue app: " and the app's name | the app if installed; otherwise its Play page, pinned to Play, then the browser | whether it is installed, and that it must be set up before the user sets out |
 | Avalanche bulletin | "Avalanche bulletin, " and the issuer | `ACTION_VIEW` on the page | the page's host |
 | Mountain weather | "Mountain weather, " and the issuer; ČHMÚ's "Weather model charts for the mountains" | `ACTION_VIEW` on the page | the page's host |
 
@@ -193,6 +193,7 @@ button reads `safety_title` as its content description.
 | `safety_dial_hint` | %1$s. Opens the phone app with the number typed; you place the call. | %1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
 | `safety_rescue_fallback` | Call mountain rescue if %1$s does not connect | Wezwij ratowników górskich, gdy %1$s się nie łączy |
 | `safety_rescue_fallback_hint` | %1$s, from any phone on any network. Opens the phone app with the number typed; you place the call. | %1$s, z każdego telefonu i w każdej sieci. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
+| `safety_rescue_app` | Rescue app: %1$s | Aplikacja ratunkowa: %1$s |
 | `safety_app_installed` | Installed. Open it before you set out to check it is set up. | Zainstalowana. Otwórz ją przed wyjściem w góry i sprawdź, czy jest skonfigurowana. |
 | `safety_app_missing` | Not installed. Install it from Google Play and set it up before you set out. | Niezainstalowana. Zainstaluj ją z Google Play i skonfiguruj przed wyjściem w góry. |
 | `safety_avalanche` | Avalanche bulletin, %1$s | Komunikat lawinowy, %1$s |
