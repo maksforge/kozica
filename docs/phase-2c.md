@@ -84,10 +84,13 @@ branch, as phase 3's were, and the release PR waits for B.
 - **`deliveryType.set("fast-follow")`** in `gradle/region-pack.gradle.kts`. Nothing else in the
   build changes: `-PmapPacks`, the data build and the archives on the GitHub release are as phase
   2b left them.
-- **The app asks for whatever has not arrived.** On the map's first collection of the Regions, a
-  Region that is neither ready nor on its way (Play's `NOT_INSTALLED`, or `FAILED`) is fetched, all
-  of them in one `fetch` call, as "Download all" did. That covers a fast-follow download Play has
-  not started, one the user cancelled in the Play Store, and a Region added to a later build.
+- **The app asks only for what was never asked for.** On the map's first collection of the
+  Regions, a Region Play reports `NOT_INSTALLED` is fetched, all of them in one `fetch` call, as
+  "Download all" did. That covers a fast-follow download Play has not started and a Region added to
+  a later build, which Play fetches unprompted as part of the install anyway. **A failed Region, or
+  one the user cancelled in the Play Store** (`FAILED`, `CANCELED`), is not fetched again behind the
+  user's back: it waits for Retry, and Retry shows what it will download, "Retry — %1$s", once Play
+  has reported the size of every failed Region.
 - **The progress line** replaces the empty state, "No Regions downloaded yet." and its button, which
   go with `MapEmpty`. It shows while any Region is not ready, over the map rather than instead of
   it, since the Regions already ready draw beneath it:
@@ -97,7 +100,7 @@ branch, as phase 3's were, and the release PR waits for B.
   | Any downloading, pending or not yet asked for | "Downloading maps — %1$d of %2$d" (ready of all) | — |
   | Any waiting for Wi-Fi | "Waiting for Wi-Fi" | "Download over mobile data", Play's dialog |
   | Any needing confirmation | "Play needs your confirmation" | "Confirm", Play's dialog |
-  | Any failed, none of the above | "Download failed" | "Retry", one `fetch` for every failed Region |
+  | Any failed or cancelled, none of the above | "Download failed" | "Retry — 68 MB" (or "Retry" while a size is unknown), one `fetch` for every failed Region |
   | Any updating | "Map data is being updated." (phase 2's) | — |
 
   The first matching row wins, in that order: the line names what the user is waiting on, so a
@@ -147,7 +150,8 @@ branch, as phase 3's were, and the release PR waits for B.
 
 Copy: "Downloading maps — %1$d of %2$d". The other lines are phase 2b's, kept under new names:
 "Waiting for Wi-Fi", "Download over mobile data", "Play needs your confirmation", "Confirm",
-"Download failed", "Retry". "Map data is being updated." is phase 2's.
+"Download failed", "Retry". New: "Retry — %1$s", with the size. "Map data is being updated." is
+phase 2's.
 
 ## 2. What the documents say
 
@@ -177,8 +181,9 @@ Copy: "Downloading maps — %1$d of %2$d". The other lines are phase 2b's, kept 
   action, with the order in § 1's table. A test per row, and one with a downloading and a failed
   Region proving downloading wins: the line names what the user is waiting on, and a Retry shown
   while a download is still moving misreports it.
-- **What the first launch fetches**: not-installed and failed Regions, never one ready, downloading
-  or updating. Asking again for a pack already moving or updating is pointless.
+- **What the first launch fetches**: not-installed Regions only, never one ready, downloading,
+  updating, failed or cancelled. A cancelled one fetched unasked would undo the user's own decision,
+  with no size shown.
 
 ## Documents this phase amends
 
