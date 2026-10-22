@@ -30,9 +30,10 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 
 ## Before the first upload
 
-- [ ] **Delete what the app does not need**, while deleting is free — [`optional-modules.md`](optional-modules.md)
-      lists each module's files and the five places around the code a strip reaches. Room, photos,
-      backup and reminders are each a data-loss or Data safety story you will otherwise defend forever.
+- [x] **Delete what the app does not need.** Phase 0 deleted reminders, WorkManager's own use and
+      the placeholder domain ([`optional-modules.md`](optional-modules.md)). Room, photos and backup
+      stay on purpose: phase 6's hike log needs all three ([`phase-0.md`](phase-0.md)), and until then
+      they hold nothing of the user's, so a tester's install has nothing in them to lose.
 - [x] **Decide `minSdk` deliberately.** Kept at 26 ([`phase-0.md`](phase-0.md) § 0).
 - [ ] **Replace the placeholder mark.** `art/mark.py`, then `python3 art/make-launcher-icon.py` and
       `make-feature-graphic.py`. Commit the concept image and record its provenance in
@@ -42,11 +43,10 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       `MIGRATION_1_2` replaces it ([`phase-0.md`](phase-0.md) § *Not in*).
 - [x] **Rewrite `scripts/edge-to-edge.py`'s SCENES** against your screens. Home and Settings; each
       new screen brings its own scenes.
-- [ ] **Run the artifact gates before the first tag.** Phase 0 rewrote `aab-permissions.py`'s
-      EXPECTED and FORBIDDEN for Kozica, and its empty EXPECTED_ORIENTATION is right while no screen
-      is locked. Run all four `aab-*.py` scripts against a local `bundleRelease` **before the first
-      tag** — the first app built from the template found its stale table in the publish workflow,
-      after the tag, with the version already spent.
+- [x] **Run the artifact gates before the first tag.** `publish-play.yml` runs all four `aab-*.py`
+      on every release bundle before Play sees it; v0.4.1's run 39495344121, the nine packs inside,
+      read versionCode 134 matching, 7 permissions all accounted for and none of the 8 forbidden, `pl`
+      present, and 4 reflection classes intact. The standing *every release* check below keeps it.
 - [x] **Choose the palette.** Chamois ochre, rock, slate and stone in `scripts/gen_scheme.py`; every
       contrast pair passes. Phase 2's R9 read it against the Trail colours on the map: no seed moved.
 - [x] **Choose a dedicated support address.** `kozica.support@maksforge.com` since 2026-10-20, on
