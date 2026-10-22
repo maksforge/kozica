@@ -5,7 +5,7 @@ title: Privacy Policy
 
 # Privacy Policy
 
-_Last updated: 20 October 2026_
+_Last updated: 22 October 2026_
 
 Kozica is an Android app for hiking in the Polish mountains: an offline map of the trails, drawn in
 their signpost colours. This policy describes what the app does with information about you. It is
@@ -52,8 +52,8 @@ These are done by the operating system or by Google, not by Kozica, but they are
 2. **Google Play.** Installing and updating an app is a transaction between your phone and Google,
    with its own privacy policy. The developer of this app receives aggregate, anonymous statistics —
    install counts, crash rates, country-level breakdowns — and no information about individuals.
-   The map data is downloaded by the Play Store app too, under Google's terms, when you choose a
-   Region; Kozica itself opens no connection.
+   The map data is downloaded by the Play Store app too, under Google's terms, after Kozica is
+   installed; Kozica itself opens no connection.
 
 ## Children
 

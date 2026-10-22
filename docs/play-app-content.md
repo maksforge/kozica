@@ -133,16 +133,18 @@ forbids it. Answered 2026-10-20.
 
 **`dataSync`, for Play Asset Delivery's extraction service**, from phase 2b's checkpoint B
 ([`phase-2b.md`](phase-2b.md) § 2). Kozica starts no foreground service of its own; the library's
-service unpacks a Region's pack after the Play Store has downloaded it. **Not yet declared in the
+service unpacks each Region's pack after the Play Store has downloaded it, right after the install
+([`phase-2c.md`](phase-2c.md)). **Not yet declared in the
 Console**: the form appears only once a bundle declaring the permission reaches a track (internal
 app sharing does not count; checked 2026-10-20), so it is declared with the first release that
 carries the library, E's and F's, and this section gets that date. The answers to give:
 
-- **What the user sees:** a Region they asked to download, from the Regions screen, being made
-  ready to use offline, with the system's foreground-service notification while it runs.
-- **Why it cannot wait:** the user asked for the map before going where there is no signal, and the
-  pack must be unpacked while the app may be in the background, or the map is missing on the trail.
-- **Type:** `dataSync`, which covers transferring data the user asked for to the device.
+- **What the user sees:** the maps that arrive with the app after it is installed being made ready
+  to use offline, with the system's foreground-service notification while it runs.
+- **Why it cannot wait:** the maps are what the app is installed for, and they must be unpacked as
+  soon as Play has downloaded them, while the app may be in the background, or the map is missing
+  on the trail where there is no signal.
+- **Type:** `dataSync`, which covers transferring to the device the data the app needs to work.
 
 Phase 6's hike recording brings a `location` service. Each foreground service the app gains is
 recorded here with its type and the declaration's answers.

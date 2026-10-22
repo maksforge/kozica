@@ -49,10 +49,10 @@ The line that appears under the name in search results, and the most-read text i
 Offline trail map of the Polish mountains, drawn in the signposts' own colours.
 ```
 
-### Full description — 1332/4000
+### Full description — 1327/4000
 
 ```
-Kozica is a hiking map of the Polish mountains. Download the ranges you need before you go, from the Karkonosze to the Bieszczady and across the Czech and Slovak borders where the ranges do, and it works with no signal at all.
+Kozica is a hiking map of the Polish mountains, from the Karkonosze to the Bieszczady and across the Czech and Slovak borders where the ranges do. Every range arrives with the app, and the map works with no signal at all.
 
 Every marked trail is drawn in the colour on its signposts — red, blue, green, yellow or black — with its symbol along the line. Where two trails share a path, both are drawn side by side, so you can see which one you are on.
 
@@ -79,10 +79,10 @@ Kozica
 Mapa szlaków w polskich górach bez internetu, w kolorach z drogowskazów.
 ```
 
-### Full description — 1345/4000
+### Full description — 1354/4000
 
 ```
-Kozica to mapa turystyczna polskich gór. Pobierz potrzebne pasma przed wyjściem, od Karkonoszy po Bieszczady, także po czeskiej i słowackiej stronie granicy, a zadziała bez zasięgu.
+Kozica to mapa turystyczna polskich gór, od Karkonoszy po Bieszczady, także po czeskiej i słowackiej stronie granicy. Wszystkie pasma przychodzą razem z aplikacją, a mapa działa bez zasięgu.
 
 Każdy znakowany szlak jest narysowany w kolorze z drogowskazów — czerwonym, niebieskim, zielonym, żółtym albo czarnym — ze swoim znakiem wzdłuż linii. Gdy dwa szlaki biegną jedną ścieżką, oba są narysowane obok siebie, więc widać, którym idziesz.
 
@@ -200,4 +200,18 @@ A new Safety button on the map, beside Regions and Settings, opens what you need
 
 ```
 Nowy przycisk Bezpieczeństwo na mapie, obok Regionów i Ustawień, otwiera to, czego potrzebujesz, gdy coś pójdzie nie tak: 112, a dla Polski, Słowacji i Czech numer ratownictwa górskiego, aplikację ratunkową, komunikat lawinowy i pogodę w górach. Kozica wpisuje numer w aplikacji Telefon, a połączenie nawiązujesz samodzielnie. Aplikacje i strony wymagają zasięgu.
+```
+
+### 0.6.0 — every Region arrives with the app
+
+**English** — 321/500:
+
+```
+Every mountain range now arrives with the app: right after you install Kozica, the Play Store downloads all nine Regions by itself, so there is nothing to choose. The Regions screen and the first launch's question are gone, and the map opens on the Tatry. While the maps are still arriving, a line on the map counts them.
+```
+
+**Polish** — 306/500:
+
+```
+Wszystkie pasma przychodzą teraz razem z aplikacją: zaraz po instalacji Sklep Play sam pobiera wszystkie dziewięć regionów, więc nie trzeba niczego wybierać. Ekran Regiony i pytanie przy pierwszym uruchomieniu zniknęły, a mapa otwiera się na Tatrach. Dopóki mapy się pobierają, linijka na mapie je odlicza.
 ```
