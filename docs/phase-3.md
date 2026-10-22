@@ -102,8 +102,8 @@ upload*, not this phase alone. Its items still open on 2026-10-22:
 
 **What the door freezes** is what a tester's install keeps. From the first one, deleting Room, photos
 or backup loses a tester's data instead of costing nothing, which is why the deletion comes first. The
-`applicationId` and the upload key were fixed when Play took the first bundle. And a build a tester
-keeps its compiled-in support address and Safety targets, so a target that moves is put right
+`applicationId` and the upload key were fixed when Play took the first bundle. And a build on a tester's
+phone keeps its compiled-in support address and Safety targets, so a target that moves is put right
 for them only by an update.
 
 ---

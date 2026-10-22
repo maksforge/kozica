@@ -169,9 +169,9 @@ the map, for each country a Region reaches — Poland's 985, Ratunek, TOPR's and
 bulletins and IMGW's weather, and Slovakia's and Czechia's equivalents beside them, Czechia's for the
 Karkonosze and the Jesioniki both ([ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md)).
 The listing, the privacy policy and the App content answers were written in phase P, and the support
-address chosen on 2026-10-20 (`DOD.md`). Closed testing opens when this phase closes **and**
-`DOD.md`'s *Before the first upload* is clear ([`phase-3.md`](phase-3.md) § *The door to closed
-testing*); the next three phases are built while it runs.
+address chosen on 2026-10-20 (`DOD.md`). Closed testing opens when this phase closes **and** the
+items [`phase-3.md`](phase-3.md) § *The door to closed testing* names are done; the next three
+phases are built while it runs.
 
 ## Phase 4 — Elevation
 
