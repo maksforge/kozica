@@ -1295,6 +1295,8 @@ SCENES = [
     Scene("home", "home", []),
 
     # --- pushed screens: no bottom bar, so the navigation-bar inset is the app's own problem ----
+    Scene("safety", "detail", [("tap", "Safety")]),
+    Scene("safety-bottom", "detail", [("tap", "Safety"), ("swipe_end", "")]),
     Scene("settings", "detail", [("tap", "Settings")]),
     Scene("settings-bottom", "detail", [("tap", "Settings"), ("swipe_end", "")]),
     Scene("support", "detail", [("tap", "Settings"), ("tap", "Help and feedback")]),
