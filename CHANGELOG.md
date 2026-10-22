@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/srednimax/kozica/compare/v0.5.0...v0.6.0) (2026-10-22)
+
+
+### Features
+
+* every Region arrives with the app, and the Regions and welcome screens are gone ([5898cfd](https://github.com/srednimax/kozica/commit/5898cfddda055014e717a9f4f3f989e94b81da65))
+* leave a failed or cancelled Region to Retry, which shows its size ([872edbb](https://github.com/srednimax/kozica/commit/872edbb62a8856d33eb622c8cbb6e72bd7642864))
+
+
+### Bug Fixes
+
+* fail a Region Play still calls not downloaded once asked, and log each fetch's outcome ([c77590a](https://github.com/srednimax/kozica/commit/c77590a9540553281cc281905e6c2311366de90d))
+* say in the map's first fetch that a cancelled Region waits for Retry ([34b83fa](https://github.com/srednimax/kozica/commit/34b83fa0154eb1f674128a431aac8266b6d7a957))
+
 ## [0.5.0](https://github.com/srednimax/kozica/compare/v0.4.1...v0.5.0) (2026-10-22)
 
 
