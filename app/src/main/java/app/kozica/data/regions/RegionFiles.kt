@@ -1,6 +1,7 @@
 package app.kozica.data.regions
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import com.google.android.gms.tasks.Task
@@ -46,7 +47,7 @@ class RegionFiles private constructor(
 
     val states: Flow<List<Region>> =
         merge(
-            flow { emit(StateChange(read(REGION_NAMES.keys), isFirstRead = true)) },
+            flow { emit(StateChange(read(REGION_NAMES.keys, logged = true), isFirstRead = true)) },
             updates.map { StateChange(it) },
             progress()
                 .map { state -> StateChange(mapOf(idOf(state.name()) to fromPackState(idOf(state.name()), state))) }
@@ -65,6 +66,7 @@ class RegionFiles private constructor(
 
     /** One request for every Region in [ids], rather than one per Region. */
     suspend fun download(ids: Collection<String>) {
+        Log.i(TAG, "fetch ${ids.joinToString()}")
         updates.emit(
             try {
                 val states = manager.fetch(ids.map(::pack)).await().packStates()
@@ -89,13 +91,18 @@ class RegionFiles private constructor(
 
     // A build sideloaded by installDebug has no Play session and declares no pack, so a request
     // fails or answers without the pack; either is "not downloaded", never a crash (ADR-0007).
-    private suspend fun read(ids: Collection<String>): Map<String, RegionState> {
+    // docs/phase-2c.md R1 reads the first launch's states from a Play install, so this logs in release.
+    private suspend fun read(
+        ids: Collection<String>,
+        logged: Boolean = false,
+    ): Map<String, RegionState> {
         val states =
             try {
                 manager.getPackStates(ids.map(::pack)).await().packStates()
             } catch (_: Exception) {
                 emptyMap()
             }
+        if (logged) ids.forEach { Log.i(TAG, "$it: status ${states[pack(it)]?.status()}") }
         return ids.associateWith { id ->
             readyArchive(id)?.let(::readyRegion)
                 ?: states[pack(id)]?.let { fromPackState(id, it) }
@@ -150,6 +157,8 @@ class RegionFiles private constructor(
 
         fun of(context: Context): RegionFiles =
             instance ?: synchronized(this) { instance ?: RegionFiles(context).also { instance = it } }
+
+        private const val TAG = "KozicaPack"
 
         private fun pack(id: String) = "region_$id"
 
