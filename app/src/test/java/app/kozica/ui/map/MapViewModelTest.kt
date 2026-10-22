@@ -96,7 +96,7 @@ class MapViewModelTest {
         }
 
     @Test
-    fun `the map asks once for every Region not ready and not on its way`() =
+    fun `the map asks once for every Region never asked for`() =
         runTest {
             val fetched = mutableListOf<List<String>>()
             val regions =
@@ -112,7 +112,7 @@ class MapViewModelTest {
 
             regions.value = listOf(tatry(RegionState.Downloading(percent = 0)), bieszczady(BIESZCZADY_READY))
 
-            assertEquals(listOf(listOf("tatry", "beskid_niski")), fetched)
+            assertEquals(listOf(listOf("tatry")), fetched)
         }
 }
 

@@ -14,6 +14,7 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.SystemClock
 import android.provider.Settings
+import android.text.format.Formatter
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -457,7 +458,7 @@ private fun ProgressLine(
                             )
                         MapProgress.WaitingForWifi -> stringResource(R.string.map_waiting_for_wifi)
                         MapProgress.NeedsConfirmation -> stringResource(R.string.map_needs_confirmation)
-                        MapProgress.Failed -> stringResource(R.string.map_download_failed)
+                        is MapProgress.Failed -> stringResource(R.string.map_download_failed)
                         MapProgress.Updating -> stringResource(R.string.map_updating)
                     },
                 style = MaterialTheme.typography.bodyLarge,
@@ -467,7 +468,18 @@ private fun ProgressLine(
                     TextButton(onClick = onConfirm) { Text(stringResource(R.string.map_mobile_data)) }
                 MapProgress.NeedsConfirmation ->
                     TextButton(onClick = onConfirm) { Text(stringResource(R.string.map_confirm)) }
-                MapProgress.Failed -> TextButton(onClick = onRetry) { Text(stringResource(R.string.map_retry)) }
+                is MapProgress.Failed ->
+                    TextButton(onClick = onRetry) {
+                        Text(
+                            progress.size?.let {
+                                stringResource(
+                                    R.string.map_retry_sized,
+                                    Formatter.formatShortFileSize(LocalContext.current, it),
+                                )
+                            }
+                                ?: stringResource(R.string.map_retry),
+                        )
+                    }
                 is MapProgress.Downloading, MapProgress.Updating -> Unit
             }
         }

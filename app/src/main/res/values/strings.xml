@@ -39,6 +39,8 @@
     <string name="map_location_settings">Settings</string>
 
     <string name="map_retry">Retry</string>
+    <!-- %1$s is a size from the platform, such as "68 MB": what Retry downloads -->
+    <string name="map_retry_sized">Retry — %1$s</string>
     <string name="map_waiting_for_wifi">Waiting for Wi-Fi</string>
     <string name="map_mobile_data">Download over mobile data</string>
     <string name="map_needs_confirmation">Play needs your confirmation</string>

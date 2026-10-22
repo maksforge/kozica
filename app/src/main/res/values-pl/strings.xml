@@ -23,6 +23,7 @@
     <string name="map_location_settings">Ustawienia</string>
 
     <string name="map_retry">Spróbuj ponownie</string>
+    <string name="map_retry_sized">Spróbuj ponownie — %1$s</string>
     <string name="map_waiting_for_wifi">Oczekiwanie na Wi-Fi</string>
     <string name="map_mobile_data">Pobierz przez dane komórkowe</string>
     <string name="map_needs_confirmation">Sklep Play czeka na twoje potwierdzenie</string>

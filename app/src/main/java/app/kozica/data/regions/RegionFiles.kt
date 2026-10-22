@@ -140,7 +140,8 @@ class RegionFiles private constructor(
             }
             AssetPackStatus.WAITING_FOR_WIFI -> RegionState.WaitingForWifi
             AssetPackStatus.REQUIRES_USER_CONFIRMATION -> RegionState.NeedsConfirmation
-            AssetPackStatus.FAILED -> RegionState.Failed(state.errorCode())
+            // A download the user cancelled in the Play Store waits for Retry, as a failure does.
+            AssetPackStatus.FAILED, AssetPackStatus.CANCELED -> RegionState.Failed(state.errorCode())
             else -> RegionState.NotDownloaded
         }
     }
