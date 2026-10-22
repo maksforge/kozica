@@ -105,8 +105,8 @@ class MapViewModel(
 
     init {
         viewModelScope.launch { camera.compareAndSet(null, preferences.mapCamera.first() ?: TATRY) }
-        // Play fetches fast-follow packs by itself; this covers one it has not started, one the user
-        // cancelled in the Play Store, and a Region a later build adds (docs/phase-2c.md § 1).
+        // Play fetches fast-follow packs by itself; this covers one it has not started and a Region a
+        // later build adds. A failed or cancelled one waits for Retry (docs/phase-2c.md § 1).
         viewModelScope.launch {
             val missing = toFetch(this@MapViewModel.regions.filterNotNull().first())
             if (missing.isNotEmpty()) applicationScope.launch { fetch(missing) }
