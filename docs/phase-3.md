@@ -103,7 +103,7 @@ upload*, not this phase alone. Its items still open on 2026-10-22:
 **What the door freezes** is what a tester's install keeps. From the first one, deleting Room, photos
 or backup loses a tester's data instead of costing nothing, which is why the deletion comes first. The
 `applicationId` and the upload key were fixed when Play took the first bundle. And a build a tester
-keeps keeps its compiled-in support address and Safety targets, so a target that moves is put right
+keeps its compiled-in support address and Safety targets, so a target that moves is put right
 for them only by an update.
 
 ---
@@ -185,14 +185,14 @@ button reads `safety_title` as its content description.
 | Key | English | Polish |
 | --- | --- | --- |
 | `safety_title` | Safety | Bezpieczeństwo |
-| `safety_intro` | Kozica works without signal. These rows open other apps and pages; a call or a page needs signal. | Kozica działa bez zasięgu. Te wiersze otwierają inne aplikacje i strony; połączenie i strona wymagają zasięgu. |
+| `safety_intro` | Kozica works without signal. These rows open other apps and pages; a call or a page needs signal. | Kozica działa bez zasięgu. Poniższe opcje otwierają inne aplikacje i strony; połączenie i strona wymagają zasięgu. |
 | `safety_emergency` | Emergency number, in all three countries | Numer alarmowy we wszystkich trzech krajach |
-| `safety_emergency_hint` | %1$s, on any network: when you are not sure which country you are in, or no other number connects. Opens the phone app with the number typed; you place the call. | %1$s, w każdej sieci: gdy nie wiesz, w którym kraju jesteś, lub inny numer się nie łączy. Otwiera aplikację Telefon z wpisanym numerem; połączenie wykonujesz Ty. |
+| `safety_emergency_hint` | %1$s, on any network: when you are not sure which country you are in, or no other number connects. Opens the phone app with the number typed; you place the call. | %1$s, w każdej sieci: gdy nie wiesz, w którym kraju jesteś, lub inny numer się nie łączy. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
 | `safety_poland` / `safety_slovakia` / `safety_czechia` | Poland / Slovakia / Czechia | Polska / Słowacja / Czechy |
 | `safety_rescue` | Call mountain rescue | Wezwij ratowników górskich |
-| `safety_dial_hint` | %1$s. Opens the phone app with the number typed; you place the call. | %1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie wykonujesz Ty. |
+| `safety_dial_hint` | %1$s. Opens the phone app with the number typed; you place the call. | %1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
 | `safety_rescue_fallback` | Call mountain rescue if %1$s does not connect | Wezwij ratowników górskich, gdy %1$s się nie łączy |
-| `safety_rescue_fallback_hint` | %1$s, from any phone on any network. Opens the phone app with the number typed; you place the call. | %1$s, z każdego telefonu i w każdej sieci. Otwiera aplikację Telefon z wpisanym numerem; połączenie wykonujesz Ty. |
+| `safety_rescue_fallback_hint` | %1$s, from any phone on any network. Opens the phone app with the number typed; you place the call. | %1$s, z każdego telefonu i w każdej sieci. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
 | `safety_app_installed` | Installed. Open it before you set out to check it is set up. | Zainstalowana. Otwórz ją przed wyjściem w góry i sprawdź, czy jest skonfigurowana. |
 | `safety_app_missing` | Not installed. Install it from Google Play and set it up before you set out. | Niezainstalowana. Zainstaluj ją z Google Play i skonfiguruj przed wyjściem w góry. |
 | `safety_avalanche` | Avalanche bulletin, %1$s | Komunikat lawinowy, %1$s |
