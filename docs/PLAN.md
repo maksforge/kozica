@@ -21,7 +21,7 @@ was extracted from and the first app built from it settled on exactly this split
 - [x] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; Play's reading (E) moved to phase 2b
 - [x] **Phase 2** — The map: the Tatry drawn as the signposts mark them, "you are here"
 - [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", across the border, delivered by Play
-- [ ] **Phase 3** — Safe for a stranger ← **the door: closed testing opens here**
+- [x] **Phase 3** — Safe for a stranger: the Safety screen ← **the door: closed testing opens once its list is done**
 - [ ] **Phase 4** — Elevation: contours and hillshading
 - [ ] **Phase 5** — Route planning, and search by name
 - [ ] **Phase 6** — The hike log
