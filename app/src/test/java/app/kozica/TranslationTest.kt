@@ -226,11 +226,7 @@ class TranslationTest {
      * sentence needs, which is wrong in most inflecting languages for a heading being cited. So a
      * composed sentence is allowed, and **an entry here is what it costs**.
      */
-    private val quotedPairs: List<Pair<String, String>> =
-        listOf(
-            "settings_title" to "welcome_later",
-            "regions_title" to "welcome_later",
-        )
+    private val quotedPairs: List<Pair<String, String>> = emptyList()
 
     @Test
     fun `a string that quotes another by name still contains it in every locale`() {

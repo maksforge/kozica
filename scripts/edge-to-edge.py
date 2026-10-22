@@ -1288,8 +1288,7 @@ SCENES = [
     ),
 
     # --- a wiped install: the first launch, which no seeded run can show ------------------------
-    Scene("welcome", "welcome", [("wipe", "")], suite="empty"),
-    Scene("home-empty", "home", [("wipe", ""), ("tap", "Not now")], suite="empty"),
+    Scene("home-empty", "home", [("wipe", "")], suite="empty"),
 
     # --- the root ------------------------------------------------------------------------------
     Scene("home", "home", []),
@@ -1325,9 +1324,9 @@ DEBUG_RES_DIR = Path(__file__).resolve().parent.parent / "app" / "src" / "debug"
 # stages none; leave it as None until yours does, and see `Scene.keeps_seeded_prompt`.
 PROMPT_DISMISS: "str | None" = None
 
-# The walk from a wiped install to the seeded fixture: past the welcome screen, into Settings and
-# through the debug-only sample-data block at the end of it.
-SEED_WALK = ("Not now", "Settings", "Seed sample data")
+# The walk from a wiped install to the seeded fixture: into Settings and through the debug-only
+# sample-data block at the end of it.
+SEED_WALK = ("Settings", "Seed sample data")
 
 
 def require_bcp47(tag: str) -> None:

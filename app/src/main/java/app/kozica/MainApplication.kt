@@ -16,10 +16,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 import org.maplibre.android.MapLibre
 import java.io.File
@@ -89,13 +87,6 @@ class MainApplication : Application() {
         private set
 
     /**
-     * Whether the first launch's welcome is answered, held for the process so a recreated Activity
-     * starts from the known value. Null only until the first read lands.
-     */
-    lateinit var onboardingDone: StateFlow<Boolean?>
-        private set
-
-    /**
      * **Nothing may read this until [schemaMismatch] is null.** Forcing the lazy constructs Room.
      */
     val container: AppContainer by lazy { AppContainer(this, preferences, applicationScope) }
@@ -104,7 +95,6 @@ class MainApplication : Application() {
         super.onCreate()
 
         preferences = AppPreferences(preferencesStore)
-        onboardingDone = preferences.onboardingDone.stateIn(applicationScope, SharingStarted.Eagerly, null)
 
         // A blocking read, deliberately and exactly once. Everything else about DataStore is a Flow,
         // but this value has to be known before the first window is created — a Flow collected in a
