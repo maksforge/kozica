@@ -89,8 +89,8 @@ of `publish-play-production.yml` with `update_listing: true`, which needs *Manag
 
 ## The door to closed testing
 
-`PLAN.md` opens closed testing when this phase closes, but the door is `DOD.md`'s *Before the first
-upload*, not this phase alone. Its items still open on 2026-10-22:
+`PLAN.md` opens closed testing when this phase closes and the items below, from `DOD.md`'s *Before
+the first upload*, are done. Those still open on 2026-10-22:
 
 - **The developer's:** delete what the app does not need ([`optional-modules.md`](optional-modules.md));
   run the four `aab-*.py` gates against the bundle the testers get; checkpoint E
