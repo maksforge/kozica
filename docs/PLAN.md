@@ -164,10 +164,13 @@ Play work. [`phase-2b.md`](phase-2b.md).
 
 ## Phase 3 — Safe for a stranger
 
-What a stranger needs before installing: the listing, the privacy policy, a real support address, the
-App content answers, and the hand-offs for live information — mountain rescue (985), Ratunek, the
-avalanche bulletin and the weather ([ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md)).
-Closed testing opens when this phase closes; the next three phases are built while it runs.
+What a stranger needs before installing: the hand-offs for live information, from a Safety button on
+the map, for each country a Region reaches — Poland's 985, Ratunek, TOPR's and GOPR's avalanche
+bulletins and IMGW's weather, and Slovakia's and Czechia's equivalents beside them
+([ADR-0008](adr/0008-kozica-never-opens-a-network-connection.md)). The listing, the privacy policy
+and the App content answers were written in phase P; a real support address is the owner's choice
+(`DOD.md`). Closed testing opens when this phase closes; the next three phases are built while it
+runs. [`phase-3.md`](phase-3.md).
 
 ## Phase 4 — Elevation
 
