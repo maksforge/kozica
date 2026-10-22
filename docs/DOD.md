@@ -32,8 +32,10 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 
 - [x] **Delete what the app does not need.** Phase 0 deleted the reminders with their WorkManager jobs, and
       the placeholder domain ([`optional-modules.md`](optional-modules.md)). Room, photos and backup
-      stay on purpose: phase 6's hike log needs all three ([`phase-0.md`](phase-0.md)), and until then
-      they hold nothing of the user's, so a tester's install has nothing in them to lose.
+      stay on purpose: Room for phase 5's planned routes ([`phase-0.md`](phase-0.md) § *Not in*),
+      photos and backup for phase 6's hike log ([`PLAN.md`](PLAN.md) § *Phase 0*). That is decided
+      before the door because a tester's install keeps them: from phase 5 on, deleting one loses a
+      tester's data ([`phase-3.md`](phase-3.md) § *The door to closed testing*).
 - [x] **Decide `minSdk` deliberately.** Kept at 26 ([`phase-0.md`](phase-0.md) § 0).
 - [ ] **Replace the placeholder mark.** `art/mark.py`, then `python3 art/make-launcher-icon.py` and
       `make-feature-graphic.py`. Commit the concept image and record its provenance in
@@ -43,10 +45,14 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       `MIGRATION_1_2` replaces it ([`phase-0.md`](phase-0.md) § *Not in*).
 - [x] **Rewrite `scripts/edge-to-edge.py`'s SCENES** against your screens. Home and Settings; each
       new screen brings its own scenes.
-- [x] **Run the artifact gates before the first tag.** `publish-play.yml` runs all four `aab-*.py`
-      on every release bundle before Play sees it; v0.4.1's run 39495344121, the nine packs inside,
-      read versionCode 134 matching, 7 permissions all accounted for and none of the 8 forbidden, `pl`
-      present, and 4 reflection classes intact. The standing *every release* check below keeps it.
+- [x] **Run the artifact gates before the first tag.** Overtaken: all four never ran locally before a
+      tag. Phase 0's R1 ran `aab-permissions.py` on a local `bundleRelease` (versionCode 13,
+      2026-10-18), and v0.2.0, the first tag, passed all four in `publish-play.yml` run 39339727698
+      on its first try: versionCode 88 matching, 3 permissions all accounted for and none of the 8
+      forbidden, all 47 `pl` strings present, 3 reflection classes intact. The failure this item
+      guarded against, a stale table found after the tag with the version spent, never happened.
+      Every release since runs all four before Play sees the bundle, `publish-play-closed.yml`
+      promotes those same bytes, and the standing *every release* check below keeps it.
 - [x] **Choose the palette.** Chamois ochre, rock, slate and stone in `scripts/gen_scheme.py`; every
       contrast pair passes. Phase 2's R9 read it against the Trail colours on the map: no seed moved.
 - [x] **Choose a dedicated support address.** `kozica.support@maksforge.com` since 2026-10-20, on
@@ -78,10 +84,16 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       moves each build to them.
 - [x] **Decide the `applicationId` deliberately.** `io.github.srednimax.kozica`, fixed by the Play
       entry.
-- [ ] **Take checkpoint E, phase 2b's since phase 2 split, before any release carries a map pack
-      or the asset-delivery library.** The library in `main/` with the Console's foreground-service
-      declaration, the data build in `publish-play.yml`, and the update size Play reports for a
-      one-pin refresh. [`phase-2b.md`](phase-2b.md) checkpoints A, B and F.
+- [ ] **Take checkpoint E, phase 2b's since phase 2 split.** Its deadline, before any release
+      carries a map pack or the asset-delivery library, passed with 0.3.0, which carried both, and
+      what was read then stands: the library in `main/` declares exactly its four permissions (R4),
+      the data build runs in `publish-play.yml` (R9, run 39462967609), Play delivered all nine packs
+      from the internal track (R7), and the release page's archives match them (R8). **Still open:**
+      the Console's foreground-service declaration for `dataSync`, which
+      [`play-app-content.md`](play-app-content.md) still records as not made; this item closes when
+      that section gets its date. The update size Play reports for a one-pin refresh is not part of
+      this gate: only the closed track can read it, on the first pin-only release after the door
+      ([`phase-2b.md`](phase-2b.md) § 6).
 - [x] **Take phase 1's phone readings before phase 2 builds on MapLibre.** Taken 2026-10-19: R1
       verdict 1, R8 verdict 3 (undecided until E), R9 after fixing a crash, R10's screen
       ([`phase-1.md`](phase-1.md) § 1).
