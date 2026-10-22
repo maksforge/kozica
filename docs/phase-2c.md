@@ -11,8 +11,10 @@ nine Regions to download, and the map draws nothing until the user has chosen an
 them; a Regions screen downloads and removes them one by one or all at once. After this phase every
 Region is a **fast-follow** pack: Play fetches all nine by itself right after the install, without
 the app being opened, and the app has no screen for choosing. The difference a device can be asked
-about: a build installed from Play, never opened, holds all nine Regions a few minutes later, and
-the first launch opens on the Tatry's Trails.
+about: a build installed from Play and never opened has had all nine packs downloaded by Play a few
+minutes later, its first launch finds each one `COMPLETED` or `TRANSFERRING` rather than
+`NOT_INSTALLED`, and it opens on the Tatry's Trails. The library enables its extraction services
+only at runtime, so moving a pack into the app's storage may wait for that launch.
 
 Decided with the owner on 2026-10-22, while phase 4 was being planned: relief for every Region
 would grow the downloads by about 200 MB, and the owner chose to ship everything to everyone rather
@@ -86,22 +88,28 @@ branch, as phase 3's were, and the release PR waits for B.
   Region that is neither ready nor on its way (Play's `NOT_INSTALLED`, or `FAILED`) is fetched, all
   of them in one `fetch` call, as "Download all" did. That covers a fast-follow download Play has
   not started, one the user cancelled in the Play Store, and a Region added to a later build.
-  `installDebug` has no Play session, so the fetch fails and the map shows its empty state, as now.
-- **The progress line** replaces the empty state's "No Regions downloaded yet." and its button. It
-  shows while any Region is not ready, over the map rather than instead of it, since the Regions
-  already ready draw beneath it:
+- **The progress line** replaces the empty state, "No Regions downloaded yet." and its button, which
+  go with `MapEmpty`. It shows while any Region is not ready, over the map rather than instead of
+  it, since the Regions already ready draw beneath it:
 
   | State of the Regions not ready | Line | Action |
   | --- | --- | --- |
-  | Any downloading or pending | "Downloading maps — %1$d of %2$d" (ready of all) | — |
+  | Any downloading, pending or not yet asked for | "Downloading maps — %1$d of %2$d" (ready of all) | — |
   | Any waiting for Wi-Fi | "Waiting for Wi-Fi" | "Download over mobile data", Play's dialog |
   | Any needing confirmation | "Play needs your confirmation" | "Confirm", Play's dialog |
   | Any failed, none of the above | "Download failed" | "Retry", one `fetch` for every failed Region |
   | Any updating | "Map data is being updated." (phase 2's) | — |
 
-  The first matching row wins, in that order: a download still moving is reported before one that
-  failed, and Play's dialog before a Retry, because the dialog may be what the failure waits on.
-  With every Region ready the line is gone.
+  The first matching row wins, in that order: the line names what the user is waiting on, so a
+  download still moving is reported before one that failed, and Play's dialog before a Retry,
+  because the dialog may be what the failure waits on. A Region not yet asked for counts as
+  downloading: the first launch's `fetch` is already asking for it. With every Region ready the
+  line is gone.
+- **Without a Play session the line says "Download failed".** `installDebug` has none, so the
+  first launch's `fetch` fails and every Region not hand-pushed to `files/regions/` is `Failed`: a
+  debug build without all nine archives pushed shows "Download failed" and Retry over the map. That
+  is true of that build, and accepted. `scripts/edge-to-edge.py`'s scenes show the line as it is;
+  phase 4's gate reading pushes all nine archives, so it has none.
 - **The first launch opens on the Tatry.** With no stored camera, the map centres on the Tatry at
   about zoom 11, where Trails, Huts and peaks draw, instead of phase 2's overview from the
   Karkonosze to the Bieszczady, which draws borders and park outlines only. After that the stored
@@ -109,13 +117,32 @@ branch, as phase 3's were, and the release PR waits for B.
 - **The camera never moves by itself.** Phase 2b § 5's arrival rule goes, with
   `AppPreferences.readyRegions`: nine Regions landing within a minute of the install would
   otherwise move the map under a finger that is already panning it.
-- **Deleted:** `ui/regions/` with its screen, `ViewModel` and test; the `Regions` NavKey; the map's
-  download button; Settings' *Map* section and its row; `ui/welcome/`, its NavKey and the
-  `onboarding_done` key; `RegionFiles.remove`; the `regions_*`, `welcome_*` and `map_choose_regions`
-  strings in every locale; the Regions and welcome scenes in `scripts/edge-to-edge.py`. A stored key
-  nothing reads any more is harmless on the internal track's installs, so neither key gets a
-  removal step. `REGION_NAMES` and the Region name strings stay: the debug build's pack list and the
-  progress line's count read them.
+- **Deleted:**
+  - `ui/regions/`, its screen, `ViewModel` and `RegionsUiStateTest`, and the `Regions` NavKey.
+  - `ui/welcome/` with `WelcomeUiStateTest` and `WelcomeViewModelTest`. The welcome screen has no
+    NavKey: what shows it is `Navigation.kt`'s `onboardingDone` gate and
+    `MainApplication.onboardingDone`, and both go, with the `onboarding_done` key.
+  - The map's empty state and download button: `MapEmpty`, `MapStart` and `ic_download`.
+  - Settings' *Map* section and its row.
+  - The camera's arrival rule: `MapUiState.arrival`, `MapScreen`'s arrival `LaunchedEffect`,
+    `MapViewModelTest`'s arrival tests and `AppPreferences.readyRegions`.
+  - `RegionFiles.remove`.
+  - In every locale, every `regions_*` and `welcome_*` string, `map_no_regions`,
+    `map_choose_regions` and `settings_map`; `TranslationTest.quotedPairs` is left empty. The
+    strings the progress line keeps are renamed `map_retry`, `map_waiting_for_wifi`,
+    `map_mobile_data`, `map_needs_confirmation`, `map_confirm` and `map_download_failed`, beside the
+    new `map_downloading`.
+  - In `scripts/edge-to-edge.py`, the `welcome` scene; `home-empty` becomes the wipe alone, and
+    `SEED_WALK` loses its "Not now". Every seeded cell walks `SEED_WALK`, so without that edit the
+    whole matrix breaks, not one scene.
+
+  A stored key nothing reads any more is harmless on the internal track's installs, so neither key
+  gets a removal step. `REGION_NAMES` and the Region name strings stay: the debug build's pack list
+  and the progress line's count read them.
+- **The first launch's pack states are logged**, under `KozicaPack`: each pack's state as the map
+  first reads it, and each `fetch` the app sends with the packs it names. R1 reads a release
+  installed from Play, which has neither a debug build's log nor its pack list, so the line is in
+  `main/`; it carries no string and no screen.
 - **The map's buttons** are Safety and Settings.
 
 Copy: "Downloading maps — %1$d of %2$d". The other lines are phase 2b's, kept under new names:
@@ -131,9 +158,16 @@ Copy: "Downloading maps — %1$d of %2$d". The other lines are phase 2b's, kept 
   need" from its opening line.
 - **The privacy policy** says the map data is downloaded by the Play Store app after Kozica is
   installed, rather than "when you choose a Region".
-- **[`play-app-content.md`](play-app-content.md)'s foreground-service answers**: "What the user
-  sees" becomes the maps that arrive with the app being made ready to use offline. The declaration
-  is still checkpoint E's, owed in the Console.
+- **[`play-app-content.md`](play-app-content.md)'s foreground-service answers**, all three, since
+  each rested on a Region the user asked for and with fast-follow nobody asks. The declaration is
+  still checkpoint E's, owed in the Console, and is filed with these:
+  - **What the user sees:** the maps that come with the app, which the Play Store downloads right
+    after the install, being made ready to use offline, with the system's foreground-service
+    notification while it runs.
+  - **Why it cannot wait:** the map has to be on the phone before the user goes where there is no
+    signal, and Play delivers it while the app may be in the background; left for later, the map
+    is missing on the trail.
+  - **Type:** `dataSync`, which covers transferring to the device the data the app needs to work.
 
 ---
 
@@ -141,10 +175,10 @@ Copy: "Downloading maps — %1$d of %2$d". The other lines are phase 2b's, kept 
 
 - **The progress line's state** is a pure function from the Regions' states to one line and its
   action, with the order in § 1's table. A test per row, and one with a downloading and a failed
-  Region proving downloading wins: a Retry offered while a download still runs would start a second
-  one.
+  Region proving downloading wins: the line names what the user is waiting on, and a Retry shown
+  while a download is still moving misreports it.
 - **What the first launch fetches**: not-installed and failed Regions, never one ready, downloading
-  or updating. A Region updating fetched again would restart Play's patch.
+  or updating. Asking again for a pack already moving or updating is pointless.
 
 ## Documents this phase amends
 
@@ -154,7 +188,8 @@ Copy: "Downloading maps — %1$d of %2$d". The other lines are phase 2b's, kept 
 - **`docs/store-listing.md`**, **`docs/index.md`**, **`docs/privacy-policy.md`**,
   **`docs/play-app-content.md`**: § 2.
 - **`PLAN.md`**: this phase's line and paragraph.
-- **`CLAUDE.md`**: the Stack's Play Asset Delivery row and the Layout's `data/regions/` line, with A.
+- **`CLAUDE.md`**: the Stack's Play Asset Delivery row and the Layout's `region_<id>/` line ("one
+  on-demand asset pack per polygon"), with A.
 
 ## Known gaps, deliberately
 
@@ -171,7 +206,7 @@ Copy: "Downloading maps — %1$d of %2$d". The other lines are phase 2b's, kept 
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | A fresh install from Play holds all nine Regions without being opened, and which of Play and the app's own `fetch` brought them | install A's release from the internal track with the app never opened; after five minutes `adb -s mnbm7hw8ivdqzx9l logcat -d \| grep -E 'AssetPack\|KozicaPack\|Finsky.*region_'`; then the first launch's screen, `adb -s mnbm7hw8ivdqzx9l exec-out screencap -p > r1.png` | *(date)* |
+| R1 | A fresh install from Play has all nine Regions downloaded by Play before it is opened, each pack's state at the first launch (`TRANSFERRING` or `COMPLETED`, against `NOT_INSTALLED`), and which of Play and the app's own `fetch` brought them | install A's release from the internal track with the app never opened; after five minutes Play's downloads, `adb -s mnbm7hw8ivdqzx9l logcat -d \| grep -E 'AssetPack\|Finsky.*region_'`; then the first launch, `adb -s mnbm7hw8ivdqzx9l logcat -c`, open the app, `adb -s mnbm7hw8ivdqzx9l logcat -d -s KozicaPack` and `adb -s mnbm7hw8ivdqzx9l exec-out screencap -p > r1.png` | *(date)* |
 | R2 | The update from 0.5.0: an install holding some on-demand Regions and missing others ends with all nine, the ones it held kept rather than fetched again | 0.5.0 from the internal track with three Regions downloaded, then A's release over it; R1's logcat filter, and Finsky's byte counts per pack | *(date)* |
 | R3 | The first launch mid-download: the Tatry, the progress line counting up, Regions drawing in place, the camera unmoved | open the app within a minute of R1's install; a screencap per state | *(date)* |
 | R4 | The same fresh install on the owner's phone, API 36, HyperOS | R1 with `-s 132bc856`, after saying so in chat | *(date)* |

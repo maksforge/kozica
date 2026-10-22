@@ -13,7 +13,13 @@ contours that bulge 20–30 m at every forest edge, and an ascent summed over it
 Each of the three countries publishes a lidar terrain model, free to reuse: Poland's GUGiK NMT
 (1 m, and 5 m), Slovakia's ÚGKK DMR 5.0 (1 m) and Czechia's ČÚZK DMR 4G (5 m). None of their
 licences is share-alike: GUGiK asks that the source is stated, the other two are CC BY 4.0. Read on
-2026-10-22, with sources in the planning research behind `phase-4.md`.
+2026-10-22:
+
+- **GUGiK NMT**: [geoportal.gov.pl's NMT page](https://www.geoportal.gov.pl/pl/dane/numeryczny-model-terenu-nmt/).
+- **ČÚZK DMR 4G**: [ČÚZK's open data terms](https://cuzk.gov.cz/Uvod/Produkty-a-sluzby/Otevrena-data/Otevrena-data-zakladni-informace.aspx).
+- **ÚGKK DMR 5.0**: CC BY 4.0 confirmed only second-hand, through
+  [Mapterhorn's attribution catalogue](https://download.mapterhorn.com/attribution.json). Phase 4's
+  checkpoint B confirms it on ÚGKK's own pages in its first commit and links them here.
 
 ## Decision
 

@@ -95,8 +95,15 @@ phase's cost. Taken before A, a bad gate would leave a pipeline built for a desi
 ### The question, in the form that can be measured
 
 On the test phone (Redmi Note 8 Pro, API 30), with all nine Regions ready and a Tatry height grid
-at zoom 0–12 with its 20 m contours, does a scripted pan across the Tatry at zoom 11 and 13 render
-its frames within 25 % of the same pan without the relief, and is no frame over 100 ms?
+at zoom 0–12 with its 20 m contours, does a scripted pan across the Tatry at zoom 11 and 13 keep
+its 95th-percentile frame time within 25 % of the same pan without the relief, with no more frames
+over 100 ms than that pan has?
+
+**The statistic.** Each run is the same ten swipes at each zoom, on the same build and camera; its
+p95 is taken over every frame the frame log records across them. The relief run is compared with
+the baseline run taken straight before it. A frame over 100 ms counts against the relief only
+beyond the number the baseline run shows: tile loads at zoom 13 over nine Regions can stall a frame
+with no relief drawn, and the gate measures what the relief adds, not those.
 
 ### The apparatus
 
@@ -104,6 +111,10 @@ its frames within 25 % of the same pan without the relief, and is no frame over 
   px, as `relief.pmtiles`, with its contours as `contours.pmtiles` traced from it. Made with
   whatever is quickest (the planning's scratch extract from Mapterhorn was one): the reading is
   about the shape, and nothing here ships.
+- **All nine Region archives pushed by hand** to `files/regions/<id>.pmtiles`, which
+  `RegionSource.kt`'s debug overlay reads as ready, so no Region is `Failed` and phase 2c's progress
+  line stays off the map. A `connectedAndroidTest` run's closing uninstall wipes them, so they are
+  pushed again after one.
 - **The debug half of a relief seam**, beside `RegionSource.kt`'s: the debug build draws
   `files/relief/relief.pmtiles` and `files/relief/contours.pmtiles` when pushed by hand. The release
   half returns nothing until C.
@@ -112,12 +123,14 @@ its frames within 25 % of the same pan without the relief, and is no frame over 
 
 ### The verdicts, decided now rather than argued about later
 
-1. **Within 25 %, no frame over 100 ms** → B and C as planned.
-2. **Slower than that, but under twice the baseline** → shading from zoom 10 only, and the grid
-   stops at zoom 11; read again. If the second reading passes, that is the design; if not, verdict 3.
-3. **Twice the baseline or worse** → the live shading goes: shading baked into a grey image in CI,
-   with the height grid still shipped, undrawn, for phase 5. This file is
-   rewritten before B starts.
+1. **p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's** → B and C
+   as planned.
+2. **Slower than that, but p95 under twice the baseline's** → shading from zoom 10 only, and the
+   grid stops at zoom 11; read again. If the second reading passes, that is the design; if not,
+   verdict 3.
+3. **p95 twice the baseline's or worse** → the live shading goes: shading baked into a grey image
+   by `build-relief.yml`, once, beside the height grid and pinned with it, and the grid still
+   shipped, undrawn, for phase 5. This file is rewritten before B starts.
 
 ### The verdict, taken *(date)*
 
@@ -126,15 +139,19 @@ its frames within 25 % of the same pan without the relief, and is no frame over 
 ## 2. The relief build
 
 - **`scripts/build-relief.py`** builds `relief.pmtiles` and `contours.pmtiles` for the union of
-  the nine polygons in `scripts/regions/`, clipped to Geofabrik's outlines of Poland, Slovakia and
-  Czechia: outside the three countries there is no national model, and the OSM data stops at
-  Ukraine's and Germany's borders there too.
+  the nine polygons in `scripts/regions/`, clipped to the real state borders of Poland, Slovakia and
+  Czechia: their `boundary=administrative`, `admin_level=2` relations, read from the extracts
+  `scripts/osm-data.pin` already pins for the map build. Outside the three countries there is no
+  national model. Geofabrik's `.poly` outlines would not do: they reach past the border on purpose,
+  so extracts catch what lies along it, and would keep strips of Ukraine in the Bieszczady and of
+  Germany beyond the Karkonosze that the gap check would then fail on by design.
 - **Each agency's sheets, fetched by its own index.** Poland's NMT 5 m grid sheets through GUGiK's
   WFS sheet index; Czechia's DMR 4G through ČÚZK's ATOM feed; Slovakia's DMR 5.0, published at 1 m
   only, through ÚGKK's own index. Only sheets touching the clipped union are fetched. **Each sheet
   is resampled onto the target grid as it arrives and then deleted**, so the disk holds the grid and
   one sheet, not the 1 m source: Slovakia's share at 1 m would otherwise run to tens of GB. B's
-  first commit measures each source's download for the union before writing the rest.
+  first commit measures each source's download for the union before writing the rest, and confirms
+  ÚGKK's CC BY 4.0 on its own pages (ADR-0009).
 - **One grid, in one projection, with no seam.** Every sheet is reprojected from its national
   system (Poland's EPSG:2180, Slovakia's and Czechia's S-JTSK) onto Web Mercator at zoom 12's
   resolution, about 12 m at 49° N, with bilinear resampling. Where two countries' sheets overlap at
@@ -196,6 +213,13 @@ licences screen's "Resampled, merged and traced into contours by Kozica".
 - **The licences screen** and **`docs/store-listing.md`**: the 0.7.0 notes, and a sentence in the
   description that the map shows the shape of the mountains.
 - **`PLAN.md`**: this phase's paragraph, and the status line when it closes.
+- **`CLAUDE.md`**, with C: the Stack's Play Asset Delivery row gains the `relief` pack, which is not
+  a Region's; the Layout gains the `relief/` module, `scripts/build-relief.py` and
+  `scripts/relief.pin`.
+- **`RELEASING.md`**: `publish-play.yml`'s new step that downloads the pinned relief and checks its
+  hashes, with C; the hand-started `build-relief.yml` and its own `relief-<date>` releases, with B.
+- **`play-app-content.md`**, with C: the `dataSync` answers cover the `relief` pack as well as the
+  Regions.
 - **The privacy policy** owes nothing: the relief arrives from Play, as the maps do.
 
 ## Known gaps, deliberately
@@ -203,7 +227,7 @@ licences screen's "Resampled, merged and traced into contours by Kozica".
 - **The three height datums are not reconciled.** Poland's PL-EVRF2007-NH and the Baltic heights
   Slovakia and Czechia use differ by well under a metre. Against 20 m contours that is invisible,
   and correcting it would be a geodesy step with its own source to pin.
-- **Relief stops at Ukraine's and Germany's borders**, where the OSM data does.
+- **Relief stops at Ukraine's and Germany's borders**, a little short of where the OSM data does.
 - **Every install carries about 200 MB more.** Accepted with phase 2c's decision to ship everything.
 
 ## Readings
@@ -213,7 +237,7 @@ the keyguard up measures nothing.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: frame times of the scripted pan at zoom 11 and 13 over the Tatry, with and without the relief, all nine Regions ready | the debug build with A's archives pushed to `files/relief/`; `adb -s mnbm7hw8ivdqzx9l shell input swipe …` ×10 per run; `adb -s mnbm7hw8ivdqzx9l logcat -d -s KozicaFrames` | *(date)* |
+| R1 | The gate: frame times of the scripted pan at zoom 11 and 13 over the Tatry, with and without the relief, all nine Regions ready | the debug build with all nine Region archives pushed to `files/regions/` and A's archives to `files/relief/`; `adb -s mnbm7hw8ivdqzx9l shell input swipe …` ×10 per zoom per run, the baseline run then the relief run; `adb -s mnbm7hw8ivdqzx9l logcat -d -s KozicaFrames` | *(date)* |
 | R2 | Each source's download for the clipped union, and the build's peak disk and minutes | `build-relief.py`'s own log, from `build-relief.yml`'s first run | *(date)* |
 | R3 | No seam: the shading and contours across the Polish–Slovak border in the Tatry and the Polish–Czech one in the Karkonosze | release-shaped debug build with C's archives; `adb exec-out screencap -p` at zoom 13 over each | *(date)* |
 | R4 | The relief pack arrives from Play with the Regions, and the progress line counts it | C's release from the internal track, as phase 2c's R1 | *(date)* |
