@@ -1,5 +1,9 @@
 # Phase 2b — Every mountain range downloads from a list, across the border, delivered by Play
 
+**Partly undone by [`phase-2c.md`](phase-2c.md), 2026-10-22:** every Region became a fast-follow
+pack, and § 5's Regions screen, welcome screen and camera arrival rule were deleted. The rest
+stands.
+
 Sequence lives in [`PLAN.md`](PLAN.md); the live worklist lives in [`DOD.md`](DOD.md). This phase
 builds on [ADR-0007](adr/0007-osm-data-ships-per-mountain-range-as-play-asset-packs.md) and owns the
 second decision it leaves to "the map phase": the list of Regions, with each one's polygon. It

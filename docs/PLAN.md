@@ -21,8 +21,9 @@ was extracted from and the first app built from it settled on exactly this split
 - [x] **Phase 1** — The data reaches the phone: one Region built, drawn offline and delivered as a pack; Play's reading (E) moved to phase 2b
 - [x] **Phase 2** — The map: the Tatry drawn as the signposts mark them, "you are here"
 - [ ] **Phase 2b** — Every Region: the list, the picker and "Download all", across the border, delivered by Play
+- [ ] **Phase 2c** — Every Region arrives with the app: fast-follow packs, no picker
 - [x] **Phase 3** — Safe for a stranger: the Safety screen ← **the door: closed testing opens once its list is done**
-- [ ] **Phase 4** — Elevation: contours and hillshading
+- [ ] **Phase 4** — Elevation: contours and hillshading, from the three national lidar models
 - [ ] **Phase 5** — Route planning, and search by name
 - [ ] **Phase 6** — The hike log
 - [ ] **Phase N** — Ship shape: screenshots, production access, **1.0**
@@ -160,7 +161,15 @@ It brings the asset-delivery library into the release build: the Console's foreg
 declaration, the data build in CI and the ODbL offer. That is phase 1's
 checkpoint E, which this phase takes over, so phase 1 closes on its phone readings alone. Split
 from phase 2 when that phase opened, because the map can be built locally and this half waits on
-Play work. [`phase-2b.md`](phase-2b.md).
+Play work. [`phase-2b.md`](phase-2b.md). Its picker is undone by phase 2c.
+
+## Phase 2c — Every Region arrives with the app
+
+Every Region becomes a fast-follow pack, which Play fetches right after the install, and the
+Regions screen and the first launch's choice are deleted: the user picks nothing. Decided with the
+owner on 2026-10-22, while phase 4 was planned, as shipping everything rather than adding relief to
+a per-Region choice. Split from phase 4 by rule 2: one line of build and some deleting, against a new
+data pipeline. [`phase-2c.md`](phase-2c.md).
 
 ## Phase 3 — Safe for a stranger
 
@@ -176,7 +185,10 @@ phases are built while it runs.
 ## Phase 4 — Elevation
 
 Contours and hillshading from a DEM, through a second pipeline with its own source, licence and
-attribution. Route planning's walking times come from the same data.
+attribution. Route planning's walking times come from the same data. The DEM is built by us from
+Poland's, Slovakia's and Czechia's lidar terrain models, once rather than per release, and ships as
+one pack for every Region ([ADR-0009](adr/0009-relief-is-built-by-us-from-the-three-national-lidar-models.md),
+[`phase-4.md`](phase-4.md)).
 
 ## Phase 5 — Route planning
 

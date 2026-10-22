@@ -212,3 +212,23 @@ Germany's of the Góry Izerskie stay out, for what they would add against their 
 release-please GitHub release, under ODbL, and the licences screen links to it. The Decision's "it
 is the script offered under ODbL" is struck: `build-map-data.py` stays readable in the public
 repository, but the offer is the derivative database itself, which leaves the code's licence alone.
+
+## Amendment — 2026-10-22: every Region is a fast-follow pack
+
+The Decision's "each region is an on-demand Play asset pack … the user picks the ranges they hike"
+is struck. **Every Region is a fast-follow pack** ([`phase-2c.md`](../phase-2c.md)): Play fetches
+all of them right after the install, without the app being opened, and the app fetches any that
+has not arrived when the map first opens. The user picks nothing, and the Regions screen and the
+first launch's choice are gone. Decided with the owner while phase 4 was planned, when relief for
+every Region would have added about 200 MB to that choice: shipping everything to everyone was
+preferred to a choice of ranges.
+
+The Alternatives' **"One pack for all ranges"** still loses: the packs stay one per Region, so a
+refresh still costs only the Regions it changed. **"Install-time asset packs"** still loses too,
+for a reason other than its own: the store listing would show every byte, and Android wants twice
+that free to install or update. Fast-follow keeps the listing at the app's size.
+
+What this costs: every install downloads every Region, about 275 MB before phase 4's relief, and
+every refresh reaches every user's changed packs, not only the Regions they had chosen. The
+Consequences' "update in progress" state, the data path existing only through Play, and the 1.5 GB
+per-pack limit stand unchanged.
