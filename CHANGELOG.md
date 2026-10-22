@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/srednimax/kozica/compare/v0.4.1...v0.5.0) (2026-10-22)
+
+
+### Features
+
+* add the Safety screen, with each country's mountain rescue, rescue app, avalanche bulletin and weather ([7f41a89](https://github.com/srednimax/kozica/commit/7f41a89a4e285ca0957b4cc76329ef6fb7a0a1b8))
+
+
+### Bug Fixes
+
+* bring the Safety screen into line with phase 3's targets and copy ([61df62d](https://github.com/srednimax/kozica/commit/61df62d58e71e87a2824b593c883110b26b566fb))
+* say the Polish fallback number needs a SIM, unlike 112 ([f7cb85a](https://github.com/srednimax/kozica/commit/f7cb85ad930400ea46f0af03dcefa25fa00a5351))
+
 ## [0.4.1](https://github.com/srednimax/kozica/compare/v0.4.0...v0.4.1) (2026-10-20)
 
 
