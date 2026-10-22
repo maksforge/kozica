@@ -20,6 +20,7 @@ import androidx.navigation3.ui.NavDisplay
 import app.kozica.ui.backup.BackupScreen
 import app.kozica.ui.map.MapScreen
 import app.kozica.ui.regions.RegionsScreen
+import app.kozica.ui.safety.SafetyScreen
 import app.kozica.ui.settings.SettingsScreen
 import app.kozica.ui.support.LicenceTextScreen
 import app.kozica.ui.support.LicencesScreen
@@ -97,7 +98,11 @@ fun MainNavigation(modifier: Modifier = Modifier) {
                                 MapScreen(
                                     onOpenSettings = { backStack.add(Settings) },
                                     onOpenRegions = { backStack.add(Regions) },
+                                    onOpenSafety = { backStack.add(Safety) },
                                 )
+                            }
+                            entry<Safety> {
+                                SafetyScreen(onBack = { backStack.removeLastOrNull() })
                             }
                             entry<Settings> {
                                 SettingsScreen(

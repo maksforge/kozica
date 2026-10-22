@@ -8,6 +8,7 @@ import androidx.annotation.StringRes
 import androidx.core.net.toUri
 import app.kozica.BuildConfig
 import app.kozica.R
+import app.kozica.ui.common.openOnPlay
 import app.kozica.ui.common.startActivitySafely
 
 /**
@@ -27,9 +28,6 @@ private const val SUPPORT_ADDRESS = "kozica.support@maksforge.com"
  * applicationId outside Gradle.
  */
 private const val PLAY_PACKAGE = "io.github.srednimax.kozica"
-
-/** The Play app itself, which is the only store this app is listed in. */
-private const val PLAY_STORE_APP = "com.android.vending"
 
 /**
  * The things a user can send, as a lookup table.
@@ -94,24 +92,12 @@ fun Context.sendSupportMail(request: SupportRequest): Boolean {
 }
 
 /**
- * Open this app's Play listing: in the Play app if the phone has it, in a browser if not.
- *
- * **Not a third [SupportRequest].** That enum is what a *mail* is made of, and a rating is not mail.
- *
- * **An `https://` link pinned to the Play app, not `market://`.** That is a device finding: on
- * HyperOS the `market` scheme is also claimed by Xiaomi's own store, so an unpinned `market://` tap
- * opens the system chooser with that store listed first — and the app is not in it. `setPackage` is
- * the platform's way of saying *this app and no other*; with it, the launch either opens Play or
- * throws `ActivityNotFoundException` because Play is not installed. The `https` link is the same one
- * either way, so the fallback is that link unpinned, which a browser answers.
+ * Open this app's Play listing. **Not a third [SupportRequest]**: that enum is what a *mail* is made
+ * of, and a rating is not mail.
  *
  * @return whether anything opened, the same contract as [sendSupportMail].
  */
-fun Context.rateOnPlay(): Boolean {
-    val listing = "https://play.google.com/store/apps/details?id=$PLAY_PACKAGE".toUri()
-    val inPlay = Intent(Intent.ACTION_VIEW, listing).setPackage(PLAY_STORE_APP)
-    return startActivitySafely(inPlay) || startActivitySafely(Intent(Intent.ACTION_VIEW, listing))
-}
+fun Context.rateOnPlay(): Boolean = openOnPlay(PLAY_PACKAGE)
 
 /**
  * The prompt, room to write, and the facts a bug report always needs and a reporter never has to
