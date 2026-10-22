@@ -158,7 +158,7 @@
     <string name="safety_rescue">Call mountain rescue</string>
     <string name="safety_dial_hint">%1$s. Opens the phone app with the number typed; you place the call.</string>
     <string name="safety_rescue_fallback">Call mountain rescue if %1$s does not connect</string>
-    <string name="safety_rescue_fallback_hint">%1$s, from any phone on any network. Opens the phone app with the number typed; you place the call.</string>
+    <string name="safety_rescue_fallback_hint">%1$s, from a Polish or a foreign SIM, roaming included. Opens the phone app with the number typed; you place the call.</string>
     <string name="safety_rescue_app">Rescue app: %1$s</string>
     <string name="safety_app_installed">Installed. Open it before you set out to check it is set up.</string>
     <string name="safety_app_missing">Not installed. Install it from Google Play and set it up before you set out.</string>
