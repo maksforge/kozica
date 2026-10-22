@@ -30,7 +30,7 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 
 ## Before the first upload
 
-- [x] **Delete what the app does not need.** Phase 0 deleted reminders, WorkManager's own use and
+- [x] **Delete what the app does not need.** Phase 0 deleted the reminders with their WorkManager jobs, and
       the placeholder domain ([`optional-modules.md`](optional-modules.md)). Room, photos and backup
       stay on purpose: phase 6's hike log needs all three ([`phase-0.md`](phase-0.md)), and until then
       they hold nothing of the user's, so a tester's install has nothing in them to lose.
