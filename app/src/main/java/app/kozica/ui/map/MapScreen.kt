@@ -103,6 +103,7 @@ import kotlin.time.Duration.Companion.seconds
 fun MapScreen(
     onOpenSettings: () -> Unit,
     onOpenRegions: () -> Unit,
+    onOpenSafety: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(factory = MapViewModel.Factory, extras = appViewModelExtras()),
 ) {
@@ -267,6 +268,12 @@ fun MapScreen(
                     Icon(
                         painterResource(R.drawable.ic_download),
                         contentDescription = stringResource(R.string.regions_title),
+                    )
+                }
+                FilledTonalIconButton(onClick = onOpenSafety) {
+                    Icon(
+                        painterResource(R.drawable.ic_emergency),
+                        contentDescription = stringResource(R.string.safety_title),
                     )
                 }
                 FilledTonalIconButton(onClick = onOpenSettings) {

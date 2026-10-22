@@ -148,4 +148,23 @@
     <string name="region_beskid_niski" translatable="false">Beskid Niski</string>
     <string name="region_bieszczady" translatable="false">Bieszczady</string>
     <string name="region_gory_swietokrzyskie" translatable="false">Góry Świętokrzyskie</string>
+
+    <!-- Safety. The services' names and the numbers are code (ui/safety/SafetyTargets.kt), never
+         strings, so no translation can change where a row goes. -->
+    <string name="safety_title">Safety</string>
+    <string name="safety_intro">Kozica works without signal. These rows open other apps and pages, and all but the phone app need signal.</string>
+    <string name="safety_emergency">Emergency number, if no other connects</string>
+    <string name="safety_dial_hint">%1$s. Opens the phone app with the number typed; you place the call.</string>
+    <string name="safety_rescue">Call mountain rescue</string>
+    <string name="safety_rescue_foreign">Call mountain rescue from a foreign SIM</string>
+    <string name="safety_app_installed">Installed. Opens the app.</string>
+    <string name="safety_app_missing">Not installed. Install it from Google Play before you set out.</string>
+    <string name="safety_avalanche">Avalanche bulletin, %1$s</string>
+    <string name="safety_weather">Mountain weather, %1$s</string>
+    <string name="safety_opens_browser">%1$s, in your browser</string>
+    <string name="safety_no_dialler">No phone app on this phone to open.</string>
+    <string name="safety_no_browser">No web browser on this phone to open.</string>
+    <string name="safety_poland">Poland</string>
+    <string name="safety_slovakia">Slovakia</string>
+    <string name="safety_czechia">Czechia</string>
 </resources>

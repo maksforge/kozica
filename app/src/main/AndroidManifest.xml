@@ -26,6 +26,14 @@
     -->
     <queries>
         <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+        <!-- The Safety screen's rescue apps, so it can say whether each is installed. -->
+        <package android:name="com.pagasolutions.emergencycall_pl" />
+        <package android:name="hzs.sk.hzs" />
+        <package android:name="com.medicalit.zachranka" />
+        <intent>
             <action android:name="android.intent.action.SENDTO" />
             <data android:scheme="mailto" />
         </intent>
