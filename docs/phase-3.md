@@ -92,9 +92,10 @@ of `publish-play-production.yml` with `update_listing: true`, which needs *Manag
 `PLAN.md` opens closed testing when this phase closes and the items below, from `DOD.md`'s *Before
 the first upload*, are done. Those still open on 2026-10-22:
 
-- **The developer's:** delete what the app does not need ([`optional-modules.md`](optional-modules.md));
-  run the four `aab-*.py` gates against the bundle the testers get; checkpoint E
-  ([`phase-2b.md`](phase-2b.md)), if that bundle carries a map pack or the asset-delivery library.
+- **The developer's:** checkpoint E's refresh reading ([`phase-2b.md`](phase-2b.md) § 6), which can
+  only be taken on the closed track itself. Done on 2026-10-22: nothing more to delete (phase 0
+  kept Room, photos and backup for phase 6), and the four `aab-*.py` gates pass on every release
+  bundle in `publish-play.yml` (`DOD.md`).
 - **The owner's:** the mark and its provenance (`art/`); the licence in `LICENSE` and `README.md`;
   the closed test and its testers; and pushing the listing with B's sentence.
 - **Not a gate:** the dormant `items` table, which phase 5's `MIGRATION_1_2` replaces under the
