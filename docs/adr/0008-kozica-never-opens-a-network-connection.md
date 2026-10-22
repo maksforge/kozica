@@ -76,3 +76,13 @@ from the app's manifest.
   and the browser or the Play Store shows the user that something is wrong rather than the app.
 - No crash reporting of our own. Android vitals is the only source, and it sees only opted-in
   devices; a fault on any other phone is found by its owner, or by a reading.
+
+## Amendment — 2026-10-22: the hand-offs, per country
+
+The Decision's four hand-offs are Poland's. Since phase 2b's amendment of ADR-0007 the Regions cross
+into Slovakia and Czechia, where 985 and Ratunek are the wrong first call, so phase 3 builds them for
+each of the three countries, in a fixed order, under 112 ([`phase-3.md`](../phase-3.md) § 2): the
+rescue number in the dialler, the rescue app or its Play page, the avalanche bulletin and the mountain
+weather in the browser. **No country is chosen by the user's position**: a fix can be missing, stale
+or beside the border, and a wrong guess hands a hiker the wrong number. Nothing is dialled by the app;
+`ACTION_DIAL` types the number and the user places the call, so no `CALL_PHONE` is asked for.

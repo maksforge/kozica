@@ -57,7 +57,8 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       because what a build freezes is the address, not the mailbox. Moving the mailbox is now only a
       change to the Cloudflare route; all three change only if the address does. v0.2.0 and v0.3.0
       compile in the Gmail itself, so that inbox stays read for as long as either build survives.
-- [ ] **Write the listing.** `docs/store-listing.md` — every heading in it is parsed by a script.
+- [x] **Write the listing.** `docs/store-listing.md`, since phase P; phase 3 adds the Safety screen
+      to it.
 - [x] **Write the privacy policy** and confirm GitHub Pages is serving `docs/`. Play requires a
       *hosted* URL, and an offline app has no server of its own. Served at
       `https://srednimax.github.io/kozica/privacy-policy.html` since 2026-10-20.
