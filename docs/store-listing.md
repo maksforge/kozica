@@ -49,7 +49,7 @@ The line that appears under the name in search results, and the most-read text i
 Offline trail map of the Polish mountains, drawn in the signposts' own colours.
 ```
 
-### Full description — 943/4000
+### Full description — 1178/4000
 
 ```
 Kozica is a hiking map of the Polish mountains. Download the ranges you need before you go, from the Karkonosze to the Bieszczady and across the Czech and Slovak borders where the ranges do, and it works with no signal at all.
@@ -59,6 +59,8 @@ Every marked trail is drawn in the colour on its signposts — red, blue, green,
 The map also shows paths, huts and shelters, peaks, passes, springs, viewpoints, car parks and stops, national-park boundaries and the state border, in a light and a dark style.
 
 Tap the position button to see where you are, with the accuracy and the direction you are facing. Your location stays on your phone: Kozica has no permission to use the internet, no account and no ads, and it collects nothing.
+
+The Safety button puts 112 one tap away, and for Poland, Slovakia and Czechia the mountain-rescue number, the rescue app, the avalanche bulletin and the mountain weather. They open in your phone app and your browser, and need signal.
 
 Map data © OpenStreetMap contributors, available under the Open Database License.
 ```
@@ -77,7 +79,7 @@ Kozica
 Mapa szlaków w polskich górach bez internetu, w kolorach z drogowskazów.
 ```
 
-### Full description — 942/4000
+### Full description — 1177/4000
 
 ```
 Kozica to mapa turystyczna polskich gór. Pobierz potrzebne pasma przed wyjściem, od Karkonoszy po Bieszczady, także po czeskiej i słowackiej stronie granicy, a zadziała bez zasięgu.
@@ -87,6 +89,8 @@ Każdy znakowany szlak jest narysowany w kolorze z drogowskazów — czerwonym, 
 Na mapie są też ścieżki, schroniska i wiaty, szczyty, przełęcze, źródła, punkty widokowe, parkingi i przystanki, granice parków narodowych i granica państwa, w jasnym i ciemnym stylu.
 
 Dotknij przycisku pozycji, aby zobaczyć, gdzie jesteś, z dokładnością i kierunkiem, w którym patrzysz. Twoja lokalizacja zostaje w telefonie: Kozica nie ma uprawnienia do internetu, nie wymaga konta, nie wyświetla reklam i niczego nie zbiera.
+
+Przycisk Bezpieczeństwo daje pod ręką 112, a dla Polski, Słowacji i Czech numer ratownictwa górskiego, aplikację ratunkową, komunikat lawinowy i pogodę w górach. Otwierają się w aplikacji Telefon i w przeglądarce, i wymagają zasięgu.
 
 Dane mapy © Współtwórcy OpenStreetMap, dostępne na licencji Open Database License.
 ```
@@ -182,4 +186,18 @@ In Settings → Help and feedback, "Report a problem" and "Suggest a feature" no
 
 ```
 „Zgłoś problem” i „Zaproponuj funkcję” w Ustawienia → Pomoc i opinie otwierają teraz wiadomość na własny adres pomocy Kozicy, kozica.support@maksforge.com, a nie na prywatny. Tak samo „Coś brzmi nie tak?” w Ustawienia → Język.
+```
+
+### 0.5.0 — the Safety screen
+
+**English** — 342/500:
+
+```
+A new Safety button on the map, beside Regions and Settings, opens what you need when something goes wrong: 112, and for Poland, Slovakia and Czechia the mountain-rescue number, the rescue app, the avalanche bulletin and the mountain weather. Kozica types the number into your phone app and you place the call. The apps and pages need signal.
+```
+
+**Polish** — 363/500:
+
+```
+Nowy przycisk Bezpieczeństwo na mapie, obok Regionów i Ustawień, otwiera to, czego potrzebujesz, gdy coś pójdzie nie tak: 112, a dla Polski, Słowacji i Czech numer ratownictwa górskiego, aplikację ratunkową, komunikat lawinowy i pogodę w górach. Kozica wpisuje numer w aplikacji Telefon, a połączenie nawiązujesz samodzielnie. Aplikacje i strony wymagają zasięgu.
 ```
