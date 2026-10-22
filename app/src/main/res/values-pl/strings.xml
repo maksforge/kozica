@@ -117,7 +117,7 @@
     <string name="safety_rescue">Wezwij ratowników górskich</string>
     <string name="safety_dial_hint">%1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie.</string>
     <string name="safety_rescue_fallback">Wezwij ratowników górskich, gdy %1$s się nie łączy</string>
-    <string name="safety_rescue_fallback_hint">%1$s, z każdego telefonu i w każdej sieci. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie.</string>
+    <string name="safety_rescue_fallback_hint">%1$s, z telefonu z polską lub zagraniczną kartą SIM, także w roamingu. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie.</string>
     <string name="safety_rescue_app">Aplikacja ratunkowa: %1$s</string>
     <string name="safety_app_installed">Zainstalowana. Otwórz ją przed wyjściem w góry i sprawdź, czy jest skonfigurowana.</string>
     <string name="safety_app_missing">Niezainstalowana. Zainstaluj ją z Google Play i skonfiguruj przed wyjściem w góry.</string>

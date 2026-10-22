@@ -192,7 +192,7 @@ button reads `safety_title` as its content description.
 | `safety_rescue` | Call mountain rescue | Wezwij ratowników górskich |
 | `safety_dial_hint` | %1$s. Opens the phone app with the number typed; you place the call. | %1$s. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
 | `safety_rescue_fallback` | Call mountain rescue if %1$s does not connect | Wezwij ratowników górskich, gdy %1$s się nie łączy |
-| `safety_rescue_fallback_hint` | %1$s, from any phone on any network. Opens the phone app with the number typed; you place the call. | %1$s, z każdego telefonu i w każdej sieci. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
+| `safety_rescue_fallback_hint` | %1$s, from a Polish or a foreign SIM, roaming included. Opens the phone app with the number typed; you place the call. | %1$s, z telefonu z polską lub zagraniczną kartą SIM, także w roamingu. Otwiera aplikację Telefon z wpisanym numerem; połączenie nawiązujesz samodzielnie. |
 | `safety_rescue_app` | Rescue app: %1$s | Aplikacja ratunkowa: %1$s |
 | `safety_app_installed` | Installed. Open it before you set out to check it is set up. | Zainstalowana. Otwórz ją przed wyjściem w góry i sprawdź, czy jest skonfigurowana. |
 | `safety_app_missing` | Not installed. Install it from Google Play and set it up before you set out. | Niezainstalowana. Zainstaluj ją z Google Play i skonfiguruj przed wyjściem w góry. |
