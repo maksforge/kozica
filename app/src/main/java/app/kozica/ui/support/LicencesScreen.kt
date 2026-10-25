@@ -62,6 +62,24 @@ fun LicencesScreen(
                     )
                 }
             }
+            // The relief's three sources (docs/phase-4.md § 3): GUGiK named, as Polish law asks; the
+            // other two under CC BY 4.0, which also asks that the change be said.
+            item(key = CC_BY) {
+                LicenceSection("Creative Commons Attribution 4.0", "ÚGKK SR: DMR 5.0\nČÚZK: DMR 4G") {
+                    onOpenLicence(CC_BY)
+                }
+            }
+            item(key = "GUGiK") {
+                LicenceSection("Numeryczny Model Terenu", "GUGiK", onClick = null)
+            }
+            item(key = "relief-modified") {
+                Text(
+                    text = stringResource(R.string.licences_relief_modified),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = Spacing.base, vertical = Spacing.tight),
+                )
+            }
             item(key = OFL) {
                 LicenceSection("SIL Open Font License 1.1", "Noto Sans") { onOpenLicence(OFL) }
             }

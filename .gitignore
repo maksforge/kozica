@@ -35,3 +35,6 @@ fastlane/metadata/
 /map-data/
 /region_*/src/main/assets/
 /region_*/build/
+# The relief: built once by scripts/build-relief.py, fetched by scripts/fetch-relief.py, never committed.
+/relief/src/main/assets/
+/relief/build/

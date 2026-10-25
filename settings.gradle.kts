@@ -47,4 +47,11 @@ if (providers
         include(":region_$region")
         project(":region_$region").buildFileName = "../gradle/region-pack.gradle.kts"
     }
+    listOf("relief", "contours").forEach { name ->
+        check(file("relief/src/main/assets/$name.pmtiles").exists()) {
+            "-PmapPacks needs relief/src/main/assets/$name.pmtiles. Fetch it with `python3 scripts/fetch-relief.py`."
+        }
+    }
+    include(":relief")
+    project(":relief").buildFileName = "../gradle/region-pack.gradle.kts"
 }

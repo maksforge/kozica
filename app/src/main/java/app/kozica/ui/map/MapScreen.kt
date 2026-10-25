@@ -292,7 +292,7 @@ fun MapScreen(
                     contentDescription = stringResource(R.string.map_position_show),
                 )
             }
-            OsmCredit(state.osmDate)
+            OsmCredit(state.osmDate, relief = state.reliefShown)
         }
     }
 }
@@ -489,10 +489,12 @@ private fun ProgressLine(
 @Composable
 private fun OsmCredit(
     osmDate: Instant?,
+    relief: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val credit = stringResource(R.string.map_osm_credit)
+    val reliefCredit = stringResource(R.string.map_relief_credit, RELIEF_SOURCES)
     MapLabel(modifier) {
         Column(
             horizontalAlignment = Alignment.End,
@@ -507,6 +509,7 @@ private fun OsmCredit(
                                 styles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary)),
                             ) { context.startActivitySafely(Intent(Intent.ACTION_VIEW, OSM_COPYRIGHT.toUri())) },
                         ) { append(credit) }
+                        if (relief) append(" · $reliefCredit")
                     },
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -538,6 +541,9 @@ private val CameraSaver =
     )
 
 private const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
+
+/** The relief's three agencies, by the names their licences ask for (docs/phase-4.md § 3). */
+private const val RELIEF_SOURCES = "GUGiK, ÚGKK SR, ČÚZK"
 
 private fun MapCamera.toCameraUpdate(): CameraUpdate =
     CameraUpdateFactory.newCameraPosition(

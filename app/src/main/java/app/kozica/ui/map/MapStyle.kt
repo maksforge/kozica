@@ -15,53 +15,58 @@ import java.io.File
 internal fun styleTemplate(dark: Boolean): String = if (dark) "map/style-dark.json" else "map/style-light.json"
 
 /**
- * Sources added beside the Regions' and layers placed after the template layer they are keyed by,
- * each once rather than per Region.
- */
-class StyleOverlay(
-    val sources: Map<String, JsonObject>,
-    val after: Map<String, List<JsonObject>>,
-)
-
-/**
- * The template with one source per ready Region and each sourced layer repeated per Region, in the
- * template's layer order, so one Region's land never paints over another's Trails
- * (docs/phase-2.md § 2).
+ * The template with one source per ready Region and each Region-sourced layer repeated per Region,
+ * in the template's layer order, so one Region's land never paints over another's Trails
+ * (docs/phase-2.md § 2). The relief's layers are drawn once, from [relief] and the contours beside
+ * it, and dropped while it has not arrived (docs/phase-4.md § 3).
  */
 internal fun expandStyle(
     template: String,
     archives: List<Pair<String, File>>,
-    overlay: StyleOverlay? = null,
+    relief: File? = null,
 ): String {
     val style = Json.parseToJsonElement(template).jsonObject
     val sources =
         buildJsonObject {
             for ((region, archive) in archives) {
-                put(
-                    region,
-                    buildJsonObject {
-                        put("type", "vector")
-                        put("url", "pmtiles://file://${archive.absolutePath}")
-                    },
-                )
+                put(region, pmtiles("vector", archive))
             }
-            overlay?.sources?.forEach { (id, source) -> put(id, source) }
+            if (relief != null) {
+                put(
+                    RELIEF_SOURCE,
+                    JsonObject(
+                        pmtiles("raster-dem", relief) +
+                            mapOf("encoding" to JsonPrimitive("terrarium"), "tileSize" to JsonPrimitive(512)),
+                    ),
+                )
+                put(CONTOURS_SOURCE, pmtiles("vector", relief.resolveSibling("contours.pmtiles")))
+            }
         }
     val layers =
         style.getValue("layers").jsonArray.flatMap { element ->
             val layer = element.jsonObject
-            val id = layer.getValue("id").jsonPrimitive.content
-            val expanded =
-                if ("source" !in layer) {
-                    listOf(layer)
-                } else {
+            when (layer["source"]?.jsonPrimitive?.content) {
+                null -> listOf(layer)
+                RELIEF_SOURCE, CONTOURS_SOURCE -> if (relief != null) listOf(layer) else emptyList()
+                else ->
                     archives.map { (region, _) ->
+                        val id = layer.getValue("id").jsonPrimitive.content
                         JsonObject(
                             layer + mapOf("id" to JsonPrimitive("$id-$region"), "source" to JsonPrimitive(region)),
                         )
                     }
-                }
-            expanded + overlay?.after?.get(id).orEmpty()
+            }
         }
     return JsonObject(style + mapOf("sources" to sources, "layers" to JsonArray(layers))).toString()
 }
+
+private fun pmtiles(
+    type: String,
+    archive: File,
+) = buildJsonObject {
+    put("type", type)
+    put("url", "pmtiles://file://${archive.absolutePath}")
+}
+
+private const val RELIEF_SOURCE = "relief"
+private const val CONTOURS_SOURCE = "contours"

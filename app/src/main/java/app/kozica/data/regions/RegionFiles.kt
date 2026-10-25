@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
+import androidx.core.content.res.ResourcesCompat
 import com.google.android.gms.tasks.Task
 import com.google.android.play.core.assetpacks.AssetPackException
 import com.google.android.play.core.assetpacks.AssetPackManagerFactory
@@ -12,10 +13,13 @@ import com.google.android.play.core.assetpacks.AssetPackStateUpdateListener
 import com.google.android.play.core.assetpacks.model.AssetPackErrorCode
 import com.google.android.play.core.assetpacks.model.AssetPackStatus
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
@@ -24,6 +28,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -32,7 +37,9 @@ import kotlin.coroutines.resumeWithException
 
 /**
  * Every Region's fast-follow asset pack (docs/phase-2c.md § 1), one pack per polygon in
- * `scripts/regions/`, named `region_<id>` and holding `<id>.pmtiles`.
+ * `scripts/regions/`, named `region_<id>` and holding `<id>.pmtiles`; and the relief's, `relief`,
+ * holding `relief.pmtiles` and `contours.pmtiles` (docs/phase-4.md § 3). The relief is no Region,
+ * so it is [relief] rather than one of [states].
  *
  * One per process, so a fetch started on one screen reaches every collector through [updates].
  */
@@ -46,20 +53,35 @@ class RegionFiles private constructor(
     private val downloadSizes = ConcurrentHashMap<String, Long>()
     private val asked = ConcurrentHashMap.newKeySet<String>()
 
-    val states: Flow<List<Region>> =
+    // One read and one listener for every pack, however many screens collect the Regions and the relief.
+    private val packs: Flow<Map<String, RegionState>> =
         merge(
-            flow { emit(StateChange(read(REGION_NAMES.keys, logged = true), isFirstRead = true)) },
+            flow { emit(StateChange(read(PACKS, logged = true), isFirstRead = true)) },
             updates.map { StateChange(it) },
             progress()
                 .map { state -> StateChange(mapOf(idOf(state.name()) to fromPackState(idOf(state.name()), state))) }
                 .catch { },
         ).scan(emptyMap<String, RegionState>()) { known, change -> known.mergedWith(change) }
-            .filter { it.keys.containsAll(REGION_NAMES.keys) }
-            .map { known ->
-                REGION_NAMES.map { (id, name) ->
-                    Region(id, name, known.getValue(id).afterAsking(id in asked), downloadSizes[id])
-                }
-            }.flowOn(Dispatchers.IO)
+            .filter { it.keys.containsAll(PACKS) }
+            .map { known -> known.mapValues { (id, state) -> state.afterAsking(id in asked) } }
+            .flowOn(Dispatchers.IO)
+            .shareIn(
+                CoroutineScope(SupervisorJob() + Dispatchers.IO),
+                SharingStarted.WhileSubscribed(5_000),
+                replay = 1,
+            )
+
+    val states: Flow<List<Region>> =
+        packs.map { known ->
+            REGION_NAMES.map { (id, name) -> Region(id, name, known.getValue(id), downloadSizes[id]) }
+        }
+
+    /**
+     * The relief pack, as a [Region] so the map counts and fetches it with the Regions; it has no
+     * name, being no Region. [RegionState.Ready]'s archive is `relief.pmtiles`, beside `contours.pmtiles`.
+     */
+    val relief: Flow<Region> =
+        packs.map { Region(RELIEF, ResourcesCompat.ID_NULL, it.getValue(RELIEF), downloadSizes[RELIEF]) }
 
     fun readyArchive(id: String): File? =
         manager
@@ -96,7 +118,7 @@ class RegionFiles private constructor(
      */
     suspend fun confirm(launcher: ActivityResultLauncher<IntentSenderRequest>): Boolean =
         manager.showConfirmationDialog(launcher).also { shown ->
-            if (!shown) updates.emit(read(REGION_NAMES.keys))
+            if (!shown) updates.emit(read(PACKS))
         }
 
     // A build sideloaded by installDebug has no Play session and declares no pack, so a request
@@ -125,7 +147,7 @@ class RegionFiles private constructor(
         callbackFlow {
             val listener =
                 AssetPackStateUpdateListener { state ->
-                    if (idOf(state.name()) in REGION_NAMES) trySend(state)
+                    if (idOf(state.name()) in PACKS) trySend(state)
                 }
             manager.registerListener(listener)
             awaitClose { manager.unregisterListener(listener) }
@@ -172,11 +194,15 @@ class RegionFiles private constructor(
         fun of(context: Context): RegionFiles =
             instance ?: synchronized(this) { instance ?: RegionFiles(context).also { instance = it } }
 
+        const val RELIEF = "relief"
+
+        private val PACKS = REGION_NAMES.keys + RELIEF
+
         private const val TAG = "KozicaPack"
 
-        private fun pack(id: String) = "region_$id"
+        private fun pack(id: String) = if (id == RELIEF) RELIEF else "region_$id"
 
-        private fun idOf(pack: String) = pack.removePrefix("region_")
+        private fun idOf(pack: String) = if (pack == RELIEF) RELIEF else pack.removePrefix("region_")
     }
 }
 

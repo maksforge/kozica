@@ -26,6 +26,8 @@
     <string name="map_downloading">Downloading maps — %1$d of %2$d</string>
     <string name="map_updating">Map data is being updated.</string>
     <string name="map_osm_credit">© OpenStreetMap contributors</string>
+    <!-- %1$s is the relief's sources, the agencies' names, such as "GUGiK, ÚGKK SR, ČÚZK"; they are not translated. -->
+    <string name="map_relief_credit">Relief: %1$s</string>
     <!-- %1$s is a date, formatted for the locale -->
     <string name="map_osm_date">OSM data: %1$s</string>
     <string name="map_position_show">Show my position</string>
@@ -95,6 +97,8 @@
     <!-- Licences -->
     <string name="licences_map_data">The map data of this version</string>
     <string name="licences_map_data_hint">Opens this version\'s release on GitHub, where the map\'s files are offered under the Open Database License.</string>
+    <!-- Under the relief's two licence entries: what Kozica did to the agencies' terrain models. -->
+    <string name="licences_relief_modified">Resampled, merged and traced into contours by Kozica.</string>
     <string name="licence_text_missing">The text of this licence is not bundled with the app.</string>
 
     <!-- The schema gate's screen. Deliberately plain: someone reading it is already worried. -->

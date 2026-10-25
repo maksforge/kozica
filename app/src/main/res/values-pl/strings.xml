@@ -13,6 +13,7 @@
     <string name="map_downloading">Pobieranie map — %1$d z %2$d</string>
     <string name="map_updating">Trwa aktualizacja danych mapy.</string>
     <string name="map_osm_credit">© Współtwórcy OpenStreetMap</string>
+    <string name="map_relief_credit">Rzeźba terenu: %1$s</string>
     <string name="map_osm_date">Dane OSM: %1$s</string>
     <string name="map_position_show">Pokaż moją pozycję</string>
     <string name="map_location_approximate">Tylko przybliżona lokalizacja.</string>
@@ -67,6 +68,7 @@
 
     <string name="licences_map_data">Dane mapy tej wersji</string>
     <string name="licences_map_data_hint">Otwiera stronę wydania tej wersji na GitHubie, gdzie pliki mapy są udostępnione na licencji Open Database License.</string>
+    <string name="licences_relief_modified">Przepróbkowane, scalone i przetworzone na poziomice przez Kozicę.</string>
     <string name="licence_text_missing">Treść tej licencji nie jest dołączona do aplikacji.</string>
 
     <string name="schema_mismatch_title">Te dane zapisała inna wersja</string>

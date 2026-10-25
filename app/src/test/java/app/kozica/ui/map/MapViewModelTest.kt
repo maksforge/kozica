@@ -114,12 +114,26 @@ class MapViewModelTest {
 
             assertEquals(listOf(listOf("tatry")), fetched)
         }
+
+    @Test
+    fun `the relief is fetched and counted with the Regions`() =
+        runTest {
+            val fetched = mutableListOf<List<String>>()
+            val relief = Region("relief", name = 0, RegionState.NotDownloaded)
+            val viewModel =
+                mapViewModel(flowOf(listOf(tatry(READY))), fetch = { fetched += it }, relief = flowOf(relief))
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+
+            assertEquals(listOf(listOf("relief")), fetched)
+            assertEquals(MapProgress.Downloading(ready = 1, total = 2), viewModel.state.value.progress)
+        }
 }
 
 private fun mapViewModel(
     regions: Flow<List<Region>>,
     preferences: AppPreferences = AppPreferences(MemoryPreferences()),
     fetch: suspend (List<String>) -> Unit = {},
+    relief: Flow<Region?> = flowOf(null),
 ) = MapViewModel(
     regions = regions,
     preferences = preferences,
@@ -128,6 +142,7 @@ private fun mapViewModel(
     positions = { MutableSharedFlow<Location>() },
     fetch = fetch,
     confirmFetch = { false },
+    relief = relief,
 )
 
 private fun tatry(state: RegionState) = Region("tatry", name = 0, state)
