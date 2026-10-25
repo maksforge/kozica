@@ -53,5 +53,18 @@ class GapCheckTest(unittest.TestCase):
         self.check()
 
 
+class WaterTest(unittest.TestCase):
+    def test_a_named_lake_is_filled_at_its_shore_level(self):
+        west, south, east, north = relief["WATER"]["Rozkoš reservoir, Czechia"]
+        grid = relief["Grid"].around(box(west - 0.01, south - 0.01, east + 0.01, north + 0.01))
+        heights = np.full((grid.height, grid.width), 272.0, dtype=np.float32)
+        x, y = relief["to_pixel"]((west + east) / 2, (south + north) / 2)
+        r, c = int(y) - grid.y0, int(x) - grid.x0
+        heights[r - 5 : r + 5, c - 5 : c + 5] = np.nan
+        relief["fill_water"](heights, grid)
+        self.assertFalse(np.isnan(heights).any())
+        self.assertEqual(272.0, heights[r, c])
+
+
 if __name__ == "__main__":
     unittest.main()

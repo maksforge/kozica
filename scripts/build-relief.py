@@ -49,7 +49,7 @@ from pyproj import Transformer
 from rasterio.features import rasterize
 from rasterio.transform import Affine
 from rasterio.warp import Resampling, reproject
-from scipy.ndimage import distance_transform_edt, find_objects, gaussian_filter, label, map_coordinates
+from scipy.ndimage import binary_dilation, distance_transform_edt, find_objects, gaussian_filter, label, map_coordinates
 import shapely
 from shapely import affinity
 from shapely.geometry import LineString, MultiPolygon, Polygon, box, shape
@@ -71,6 +71,12 @@ MERCATOR = rasterio.crs.CRS.from_epsg(3857)
 TIMEOUT = 120
 CONTOUR_STEP = 20
 BORDER_TOLERANCE = 3
+
+# Water a national model leaves out, filled at one level from its own shore: each is a gap the build
+# found and an amendment to ADR-0009 names. Any other gap still fails the build.
+WATER = {
+    "Rozkoš reservoir, Czechia": (16.035, 50.360, 16.095, 50.405),
+}
 INDEX_STEP = 100
 
 BORDERS = {"poland": 49715, "slovakia": 14296, "czech-republic": 51684}
@@ -463,6 +469,31 @@ def near_borders(grid: Grid, countries) -> np.ndarray:
     return rasterize(bands, out_shape=(grid.height, grid.width), dtype=np.uint8, all_touched=True).astype(bool)
 
 
+def fill_water(heights: np.ndarray, grid: Grid) -> None:
+    for name, bounds in WATER.items():
+        west, south, east, north = bounds
+        left, top = to_pixel(west, north)
+        right, bottom = to_pixel(east, south)
+        r0, c0 = max(int(top) - grid.y0, 0), max(int(left) - grid.x0, 0)
+        r1, c1 = min(int(bottom) - grid.y0 + 1, grid.height), min(int(right) - grid.x0 + 1, grid.width)
+        if r1 <= r0 or c1 <= c0:
+            continue
+        block = heights[r0:r1, c0:c1]
+        missing = np.isnan(block)
+        if not missing.any():
+            continue
+        lakes, count = label(missing)
+        for n in range(1, count + 1):
+            lake = lakes == n
+            if lake[0, :].any() or lake[-1, :].any() or lake[:, 0].any() or lake[:, -1].any():
+                continue
+            shore = binary_dilation(lake, iterations=2) & ~missing
+            # Water lies at the bottom of its banks; the median would lift it onto them.
+            level = float(np.percentile(block[shore], 10))
+            block[lake] = level
+            log(f"{name}: {int(lake.sum()):,} cells filled at {level:.1f} m from its shore")
+
+
 def check_gaps(heights: np.ndarray, grid: Grid, inside, countries, regions: dict) -> None:
     mask = rasterize([(pixel_geometry(inside, grid), 1)], out_shape=heights.shape, dtype=np.uint8).astype(bool)
     gaps = mask & np.isnan(heights)
@@ -705,6 +736,7 @@ def main() -> None:
         fail(f"{len(failed)} of {len(sheets)} sheets failed; the parts built are kept, so a rerun fetches only these")
 
     heights = merge(grid, sheets)
+    fill_water(heights, grid)
     check_gaps(heights, grid, inside, countries.values(), chosen)
     attribution = "Relief: GUGiK, ÚGKK SR, ČÚZK"
     build_archives(heights, grid, inside, attribution)
