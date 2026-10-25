@@ -192,21 +192,23 @@ one pack for every Region ([ADR-0009](adr/0009-relief-is-built-by-us-from-the-th
 
 ## Phase 5 — Route planning
 
-The user plans a route over Trails and sees its length, ascent and walking time, entirely on the
-phone. Search by name arrives here, because picking a start and an end needs it. A second area of
-the app arrives with it, so this is the phase that brings a tab bar. An idea raised by the owner on
-2026-10-20, not yet decided: **highlight either a planned route, or a named Trail such as the Główny
-Szlak Beskidzki (GSB)**, and draw the rest fainter rather than hide Trails by colour, since a colour
-names no single Trail and a map that hides colours no longer matches the signpost at the junction.
-Highlighting a named Trail needs its name or relation id in the tiles, which `KozicaProfile` does
-not write today.
+The user plans a Route over Trails, and only Trails, from a start through any via points to an end,
+and sees its length, ascent, walking time and elevation profile, entirely on the phone; a Route can
+be saved, and saved Routes are the first data of the user's own in Room. Search by name arrives
+here, because picking a start and an end needs it. A second area of the app arrives with it, so this
+is the phase that brings a tab bar: Map and Routes. The network and the name index are our own,
+built with the map data and shipped in the app
+([ADR-0010](adr/0010-routes-are-planned-over-our-own-trail-network.md), [`phase-5.md`](phase-5.md)).
 
 ## Phase 6 — The hike log
 
 Record a hike — the track, photos and notes — and look back at it. It brings the `location`
 foreground service, with `FOREGROUND_SERVICE_LOCATION` from API 34 and the Console's
-foreground-service declaration; the notifications ask; and the first of the user's own data that a
-backup has to keep, so Backup returns to Settings.
+foreground-service declaration; the notifications ask; and photos, which Auto Backup cannot carry,
+so the manual Backup returns to Settings. Moved here from phase 5 with the owner on 2026-10-25:
+following a Route while walking, walking times from the user's own pace, named Trails with a whole
+Trail highlighted and the rest of the map fainter (which needs each Trail's name or relation id in
+the tiles, which `KozicaProfile` does not write today), and GPX export.
 
 ## Phase N — Ship shape
 
@@ -222,5 +224,8 @@ Screenshots, the production-access application and **1.0**: everything above, in
   stripped as ADR-0008 requires.
 - **Data beyond Slovakia's and Czechia's borders** in 1.0. Regions cross into those two where the
   ranges do (ADR-0007's amendment of 2026-10-20); Ukraine's and Germany's sides stay out.
+- **GPX import and an "avoid difficult Trails" setting.** An imported track can leave the Trails,
+  which a Route cannot, and the planner's warning already names a hard stretch
+  ([`phase-5.md`](phase-5.md)). Reopened only if testers ask.
 - **Reminders and scheduled work.** Nothing in the plan schedules anything of its own. WorkManager
   is in the build for Play Asset Delivery's extraction alone (ADR-0003's amendment of 2026-10-20).

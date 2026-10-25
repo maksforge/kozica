@@ -1,0 +1,57 @@
+# Routes are planned over our own Trail network, built with the map data and shipped in the app
+
+## Context
+
+Phase 5 plans a Route on the phone: the shortest walking time over Trails between the user's
+points, with its ascent from the height grid. ADR-0008 rules out any routing service, so the router
+and its data are on the phone. The map's PMTiles cannot be routed over: their geometry is clipped at
+tile edges, simplified per zoom and carries no junctions, so the planner needs a network of its own.
+The Trails are a small part of OSM, and a Route may cross from one Region into the next, where the
+packs overlap by a few kilometres.
+
+## Decision
+
+**`build-map-data.py` writes the network**, from the same pinned extracts as the Region archives:
+every way drawn as a Trail, from the union of the nine Regions, each once, split at junctions, with
+heights sampled from the pinned relief at build time. It writes the name index for search in the
+same step. **One network for all Regions**, so no Trail is cut at a Region's edge.
+
+**Our own A\* searches it**, in Kotlin, with walking time as the cost and one-way Trails obeyed
+(`docs/phase-5.md` § 3).
+
+**Both files ship in the app's base module**, not in a pack: they are a few megabytes, needed the
+moment the map opens, and change only when the pin moves, which is a release anyway. They are
+attached to each release under ODbL with the archives, and they join `scripts/map-archives.py`'s
+record, with `scripts/relief.pin` among its inputs.
+
+Decided with the owner on 2026-10-25, while phase 5 was planned.
+
+## Alternatives
+
+**GraphHopper on the phone.** A mature router with hiking profiles. But its Android support is
+unofficial, it is a heavy dependency for a network of Trails alone, and it brings a graph format of
+its own that would be built from the same extracts anyway, by a second tool the build would have to
+pin and keep deterministic.
+
+**BRouter.** Strong for hiking and built for offline Android. It is GPL, and Kozica's code is all
+rights reserved; linking it is not an option, and handing off to the BRouter app would break the
+"one app, nothing else to install" promise.
+
+**A network per Region, inside each Region's pack.** It would refresh with the Region. But every
+Trail that crosses a boundary would be cut there, a Route across two Regions would need the two
+networks stitched on the phone, and a pack not yet unpacked would leave holes in planning.
+
+**Heights read from the relief tiles on the phone.** It keeps the network free of heights and the
+grid as the one source at runtime. But it means decoding lossless WebP Terrarium tiles while
+planning, on a 2019 phone, for numbers that never change between relief builds; sampling once in the
+build gives the same numbers, under a test in Python.
+
+## Consequences
+
+- The build grows a second output and a dependency on the relief pin; a relief rebuild now changes
+  the network too, and the publish run's reuse sees it.
+- Every OSM pin changes the network, so a saved Route, which stores only its points, can take a
+  different way after an update.
+- The network's format is ours to version. Its reader and writer are tested against one fixture,
+  and a format change is a release like any other, since both ship together.
+- The base APK grows by the two files' size, read in phase 5's gate.
