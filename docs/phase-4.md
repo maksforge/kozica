@@ -247,6 +247,10 @@ licences screen's "Resampled, merged and traced into contours by Kozica".
 - **The gap check** fails for a grid with one empty cell inside the union, and passes for one empty
   outside it.
 
+Both are `scripts/test_build_relief.py`, run with the build's own venv
+(`map-data/relief/venv/bin/python -m unittest scripts/test_build_relief.py`); the relief is built
+only on the owner's PC, so CI has no venv to run them in.
+
 ## Documents this phase amends
 
 - **ADR-0009**, written with this file.
