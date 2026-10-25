@@ -252,14 +252,15 @@ def indexed(source: str, area, read) -> list[Sheet]:
         return [Sheet(**s) for s in json.loads(cache.read_text())]
     sheets = read(area)
     cache.write_text(json.dumps([s.__dict__ for s in sheets], indent=0))
+    log(f"index {source}: read live from the agency, saved as {cache.name}")
     return sheets
 
 
 def gugik_index(area) -> list[Sheet]:
-    """Per 1:5000 sheet, the newest lidar grid, else the newest of any kind (docs/phase-4.md § 2)."""
+    """The best grid for each piece of ground, by area rather than by sheet name (docs/phase-4.md § 2)."""
     west, south, east, north = area.bounds
     to_wgs = Transformer.from_crs(2180, 4326).transform
-    found: dict[str, list] = {}
+    candidates: list = []
     for service in GUGIK_SERVICES:
         datum = service.removeprefix("NumerycznyModelTerenu")
         capabilities = fetch(f"{GUGIK.format(service=service)}?service=WFS&request=GetCapabilities").decode()
@@ -290,16 +291,35 @@ def gugik_index(area) -> list[Sheet]:
                     lidar = get("zrodlo_danych") == "Skaning laserowy"
                     spacing = re.match(r"[\d.]+", get("char_przestrz"))
                     resolution = float(spacing.group()) if spacing else 99.0
-                    rank = (lidar, service.endswith("EVRF2007"), year, -resolution)
-                    found.setdefault(get("godlo"), []).append(
-                        (rank, Sheet(get("godlo"), "pl", get("url_do_pobrania"), outline.bounds,
-                                     f"{'lidar' if lidar else 'photo'} {resolution:g} m {datum} {year}"))
-                    )
+                    # 1 m before 0.5 m: the same ground at a quarter of the download, resampled to 12 m anyway.
+                    rank = (lidar, resolution == 1.0, -resolution, service.endswith("EVRF2007"), year, get("url_do_pobrania"))
+                    sheet = Sheet(get("godlo"), "pl", get("url_do_pobrania"), outline.bounds,
+                                  f"{'lidar' if lidar else 'photo'} {resolution:g} m {datum} {year}")
+                    candidates.append((rank, sheet, outline))
                 if len(members) < 5000:
                     break
                 start += 5000
-            log(f"index pl {datum} {year}: {len(found)} sheets so far")
-    return [max(entries, key=lambda e: (e[0], e[1].url))[1] for _, entries in sorted(found.items())]
+            log(f"index pl {datum} {year}: {len(candidates)} candidates so far")
+    return best_cover(candidates)
+
+
+def best_cover(candidates: list) -> list[Sheet]:
+    """Best first, each taken only for ground no better one covers: GUGiK's layers name their sheets
+    in different schemes, so one piece of ground can sit under several names."""
+    cell = 0.05
+    taken: dict[tuple[int, int], list] = {}
+    chosen = []
+    for _, sheet, outline in sorted(candidates, key=lambda c: c[0], reverse=True):
+        west, south, east, north = outline.bounds
+        keys = [(i, j) for i in range(int(west // cell), int(east // cell) + 1) for j in range(int(south // cell), int(north // cell) + 1)]
+        near = {id(o): o for k in keys for o in taken.get(k, [])}
+        uncovered = outline.difference(unary_union(list(near.values()))) if near else outline
+        if uncovered.area <= 0.02 * outline.area:
+            continue
+        chosen.append(sheet)
+        for k in keys:
+            taken.setdefault(k, []).append(outline)
+    return sorted(chosen, key=lambda s: s.url)
 
 
 def cuzk_index(area) -> list[Sheet]:
@@ -403,17 +423,27 @@ def build_part(sheet: Sheet, grid: Grid, geoid: Path) -> str:
 def merge(grid: Grid, sheets: list[Sheet]) -> np.ndarray:
     total = np.zeros((grid.height, grid.width), dtype=np.int32)
     count = np.zeros((grid.height, grid.width), dtype=np.uint8)
-    for sheet in sheets:
-        part = part_path(sheet)
-        if not part.exists():
-            continue
-        with np.load(part) as loaded:
-            clipped = grid.clip(tuple(loaded["window"]))
-            if clipped is None:
+    lidar = None
+    # Photogrammetric heights only fill ground no lidar reaches; averaged in, they would blur it.
+    for photo in (False, True):
+        if photo:
+            lidar = count > 0
+        for sheet in sheets:
+            if sheet.kind.startswith("photo") != photo:
                 continue
-            inside, own = clipped
-            total[inside] += loaded["cm"][own]
-            count[inside] += loaded["valid"][own]
+            part = part_path(sheet)
+            if not part.exists():
+                continue
+            with np.load(part) as loaded:
+                clipped = grid.clip(tuple(loaded["window"]))
+                if clipped is None:
+                    continue
+                inside, own = clipped
+                valid = loaded["valid"][own]
+                if photo:
+                    valid = valid & ~lidar[inside]
+                total[inside] += np.where(valid, loaded["cm"][own], 0)
+                count[inside] += valid
     heights = np.full((grid.height, grid.width), np.nan, dtype=np.float32)
     np.divide(total, count, out=heights, where=count > 0)
     heights /= 100

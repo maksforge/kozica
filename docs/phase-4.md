@@ -162,15 +162,17 @@ not work per frame; C's R3 and R4 read seams and delivery, not frame time. Two t
   **resampled onto the target grid as it arrives and then deleted**, so the disk holds small parts,
   not the source. What each agency actually serves was read on 2026-10-25, before the script was
   written, and differs from what this section first assumed (ADR-0009's amendment):
-  - **Poland, GUGiK NMT**: the 1:5000 sheets of its WFS sheet indexes, one layer per survey year in
-    the PL-EVRF2007-NH service and the PL-KRON86-NH one before it. Per sheet the build takes the
-    newest **1 m lidar** grid ("Skaning laserowy"), else the newest grid of any kind, and logs how
-    many of each it used, by service and span of survey years. The 5 m grids are photogrammetric,
-    not lidar, which is why they are only the fallback. So are many of the newer PL-EVRF2007-NH 1 m
-    grids, which GUGiK marks "Zdj. lotnicze", and there the rank picks the PL-KRON86-NH lidar
-    survey of about 2011–15: the Tatry take 128 sheets of 2023–25 EVRF2007 lidar and 45 of 2012
-    KRON86, and R2 reads the split for the whole union. About 5,000 sheets of about 43 MB, roughly
-    215 GB.
+  - **Poland, GUGiK NMT**: the sheets of its WFS sheet indexes, one layer per survey year in the
+    PL-EVRF2007-NH service and the PL-KRON86-NH one before it. **Chosen by ground, not by name**:
+    the layers name their sheets in different schemes (1:5000 godła, and local ones such as
+    `6.110.29.05`), so one piece of ground sits under several names. The build ranks every
+    candidate, lidar ("Skaning laserowy") first, 1 m before 0.5 m (the same ground at a quarter of
+    the download), then the newer datum, then the newer survey, and takes each only where no
+    better one already covers the ground. Photogrammetric grids, the 5 m ones and many newer 1 m
+    ones GUGiK marks "Zdj. lotnicze", fill only what no lidar covers, and in the merge only cells
+    no lidar reaches: averaged in, they would blur it. For the whole union that is 5,041 lidar
+    sheets (4,940 of 1 m EVRF2007 from 2019–2026, 100 of 2012–14 KRON86, one of 0.5 m) and 79
+    photogrammetric ones; R2 records it. About 215 GB.
   - **Czechia, ČÚZK DMR 4G**: one zip per SM5 sheet from its ATOM feed, the feed's own polygons
     picking the sheets. Each holds a LAZ 5 m point grid, read with `laspy` and laid back onto its
     grid. About 1,500 sheets, 0.3 GB.
