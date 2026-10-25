@@ -136,8 +136,9 @@ with no relief drawn, and the gate measures what the relief adds, not those.
 
 **Verdict 1** (R1): with the Tatry's relief drawn and all nine Regions ready, the test phone's p95
 frame time stays within 15 % of the baseline at zoom 11 and level with it at zoom 13, and no frame in
-any run passed 100 ms. B and C go ahead as planned. The relief over every Region is read again in C,
-by R3 and R4. Two things the verdicts did not anticipate:
+any run passed 100 ms. B and C go ahead as planned. Frame time with the relief over every Region is not read again: the
+map draws only the tiles on screen, so the grid's extent beyond the Tatry adds tiles off screen,
+not work per frame; C's R3 and R4 read seams and delivery, not frame time. Two things the verdicts did not anticipate:
 
 - **The relief runs render fewer frames per swipe at zoom 13**, about 37 against 49–58, at the
   same 16.7 ms each. It is not a weaker fling: one swipe from the same camera ends on the same view
