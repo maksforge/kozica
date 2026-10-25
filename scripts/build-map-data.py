@@ -10,7 +10,8 @@
 
 The pin is one Geofabrik extract and replication sequence per line, all at one moment. Each extract
 is cut once for every Region, and each Region's cuts are merged. Needs osmium-tool,
-pyosmium-up-to-date (pyosmium 4.2+) and JDK 21; the patch flags also need bsdiff and zstd.
+pyosmium-up-to-date (pyosmium 4.2+), JDK 21, and for the network pyosmium and Pillow importable by the
+Python running this; the patch flags also need bsdiff and zstd.
 Downloads are kept in map-data/ and re-verified on every run.
 """
 
@@ -32,6 +33,10 @@ WORK = ROOT / "map-data"
 PIN = ROOT / "scripts/osm-data.pin"
 REGIONS = ROOT / "scripts/regions"
 PROFILE = ROOT / "scripts/map/KozicaProfile.java"
+NETWORK = ROOT / "scripts/build-network.py"
+RELIEF = ROOT / "relief/src/main/assets/relief.pmtiles"
+BASE_ASSETS = WORK / "base-assets"
+BASE_FILES = ("trails.network", "places.sqlite")
 
 GEOFABRIK = "https://download.geofabrik.de/europe"
 PLANETILER = WORK / "planetiler-0.10.2.jar"
@@ -285,6 +290,7 @@ def tile(source: Path, region: str, archive: Path) -> Path:
     result = run(
         "java", "-Xmx3g", "-cp", planetiler(), PROFILE,
         f"--osm_path={source}", f"--output={archive}", f"--tmpdir={scratch / 'planetiler'}",
+        f"--trail_ways={archive.with_suffix('.ways')}",
         f"--bounds={bounds(region)}", "--tile_compression=none", "--maxzoom=14",
         capture_output=True, text=True, check=False,
     )
@@ -311,6 +317,25 @@ def check_determinism(stamp: str, cuts: dict[str, list[Path]], sources: dict[str
         if second.read_bytes() != built[region].read_bytes():
             fail(f"two builds of {region} differ: {built[region]} {second}")
         print(f"deterministic: two builds of {region} are byte-identical")
+
+
+def network(sources: dict[str, Path], target: Path) -> Path:
+    """The Trail network and the name index of docs/phase-5.md § 2, from every Region's merged cut."""
+    if not RELIEF.is_file():
+        fail(f"no relief at {RELIEF}: the network's heights come from it; run `python3 scripts/fetch-relief.py`")
+    shutil.rmtree(target, ignore_errors=True)
+    regions = [part for region, source in sources.items()
+               for part in ("--region", region, source, WORK / f"archives/{region}.ways")]
+    run(sys.executable, NETWORK, "--relief", RELIEF, "--out", target, *regions)
+    return target
+
+
+def check_network_determinism(sources: dict[str, Path], built: Path) -> None:
+    again = network(sources, WORK / "determinism/network")
+    for name in BASE_FILES:
+        if (again / name).read_bytes() != (built / name).read_bytes():
+            fail(f"two builds of {name} differ: {built / name} {again / name}")
+        print(f"deterministic: two builds of {name} are byte-identical")
 
 
 def zstd_size(path: Path) -> int:
@@ -375,7 +400,19 @@ def main() -> None:
     built = {region: tile(source, region, WORK / f"archives/{region}.pmtiles") for region, source in sources.items()}
     if checked:
         check_determinism(stamp, {region: cuts[region] for region in checked}, sources, built)
+    networked = None
+    if set(regions) == set(known) and not patching:
+        networked = network(sources, WORK / "network")
+        if checked:
+            check_network_determinism(sources, networked)
+    else:
+        log("the network and the name index need every Region; not built")
     install(built)
+    if networked:
+        BASE_ASSETS.mkdir(parents=True, exist_ok=True)
+        for name in BASE_FILES:
+            (networked / name).replace(BASE_ASSETS / name)
+            log(f"installed {BASE_ASSETS / name}")
     if patching:
         for region in regions:
             measure_patch(region, olders[region], archive_path(region))

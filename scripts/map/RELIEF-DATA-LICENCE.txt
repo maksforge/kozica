@@ -12,5 +12,9 @@ resampled, merged and converted by Kozica:
 - Czechia: DMR 4G, source: ČÚZK, licensed under Creative Commons Attribution
   4.0, https://creativecommons.org/licenses/by/4.0/
 
+The heights in trails.network, attached beside it with the map data, are
+sampled from relief.pmtiles by scripts/build-network.py and come from the same
+sources.
+
 This notice covers the relief data only. The app's source code is not covered
 by it.
