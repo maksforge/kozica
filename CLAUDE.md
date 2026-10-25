@@ -172,6 +172,8 @@ with a build to prove it.
     and `adb shell wm dismiss-keyguard` clears the keyguard. Drive it at will. The
     map draws on it, unlike the API 26 emulator. `connectedAndroidTest` runs on it with no prompt,
     but its closing uninstall takes the hand-pushed `files/regions/tatry.pmtiles` with it.
+    **This PC's internet runs through it**: its USB tether outranks the PC's Ethernet (route
+    metric 100 against 101), so its Wi-Fi stays on; switching it off takes the PC offline.
   - **The owner's phone**, `132bc856`: a Redmi Note 14 Pro 5G, API 36, HyperOS. Drive it without
     asking whenever adb reaches it (the owner's standing permission since 2026-10-20), but it is in
     use: say so in chat before a reading takes its screen, and restore any toggle afterwards.
