@@ -49,8 +49,8 @@ is pipeline work with a cost of its own, so it is a checkpoint, C, not a footnot
   at pin 4942 (`region_tatry/src/main/assets/tatry.pmtiles`, 7,274,738 bytes).
 - **A public repository** and a GitHub release per release-please tag, which the ODbL offer rides.
 - **The test phone has Play and a Google account**, read 2026-10-20 with `dumpsys account`, but sits
-  in airplane mode with Wi-Fi off. A reading through Play turns Wi-Fi on for its duration and off
-  again.
+  in airplane mode. Its Wi-Fi stays on, which a reading through Play needs; `CLAUDE.md`'s
+  test-phone bullet says why.
 
 ## What is in, and what is deliberately not
 
@@ -444,7 +444,7 @@ not unit tests stand where tests might be expected:
 
 `PLAN.md` rule 3: filled in as the phase runs, from the device or the build, with the command that
 read it. A reading on the owner's phone waits until the owner says it is free. A reading through
-Play needs Wi-Fi on; the test phone's goes off again after.
+Play needs Wi-Fi on; the test phone's stays on, per `CLAUDE.md`'s test-phone bullet.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
