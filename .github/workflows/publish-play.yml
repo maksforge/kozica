@@ -67,6 +67,11 @@ jobs:
             exit 1
           fi
 
+      # The relief is built once, not here (ADR-0009): every release packs the copy scripts/relief.pin
+      # names. It needs nothing from the map build, so a missing pin or a bad hash fails in seconds.
+      - name: Fetch the pinned relief
+        run: python3 scripts/fetch-relief.py
+
       # The build reads its signing coordinates from local.properties and the keystore from a
       # path outside the repo, because neither may ever be committed (RELEASING.md, *The upload key*). A CI runner
       # has neither, so both are materialised from secrets here and removed again at the end.
@@ -101,11 +106,6 @@ jobs:
       # The script logs the free disk after each country's cut; R9 reads it and this step's minutes.
       - name: Build every Region at the pin
         run: python3 scripts/build-map-data.py --discard-extracts --check-determinism tatry
-
-      # The relief is built once, not here (ADR-0009): every release packs the copy scripts/relief.pin
-      # names, and a hash that does not match stops the run before Play sees anything.
-      - name: Fetch the pinned relief
-        run: python3 scripts/fetch-relief.py
 
       # bundleRelease, never assembleRelease: Play wants an AAB, and an AAB cannot be
       # adb install-ed — so the only build ever put on a phone is the one Play delivers.
