@@ -151,10 +151,13 @@ recorded here with its type and the declaration's answers.
 
 ## Privacy policy
 
-**`https://maksforge.github.io/kozica/privacy-policy.html`**, switched in the Console on 2026-10-25;
-before that it was `https://srednimax.github.io/kozica/privacy-policy.html`, set 2026-10-20, which
-now redirects here. Served from `docs/` by Pages, so it updates on a merge to `main` with no release,
-which is why it has to be right before the app it describes ships rather than after.
+**`https://maksforge.com/kozica/privacy-policy.html`**, switched in the Console on 2026-10-25, when
+the `maksforge` organization took the `maksforge.com` domain; before that it was
+`https://maksforge.github.io/kozica/privacy-policy.html`, set earlier the same day when the repo moved
+to the `maksforge` organization, and before that `https://srednimax.github.io/kozica/privacy-policy.html`,
+set 2026-10-20. Both still redirect here. Served from `docs/` by Pages, so it updates on a merge to
+`main` with no release, which is why it has to be right before the app it describes ships rather than
+after.
 
 ## Store settings (not App content, recorded here because it is asked for the same reason)
 
