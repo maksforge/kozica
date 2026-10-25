@@ -435,9 +435,9 @@ not unit tests stand where tests might be expected:
 
 - **The test phone cannot answer the gate.** API 30 is below the level where JobScheduler checks
   `ACCESS_NETWORK_STATE`, so A is the owner's phone's, and waits until it is free.
-- **Every release downloads 3.4 GB from Geofabrik.** ADR-0007's alternative of a cache still fails
-  for the same reason, a tag ref. Minutes of runner time per release are the price of a build anyone
-  can repeat.
+- **A release that moves the pin downloads 3.4 GB from Geofabrik.** ADR-0007's alternative of a
+  cache still fails for the same reason, a tag ref; a release with unchanged inputs reuses the last
+  version's archives instead (its 2026-10-25 amendment).
 - **Ukraine's and Germany's sides are missing.** Named above, with their reasons.
 
 ## Readings

@@ -102,10 +102,26 @@ jobs:
             echo "upload.keyPassword=${KEY_PASSWORD}"
           } >> local.properties
 
+      # ADR-0007's 2026-10-25 amendment: when every input reads as the last version's record does,
+      # its archives are installed instead of built. Any doubt falls through to the build.
+      - name: Reuse the last version's Regions
+        id: reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          if python3 scripts/map-archives.py reuse --tag "${TAG}"; then
+            echo "reused=true" >> "${GITHUB_OUTPUT}"
+          fi
+
       # docs/phase-2b.md § 6: every Region at the pin, the Tatry built twice to prove the bytes repeat.
       # The script logs the free disk after each country's cut; R9 reads it and this step's minutes.
       - name: Build every Region at the pin
+        if: steps.reuse.outputs.reused != 'true'
         run: python3 scripts/build-map-data.py --discard-extracts --check-determinism tatry
+
+      - name: Record what built the Regions
+        run: python3 scripts/map-archives.py record
 
       # bundleRelease, never assembleRelease: Play wants an AAB, and an AAB cannot be
       # adb install-ed — so the only build ever put on a phone is the one Play delivers.
@@ -139,7 +155,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name || github.ref_name }}
-        run: gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles scripts/map/MAP-DATA-LICENCE.txt --clobber
+        run: gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles scripts/map/MAP-DATA-LICENCE.txt map-data/MAP-DATA-INPUTS.txt --clobber
 
       - name: Upload to internal testing
         uses: r0adkll/upload-google-play@v1.1.5
