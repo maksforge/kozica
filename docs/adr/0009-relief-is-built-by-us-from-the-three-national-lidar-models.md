@@ -66,9 +66,11 @@ going, and the Regions' overlaps would stack two shading layers into a dark band
   same sheets. The pinned release is the copy that every release actually packs.
 - Three credits on the licences screen, a short line on the map, and no database to offer: unlike
   ODbL, none of the licences reaches the derived grid.
-- Heights mix Poland's PL-EVRF2007-NH with the Baltic heights Slovakia and Czechia use, which differ
-  by well under a metre. Invisible against 20 m contours; a later use that needs better is a new
-  decision.
+- Poland's heights mix PL-EVRF2007-NH with PL-KRON86-NH, sheet by sheet, because many of the newer
+  PL-EVRF2007-NH 1 m grids are photogrammetric (the amendment below). The KRON86 sheets are
+  Kronstadt heights, like the Baltic heights Slovakia and Czechia use, and all of them differ by
+  well under a metre. Invisible against 20 m contours; a later use that needs better is
+  a new decision.
 
 ## Amendment — 2026-10-25: what the agencies serve, and a build on the owner's PC
 
@@ -77,9 +79,12 @@ assumptions; the decision itself, the three national models built by us, stands.
 
 - **Poland's 5 m NMT is photogrammetric, not lidar.** GUGiK's sheet index marks each 5 m grid's
   source as aerial photographs, which in forest is the canopy problem this ADR exists to avoid.
-  The build takes the 1 m lidar grid for each 1:5000 sheet, which covers all but about 220 of the
-  roughly 5,300 sheets the Regions touch, and falls back to older lidar, then the 5 m grid, for
-  those, logging how many of each it used. That makes Poland about 215 GB to download.
+  The build takes the newest 1 m lidar grid for each 1:5000 sheet, which covers all but about 220
+  of the roughly 5,300 sheets the Regions touch, and falls back to the newest grid of any kind for
+  those, logging how many of each it used. GUGiK marks many of its newer PL-EVRF2007-NH 1 m grids
+  as aerial photographs too, so where those are the newest the lidar is its PL-KRON86-NH survey of
+  about 2011–15: in the Tatry, 128 sheets of 2023–25 EVRF2007 lidar and 45 of 2012 KRON86. That
+  makes Poland about 215 GB to download.
 - **Czechia's DMR 4G ships as LAZ point files**, a regular 5 m grid of points rather than a raster,
   under CC BY 4.0 ("Data poskytována pod licencí: Creative Commons CC-BY 4.0", atom.cuzk.gov.cz).
 - **Slovakia's DMR 5.0 has no sheets**: one 197 GB archive holding a single 157 GB GeoTIFF. The
@@ -96,4 +101,5 @@ nothing for a build that runs once. This is not the local build ADR-0007 rejecte
 have put a developer's machine between a release's tag and its bundle on every release; this one
 produces a pinned input, published to its own release with its hashes in `scripts/relief.pin`,
 which every release then downloads and checks, and which anyone can rebuild from the committed,
-deterministic script.
+deterministic script and the sheet lists published beside the archives: the agencies' indexes gain
+a survey year at a time, so the live ones would pick other sheets.
