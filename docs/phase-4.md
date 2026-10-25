@@ -158,18 +158,28 @@ not work per frame; C's R3 and R4 read seams and delivery, not frame time. Two t
   national model. Geofabrik's `.poly` outlines would not do: they reach past the border on purpose,
   so extracts catch what lies along it, and would keep strips of Ukraine in the Bieszczady and of
   Germany beyond the Karkonosze that the gap check would then fail on by design.
-- **Each agency's sheets, fetched by its own index.** Poland's NMT 5 m grid sheets through GUGiK's
-  WFS sheet index; Czechia's DMR 4G through ČÚZK's ATOM feed; Slovakia's DMR 5.0, published at 1 m
-  only, through ÚGKK's own index. Only sheets touching the clipped union are fetched. **Each sheet
-  is resampled onto the target grid as it arrives and then deleted**, so the disk holds the grid and
-  one sheet, not the 1 m source: Slovakia's share at 1 m would otherwise run to tens of GB. B's
-  first commit measures each source's download for the union before writing the rest, and confirms
-  ÚGKK's CC BY 4.0 on its own pages (ADR-0009).
+- **Each agency's data, fetched by its own service**, only where it touches the clipped union, and
+  **resampled onto the target grid as it arrives and then deleted**, so the disk holds small parts,
+  not the source. What each agency actually serves was read on 2026-10-25, before the script was
+  written, and differs from what this section first assumed (ADR-0009's amendment):
+  - **Poland, GUGiK NMT**: the 1:5000 sheets of its WFS sheet indexes, one layer per survey year in
+    the PL-EVRF2007-NH service and the PL-KRON86-NH one before it. Per sheet the build takes the
+    newest **1 m lidar** grid ("Skaning laserowy"), else the newest grid of any kind, and logs how
+    many of each it used. The 5 m grids are photogrammetric, not lidar, which is why they are only
+    the fallback. About 5,000 sheets of about 43 MB, roughly 215 GB.
+  - **Czechia, ČÚZK DMR 4G**: one zip per SM5 sheet from its ATOM feed, the feed's own polygons
+    picking the sheets. Each holds a LAZ 5 m point grid, read with `laspy` and laid back onto its
+    grid. About 1,500 sheets, 0.3 GB.
+  - **Slovakia, ÚGKK DMR 5.0**: published only as one 197 GB archive, so the build reads ÚGKK's
+    INSPIRE WCS instead, in 5 km squares at 5 m. Its heights are ellipsoidal, so each is corrected
+    to Slovakia's Baltic heights with ÚGKK's own grid, pinned by hash: H = h − N, read at Kriváň as
+    2537.22 − 42.92 = 2494.30 m against the summit's 2494.7 m. About 0.8 GB.
 - **One grid, in one projection, with no seam.** Every sheet is reprojected from its national
-  system (Poland's EPSG:2180, Slovakia's and Czechia's S-JTSK) onto Web Mercator at zoom 12's
-  resolution, about 12 m at 49° N, with bilinear resampling. Where two countries' sheets overlap at
-  a border the mean is taken. The three national height datums differ by well under a metre; the
-  build does not correct for it (§ Known gaps).
+  system (Poland's EPSG:2180, Czechia's S-JTSK, the WCS's ETRS89 / TM34) onto Web Mercator at zoom
+  12's resolution, about 12 m at 49° N, averaging the source cells under each. Heights are summed in
+  whole centimetres, so the merge gives the same bytes whatever order the parts finish in. Where two
+  countries' data overlap at a border the mean is taken. The three national height datums differ by
+  well under a metre; the build does not correct for it (§ Known gaps).
 - **The build fails on a gap.** A grid cell inside the clipped union with no value from any sheet
   stops the build, naming the Region and the cell. If one turns up, it is filled from a named source
   for that gap only, in an amendment to ADR-0009, not by a fallback added in advance.
@@ -181,11 +191,14 @@ not work per frame; C's R3 and R4 read seams and delivery, not frame time. Two t
   zoom 12, nothing below.
 - **Deterministic.** Sheets in a fixed order, fixed encoder settings, no timestamps, pinned GDAL and
   libwebp. `--check-determinism` builds twice and compares, as `build-map-data.py` does.
-- **Built once, not per release.** A `build-relief.yml` workflow, started by hand, runs the build on
-  a hosted runner, attaches both archives and a licence notice to a GitHub release of their own,
-  `relief-<date>`, and prints their hashes. `scripts/relief.pin` holds that release's tag and both
-  sha256s. Rebuilding is a decision, not a schedule: the ground does not move, and a national agency
-  publishing a new survey is the reason to.
+- **Built once, not per release, on the owner's PC.** Decided with the owner on 2026-10-25: a
+  one-time job of about 215 GB suits a home connection better than a hosted runner, whose six-hour
+  limit a single run of it would pass. The script is committed and deterministic, `--device` binds
+  its downloads to one network interface (the PC's Ethernet, not the test phone's tether), and each
+  finished sheet is kept as a part, so a stopped run resumes. Its two archives and
+  `scripts/map/RELIEF-DATA-LICENCE.txt` go to a GitHub release of their own, `relief-<date>`, and
+  `scripts/relief.pin` holds that tag and both sha256s. Rebuilding is a decision, not a schedule:
+  the ground does not move, and a national agency publishing a new survey is the reason to.
 
 ## 3. The relief on the map
 
@@ -230,7 +243,7 @@ licences screen's "Resampled, merged and traced into contours by Kozica".
   a Region's; the Layout gains the `relief/` module, `scripts/build-relief.py` and
   `scripts/relief.pin`.
 - **`RELEASING.md`**: `publish-play.yml`'s new step that downloads the pinned relief and checks its
-  hashes, with C; the hand-started `build-relief.yml` and its own `relief-<date>` releases, with B.
+  hashes, with C; the local build and its own `relief-<date>` releases, with B.
 - **`play-app-content.md`**, with C: the `dataSync` answers cover the `relief` pack as well as the
   Regions.
 - **The privacy policy** owes nothing: the relief arrives from Play, as the maps do.
@@ -251,7 +264,7 @@ the keyguard up measures nothing.
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
 | R1 | The gate: frame times of the scripted pan at zoom 11 and 13 over the Tatry, with and without the relief, all nine Regions ready | the debug build with all nine Region archives pushed to `files/regions/` and A's archives to `files/relief/`; per run, on `adb -s mnbm7hw8ivdqzx9l`: stop the app; `shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.CameraReceiver -f 0x00000020 --ef lat 49.23 --ef lon 20.0 --ef zoom <11\|13>`; stop it again; wake, `wm dismiss-keyguard`, launch, wait 10 s; `logcat -c`; 5 × (`input swipe 850 1300 250 1100 250`, 1.2 s, `input swipe 250 1100 850 1300 250`, 1.2 s); `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py`. The baseline runs with `files/relief` renamed to `files/relief-off` | 2026-10-22, test phone, debug build, the Tatry's grid cut from Mapterhorn at zoom 0–12 (13.7 MB) and contours traced from it at 20 m (0.9 MB), all nine Regions from v0.5.0's release. p95 frame time, baseline against relief: zoom 11, 19.5 / 22.4, 19.5 / 19.7 and 19.0 / 20.2 ms; zoom 13, 17.5 / 17.6, 18.1 / 17.8 and 17.5 / 17.4 ms. Median 16.4–16.7 ms throughout; no frame over 100 ms in any run; every run's 10 swipes showed exactly 9 rests, so no stall hid among them. The first zoom 11 relief run logged 173 frames against the usual 375 and did not repeat; it is kept and counted, the worst case at +15 %, and without it zoom 11 is within 6 %. **Verdict 1** |
-| R2 | Each source's download for the clipped union, and the build's peak disk and minutes | `build-relief.py`'s own log, from `build-relief.yml`'s first run | *(date)* |
+| R2 | Each source's sheets and download for the clipped union, the kinds of Polish sheet used, and the build's peak disk and hours | `build-relief.py`'s own log, from the full local run | *(date)* |
 | R3 | No seam: the shading and contours across the Polish–Slovak border in the Tatry and the Polish–Czech one in the Karkonosze | release-shaped debug build with C's archives; `adb exec-out screencap -p` at zoom 13 over each | *(date)* |
 | R4 | The relief pack arrives from Play with the Regions, and the progress line counts it | C's release from the internal track, as phase 2c's R1 | *(date)* |
 | R5 | The contours against the ground: Kasprowy Wierch's summit, 1987 m, between its 1980 m contour and the next; Śnieżka's, 1603 m, between 1600 m and 1620 m | the map at zoom 14, screencap; the grid sampled at each summit by `scripts/build-relief.py --sample` | *(date)* |

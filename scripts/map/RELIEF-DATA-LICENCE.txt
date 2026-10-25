@@ -1,0 +1,16 @@
+Kozica relief data
+
+relief.pmtiles (a height grid) and contours.pmtiles (contour lines traced from
+it) were built by scripts/build-relief.py from these terrain models, each
+resampled, merged and converted by Kozica:
+
+- Poland: Numeryczny Model Terenu, source: Główny Urząd Geodezji i Kartografii
+  (GUGiK), https://www.geoportal.gov.pl/pl/dane/numeryczny-model-terenu-nmt/
+- Slovakia: DMR 5.0, source: ÚGKK SR, licensed under Creative Commons
+  Attribution 4.0, https://creativecommons.org/licenses/by/4.0/
+  Heights converted with ÚGKK SR's ETRS89 to Baltic 1957 grid, also CC BY 4.0.
+- Czechia: DMR 4G, source: ČÚZK, licensed under Creative Commons Attribution
+  4.0, https://creativecommons.org/licenses/by/4.0/
+
+This notice covers the relief data only. The app's source code is not covered
+by it.
