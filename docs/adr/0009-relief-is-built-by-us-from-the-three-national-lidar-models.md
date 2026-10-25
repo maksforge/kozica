@@ -105,3 +105,13 @@ produces a pinned input, published to its own release with its hashes in `script
 which every release then downloads and checks, and which anyone can rebuild from the committed,
 deterministic script and the sheet lists published beside the archives: the agencies' indexes gain
 a survey year at a time, so the live ones would pick other sheets.
+
+## Amendment — 2026-10-25: the Rozkoš reservoir, filled from its shore
+
+The first full build failed its gap check on 7,481 cells in Sudety Środkowe: the Rozkoš reservoir
+near Česká Skalice, whose surface ČÚZK leaves out of both DMR 4G and DMR 5G. Water is not a missing
+survey but a surface a terrain model does not measure, and GUGiK's grids already carry their lakes
+at the water level. So the named source for this gap is the reservoir's own shore: the build fills
+each gap inside the reservoir's listed bounds that data surrounds at one level, the lowest tenth of
+the heights around it (the median would lift the water onto its banks), and logs the level. The list is `WATER` in `scripts/build-relief.py`; a water
+body joins it only through a gap a build has found, and every other gap still fails.
