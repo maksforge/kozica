@@ -128,6 +128,8 @@ app/src/main/java/<namespace>/
   data/backup/ export, restore, the manifest, the WAL checkpoint
   data/location/ the app's own reader of the phone's fixes; each variant wraps it in
                PositionOverride.kt
+  data/routes/ the Trail network's reader and the router (ADR-0010); each variant says where the
+               network comes from in NetworkSource.kt
   media/       MediaFiles.kt — the single path for persisting images, kind-aware
   theme/       generated palette, type scale, spacing, the night-mode window half
   ui/          Compose screens + ViewModels, one package per area; ui/map/ is Home
@@ -139,7 +141,8 @@ app/src/debug/    the developer-only build: the sample-data seeder, Settings' de
                   press on the map, Settings' "real position" row and PositionReceiver for
                   scripted readings; a relief hand-pushed to files/relief/ stands in for the
                   relief pack, ui/map/FrameLog.kt logs frame times and CameraReceiver sets the
-                  camera, for phase 4's readings
+                  camera, for phase 4's readings; a network hand-pushed to files/network/ stands in
+                  for the base assets, and RouteReceiver plans a leg and logs it, for phase 5's
 app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
                   settings, no continue button, no frame log, and the Regions, the relief and the
                   real position passed through

@@ -49,11 +49,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Install osmium and pyosmium
+      - name: Install osmium, pyosmium and Pillow
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q osmium-tool
-          pip install --user 'osmium>=4.2'
+          pip install --user 'osmium>=4.2' pillow
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       # A manual run on a branch has no release to attach to; fail before the data build.
@@ -154,7 +154,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name || github.ref_name }}
-        run: gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles scripts/map/MAP-DATA-LICENCE.txt map-data/MAP-DATA-INPUTS.txt --clobber
+        run: >-
+          gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles map-data/base-assets/trails.network
+          map-data/base-assets/places.sqlite scripts/map/MAP-DATA-LICENCE.txt scripts/map/RELIEF-DATA-LICENCE.txt
+          map-data/MAP-DATA-INPUTS.txt --clobber
 
       - name: Upload to internal testing
         uses: r0adkll/upload-google-play@v1.1.5

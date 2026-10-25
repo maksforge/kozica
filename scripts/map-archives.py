@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Reuses a release's Region archives when nothing that builds them has changed.
+"""Reuses a release's Region archives, Trail network and name index when nothing that builds them changed.
 
     python3 scripts/map-archives.py reuse    # exit 0: installed; otherwise build them
     python3 scripts/map-archives.py record   # writes map-data/MAP-DATA-INPUTS.txt
 
 The record names every input of build-map-data.py by its sha256, the tools by their versions, and
-every installed archive by its sha256. It is attached to each version's release beside the archives,
+every installed archive and base file by its sha256. It is attached to each version's release beside the archives,
 so a later run whose inputs read the same downloads those archives instead of building them
 (ADR-0007's 2026-10-25 amendment).
 """
@@ -16,6 +16,7 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -23,9 +24,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 RECORD = ROOT / "map-data" / "MAP-DATA-INPUTS.txt"
 DOWNLOADS = ROOT / "map-data" / "reused"
+BASE_ASSETS = ROOT / "map-data" / "base-assets"
+BASE_FILES = ("trails.network", "places.sqlite")
 INPUTS = [
     "scripts/build-map-data.py",
+    "scripts/build-network.py",
     "scripts/osm-data.pin",
+    "scripts/relief.pin",
     "scripts/map/KozicaProfile.java",
     *sorted(str(path.relative_to(ROOT)) for path in (ROOT / "scripts/regions").glob("*.poly")),
 ]
@@ -48,19 +53,29 @@ def first_line(*command: str) -> str:
     return (result.stdout or result.stderr).splitlines()[0].strip()
 
 
-def pyosmium() -> str:
+def version(package: str) -> str:
     try:
-        return importlib.metadata.version("osmium")
+        return importlib.metadata.version(package)
     except importlib.metadata.PackageNotFoundError:
         return "absent"
+
+
+def webp() -> str:
+    try:
+        from PIL import features
+    except ImportError:
+        return "absent"
+    return features.version("webp") or "absent"
 
 
 def inputs() -> list[str]:
     return [
         *(f"input {sha256(ROOT / path)} {path}" for path in INPUTS),
         f"tool osmium-tool {first_line('osmium', '--version')}",
-        f"tool pyosmium {pyosmium()}",
+        f"tool pyosmium {version('osmium')}",
         f"tool java {first_line('java', '-version')}",
+        f"tool sqlite {sqlite3.sqlite_version}",
+        f"tool pillow {version('pillow')} libwebp {webp()}",
     ]
 
 
@@ -68,8 +83,10 @@ def regions() -> list[str]:
     return sorted(path.stem for path in (ROOT / "scripts/regions").glob("*.poly"))
 
 
-def archive(region: str) -> Path:
-    return ROOT / f"region_{region}/src/main/assets/{region}.pmtiles"
+def outputs() -> dict[str, Path]:
+    """Each file the build installs, by the name it is published under."""
+    archives = {f"{region}.pmtiles": ROOT / f"region_{region}/src/main/assets/{region}.pmtiles" for region in regions()}
+    return archives | {name: BASE_ASSETS / name for name in BASE_FILES}
 
 
 def gh(*args: str) -> str:
@@ -104,28 +121,29 @@ def reuse() -> bool:
         log(f"inputs differ from {source}'s; building. Lines in only one of the two:\n  " + "\n  ".join(changed))
         return False
     expected = {name: digest for _, digest, name in (line.split() for line in lines if line.startswith("archive "))}
-    if sorted(expected) != [f"{region}.pmtiles" for region in regions()]:
-        log(f"{source}'s record names other archives than the Regions; building")
+    targets = outputs()
+    if sorted(expected) != sorted(targets):
+        log(f"{source}'s record names other files than this build installs; building")
         return False
-    gh("release", "download", source, "--pattern", "*.pmtiles", "--dir", str(DOWNLOADS), "--clobber")
+    for name in expected:
+        gh("release", "download", source, "--pattern", name, "--dir", str(DOWNLOADS), "--clobber")
     for name, digest in expected.items():
         if sha256(DOWNLOADS / name) != digest:
             log(f"{source}'s {name} does not match its record; building")
             return False
-    for region in regions():
-        target = archive(region)
+    for name, target in targets.items():
         target.parent.mkdir(parents=True, exist_ok=True)
-        (DOWNLOADS / f"{region}.pmtiles").replace(target)
-    log(f"inputs match {source}'s; installed its {len(expected)} archives")
+        (DOWNLOADS / name).replace(target)
+    log(f"inputs match {source}'s; installed its {len(expected)} files")
     return True
 
 
 def record() -> None:
-    missing = [str(archive(region)) for region in regions() if not archive(region).is_file()]
+    missing = [str(path) for path in outputs().values() if not path.is_file()]
     if missing:
-        sys.exit(f"map-archives: no archive at {', '.join(missing)}")
+        sys.exit(f"map-archives: nothing at {', '.join(missing)}")
     RECORD.parent.mkdir(parents=True, exist_ok=True)
-    archives = [f"archive {sha256(archive(region))} {region}.pmtiles" for region in regions()]
+    archives = [f"archive {sha256(path)} {name}" for name, path in sorted(outputs().items())]
     RECORD.write_text("\n".join([*inputs(), *archives]) + "\n")
     log(f"wrote {RECORD}")
 

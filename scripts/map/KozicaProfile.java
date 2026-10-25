@@ -8,6 +8,8 @@ import com.onthegomap.planetiler.reader.osm.OsmElement;
 import com.onthegomap.planetiler.reader.osm.OsmReader;
 import com.onthegomap.planetiler.reader.osm.OsmRelationInfo;
 import com.onthegomap.planetiler.reader.osm.OsmSourceFeature;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -51,14 +53,20 @@ public class KozicaProfile implements Profile {
       Comparator.comparingInt((Trail trail) -> colourRank(trail.colour())).thenComparingLong(Trail::id);
 
   private final Map<Long, long[]> wayEnds = new ConcurrentHashMap<>();
+  private final Set<Long> trailWays = ConcurrentHashMap.newKeySet();
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     var arguments = Arguments.fromArgs(args);
+    var profile = new KozicaProfile();
+    var trailWaysPath = arguments.file("trail_ways", "where to list every Trail's way ids, for the network", null);
     Planetiler.create(arguments)
-        .setProfile(new KozicaProfile())
+        .setProfile(profile)
         .addOsmSource("osm", arguments.inputFile("osm_path", "the Region's cut", Path.of("region.osm.pbf")))
         .overwriteOutput(Path.of("region.pmtiles"))
         .run();
+    if (trailWaysPath != null) {
+      Files.write(trailWaysPath, new TreeSet<>(profile.trailWays).stream().map(String::valueOf).toList());
+    }
   }
 
   @Override
@@ -72,7 +80,11 @@ public class KozicaProfile implements Profile {
   @Override
   public List<OsmRelationInfo> preprocessOsmRelation(OsmElement.Relation relation) {
     if (relation.hasTag("type", "route") && relation.hasTag("route", "hiking")) {
-      return List.of(trailOf(relation));
+      var trail = trailOf(relation);
+      for (var way : trail.ways()) {
+        trailWays.add(way);
+      }
+      return List.of(trail);
     }
     var kind = boundaryKind(relation);
     return kind == null ? null : List.of(new Boundary(relation.id(), kind));

@@ -88,6 +88,10 @@ jobs:
       - name: Notes gate
         run: python3 scripts/notes-gate.py
 
+      # It also holds the committed network fixture to what the build's writer writes today.
+      - name: Network build tests
+        run: python3 -m unittest scripts/test_build_network.py
+
       - name: Build debug APK
         run: ./gradlew assembleDebug
 

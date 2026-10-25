@@ -126,9 +126,24 @@ nothing has explored the whole component, so its time measures something else.
 Verdict 3 stands beside either of the others: a format that is fast but too big is still rethought,
 and when 2 and 3 both hold, one rethink answers both.
 
-### The verdict, taken *(date)*
+### The verdict, taken 2026-10-25
 
-*(Which one, the reading behind it.)*
+**Verdict 1: B goes ahead on this format.** On the test phone, from the base assets of a
+`-PmapPacks` debug build and from a cold start, three runs each: the network loads in 190 ms and its
+grid index builds in 353 ms, once per process; a leg then takes 54–58 ms to find its joins and
+88–112 ms to search, so about 150 ms from Kuźnice to Łysa Polana and 165 ms from Zakopane to Turbacz.
+The files are 13.1 MB and 6.1 MB, 19.2 MB together: 62,930 junctions, 65,851 edges, 942,167 points
+and 49,117 places at the pin, each built twice to the same bytes.
+
+Both Routes follow drawn Trails end to end, drawn over the network to check. What neither verdict
+anticipated: the first Kuźnice → Łysa Polana took 54 km and 20 hours through Slovakia, the network
+being right and the rule wrong. No Trail covers the 1.5 km of road from Palenica Białczańska to the
+border, so the nearest Trail to Łysa Polana is the Slovak one; § 3's joining rule, decided with the
+owner that evening, answers it, and the same leg is now 14.4 km and 5½ hours by the Polish Trails,
+ending 1.1 km from Łysa Polana at Palenica. Zakopane → Turbacz is 53 km, the way the Trails cross
+Podhale. Two things changed under the reading: a first scan of every segment took 330 ms to snap
+two points, which the grid index replaced, and storing the 30 m resampling the climb is computed
+from cost 3 MB, so only OSM's own nodes are stored.
 
 ## 2. The network and the name index
 
@@ -169,7 +184,9 @@ and when 2 and 3 both hold, one rethink answers both.
 - **Build output, never committed**, like the archives. `build-map-data.py` writes both to
   `map-data/base-assets/`, which is gitignored, and the base module takes that directory as an
   assets source only under `-PmapPacks`, which fails at configuration when either file is missing,
-  as it does for an archive. Without it (`ci.yml`'s `assembleDebug`, a local debug build) the debug
+  as it does for an archive. The module takes it from C on, when search and planning first read
+  the files; A builds, records and publishes them, and its gate read them from a build that took
+  them early, so no release carries 19 MB nothing reads. Without it (`ci.yml`'s `assembleDebug`, a local debug build) the debug
   half reads a copy hand-pushed to `files/network/`, as `RegionSource` does for an archive; with
   neither, search and planning say they are not in this build and the map works as before: a
   placeholder, never a crash.
@@ -190,9 +207,15 @@ and when 2 and 3 both hold, one rethink answers both.
 - **A Route** is a start, an end and via points in the user's order. Each leg is the shortest
   walking time between its two points over the network; A* with the straight-line distance at 4 km/h
   as its heuristic, which never overestimates, since no walking time is faster than the flat.
-- **Snapping.** A point is joined to the nearest point on any Trail, on the edge itself rather than
-  only at a node. The sheet shows the distance from the point to where the Route starts when it is
-  over 50 m.
+- **Joining the Trails.** A point is joined to a Trail on the edge itself rather than only at a node,
+  and not always the nearest one: every Trail within 1.5 km is a candidate, and the leg takes the
+  join that makes it shortest, counting the walk from the point to the Trail at 4 km/h. Decided with
+  the owner on 2026-10-25, when the gate's first Route from Kuźnice to Łysa Polana took 20 hours
+  through Slovakia: no Trail covers the 1.5 km of road from Palenica Białczańska to the border, so
+  the nearest Trail to Łysa Polana is the Slovak one. While the join is chosen that walk counts ten
+  times, so a farther Trail wins only for a much shorter Route and the walk is never a shortcut
+  across country; the leg's time counts it once. The off-Trail stretch is drawn dashed, never as a
+  Trail, and the sheet shows its length when it is over 50 m.
 - **One-way Trails** are never walked against their direction, read as the OSM wiki's *Key:oneway*
   reads them for walkers: `oneway:foot` (or `foot:backward`/`foot:forward=no`) wherever it is set,
   and it wins; otherwise `oneway=yes` or `-1` only on `highway=path`, `footway`, `steps` and
@@ -260,7 +283,7 @@ Copy: "Map", "Routes", "No saved routes yet", "Rename", "Delete route", "Delete 
 
 - **The walking-time rule** for a flat edge, a climb, a gentle descent and a steep one, and the
   rounding up to 5 minutes of a sum, not of each part.
-- **The dead band**: a sawtooth of ±3 m over a flat kilometre adds no ascent; a steady climb of 100
+- **The dead band**: a sawtooth of ±2 m (a 4 m swing, inside the 5 m band) over a flat kilometre adds no ascent; a steady climb of 100
   m adds 100.
 - **A\*** on a small hand-built network: the shortest-time leg, a one-way edge refused against its
   direction and taken with it, and a leg with no way.
@@ -316,7 +339,7 @@ notes).
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: both Routes found and plausible (§ 1), then load time, plan time and nodes visited for Kuźnice → Łysa Polana and Zakopane → Turbacz; the two files' sizes | debug build, both files hand-pushed to `files/network/`; cold start; `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.RouteReceiver -f 0x00000020 --es from <lat,lon> --es to <lat,lon>`; `adb logcat -d -s KozicaRoute`; `ls -l` of both files in the build | *(date)* |
+| R1 | The gate: both Routes found and plausible (§ 1), then load time, plan time and nodes visited for Kuźnice → Łysa Polana and Zakopane → Turbacz; the two files' sizes | debug build, both files hand-pushed to `files/network/`; cold start; `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.RouteReceiver -f 0x00000020 --es from <lat,lon> --es to <lat,lon>`; `adb logcat -d -s KozicaRoute`; `ls -l` of both files in the build | 2026-10-25, test phone, `-PmapPacks` debug build reading its base assets (`files/network/` removed), Kuźnice 49.2700,19.9805 → Łysa Polana 49.2589,20.1170 and Zakopane 49.2950,19.9500 → Turbacz 49.5431,20.1114, three cold starts each: load 190 ms, index 352–356 ms, joins 53–58 ms, search 88–96 ms (496 nodes, 14.4 km, 328 min) and 111–112 ms (1,383 nodes, 53.0 km, 921 min). `trails.network` 13,080,136 bytes, `places.sqlite` 6,148,096. Both Routes drawn over the network follow its Trails. **Verdict 1** (§ 1) |
 | R2 | Our walking times against the signposts: five Trail sections in the Beskidy and five in the Tatry, each signpost's time beside ours | photographed or published signpost times; `RouteReceiver` for each section | *(date)* |
 | R3 | Orla Perć: a Route from Zawrat to Kozi Wierch takes it; one from Kozi Wierch to Zawrat does not | `RouteReceiver` both ways; the logged edges | *(date)* |
 | R4 | Search: "gerlach", "snieznik", "morskie oko", "polana" near Turbacz; the first results and their order. "polana" expects the clearings around Turbacz (§ 2) among the first results, whether their kind is clearing or place, with any other place whose name holds the word; those starting with it first, each group nearest Turbacz first | the release-shaped debug build, typed on the phone; screencap | *(date)* |
