@@ -287,7 +287,7 @@ def gugik_index(area) -> list[Sheet]:
                     break
                 start += 5000
             log(f"index pl {service[-7:]} {year}: {len(found)} sheets so far")
-    sheets = [max(entries)[1] for _, entries in sorted(found.items())]
+    sheets = [max(entries, key=lambda e: (e[0], e[1].url))[1] for _, entries in sorted(found.items())]
     cache.write_text(json.dumps([s.__dict__ for s in sheets]))
     return sheets
 
