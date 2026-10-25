@@ -26,9 +26,10 @@ the user's own all move to phase 6.
 
 ## 0. What this phase inherits
 
-- **The Trails are already built from the pinned OSM data** (phase 2's `trails` layer: each
-  `route=hiking` relation's member ways with `colour` or `osmc:symbol`). The network is the same
-  ways, so a Route can only follow what the map draws as a Trail.
+- **The Trails are already built from the pinned OSM data** (phase 2's `trails` layer: every
+  `route=hiking` relation's member ways, those with neither `colour` nor `osmc:symbol` drawn in the
+  fallback colour). The network is the same ways, taken from the profile rather than filtered a
+  second time (§ 2), so a Route can only follow what the map draws as a Trail.
 - **Regions overlap by a few kilometres** (phase 2b § 4), and Trails cross from one Region into the
   next. A network per Region would cut every such Trail at a boundary; one network for all nine has
   no boundary to cut.
@@ -43,7 +44,7 @@ the user's own all move to phase 6.
   `MIGRATION_1_2` replaces, and every tester's database is carried forward by it. This is the first
   schema bump since the door, so the whole standing gate applies (`DOD.md`).
 - **The debug build's long-press** sets a fake position (`app/src/debug/`, `PositionOverride.kt`).
-  Planning takes the long-press in `main/`, so the debug override moves.
+  Planning takes the long-press in `main/`, so the override keeps only `PositionReceiver` (§ 4).
 
 ## What is in, and what is deliberately not
 
@@ -110,11 +111,20 @@ at the first planning after a cold start?
 
 ### The verdicts, decided now rather than argued about later
 
+**No timing counts until both Routes are found and plausible**: each one's logged edges follow the
+Trails the map draws between its ends, with no gap jumped and no detour a signpost would not send a
+walker on. A Route not found or plainly wrong means the network is fixed first (a junction not
+split, the Regions' overlap joined twice or not at all) and A is read again: an A* that finds
+nothing has explored the whole component, so its time measures something else.
+
 1. **Both Routes in under 500 ms, the network loaded in under 2 s** → B goes ahead on this format.
 2. **Over 500 ms, or a load over 2 s** → the format is rethought before B (contracting the network
    to junctions only, with the geometry read per edge on demand), and A is read again.
 3. **The files together over 30 MB** → the network keeps junctions and simplified geometry only, and
    the gate is read again.
+
+Verdict 3 stands beside either of the others: a format that is fast but too big is still rethought,
+and when 2 and 3 both hold, one rethink answers both.
 
 ### The verdict, taken *(date)*
 
@@ -124,10 +134,12 @@ at the first planning after a cold start?
 
 - **`trails.network`**: every way that the map draws as a Trail, from the union of the nine
   Regions, each way once by its OSM id, split at every junction and every point where another Trail
-  joins. Nodes carry a position and a height; edges carry their geometry, length, the walking time
-  each way (§ 3), the ascent and descent each way, the `sac_scale` grade, and whether OSM marks them
-  `oneway=yes`. A compact little-endian binary with a format version in its header, loaded whole
-  into memory; A's verdict confirms that or replaces it.
+  joins. The ways are the ones `KozicaProfile.java` lists for its `route=hiking` relations, written
+  beside each Region's archive, so the rule stays written once; their tags and nodes are read from
+  the merged cut. Nodes carry a position and a height; edges carry their geometry, length, the
+  walking time each way (§ 3), the ascent and descent each way, the `sac_scale` grade, and their
+  one-way direction, if any, by § 3's rule. A compact little-endian binary with a format version in
+  its header, loaded whole into memory; A's verdict confirms that or replaces it.
 - **Heights are sampled at build time** from the pinned `relief.pmtiles`, which `fetch-relief.py`
   already puts in the build before the map data. The phone never decodes a relief tile to plan: the
   network carries the heights, so the profile and the ascent are the grid's numbers, read once,
@@ -138,16 +150,34 @@ at the first planning after a cold start?
   26). Folding is done in the build and again on the phone, by one rule written twice and tested
   twice: lower case, accents off, and the letters no decomposition reaches (`ł`, `đ`, `ß`) mapped by
   hand.
-- **Kinds searched:** peaks, passes, Huts, Shelters, viewpoints, towns and villages, lakes and other
-  named water. The tags behind each are the ones the `pois` and `places` layers already read.
+- **Kinds searched, and the tags behind each:** peaks (`natural=peak`), passes (`natural=saddle`,
+  `mountain_pass=yes`), Huts (`tourism=alpine_hut`), Shelters (`tourism=wilderness_hut`, or
+  `amenity=shelter` that is not a bus shelter) and viewpoints (`tourism=viewpoint`), as the `pois`
+  layer reads them; towns, villages and hamlets (`place=town|village|hamlet`), as the `places` layer
+  does; and lakes and other named water (`natural=water` with a `name`, at a point on its surface),
+  which no layer reads, since the `water` layer carries no name. Clearings (*polana*, *hala*:
+  `place=locality`, a named `natural=grassland` or `landuse=meadow`) are not a kind searched.
 - **Shipped in the app**, in the base module's assets, not as a pack: both are small, both are
   needed the moment the map opens, and both change only when the pin does, which is a release
   anyway. ADR-0010.
+- **Build output, never committed**, like the archives. `build-map-data.py` writes both to
+  `map-data/base-assets/`, which is gitignored, and the base module takes that directory as an
+  assets source only under `-PmapPacks`, which fails at configuration when either file is missing,
+  as it does for an archive. Without it (`ci.yml`'s `assembleDebug`, a local debug build) the debug
+  half reads a copy hand-pushed to `files/network/`, as `RegionSource` does for an archive; with
+  neither, search and planning say they are not in this build and the map works as before: a
+  placeholder, never a crash.
 - **They join the map record.** `scripts/map-archives.py` adds `scripts/relief.pin` to its inputs
-  (the heights now come from it) and both files to its outputs, so a reused release installs the
-  last version's network and index with its archives, or builds all of them.
-- **They join the ODbL offer.** `publish-play.yml` attaches both to the GitHub release beside the
-  `.pmtiles`, and `scripts/map/MAP-DATA-LICENCE.txt` names them.
+  (the heights now come from it), the versions of SQLite and of the WebP decoder to its tool lines
+  (SQLite writes its own version into bytes 96–99 of every file it writes), and both files to its
+  outputs, so a reused release installs the last version's network and index with its archives, or
+  builds all of them. `--check-determinism` writes both a second time and compares the bytes, as it
+  does the Tatry's archive; they are small, so it costs seconds.
+- **They join the published data.** `publish-play.yml` attaches both to the GitHub release beside
+  the `.pmtiles`, and `scripts/map/MAP-DATA-LICENCE.txt` names them under ODbL. The network's heights
+  are the relief's (ADR-0009's sources, CC BY 4.0 and GUGiK's credit), so
+  `scripts/map/RELIEF-DATA-LICENCE.txt` is attached with them and names the network beside the two
+  relief archives.
 
 ## 3. The router
 
@@ -157,8 +187,11 @@ at the first planning after a cold start?
 - **Snapping.** A point is joined to the nearest point on any Trail, on the edge itself rather than
   only at a node. The sheet shows the distance from the point to where the Route starts when it is
   over 50 m.
-- **One-way Trails** are never walked against their direction. A leg that has no other way says so
-  rather than drawing one.
+- **One-way Trails** are never walked against their direction, read as the OSM wiki's *Key:oneway*
+  reads them for walkers: `oneway:foot` (or `foot:backward`/`foot:forward=no`) wherever it is set,
+  and it wins; otherwise `oneway=yes` or `-1` only on `highway=path`, `footway`, `steps` and
+  `via_ferrata`, and never on a road or a track, where it binds vehicles only. `-1` is against the
+  way's drawn direction. A leg that has no other way says so rather than drawing one.
 - **Walking time**, per edge and each way, by the PTTK marker's rule (decided with the owner on
   2026-10-25, the best-sourced match for Polish signposts; no trail body publishes its own): **4 km/h
   on the flat, plus 10 minutes per 100 m of ascent, plus 5 minutes per 100 m of descent where the
@@ -186,13 +219,14 @@ at the first planning after a cold start?
   opacity in the style; nothing is hidden, so the colours at a junction still match the signpost.
 - **The bottom sheet**: length, ascent, descent, walking time; each point with the time to it; the
   elevation profile against distance; the difficulty warnings; Reverse and Save.
-- **The debug position override** moves off the long-press to its existing Settings row and
-  `PositionReceiver`.
+- **The debug position override** gives the long-press to planning. `PositionReceiver` becomes the
+  only way to set a position, as every scripted reading already sets it; the Settings row still
+  returns the map to the real one.
 
 Copy, in English (Polish and the other shipped languages by the translation gate): "Search places",
 "Start", "End", "Via %1$s", "Reverse", "Save route", "%1$s from the nearest Trail", "No way over the
 Trails between %1$s and %2$s", "Includes a demanding stretch: %1$s", "Ascent", "Descent", "Walking
-time", and the kind names (peak, pass, hut, shelter, viewpoint, town, village, lake).
+time", and the kind names (peak, pass, hut, shelter, viewpoint, town, village, hamlet, lake).
 
 ## 5. Saved Routes and the tab bar
 
@@ -235,14 +269,24 @@ Copy: "Map", "Routes", "No saved routes yet", "Rename", "Delete route", "Delete 
 - **`PLAN.md`**: this phase's paragraph and phase 6's, and the status line when it closes.
 - **`CONTEXT.md`**: **Route** (added while this file was planned).
 - **ADR-0010**, new.
+- **ADR-0007**: an amendment, since its 2026-10-25 record gains the relief pin, SQLite's and the
+  WebP decoder's versions and the two files, and its ODbL offer is no longer the archives alone.
+- **ADR-0009**: its Context's "from one height grid on the phone" points to ADR-0010, which samples
+  the grid in the build.
+- **`phase-2b.md` § 6**: the offer attaches the network and the index too.
+- **`DOD.md`**: "Drop the dormant `items` table" is ticked when D merges.
 - **`CLAUDE.md`**: the ODbL house rule's list of what the release attaches; the stack table's
-  routing line; the layout's `data/routes/`.
+  routing line; the layout's `data/routes/`; the `app/src/debug/` paragraph, which loses the long
+  press and gains `RouteReceiver` and the hand-pushed `files/network/`.
 - **`scripts/map/MAP-DATA-LICENCE.txt`**: the network and the name index.
+- **`scripts/map/RELIEF-DATA-LICENCE.txt`**: the network, whose heights it covers too.
 - **`docs/privacy-policy.md`**: what the app keeps now includes saved Routes, on the phone and in
   Android's backup.
 - **`docs/play-app-content.md`**: the Data safety reasoning gains the Routes table; still no data
   collected, as with the preferences file.
-- **`docs/RELEASING.md`**: what the publish run attaches.
+- **`docs/RELEASING.md`**: what the publish run attaches; and § *Why internal*, whose "an
+  internal-track install demands an uninstall" phase 2c's R2 disproved: 0.3.0 from the internal
+  track updated in place to 0.6.0.
 
 ## Known gaps, deliberately
 
@@ -258,13 +302,16 @@ Copy: "Map", "Routes", "No saved routes yet", "Rename", "Delete route", "Delete 
 ## Readings
 
 `PLAN.md` rule 3. The test phone (`mnbm7hw8ivdqzx9l`) unless named; its keyguard cleared with `wm
-dismiss-keyguard` before any screencap.
+dismiss-keyguard` before any screencap. A cold-started package is stopped, so every `RouteReceiver`
+broadcast passes `-f 0x00000020`, as `PositionReceiver`'s does, and autostart, which lapses on its
+own on both Xiaomi phones, is read with `scripts/device-gate.py` first (CLAUDE.md § Environment
+notes).
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: load time, plan time and nodes visited for Kuźnice → Łysa Polana and Zakopane → Turbacz; the two files' sizes | debug build; cold start; `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.RouteReceiver --es from <lat,lon> --es to <lat,lon>`; `adb logcat -d -s KozicaRoute`; `ls -l` of both files in the build | *(date)* |
+| R1 | The gate: both Routes found and plausible (§ 1), then load time, plan time and nodes visited for Kuźnice → Łysa Polana and Zakopane → Turbacz; the two files' sizes | debug build, both files hand-pushed to `files/network/`; cold start; `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.RouteReceiver -f 0x00000020 --es from <lat,lon> --es to <lat,lon>`; `adb logcat -d -s KozicaRoute`; `ls -l` of both files in the build | *(date)* |
 | R2 | Our walking times against the signposts: five Trail sections in the Beskidy and five in the Tatry, each signpost's time beside ours | photographed or published signpost times; `RouteReceiver` for each section | *(date)* |
 | R3 | Orla Perć: a Route from Zawrat to Kozi Wierch takes it; one from Kozi Wierch to Zawrat does not | `RouteReceiver` both ways; the logged edges | *(date)* |
-| R4 | Search: "gerlach", "snieznik", "morskie oko", "polana" near Turbacz; the first results and their order | the release-shaped debug build, typed on the phone; screencap | *(date)* |
+| R4 | Search: "gerlach", "snieznik", "morskie oko", "polana" near Turbacz; the first results and their order. Clearings are not a kind (§ 2), so "polana" expects only places of the searched kinds whose names hold the word, those starting with it first, each group nearest Turbacz first | the release-shaped debug build, typed on the phone; screencap | *(date)* |
 | R5 | The Route on the map: Kuźnice → Morskie Oko via Zawrat drawn with the rest faded, the sheet's numbers and profile, light and dark | screencap of each | *(date)* |
-| R6 | The upgrade, both ways it reaches a phone: `main` before D as `assembleDebug -PreleaseShapedDebug`, opened; D's the same way over it, opened past the launch gate; a Route saved, the app killed and reopened; then D's release from the internal track over 0.7.0 from Play, opened | `adb install -r` of each APK, `am force-stop`, launch, screencap of the Routes tab; Play's install for the last step | *(date)* |
+| R6 | The upgrade, both ways it reaches a phone: `main` before D as `assembleDebug -PreleaseShapedDebug`, opened; D's the same way over it, opened past the launch gate; a Route saved, the app killed and reopened; then D's release from the internal track over 0.7.0 from Play, updated in place as phase 2c's R2 was, opened | `adb install -r` of each APK, `am force-stop`, launch, screencap of the Routes tab; Play's install for the last step | *(date)* |
