@@ -132,9 +132,19 @@ with no relief drawn, and the gate measures what the relief adds, not those.
    by `build-relief.yml`, once, beside the height grid and pinned with it, and the grid still
    shipped, undrawn, for phase 5. This file is rewritten before B starts.
 
-### The verdict, taken *(date)*
+### The verdict, taken 2026-10-22
 
-*(Which one, the reading behind it, and anything it found that neither verdict anticipated.)*
+**Verdict 1** (R1): with the relief drawn over all nine Regions, the test phone's p95 frame time
+stays within 15 % of the baseline at zoom 11 and level with it at zoom 13, and no frame in any run
+passed 100 ms. B and C go ahead as planned. Two things the verdicts did not anticipate:
+
+- **The relief runs render fewer frames per swipe at zoom 13**, about 37 against 49–58, at the
+  same 16.7 ms each. It is not a weaker fling: one swipe from the same camera ends on the same view
+  with and without the relief. The baseline keeps rendering after the motion has stopped, and
+  frame time does not count that.
+- **The shading is too heavy** in steep ground with the gate's throwaway colours and exaggeration
+  0.5: the Tatry's north faces go nearly black under the Trails. That is C's style work, read again
+  in C's own screenshots, not a gate result.
 
 ## 2. The relief build
 
@@ -237,7 +247,7 @@ the keyguard up measures nothing.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: frame times of the scripted pan at zoom 11 and 13 over the Tatry, with and without the relief, all nine Regions ready | the debug build with all nine Region archives pushed to `files/regions/` and A's archives to `files/relief/`; `adb -s mnbm7hw8ivdqzx9l shell input swipe …` ×10 per zoom per run, the baseline run then the relief run; `adb -s mnbm7hw8ivdqzx9l logcat -d -s KozicaFrames` | *(date)* |
+| R1 | The gate: frame times of the scripted pan at zoom 11 and 13 over the Tatry, with and without the relief, all nine Regions ready | the debug build with all nine Region archives pushed to `files/regions/` and A's archives to `files/relief/`; `adb -s mnbm7hw8ivdqzx9l shell input swipe …` ×10 per zoom per run, the baseline run then the relief run; `adb -s mnbm7hw8ivdqzx9l logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py`; the camera set by the debug `CameraReceiver` before each cold start | 2026-10-22, test phone, debug build, the Tatry's grid cut from Mapterhorn at zoom 0–12 (13.7 MB) and contours traced from it at 20 m (0.9 MB), all nine Regions from v0.5.0's release. p95 frame time, baseline against relief: zoom 11, 19.5 / 22.4, 19.5 / 19.7 and 19.0 / 20.2 ms; zoom 13, 17.5 / 17.6, 18.1 / 17.8 and 17.5 / 17.4 ms. Median 16.4–16.7 ms throughout; no frame over 100 ms in any run; every run's 10 swipes showed exactly 9 rests, so no stall hid among them. The first zoom 11 relief run logged 173 frames against the usual 375 and did not repeat. **Verdict 1** |
 | R2 | Each source's download for the clipped union, and the build's peak disk and minutes | `build-relief.py`'s own log, from `build-relief.yml`'s first run | *(date)* |
 | R3 | No seam: the shading and contours across the Polish–Slovak border in the Tatry and the Polish–Czech one in the Karkonosze | release-shaped debug build with C's archives; `adb exec-out screencap -p` at zoom 13 over each | *(date)* |
 | R4 | The relief pack arrives from Play with the Regions, and the progress line counts it | C's release from the internal track, as phase 2c's R1 | *(date)* |
