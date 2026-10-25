@@ -27,7 +27,7 @@ Three scripts read this file, so its headings are load-bearing:
 | Phone screenshots | [`art/play-screenshots/`](../art/play-screenshots/) — captured by `scripts/screenshots.py`, padded by `art/pad-screenshot.py`. Upload in filename order; the numeric prefix *is* the upload position |
 | App category | Maps & Navigation — the map is the app; not Travel & Local, which is about bookings and guides, and not Health & Fitness, whose claims `play-app-content.md` keeps out of the listing |
 | Contact email | `kozica.support@maksforge.com` — the **per-app** support address, set in Store settings. Not the account-level developer email, which is public on every app you own |
-| Website | `https://maksforge.com/kozica/` — switched in the Console on 2026-10-25; before that it was `https://maksforge.github.io/kozica/`, which still redirects here |
+| Website | `https://maksforge.com/kozica/` — switched in the Console on 2026-10-25; before that it was `https://srednimax.github.io/kozica/`, which still forwards here. The `https://maksforge.github.io/kozica/` this file gave before never reached the Console |
 
 ## English (default listing language)
 
