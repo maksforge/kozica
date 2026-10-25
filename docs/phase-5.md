@@ -158,8 +158,8 @@ and when 2 and 3 both hold, one rethink answers both.
   does; and lakes and other named water (`natural=water` with a `name`, at a point on its surface),
   which no layer reads, since the `water` layer carries no name; and clearings, *polana* and *hala*
   (`place=locality`, and a named `natural=grassland` or `landuse=meadow` at a point on its surface,
-  as the `pois` and `places` layers place an area), which the `land` layer draws without a name;
-  decided with the owner on 2026-10-25.
+  as the `pois` and `places` layers place an area), which no layer names, since `places` stops at
+  hamlets and the `land` layer carries no name; decided with the owner on 2026-10-25.
 - **Shipped in the app**, in the base module's assets, not as a pack: both are small, both are
   needed the moment the map opens, and both change only when the pin does, which is a release
   anyway. ADR-0010.
