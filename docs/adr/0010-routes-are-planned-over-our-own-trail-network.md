@@ -21,8 +21,9 @@ same step. **One network for all Regions**, so no Trail is cut at a Region's edg
 
 **Both files ship in the app's base module**, not in a pack: they are a few megabytes, needed the
 moment the map opens, and change only when the pin moves, which is a release anyway. They are
-attached to each release under ODbL with the archives, and they join `scripts/map-archives.py`'s
-record, with `scripts/relief.pin` among its inputs.
+attached to each release with the archives, under ODbL and, for the network's heights, the relief's
+licence, and they join `scripts/map-archives.py`'s record, with `scripts/relief.pin` among its
+inputs.
 
 Decided with the owner on 2026-10-25, while phase 5 was planned.
 
@@ -33,9 +34,16 @@ unofficial, it is a heavy dependency for a network of Trails alone, and it bring
 its own that would be built from the same extracts anyway, by a second tool the build would have to
 pin and keep deterministic.
 
-**BRouter.** Strong for hiking and built for offline Android. It is GPL, and Kozica's code is all
-rights reserved; linking it is not an option, and handing off to the BRouter app would break the
-"one app, nothing else to install" promise.
+**BRouter.** Strong for hiking, built for offline Android, and MIT since 2019, so its engine could
+be linked into the app; handing off to the BRouter app instead would break the "one app, nothing
+else to install" promise. Linked, it loses on the build side rather than on the phone. Its segment
+files come from its own multi-stage Java map creator, a second tool to pin and prove deterministic
+beside planetiler, which takes its heights in its own raster format, so the relief would reach it
+through a conversion the contours do not go through. Its 5° tiles match neither the Regions nor one
+network. "What the map draws as a Trail" would be written a second time, in a BRouter profile that
+sees hiking relations through its own tag mapping. And the walking-time rule, applied over whatever
+it returns, and the name index would still be ours. Against that, our writer and A\* are small, over
+a network small enough to load whole. It is the nearest alternative.
 
 **A network per Region, inside each Region's pack.** It would refresh with the Region. But every
 Trail that crosses a boundary would be cut there, a Route across two Regions would need the two
