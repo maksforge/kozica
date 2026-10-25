@@ -79,12 +79,14 @@ assumptions; the decision itself, the three national models built by us, stands.
 
 - **Poland's 5 m NMT is photogrammetric, not lidar.** GUGiK's sheet index marks each 5 m grid's
   source as aerial photographs, which in forest is the canopy problem this ADR exists to avoid.
-  The build takes the newest 1 m lidar grid for each 1:5000 sheet, which covers all but about 220
-  of the roughly 5,300 sheets the Regions touch, and falls back to the newest grid of any kind for
-  those, logging how many of each it used. GUGiK marks many of its newer PL-EVRF2007-NH 1 m grids
-  as aerial photographs too, so where those are the newest the lidar is its PL-KRON86-NH survey of
-  about 2011–15: in the Tatry, 128 sheets of 2023–25 EVRF2007 lidar and 45 of 2012 KRON86. That
-  makes Poland about 215 GB to download.
+  GUGiK marks many of its newer PL-EVRF2007-NH 1 m grids as aerial photographs too, and its layers
+  name their sheets in different schemes, so one piece of ground sits under several names. The
+  build therefore chooses by ground, not by name: lidar first, 1 m before 0.5 m, the newer datum,
+  then the newer survey, each taken only where no better one covers the ground, and
+  photogrammetric heights fill only cells no lidar reaches. For the Regions that is 5,041 lidar
+  sheets, mostly 1 m PL-EVRF2007-NH of 2019–2026 with about 100 of the PL-KRON86-NH survey of
+  2012–14, and 79 photogrammetric ones ([`phase-4.md`](../phase-4.md) § 2). That makes Poland
+  about 215 GB to download.
 - **Czechia's DMR 4G ships as LAZ point files**, a regular 5 m grid of points rather than a raster,
   under CC BY 4.0 ("Data poskytována pod licencí: Creative Commons CC-BY 4.0", atom.cuzk.gov.cz).
 - **Slovakia's DMR 5.0 has no sheets**: one 197 GB archive holding a single 157 GB GeoTIFF. The
