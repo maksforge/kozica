@@ -207,11 +207,12 @@ is the commit count), check that the release exists (a manual run must pick the 
 fetch the relief `scripts/relief.pin` names and check both hashes (`fetch-relief.py`; the relief is
 built once on the owner's PC and published to its own `relief-<date>` release, ADR-0009),
 materialise the upload key from secrets, build every Region's map data at `scripts/osm-data.pin`
-with osmium and pyosmium (`build-map-data.py --discard-extracts --check-determinism tatry`, most of
-two hours, almost all of it fetching Poland's extract; nothing is cached, ADR-0007), so a bad
+with osmium and pyosmium (`build-map-data.py --discard-extracts --check-determinism tatry`, about
+40 minutes, half of it fetching Poland's extract) unless the last version's `MAP-DATA-INPUTS.txt`
+matches, when its archives are reused instead (ADR-0007's 2026-10-25 amendment), so a bad
 dispatch, a bad relief pin or a missing secret fails before it, `bundleRelease -PmapPacks`, run all four `aab-*.py`
-artifact checks, print the signing certificate, **attach the nine `.pmtiles` and
-`scripts/map/MAP-DATA-LICENCE.txt` to the GitHub release** (the ODbL offer and its notice, so it
+artifact checks, print the signing certificate, **attach the nine `.pmtiles`,
+`scripts/map/MAP-DATA-LICENCE.txt` and `MAP-DATA-INPUTS.txt` to the GitHub release** (the ODbL offer and its notice, so it
 comes before Play and a failed attach stops the run), upload the AAB **and its R8 mapping**, keep both as
 a build artifact for 90 days, delete the key. The attach is why the job has `contents: write`.
 

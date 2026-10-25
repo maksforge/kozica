@@ -232,3 +232,18 @@ What this costs: every install downloads every Region, about 275 MB before phase
 every refresh reaches every user's changed packs, not only the Regions they had chosen. The
 Consequences' "update in progress" state, the data path existing only through Play, and the 1.5 GB
 per-pack limit stand unchanged.
+
+## Amendment — 2026-10-25: a release whose inputs are unchanged reuses the last one's archives
+
+"Nothing is cached between builds" is narrowed. Three releases in a row (0.5.0 to 0.7.0) rebuilt
+byte-identical archives, each spending about 40 of its 44 minutes on the data. `publish-play.yml`
+now attaches `MAP-DATA-INPUTS.txt` beside the archives: the sha256 of `build-map-data.py`, the pin,
+the profile and every Region's polygon, the osmium, pyosmium and JDK versions, and each archive's
+sha256. A release whose inputs read the same as the newest version's record downloads that
+release's archives, checks them against it, and skips the build (`scripts/map-archives.py`). Any
+difference, a missing record or a failed download falls through to the full build. Decided with
+the owner.
+
+The Alternatives' reason against a cache does not apply: a published release's assets are readable
+from any ref. What a reused release gives up is its own determinism check; the archives it ships
+passed one when they were built, from the same inputs.
