@@ -49,20 +49,20 @@ The line that appears under the name in search results, and the most-read text i
 Offline trail map of the Polish mountains, drawn in the signposts' own colours.
 ```
 
-### Full description — 1327/4000
+### Full description — 1463/4000
 
 ```
 Kozica is a hiking map of the Polish mountains, from the Karkonosze to the Bieszczady and across the Czech and Slovak borders where the ranges do. Every range arrives with the app, and the map works with no signal at all.
 
 Every marked trail is drawn in the colour on its signposts — red, blue, green, yellow or black — with its symbol along the line. Where two trails share a path, both are drawn side by side, so you can see which one you are on.
 
-The map also shows paths, huts and shelters, peaks, passes, springs, viewpoints, car parks and stops, national-park boundaries and the state border, in a light and a dark style.
+The map also shows paths, huts and shelters, peaks, passes, springs, viewpoints, car parks and stops, national-park boundaries and the state border, in a light and a dark style. Shading and contour lines every 20 metres show the shape of the mountains.
 
 Tap the position button to see where you are, with the accuracy and the direction you are facing. Your location stays on your phone: Kozica has no permission to use the internet, no account and no ads, and it collects nothing.
 
 The Safety button opens 112 and, for Poland, Slovakia and Czechia, the mountain-rescue number, the rescue app, the avalanche bulletin and the mountain weather. Kozica types the number into your phone app and you place the call. The rescue app opens directly, or on Google Play if it is not installed, and the bulletin and the weather open in your browser. The apps and pages need signal.
 
-Map data © OpenStreetMap contributors, available under the Open Database License.
+Map data © OpenStreetMap contributors, available under the Open Database License. Relief from GUGiK, ÚGKK SR (CC BY 4.0) and ČÚZK (CC BY 4.0).
 ```
 
 ## Polish
@@ -79,20 +79,20 @@ Kozica
 Mapa szlaków w polskich górach bez internetu, w kolorach z drogowskazów.
 ```
 
-### Full description — 1354/4000
+### Full description — 1475/4000
 
 ```
 Kozica to mapa turystyczna polskich gór, od Karkonoszy po Bieszczady, także po czeskiej i słowackiej stronie granicy. Wszystkie pasma przychodzą razem z aplikacją, a mapa działa bez zasięgu.
 
 Każdy znakowany szlak jest narysowany w kolorze z drogowskazów — czerwonym, niebieskim, zielonym, żółtym albo czarnym — ze swoim znakiem wzdłuż linii. Gdy dwa szlaki biegną jedną ścieżką, oba są narysowane obok siebie, więc widać, którym idziesz.
 
-Na mapie są też ścieżki, schroniska i wiaty, szczyty, przełęcze, źródła, punkty widokowe, parkingi i przystanki, granice parków narodowych i granica państwa, w jasnym i ciemnym stylu.
+Na mapie są też ścieżki, schroniska i wiaty, szczyty, przełęcze, źródła, punkty widokowe, parkingi i przystanki, granice parków narodowych i granica państwa, w jasnym i ciemnym stylu. Cieniowanie i poziomice co 20 metrów pokazują kształt gór.
 
 Dotknij przycisku pozycji, aby zobaczyć, gdzie jesteś, z dokładnością i kierunkiem, w którym patrzysz. Twoja lokalizacja zostaje w telefonie: Kozica nie ma uprawnienia do internetu, nie wymaga konta, nie wyświetla reklam i niczego nie zbiera.
 
 Przycisk Bezpieczeństwo otwiera 112, a dla Polski, Słowacji i Czech numer ratownictwa górskiego, aplikację ratunkową, komunikat lawinowy i pogodę w górach. Kozica wpisuje numer w aplikacji Telefon, a połączenie nawiązujesz samodzielnie. Aplikacja ratunkowa otwiera się od razu albo, jeśli nie jest zainstalowana, w Google Play, a komunikat i pogoda w przeglądarce. Aplikacje i strony wymagają zasięgu.
 
-Dane mapy © Współtwórcy OpenStreetMap, dostępne na licencji Open Database License.
+Dane mapy © Współtwórcy OpenStreetMap, dostępne na licencji Open Database License. Rzeźba terenu: GUGiK, ÚGKK SR (CC BY 4.0) i ČÚZK (CC BY 4.0).
 ```
 
 ## Release notes (Play's "What's new", 500 chars per locale)
@@ -214,4 +214,18 @@ Every mountain range now arrives with the app: right after you install Kozica, t
 
 ```
 Wszystkie pasma przychodzą teraz razem z aplikacją: zaraz po instalacji Sklep Play sam pobiera wszystkie dziewięć regionów, więc nie trzeba niczego wybierać. Ekran Regiony i pytanie przy pierwszym uruchomieniu zniknęły, a mapa otwiera się na Tatrach. Dopóki mapy się pobierają, linijka na mapie je odlicza.
+```
+
+### 0.7.0 — the shape of the mountains
+
+**English** — 316/500:
+
+```
+The map now shows the shape of the mountains: shading as if lit from the north-west, and a contour line every 20 metres, with every 100 metres labelled. It is built from the Polish, Slovak and Czech laser surveys of the ground, so it follows the slope under the forest, not the treetops, and it arrives with the map.
+```
+
+**Polish** — 280/500:
+
+```
+Mapa pokazuje teraz kształt gór: cieniowanie jak przy świetle z północnego zachodu i poziomice co 20 metrów, z opisem co 100 metrów. Powstała z polskich, słowackich i czeskich laserowych pomiarów terenu, więc pod lasem pokazuje stok, a nie korony drzew, i przychodzi razem z mapą.
 ```
