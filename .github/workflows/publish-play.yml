@@ -56,7 +56,7 @@ jobs:
           pip install --user 'osmium>=4.2'
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      # A manual run on a branch has no release to attach to; fail before the two-hour data build.
+      # A manual run on a branch has no release to attach to; fail before the data build.
       - name: Check the release exists
         env:
           GH_TOKEN: ${{ github.token }}
