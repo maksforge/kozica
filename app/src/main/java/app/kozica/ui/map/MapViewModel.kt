@@ -66,6 +66,7 @@ class MapViewModel(
     private val positions: (approximateOnly: Boolean) -> Flow<Location>,
     private val fetch: suspend (ids: List<String>) -> Unit,
     private val confirmFetch: suspend (ActivityResultLauncher<IntentSenderRequest>) -> Boolean,
+    private val overlay: (dark: Boolean) -> StyleOverlay? = { null },
 ) : ViewModel() {
     private val regions = regions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -75,12 +76,12 @@ class MapViewModel(
 
     private val style: StateFlow<String?> =
         combine(
-            dark.filterNotNull().map { readAsset(styleTemplate(it)) },
+            dark.filterNotNull().map { readAsset(styleTemplate(it)) to overlay(it) },
             this.regions
                 .filterNotNull()
                 .map { it.readyArchives() }
                 .distinctUntilChanged(),
-        ) { template, archives -> expandStyle(template, archives) }
+        ) { (template, overlay), archives -> expandStyle(template, archives, overlay) }
             .flowOn(Dispatchers.IO)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -171,6 +172,7 @@ class MapViewModel(
                         app.container::positions,
                         app.container.regionFiles::download,
                         app.container.regionFiles::confirm,
+                        { dark -> reliefOverlay(app, dark) },
                     )
                 }
             }

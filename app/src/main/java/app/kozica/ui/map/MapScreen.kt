@@ -300,7 +300,7 @@ fun MapScreen(
 @Composable
 private fun rememberMapView(onStop: () -> Unit): MapView {
     val context = LocalContext.current
-    val mapView = remember { MapView(context).apply { onCreate(null) } }
+    val mapView = remember { MapView(context).apply { onCreate(null) }.also(::logFrames) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentOnStop by rememberUpdatedState(onStop)
     DisposableEffect(lifecycle, mapView) {

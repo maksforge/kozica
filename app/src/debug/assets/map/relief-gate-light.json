@@ -1,0 +1,78 @@
+{
+  "sources": {
+    "relief": {
+      "type": "raster-dem",
+      "url": "pmtiles://file://{relief}",
+      "encoding": "terrarium",
+      "tileSize": 512
+    },
+    "contours": {
+      "type": "vector",
+      "url": "pmtiles://file://{contours}"
+    }
+  },
+  "after": {
+    "land": [
+      {
+        "id": "hillshade",
+        "type": "hillshade",
+        "source": "relief",
+        "paint": {
+          "hillshade-exaggeration": 0.5,
+          "hillshade-illumination-direction": 315,
+          "hillshade-shadow-color": "#3d3a36",
+          "hillshade-highlight-color": "#ffffff"
+        }
+      },
+      {
+        "id": "contours",
+        "type": "line",
+        "source": "contours",
+        "source-layer": "contours",
+        "paint": {
+          "line-color": "#8a6f55",
+          "line-opacity": 0.55,
+          "line-width": [
+            "case",
+            [
+              "get",
+              "index"
+            ],
+            1.2,
+            0.6
+          ]
+        }
+      }
+    ],
+    "paths": [
+      {
+        "id": "contour-labels",
+        "type": "symbol",
+        "source": "contours",
+        "source-layer": "contours",
+        "minzoom": 12,
+        "filter": [
+          "get",
+          "index"
+        ],
+        "layout": {
+          "symbol-placement": "line",
+          "text-field": [
+            "to-string",
+            [
+              "get",
+              "ele"
+            ]
+          ],
+          "text-font": [
+            "Noto Sans Regular"
+          ],
+          "text-size": 10
+        },
+        "paint": {
+          "text-color": "#8a6f55"
+        }
+      }
+    ]
+  }
+}

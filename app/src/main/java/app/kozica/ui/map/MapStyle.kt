@@ -15,6 +15,15 @@ import java.io.File
 internal fun styleTemplate(dark: Boolean): String = if (dark) "map/style-dark.json" else "map/style-light.json"
 
 /**
+ * Sources added beside the Regions' and layers placed after the template layer they are keyed by,
+ * each once rather than per Region.
+ */
+class StyleOverlay(
+    val sources: Map<String, JsonObject>,
+    val after: Map<String, List<JsonObject>>,
+)
+
+/**
  * The template with one source per ready Region and each sourced layer repeated per Region, in the
  * template's layer order, so one Region's land never paints over another's Trails
  * (docs/phase-2.md § 2).
@@ -22,6 +31,7 @@ internal fun styleTemplate(dark: Boolean): String = if (dark) "map/style-dark.js
 internal fun expandStyle(
     template: String,
     archives: List<Pair<String, File>>,
+    overlay: StyleOverlay? = null,
 ): String {
     val style = Json.parseToJsonElement(template).jsonObject
     val sources =
@@ -35,18 +45,23 @@ internal fun expandStyle(
                     },
                 )
             }
+            overlay?.sources?.forEach { (id, source) -> put(id, source) }
         }
     val layers =
         style.getValue("layers").jsonArray.flatMap { element ->
             val layer = element.jsonObject
-            if ("source" !in layer) {
-                listOf(layer)
-            } else {
-                archives.map { (region, _) ->
-                    val id = layer.getValue("id").jsonPrimitive.content
-                    JsonObject(layer + mapOf("id" to JsonPrimitive("$id-$region"), "source" to JsonPrimitive(region)))
+            val id = layer.getValue("id").jsonPrimitive.content
+            val expanded =
+                if ("source" !in layer) {
+                    listOf(layer)
+                } else {
+                    archives.map { (region, _) ->
+                        JsonObject(
+                            layer + mapOf("id" to JsonPrimitive("$id-$region"), "source" to JsonPrimitive(region)),
+                        )
+                    }
                 }
-            }
+            expanded + overlay?.after?.get(id).orEmpty()
         }
     return JsonObject(style + mapOf("sources" to sources, "layers" to JsonArray(layers))).toString()
 }

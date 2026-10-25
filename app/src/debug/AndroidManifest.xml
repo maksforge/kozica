@@ -20,5 +20,9 @@
             android:name=".debug.PositionReceiver"
             android:enabled="true"
             android:exported="true" />
+        <receiver
+            android:name=".debug.CameraReceiver"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 </manifest>
