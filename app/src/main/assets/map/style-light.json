@@ -49,6 +49,57 @@
    }
   },
   {
+   "id": "hillshade",
+   "type": "hillshade",
+   "source": "relief",
+   "paint": {
+    "hillshade-illumination-direction": 315,
+    "hillshade-exaggeration": 0.35,
+    "hillshade-shadow-color": "#363024",
+    "hillshade-highlight-color": "#ffffff",
+    "hillshade-accent-color": "#595143"
+   }
+  },
+  {
+   "id": "contours",
+   "type": "line",
+   "source": "contours",
+   "source-layer": "contours",
+   "paint": {
+    "line-color": "#975d25",
+    "line-opacity": 0.6,
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     11,
+     [
+      "case",
+      [
+       "get",
+       "index"
+      ],
+      0.6,
+      0.3
+     ],
+     16,
+     [
+      "case",
+      [
+       "get",
+       "index"
+      ],
+      1.4,
+      0.8
+     ]
+    ]
+   }
+  },
+  {
    "id": "water-area",
    "type": "fill",
    "source": "region",
@@ -335,6 +386,36 @@
       2
      ]
     ]
+   }
+  },
+  {
+   "id": "contour-labels",
+   "type": "symbol",
+   "source": "contours",
+   "source-layer": "contours",
+   "minzoom": 12,
+   "filter": [
+    "get",
+    "index"
+   ],
+   "layout": {
+    "text-font": [
+     "Noto Sans Regular"
+    ],
+    "text-size": 10,
+    "symbol-placement": "line",
+    "text-field": [
+     "to-string",
+     [
+      "get",
+      "ele"
+     ]
+    ]
+   },
+   "paint": {
+    "text-color": "#7a450e",
+    "text-halo-color": "#fff8ef",
+    "text-halo-width": 1.2
    }
   },
   {

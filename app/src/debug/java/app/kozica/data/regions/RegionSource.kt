@@ -22,3 +22,19 @@ fun regionStates(context: Context): Flow<List<Region>> =
                 }
             }
         }.flowOn(Dispatchers.IO)
+
+/** The relief pack, or a relief hand-pushed to `files/relief/`, as phase 4's gate pushed one. */
+fun reliefState(context: Context): Flow<Region> =
+    RegionFiles
+        .of(context)
+        .relief
+        .map { relief ->
+            val handPushed = File(context.filesDir, "relief/relief.pmtiles")
+            if (relief.state !is RegionState.Ready &&
+                handPushed.exists()
+            ) {
+                relief.copy(state = readyRegion(handPushed))
+            } else {
+                relief
+            }
+        }.flowOn(Dispatchers.IO)

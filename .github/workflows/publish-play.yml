@@ -102,6 +102,11 @@ jobs:
       - name: Build every Region at the pin
         run: python3 scripts/build-map-data.py --discard-extracts --check-determinism tatry
 
+      # The relief is built once, not here (ADR-0009): every release packs the copy scripts/relief.pin
+      # names, and a hash that does not match stops the run before Play sees anything.
+      - name: Fetch the pinned relief
+        run: python3 scripts/fetch-relief.py
+
       # bundleRelease, never assembleRelease: Play wants an AAB, and an AAB cannot be
       # adb install-ed — so the only build ever put on a phone is the one Play delivers.
       # -PmapPacks fails at configuration when any Region's archive is missing.

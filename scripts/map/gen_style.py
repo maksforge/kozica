@@ -69,6 +69,11 @@ def palette(dark: bool) -> dict[str, str]:
         "spring_ink": tone(T, pick(45, 75)),
         "symbol_white": tone(N, 100),
         "symbol_edge": tone(NV, 50),
+        "shade": tone(NV, pick(20, 0)),
+        "light": tone(N, pick(100, 35)),
+        "shade_accent": tone(NV, pick(35, 10)),
+        "contour": tone(P, pick(45, 55)),
+        "contour_text": tone(P, pick(35, 70)),
     }
 
 
@@ -134,6 +139,15 @@ def style(dark: bool) -> dict:
                                   "residential", c["residential"],
                                   c["background"]]},
         ),
+        # The relief (docs/phase-4.md § 3): one source each, not repeated per Region, and dropped by
+        # MapStyle.kt while the relief pack has not arrived.
+        {"id": "hillshade", "type": "hillshade", "source": "relief",
+         "paint": {"hillshade-illumination-direction": 315, "hillshade-exaggeration": 0.3 if dark else 0.35,
+                   "hillshade-shadow-color": c["shade"], "hillshade-highlight-color": c["light"],
+                   "hillshade-accent-color": c["shade_accent"]}},
+        {"id": "contours", "type": "line", "source": "contours", "source-layer": "contours",
+         "paint": {"line-color": c["contour"], "line-opacity": 0.6,
+                   "line-width": by_zoom((11, ["case", ["get", "index"], 0.6, 0.3]), (16, ["case", ["get", "index"], 1.4, 0.8]))}},
         layer("water-area", "fill", "water", filter=["==", ["geometry-type"], "Polygon"],
               paint={"fill-color": c["water"]}),
         layer(
@@ -160,6 +174,10 @@ def style(dark: bool) -> dict:
         layer("paths", "line", "paths",
               paint={"line-color": c["path"], "line-width": by_zoom((12, 0.6), (16, 1.4)),
                      "line-dasharray": ["literal", [2, 2]]}),
+        {"id": "contour-labels", "type": "symbol", "source": "contours", "source-layer": "contours",
+         "minzoom": 12, "filter": ["get", "index"],
+         "layout": text_layout(10, **{"symbol-placement": "line", "text-field": ["to-string", ["get", "ele"]]}),
+         "paint": text_paint(c["contour_text"])},
         layer("trail-casings", "line", "trails", filter=["==", ["get", "colour"], casing],
               layout={"line-join": "round"},
               paint={"line-color": c[f"{casing}_casing"], "line-width": trail_width(2.0),

@@ -45,7 +45,7 @@ let us do otherwise".">
 | Coil 3 images | Compose-native, local files only |
 | On-device storage only | No backend. Backup per ADR-0005 |
 | MapLibre Native (OpenGL ES) + PMTiles | Offline, every network permission stripped — ADR-0008, `docs/phase-2.md` § 2 |
-| Play Asset Delivery | One fast-follow pack per Region, `ACCESS_NETWORK_STATE` stripped from its WorkManager — `docs/phase-2b.md` § 1, `docs/phase-2c.md` |
+| Play Asset Delivery | One fast-follow pack per Region and one for the relief, `ACCESS_NETWORK_STATE` stripped from its WorkManager — `docs/phase-2b.md` § 1, `docs/phase-2c.md`, `docs/phase-4.md` § 3 |
 
 ## House rules
 
@@ -137,18 +137,21 @@ app/src/debug/    the developer-only build: the sample-data seeder, Settings' de
                   capture driver, data/regions/'s RegionSource.kt, which falls back to an archive
                   hand-pushed to files/regions/<id>.pmtiles, and the position override: a long
                   press on the map, Settings' "real position" row and PositionReceiver for
-                  scripted readings; ui/map/ReliefOverlay.kt draws a relief hand-pushed to
-                  files/relief/ and logs frame times, and CameraReceiver sets the camera, for
-                  phase 4's gate
+                  scripted readings; a relief hand-pushed to files/relief/ stands in for the
+                  relief pack, ui/map/FrameLog.kt logs frame times and CameraReceiver sets the
+                  camera, for phase 4's readings
 app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
-                  settings, no continue button, no relief overlay or frame log, and the Regions and
-                  the real position passed through
+                  settings, no continue button, no frame log, and the Regions, the relief and the
+                  real position passed through
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
 scripts/map/      the planetiler profile build-map-data.py runs, decode-tile.py, and the style and
                   sprite generators
 scripts/regions/  one boundary polygon per Region
 region_<id>/      one fast-follow asset pack per polygon in scripts/regions/, all built by
                   gradle/region-pack.gradle.kts; they join the build only with -PmapPacks
+relief/           the relief's fast-follow pack, by the same build file: the archives
+                  scripts/relief.pin names, which scripts/fetch-relief.py puts there.
+                  scripts/build-relief.py builds them, once, on the owner's PC (ADR-0009)
 art/             mark.py is the identity; both generators derive from it
 ```
 

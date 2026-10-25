@@ -153,7 +153,7 @@ android {
             rootProject
                 .file("scripts/regions")
                 .listFiles { file -> file.extension == "poly" }!!
-                .map { ":region_${it.nameWithoutExtension}" }
+                .map { ":region_${it.nameWithoutExtension}" } + ":relief"
     }
 
     lint {

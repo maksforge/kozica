@@ -38,6 +38,7 @@ import java.time.Instant
 
 /**
  * @param regions null until the first read of the phone's Regions.
+ * @param relief the relief pack, null until its first read or in a build without one.
  * @param style the expanded style JSON, null until the template is read.
  * @param camera where a new map view opens, null until the stored camera is read.
  * @param location null until the first resume reads it.
@@ -45,6 +46,7 @@ import java.time.Instant
  */
 data class MapUiState(
     val regions: List<Region>? = null,
+    val relief: Region? = null,
     val style: String? = null,
     val camera: MapCamera? = null,
     val location: LocationRead? = null,
@@ -52,7 +54,12 @@ data class MapUiState(
 ) {
     private val ready: List<RegionState.Ready> get() = regions.orEmpty().mapNotNull { it.state as? RegionState.Ready }
 
-    val progress: MapProgress? get() = regions?.let(::mapProgress)
+    /** The Regions and the relief, which arrive the same way and are counted together. */
+    val packs: List<Region>? get() = regions?.let { it + listOfNotNull(relief) }
+
+    val progress: MapProgress? get() = packs?.let(::mapProgress)
+
+    val reliefShown: Boolean get() = relief?.state is RegionState.Ready
 
     /** The stalest ready Region's date, because the map is no fresher than its oldest part. */
     val osmDate: Instant? get() = ready.mapNotNull { it.osmDate }.minOrNull()
@@ -66,9 +73,11 @@ class MapViewModel(
     private val positions: (approximateOnly: Boolean) -> Flow<Location>,
     private val fetch: suspend (ids: List<String>) -> Unit,
     private val confirmFetch: suspend (ActivityResultLauncher<IntentSenderRequest>) -> Boolean,
-    private val overlay: (dark: Boolean) -> StyleOverlay? = { null },
+    relief: Flow<Region?> = flowOf(null),
 ) : ViewModel() {
     private val regions = regions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private val relief = relief.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val camera = MutableStateFlow<MapCamera?>(null)
 
@@ -76,12 +85,13 @@ class MapViewModel(
 
     private val style: StateFlow<String?> =
         combine(
-            dark.filterNotNull().map { readAsset(styleTemplate(it)) to overlay(it) },
+            dark.filterNotNull().map { readAsset(styleTemplate(it)) },
             this.regions
                 .filterNotNull()
                 .map { it.readyArchives() }
                 .distinctUntilChanged(),
-        ) { (template, overlay), archives -> expandStyle(template, archives, overlay) }
+            this.relief.map { (it?.state as? RegionState.Ready)?.archive }.distinctUntilChanged(),
+        ) { template, archives, relief -> expandStyle(template, archives, relief) }
             .flowOn(Dispatchers.IO)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -101,23 +111,29 @@ class MapViewModel(
 
     val state: StateFlow<MapUiState> =
         combine(this.regions, style, camera, location, fix) { regions, style, camera, location, fix ->
-            MapUiState(regions, style, camera, location, fix)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
+            MapUiState(regions, style = style, camera = camera, location = location, fix = fix)
+        }.combine(this.relief) { state, relief -> state.copy(relief = relief) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     init {
         viewModelScope.launch { camera.compareAndSet(null, preferences.mapCamera.first() ?: TATRY) }
         // Play fetches fast-follow packs by itself; this covers one it has not started and a Region a
         // later build adds. A failed or cancelled one waits for Retry (docs/phase-2c.md § 1).
         viewModelScope.launch {
-            val missing = toFetch(this@MapViewModel.regions.filterNotNull().first())
+            val missing =
+                toFetch(
+                    combine(this@MapViewModel.regions.filterNotNull(), relief) { r, x ->
+                        r +
+                            listOfNotNull(x)
+                    }.first(),
+                )
             if (missing.isNotEmpty()) applicationScope.launch { fetch(missing) }
         }
     }
 
     fun retry() {
         val failed =
-            regions.value
-                .orEmpty()
+            packs()
                 .filter { it.state is RegionState.Failed }
                 .map { it.id }
         applicationScope.launch { fetch(failed) }
@@ -126,12 +142,13 @@ class MapViewModel(
     /** Nothing awaiting confirmation means the state shown was stale, so what showed it is asked for again. */
     fun confirm(launcher: ActivityResultLauncher<IntentSenderRequest>) {
         val waiting =
-            regions.value
-                .orEmpty()
+            packs()
                 .filter { it.state == RegionState.WaitingForWifi || it.state == RegionState.NeedsConfirmation }
                 .map { it.id }
         viewModelScope.launch { if (!confirmFetch(launcher)) applicationScope.launch { fetch(waiting) } }
     }
+
+    private fun packs(): List<Region> = regions.value.orEmpty() + listOfNotNull(relief.value)
 
     fun cameraIdle(at: MapCamera) {
         camera.value = at
@@ -172,7 +189,7 @@ class MapViewModel(
                         app.container::positions,
                         app.container.regionFiles::download,
                         app.container.regionFiles::confirm,
-                        { dark -> reliefOverlay(app, dark) },
+                        app.container.relief,
                     )
                 }
             }
