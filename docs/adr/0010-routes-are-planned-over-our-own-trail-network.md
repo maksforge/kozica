@@ -43,7 +43,8 @@ through a conversion the contours do not go through. Its 5° tiles match neither
 network. "What the map draws as a Trail" would be written a second time, in a BRouter profile that
 sees hiking relations through its own tag mapping. And the walking-time rule, applied over whatever
 it returns, and the name index would still be ours. Against that, our writer and A\* are small, over
-a network small enough to load whole. It is the nearest alternative.
+a network small enough to load whole. It is the nearest alternative, and on these costs the owner
+decided on 2026-10-25 to keep our own network.
 
 **A network per Region, inside each Region's pack.** It would refresh with the Region. But every
 Trail that crosses a boundary would be cut there, a Route across two Regions would need the two
