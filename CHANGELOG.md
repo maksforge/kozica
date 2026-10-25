@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/maksforge/kozica/compare/v0.6.0...v0.7.0) (2026-10-25)
+
+
+### Features
+
+* show the shape of the mountains: shading and contours from the relief pack ([db44601](https://github.com/maksforge/kozica/commit/db4460164540c80821ad37774a5b1d47a9600e2d))
+
+
+### Bug Fixes
+
+* build the map style once, from the Regions and the relief read together, and read the packs afresh for a new collector ([887f1a1](https://github.com/maksforge/kozica/commit/887f1a113b0b090e6657d43ac0a692e7e4189434))
+
 ## [0.6.0](https://github.com/srednimax/kozica/compare/v0.5.0...v0.6.0) (2026-10-22)
 
 
