@@ -67,7 +67,7 @@ class RegionFiles private constructor(
             .flowOn(Dispatchers.IO)
             .shareIn(
                 CoroutineScope(SupervisorJob() + Dispatchers.IO),
-                SharingStarted.WhileSubscribed(5_000),
+                SharingStarted.WhileSubscribed(5_000, replayExpirationMillis = 0),
                 replay = 1,
             )
 
