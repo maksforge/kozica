@@ -165,8 +165,12 @@ not work per frame; C's R3 and R4 read seams and delivery, not frame time. Two t
   - **Poland, GUGiK NMT**: the 1:5000 sheets of its WFS sheet indexes, one layer per survey year in
     the PL-EVRF2007-NH service and the PL-KRON86-NH one before it. Per sheet the build takes the
     newest **1 m lidar** grid ("Skaning laserowy"), else the newest grid of any kind, and logs how
-    many of each it used. The 5 m grids are photogrammetric, not lidar, which is why they are only
-    the fallback. About 5,000 sheets of about 43 MB, roughly 215 GB.
+    many of each it used, by service and span of survey years. The 5 m grids are photogrammetric,
+    not lidar, which is why they are only the fallback. So are many of the newer PL-EVRF2007-NH 1 m
+    grids, which GUGiK marks "Zdj. lotnicze", and there the rank picks the PL-KRON86-NH lidar
+    survey of about 2011–15: the Tatry take 128 sheets of 2023–25 EVRF2007 lidar and 45 of 2012
+    KRON86, and R2 reads the split for the whole union. About 5,000 sheets of about 43 MB, roughly
+    215 GB.
   - **Czechia, ČÚZK DMR 4G**: one zip per SM5 sheet from its ATOM feed, the feed's own polygons
     picking the sheets. Each holds a LAZ 5 m point grid, read with `laspy` and laid back onto its
     grid. About 1,500 sheets, 0.3 GB.
@@ -178,27 +182,35 @@ not work per frame; C's R3 and R4 read seams and delivery, not frame time. Two t
   system (Poland's EPSG:2180, Czechia's S-JTSK, the WCS's ETRS89 / TM34) onto Web Mercator at zoom
   12's resolution, about 12 m at 49° N, averaging the source cells under each. Heights are summed in
   whole centimetres, so the merge gives the same bytes whatever order the parts finish in. Where two
-  countries' data overlap at a border the mean is taken. The three national height datums differ by
-  well under a metre; the build does not correct for it (§ Known gaps).
+  countries' data overlap at a border the mean is taken. Poland's KRON86 sheets are Kronstadt
+  heights, like Czechia's and Slovakia's Baltic Bpv, its EVRF2007 sheets are not; all of them differ
+  by well under a metre, and the build does not correct for it (§ Known gaps).
 - **The build fails on a gap.** A grid cell inside the clipped union with no value from any sheet
-  stops the build, naming the Region and the cell. If one turns up, it is filled from a named source
-  for that gap only, in an amendment to ADR-0009, not by a fallback added in advance.
+  stops the build, which reports each connected gap with its size, a cell in it and its Region. If
+  one turns up, it is filled from a named source for that gap only, in an amendment to ADR-0009, not
+  by a fallback added in advance. Cells within 3 grid cells, about 40 m, of a state border are
+  tolerated and counted: where the other side has no national model, OSM's line and the agency's own
+  data edge part by a cell or two.
 - **`relief.pmtiles`**: zoom 0–12, 512 px tiles, Terrarium encoding, **lossless** WebP. A lossy
   encoder rewrites the low bits, which are the heights.
 - **`contours.pmtiles`**: traced from the same grid, so the lines, the shading and phase 5's ascent
   agree. A light smoothing before tracing so a 12 m grid does not draw staircases. 20 m lines with
   an `ele` attribute and an `index` flag every 100 m; the 100 m lines from zoom 11, all of them from
   zoom 12, nothing below.
-- **Deterministic.** Sheets in a fixed order, fixed encoder settings, no timestamps, pinned GDAL and
-  libwebp. `--check-determinism` builds twice and compares, as `build-map-data.py` does.
+- **Deterministic from its sheet lists.** Sheets in a fixed order, fixed encoder settings, no
+  timestamps, pinned GDAL and libwebp. The sheets themselves come from live indexes, which gain a
+  survey year at a time, so the build keeps the lists it used as `index-{pl,cz,sk}-<hash>.json`
+  and the release publishes them; put back in `map-data/relief/`, they stand in for the live
+  indexes, and a rebuild from them reproduces the archives.
 - **Built once, not per release, on the owner's PC.** Decided with the owner on 2026-10-25: a
   one-time job of about 215 GB suits a home connection better than a hosted runner, whose six-hour
   limit a single run of it would pass. The script is committed and deterministic, `--device` binds
   its downloads to one network interface (the PC's Ethernet, not the test phone's tether), and each
-  finished sheet is kept as a part, so a stopped run resumes. Its two archives and
-  `scripts/map/RELIEF-DATA-LICENCE.txt` go to a GitHub release of their own, `relief-<date>`, and
-  `scripts/relief.pin` holds that tag and both sha256s. Rebuilding is a decision, not a schedule:
-  the ground does not move, and a national agency publishing a new survey is the reason to.
+  finished sheet is kept as a part, so a stopped run resumes. Its two archives, its three sheet
+  lists and `scripts/map/RELIEF-DATA-LICENCE.txt` go to a GitHub release of their own,
+  `relief-<date>`, and `scripts/relief.pin` holds that tag and both sha256s. Rebuilding is a
+  decision, not a schedule: the ground does not move, and a national agency publishing a new survey
+  is the reason to.
 
 ## 3. The relief on the map
 
@@ -250,9 +262,10 @@ licences screen's "Resampled, merged and traced into contours by Kozica".
 
 ## Known gaps, deliberately
 
-- **The three height datums are not reconciled.** Poland's PL-EVRF2007-NH and the Baltic heights
-  Slovakia and Czechia use differ by well under a metre. Against 20 m contours that is invisible,
-  and correcting it would be a geodesy step with its own source to pin.
+- **The three height datums are not reconciled.** Poland's heights mix PL-EVRF2007-NH and
+  PL-KRON86-NH sheet by sheet, against the Baltic heights Slovakia and Czechia use; they differ by
+  well under a metre. Against 20 m contours that is invisible, and correcting it would be a geodesy
+  step with its own source to pin.
 - **Relief stops at Ukraine's and Germany's borders**, a little short of where the OSM data does.
 - **Every install carries about 200 MB more.** Accepted with phase 2c's decision to ship everything.
 
