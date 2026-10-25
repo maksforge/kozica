@@ -151,7 +151,7 @@ recorded here with its type and the declaration's answers.
 
 ## Privacy policy
 
-**`https://srednimax.github.io/kozica/privacy-policy.html`**, set 2026-10-20. Served from `docs/` by
+**`https://maksforge.github.io/kozica/privacy-policy.html`**, set 2026-10-20. Served from `docs/` by
 Pages, so it updates on a merge to `main` with no release, which is why it has to be right before the
 app it describes ships rather than after.
 
