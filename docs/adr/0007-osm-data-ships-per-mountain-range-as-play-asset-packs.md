@@ -245,5 +245,5 @@ difference, a missing record or a failed download falls through to the full buil
 the owner.
 
 The Alternatives' reason against a cache does not apply: a published release's assets are readable
-from any ref. What a reused release gives up is its own determinism check; the archives it ships
-passed one when they were built, from the same inputs.
+from any ref. What a reused release gives up is its own determinism check; the build its archives
+came from proved the Tatry's bytes repeat, from the same inputs.

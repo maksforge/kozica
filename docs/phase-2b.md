@@ -377,14 +377,17 @@ Phase 1 § 5's last three bullets are this checkpoint, with C's three extracts a
 - **The data build joins `publish-play.yml`** before `bundleRelease`: `osmium-tool` from apt and
   pyosmium 4.2 or newer from pip, then `build-map-data.py --discard-extracts` for every Region at
   the pin, `--check-determinism` on one of them (the Tatry, which changes in every refresh), then
-  `bundleRelease -PmapPacks`, which fails when an archive is missing. A hosted `ubuntu-latest`
-  runner guarantees 14 GB of SSD and a job may run six hours, so the build logs the runner's free
-  disk after each country's cut, and R9 records the peak and the minutes.
+  `bundleRelease -PmapPacks`, which fails when an archive is missing. A release whose inputs match
+  the last version's record skips the build and its check (ADR-0007's 2026-10-25 amendment). A
+  hosted `ubuntu-latest` runner guarantees 14 GB of SSD and a job may run six hours, so the build
+  logs the runner's free disk after each country's cut, and R9 records the peak and the minutes.
 - **The refresh size is read here**, on the closed track, where an install updates in place: the
   first release after F that only moves the pin, installed over F's, read as R3 was (§ 1's verdict).
   Gate A's CI run spent 1 h 46 min on the data alone (R9), most of it fetching Poland. **No cache**,
   decided with the owner on 2026-10-20: ADR-0007's reasons stand, and two hours inside a six-hour
-  limit, unattended, is cheaper than a second workflow keeping a cache warm.
+  limit, unattended, is cheaper than a second workflow keeping a cache warm. Narrowed on
+  2026-10-25 by ADR-0007's amendment: a release with unchanged inputs reuses the last version's
+  archives, and a full build now takes about 40 minutes.
 - **The ODbL offer is the database itself.** Decided with the owner, 2026-10-20: the workflow
   attaches the nine `.pmtiles` to the release-please GitHub release, under ODbL, with
   `scripts/map/MAP-DATA-LICENCE.txt` beside them saying so, and the licences
