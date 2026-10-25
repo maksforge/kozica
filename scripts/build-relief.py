@@ -8,7 +8,7 @@
 
 Run once, by hand, on a machine that can download about 220 GB; the output is published to its own
 GitHub release and pinned in scripts/relief.pin (ADR-0009). Each sheet is resampled as it arrives,
-kept as a small part in map-data/relief/parts/ and deleted, so a stopped run resumes where it was.
+kept as a small part in map-data/relief/parts-v2/ and deleted, so a stopped run resumes where it was.
 Needs osmium-tool and pyosmium-up-to-date for the state borders, as build-map-data.py does.
 """
 
@@ -49,7 +49,7 @@ from pyproj import Transformer
 from rasterio.features import rasterize
 from rasterio.transform import Affine
 from rasterio.warp import Resampling, reproject
-from scipy.ndimage import distance_transform_edt, gaussian_filter, map_coordinates
+from scipy.ndimage import distance_transform_edt, find_objects, gaussian_filter, label, map_coordinates
 import shapely
 from shapely import affinity
 from shapely.geometry import LineString, MultiPolygon, Polygon, box, shape
@@ -58,7 +58,7 @@ from skimage.measure import find_contours
 
 ROOT = Path(__file__).resolve().parent.parent
 WORK = ROOT / "map-data" / "relief"
-PARTS = WORK / "parts"
+PARTS = WORK / "parts-v2"
 REGIONS = ROOT / "scripts" / "regions"
 PIN = ROOT / "scripts" / "osm-data.pin"
 
@@ -70,6 +70,7 @@ RES = EARTH / WORLD
 MERCATOR = rasterio.crs.CRS.from_epsg(3857)
 TIMEOUT = 120
 CONTOUR_STEP = 20
+BORDER_TOLERANCE = 3
 INDEX_STEP = 100
 
 BORDERS = {"poland": 49715, "slovakia": 14296, "czech-republic": 51684}
@@ -129,7 +130,7 @@ def fetch(url: str, attempts: int = 5) -> bytes:
         try:
             with opener().open(url, timeout=TIMEOUT) as response:
                 return response.read()
-        except OSError as error:
+        except (OSError, http.client.HTTPException) as error:
             if attempt == attempts - 1:
                 raise
             log(f"retrying {url}: {error}")
@@ -185,8 +186,6 @@ def border(country: str, sequence: int, build) -> Polygon | MultiPolygon:
     return unary_union([shape(f["geometry"]) for f in features])
 
 
-
-
 def to_pixel(lon, lat):
     lat = np.radians(np.asarray(lat, dtype=np.float64))
     x = (np.asarray(lon, dtype=np.float64) + 180) / 360 * WORLD
@@ -220,16 +219,21 @@ class Grid:
         tx1, ty1 = int(right) // TILE + 1, int(bottom) // TILE + 1
         return Grid(tx0 * TILE, ty0 * TILE, (tx1 - tx0) * TILE, (ty1 - ty0) * TILE)
 
-    def window(self, west: float, south: float, east: float, north: float, pad: int = 2):
-        left, top = to_pixel(west, north)
-        right, bottom = to_pixel(east, south)
-        c0 = max(int(left) - self.x0 - pad, 0)
-        r0 = max(int(top) - self.y0 - pad, 0)
-        c1 = min(int(right) - self.x0 + pad + 1, self.width)
-        r1 = min(int(bottom) - self.y0 + pad + 1, self.height)
-        return (r0, c0, r1, c1) if r1 > r0 and c1 > c0 else None
+    def clip(self, window):
+        """Where an absolute zoom-12 window lands in this grid and in the window, or None."""
+        r0, c0, r1, c1 = window
+        top, left = max(r0, self.y0), max(c0, self.x0)
+        bottom, right = min(r1, self.y0 + self.height), min(c1, self.x0 + self.width)
+        if bottom <= top or right <= left:
+            return None
+        inside = np.s_[top - self.y0 : bottom - self.y0, left - self.x0 : right - self.x0]
+        return inside, np.s_[top - r0 : bottom - r0, left - c0 : right - c0]
 
 
+def pixel_window(west: float, south: float, east: float, north: float, pad: int = 2):
+    left, top = to_pixel(west, north)
+    right, bottom = to_pixel(east, south)
+    return int(top) - pad, int(left) - pad, int(bottom) + pad + 1, int(right) + pad + 1
 
 
 @dataclass(frozen=True)
@@ -241,15 +245,23 @@ class Sheet:
     kind: str
 
 
-def gugik_index(area) -> list[Sheet]:
-    """Per 1:5000 sheet, the newest lidar grid, else the newest of any kind (docs/phase-4.md § 2)."""
-    cache = WORK / f"index-pl-{hashlib.sha256(area.wkb).hexdigest()[:12]}.json"
+def indexed(source: str, area, read) -> list[Sheet]:
+    """The sheet list, kept as the file the relief release publishes (docs/phase-4.md § 2)."""
+    cache = WORK / f"index-{source}-{hashlib.sha256(area.wkb).hexdigest()[:12]}.json"
     if cache.exists():
         return [Sheet(**s) for s in json.loads(cache.read_text())]
+    sheets = read(area)
+    cache.write_text(json.dumps([s.__dict__ for s in sheets], indent=0))
+    return sheets
+
+
+def gugik_index(area) -> list[Sheet]:
+    """Per 1:5000 sheet, the newest lidar grid, else the newest of any kind (docs/phase-4.md § 2)."""
     west, south, east, north = area.bounds
     to_wgs = Transformer.from_crs(2180, 4326).transform
     found: dict[str, list] = {}
     for service in GUGIK_SERVICES:
+        datum = service.removeprefix("NumerycznyModelTerenu")
         capabilities = fetch(f"{GUGIK.format(service=service)}?service=WFS&request=GetCapabilities").decode()
         for year in sorted({int(y) for y in re.findall(r"<Name>gugik:SkorowidzNMT(\d{4})</Name>", capabilities)}):
             start = 0
@@ -281,21 +293,16 @@ def gugik_index(area) -> list[Sheet]:
                     rank = (lidar, service.endswith("EVRF2007"), year, -resolution)
                     found.setdefault(get("godlo"), []).append(
                         (rank, Sheet(get("godlo"), "pl", get("url_do_pobrania"), outline.bounds,
-                                     f"{'lidar' if lidar else 'photo'} {resolution:g} m {year} {service[-7:]}"))
+                                     f"{'lidar' if lidar else 'photo'} {resolution:g} m {datum} {year}"))
                     )
                 if len(members) < 5000:
                     break
                 start += 5000
-            log(f"index pl {service[-7:]} {year}: {len(found)} sheets so far")
-    sheets = [max(entries, key=lambda e: (e[0], e[1].url))[1] for _, entries in sorted(found.items())]
-    cache.write_text(json.dumps([s.__dict__ for s in sheets]))
-    return sheets
+            log(f"index pl {datum} {year}: {len(found)} sheets so far")
+    return [max(entries, key=lambda e: (e[0], e[1].url))[1] for _, entries in sorted(found.items())]
 
 
 def cuzk_index(area) -> list[Sheet]:
-    cache = WORK / f"index-cz-{hashlib.sha256(area.wkb).hexdigest()[:12]}.json"
-    if cache.exists():
-        return [Sheet(**s) for s in json.loads(cache.read_text())]
     atom = "{http://www.w3.org/2005/Atom}"
     root = ElementTree.fromstring(fetch(CUZK_FEED))
     sheets = []
@@ -311,7 +318,6 @@ def cuzk_index(area) -> list[Sheet]:
         code = re.search(r"_([A-Z0-9]+)\.xml$", link).group(1)
         sheets.append(Sheet(code, "cz", CUZK_ZIP.format(code=code), outline.bounds, "lidar 5 m DMR 4G"))
     sheets.sort(key=lambda s: s.id)
-    cache.write_text(json.dumps([s.__dict__ for s in sheets]))
     return sheets
 
 
@@ -329,8 +335,6 @@ def ugkk_index(area) -> list[Sheet]:
                 bounds = reshape(to_wgs, cell).bounds
                 sheets.append(Sheet(f"sk-{x}-{y}", "sk", url, bounds, "lidar 5 m DMR 5.0 (WCS)"))
     return sheets
-
-
 
 
 def read_sheet(sheet: Sheet, geoid: Path) -> tuple[np.ndarray, Affine, int]:
@@ -367,12 +371,17 @@ def read_sheet(sheet: Sheet, geoid: Path) -> tuple[np.ndarray, Affine, int]:
     return heights - n.astype(np.float32), transform, 3046
 
 
+def part_path(sheet: Sheet) -> Path:
+    """Keyed by the sheet's URL too, so a newer survey of the same sheet is a different part."""
+    return PARTS / f"{sheet.source}-{sheet.id}-{hashlib.sha256(sheet.url.encode()).hexdigest()[:10]}.npz"
+
+
 def build_part(sheet: Sheet, grid: Grid, geoid: Path) -> str:
-    part = PARTS / f"{sheet.source}-{sheet.id}.npz"
+    part = part_path(sheet)
     if part.exists():
         return "kept"
-    window = grid.window(*sheet.bounds)
-    if window is None:
+    window = pixel_window(*sheet.bounds)
+    if grid.clip(window) is None:
         return "outside"
     heights, transform, crs = read_sheet(sheet, geoid)
     r0, c0, r1, c1 = window
@@ -380,7 +389,7 @@ def build_part(sheet: Sheet, grid: Grid, geoid: Path) -> str:
     reproject(
         heights, target,
         src_transform=transform, src_crs=rasterio.crs.CRS.from_epsg(crs), src_nodata=np.nan,
-        dst_transform=pixel_transform(grid.x0 + c0, grid.y0 + r0), dst_crs=MERCATOR, dst_nodata=np.nan,
+        dst_transform=pixel_transform(c0, r0), dst_crs=MERCATOR, dst_nodata=np.nan,
         resampling=Resampling.average,
     )
     valid = ~np.isnan(target)
@@ -391,22 +400,23 @@ def build_part(sheet: Sheet, grid: Grid, geoid: Path) -> str:
     return "built"
 
 
-
-
 def merge(grid: Grid, sheets: list[Sheet]) -> np.ndarray:
-    total = np.zeros((grid.height, grid.width), dtype=np.int64)
+    total = np.zeros((grid.height, grid.width), dtype=np.int32)
     count = np.zeros((grid.height, grid.width), dtype=np.uint8)
     for sheet in sheets:
-        part = PARTS / f"{sheet.source}-{sheet.id}.npz"
+        part = part_path(sheet)
         if not part.exists():
             continue
         with np.load(part) as loaded:
-            r0, c0, r1, c1 = loaded["window"]
-            total[r0:r1, c0:c1] += loaded["cm"]
-            count[r0:r1, c0:c1] += loaded["valid"]
+            clipped = grid.clip(tuple(loaded["window"]))
+            if clipped is None:
+                continue
+            inside, own = clipped
+            total[inside] += loaded["cm"][own]
+            count[inside] += loaded["valid"][own]
     heights = np.full((grid.height, grid.width), np.nan, dtype=np.float32)
-    covered = count > 0
-    heights[covered] = (total[covered] / count[covered] / 100).astype(np.float32)
+    np.divide(total, count, out=heights, where=count > 0)
+    heights /= 100
     return heights
 
 
@@ -414,20 +424,35 @@ def pixel_geometry(geometry, grid: Grid):
     return affinity.affine_transform(reshape(lambda lon, lat: to_pixel(lon, lat), geometry), [1, 0, 0, 1, -grid.x0, -grid.y0])
 
 
-def check_gaps(heights: np.ndarray, grid: Grid, inside, regions: dict) -> None:
+def near_borders(grid: Grid, countries) -> np.ndarray:
+    t = BORDER_TOLERANCE
+    lines = [shapely.clip_by_rect(pixel_geometry(c.boundary, grid), -t, -t, grid.width + t, grid.height + t) for c in countries]
+    bands = [(line.buffer(t), 1) for line in lines if not line.is_empty]
+    if not bands:
+        return np.zeros((grid.height, grid.width), dtype=bool)
+    return rasterize(bands, out_shape=(grid.height, grid.width), dtype=np.uint8, all_touched=True).astype(bool)
+
+
+def check_gaps(heights: np.ndarray, grid: Grid, inside, countries, regions: dict) -> None:
     mask = rasterize([(pixel_geometry(inside, grid), 1)], out_shape=heights.shape, dtype=np.uint8).astype(bool)
     gaps = mask & np.isnan(heights)
+    slivers = gaps & near_borders(grid, countries)
+    if slivers.any():
+        log(f"{slivers.sum():,} empty cells within {BORDER_TOLERANCE} cells of a state border, tolerated")
+    gaps &= ~slivers
     if not gaps.any():
         log(f"no gaps among {mask.sum():,} cells")
         return
-    rows, cols = np.nonzero(gaps)
-    for r, c in list(zip(rows, cols))[:: max(len(rows) // 20, 1)][:20]:
-        lon, lat = to_lonlat(grid.x0 + c + 0.5, grid.y0 + r + 0.5)
-        where = next((name for name, area in regions.items() if area.contains(box(lon, lat, lon, lat))), "?")
-        log(f"  gap at {lat:.5f} N {lon:.5f} E ({where})")
-    fail(f"{len(rows):,} cells inside the Regions have no height (docs/phase-4.md § 2)")
-
-
+    rows, cols = np.flatnonzero(gaps.any(axis=1)), np.flatnonzero(gaps.any(axis=0))
+    r0, c0 = rows[0], cols[0]
+    labels, areas = label(gaps[r0 : rows[-1] + 1, c0 : cols[-1] + 1])
+    sizes = np.bincount(labels.ravel())
+    for n, where in sorted(enumerate(find_objects(labels), 1), key=lambda a: -sizes[a[0]])[:20]:
+        r, c = np.argwhere(labels[where] == n)[0] + (where[0].start, where[1].start)
+        lon, lat = to_lonlat(grid.x0 + c0 + c + 0.5, grid.y0 + r0 + r + 0.5)
+        region = next((name for name, area in regions.items() if area.contains(shapely.Point(lon, lat))), "?")
+        log(f"  gap of {sizes[n]:,} cells at {lat:.5f} N {lon:.5f} E ({region})")
+    fail(f"{gaps.sum():,} cells in {areas:,} gaps inside the Regions have no height (docs/phase-4.md § 2)")
 
 
 def halve(heights: np.ndarray, x0: int, y0: int) -> tuple[np.ndarray, int, int]:
@@ -473,8 +498,9 @@ def contour_tile(block: np.ndarray, pad: int, index_only: bool) -> bytes | None:
     valid = ~np.isnan(block)
     if not valid.any():
         return None
-    filled = np.where(valid, block, np.nanmean(block))
-    smooth = gaussian_filter(filled, sigma=1.0)
+    weight = gaussian_filter(valid.astype(np.float64), sigma=1.0)
+    blurred = gaussian_filter(np.where(valid, block, 0).astype(np.float64), sigma=1.0)
+    smooth = np.divide(blurred, weight, out=np.full_like(blurred, np.nan), where=valid)
     step = INDEX_STEP if index_only else CONTOUR_STEP
     low, high = math.floor(np.nanmin(block[valid]) / step + 1) * step, np.nanmax(block[valid])
     scale = 4096 / TILE
@@ -569,6 +595,22 @@ def sample(latitude: float, longitude: float) -> None:
     print(f"{rgb[0] * 256 + rgb[1] + rgb[2] / 256 - 32768:.2f} m")
 
 
+def sheet_kinds(sheets: list[Sheet]) -> list[str]:
+    """Poland's by datum with the span of survey years, the split R2 reports (docs/phase-4.md)."""
+    years: dict[str, list[str]] = {}
+    for sheet in sheets:
+        if sheet.source == "pl":
+            kind, year = sheet.kind.rsplit(" ", 1)
+        else:
+            kind, year = sheet.kind, None
+        years.setdefault(f"{sheet.source} {kind}", []).append(year)
+    lines = []
+    for kind, seen in sorted(years.items()):
+        span = sorted(filter(None, seen))
+        lines.append(f"{len(seen)} {kind} {span[0]}–{span[-1]}" if span else f"{len(seen)} {kind}")
+    return lines
+
+
 def sha256(path: Path) -> str:
     hasher = hashlib.sha256()
     with path.open("rb") as f:
@@ -609,17 +651,14 @@ def main() -> None:
             fail("Slovakia's height grid does not match its pinned hash")
 
     sheets = [
-        *gugik_index(union.intersection(countries["poland"])),
-        *cuzk_index(union.intersection(countries["czech-republic"])),
-        *ugkk_index(union.intersection(countries["slovakia"])),
+        *indexed("pl", union.intersection(countries["poland"]), gugik_index),
+        *indexed("cz", union.intersection(countries["czech-republic"]), cuzk_index),
+        *indexed("sk", union.intersection(countries["slovakia"]), ugkk_index),
     ]
-    kinds: dict[str, int] = {}
-    for sheet in sheets:
-        kind = f"{sheet.source} {sheet.kind.split(' 20')[0] if sheet.source == 'pl' else sheet.kind}"
-        kinds[kind] = kinds.get(kind, 0) + 1
-    log(f"{len(sheets)} sheets: " + ", ".join(f"{n} {k}" for k, n in sorted(kinds.items())))
+    log(f"{len(sheets)} sheets: " + ", ".join(sheet_kinds(sheets)))
 
     started = time.monotonic()
+    failed = []
     with concurrent.futures.ProcessPoolExecutor(max_workers=args.jobs) as pool:
         futures = {pool.submit(build_part, sheet, grid, geoid): sheet for sheet in sheets}
         for done, future in enumerate(concurrent.futures.as_completed(futures), 1):
@@ -627,12 +666,16 @@ def main() -> None:
             try:
                 future.result()
             except Exception as error:
-                fail(f"{sheet.source} sheet {sheet.id} ({sheet.url}): {error}")
+                failed.append(f"{sheet.source} sheet {sheet.id} ({sheet.url}): {error}")
             if done % 50 == 0 or done == len(sheets):
-                log(f"{done}/{len(sheets)} sheets, {time.monotonic() - started:.0f} s")
+                log(f"{done}/{len(sheets)} sheets, {len(failed)} failed, {time.monotonic() - started:.0f} s")
+    if failed:
+        for line in failed:
+            log(f"  {line}")
+        fail(f"{len(failed)} of {len(sheets)} sheets failed; the parts built are kept, so a rerun fetches only these")
 
     heights = merge(grid, sheets)
-    check_gaps(heights, grid, inside, chosen)
+    check_gaps(heights, grid, inside, countries.values(), chosen)
     attribution = "Relief: GUGiK, ÚGKK SR, ČÚZK"
     build_archives(heights, grid, inside, attribution)
     for name in ("relief.pmtiles", "contours.pmtiles"):
