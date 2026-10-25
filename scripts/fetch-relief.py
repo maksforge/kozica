@@ -6,6 +6,9 @@
 Downloads relief.pmtiles and contours.pmtiles from the GitHub release scripts/relief.pin names and
 fails unless each matches its pinned sha256. The relief is built once by build-relief.py (ADR-0009);
 every release packs this same copy.
+
+The pin is one entry per line, `#` lines being comments: `tag relief-YYYY-MM-DD`, then
+`relief.pmtiles <sha256>` and `contours.pmtiles <sha256>`.
 """
 
 from __future__ import annotations
@@ -30,6 +33,8 @@ def sha256(path: Path) -> str:
 
 
 def main() -> None:
+    if not PIN.exists():
+        sys.exit("fetch-relief: scripts/relief.pin is missing; pin the relief release per docs/phase-4.md § 3")
     pin = dict(line.split(None, 1) for line in PIN.read_text().splitlines() if line.strip() and not line.startswith("#"))
     tag = pin.pop("tag").strip()
     TARGET.mkdir(parents=True, exist_ok=True)

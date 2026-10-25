@@ -204,12 +204,12 @@ this only removes the hand-build that used to follow it.
 
 What the workflow does, in order: full checkout (`fetch-depth: 0`, because `versionCode`
 is the commit count), check that the release exists (a manual run must pick the tag, not a branch),
+fetch the relief `scripts/relief.pin` names and check both hashes (`fetch-relief.py`; the relief is
+built once on the owner's PC and published to its own `relief-<date>` release, ADR-0009),
 materialise the upload key from secrets, build every Region's map data at `scripts/osm-data.pin`
 with osmium and pyosmium (`build-map-data.py --discard-extracts --check-determinism tatry`, most of
 two hours, almost all of it fetching Poland's extract; nothing is cached, ADR-0007), so a bad
-dispatch or a missing secret fails before it, fetch the relief `scripts/relief.pin` names and check
-both hashes (`fetch-relief.py`; the relief is built once on the owner's PC and published to its own
-`relief-<date>` release, ADR-0009), `bundleRelease -PmapPacks`, run all four `aab-*.py`
+dispatch, a bad relief pin or a missing secret fails before it, `bundleRelease -PmapPacks`, run all four `aab-*.py`
 artifact checks, print the signing certificate, **attach the nine `.pmtiles` and
 `scripts/map/MAP-DATA-LICENCE.txt` to the GitHub release** (the ODbL offer and its notice, so it
 comes before Play and a failed attach stops the run), upload the AAB **and its R8 mapping**, keep both as
