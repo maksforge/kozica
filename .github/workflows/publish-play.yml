@@ -24,6 +24,9 @@ permissions:
 jobs:
   publish:
     name: Bundle, verify, upload to internal testing
+    # Only a version's release reaches Play. The relief's own releases (relief-<date>, ADR-0009) are
+    # published too, and would otherwise build main and upload it.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     steps:
       # No `ref:` — on a release event the default checkout is already the tag, and on a
