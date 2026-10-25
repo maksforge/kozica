@@ -156,10 +156,13 @@ and when 2 and 3 both hold, one rethink answers both.
   `amenity=shelter` that is not a bus shelter) and viewpoints (`tourism=viewpoint`), as the `pois`
   layer reads them; towns, villages and hamlets (`place=town|village|hamlet`), as the `places` layer
   does; and lakes and other named water (`natural=water` with a `name`, at a point on its surface),
-  which no layer reads, since the `water` layer carries no name; and clearings, *polana* and *hala*
-  (`place=locality`, and a named `natural=grassland` or `landuse=meadow` at a point on its surface,
-  as the `pois` and `places` layers place an area), which no layer names, since `places` stops at
-  hamlets and the `land` layer carries no name; decided with the owner on 2026-10-25.
+  which no layer reads, since the `water` layer carries no name; clearings, *polana* and *hala*, as
+  the kind "clearing" (Polish *polana*: a named `natural=grassland` or `landuse=meadow`, at a point
+  on its surface, as the `pois` and `places` layers place an area), which no layer names, since the
+  `land` layer carries no name; and every `place=locality` as the neutral kind "place" (Polish
+  *miejsce*), since the tag names anywhere nobody lives, a clearing as often as a valley floor, a
+  forest part or a former settlement, and no layer reads it, since `places` stops at hamlets;
+  decided with the owner on 2026-10-25.
 - **Shipped in the app**, in the base module's assets, not as a pack: both are small, both are
   needed the moment the map opens, and both change only when the pin does, which is a release
   anyway. ADR-0010.
@@ -230,7 +233,7 @@ Copy, in English (Polish and the other shipped languages by the translation gate
 "Start", "End", "Via %1$s", "Reverse", "Save route", "%1$s from the nearest Trail", "No way over the
 Trails between %1$s and %2$s", "Includes a demanding stretch: %1$s", "Ascent", "Descent", "Walking
 time", and the kind names (peak, pass, hut, shelter, viewpoint, town, village, hamlet, lake,
-clearing).
+clearing, place).
 
 ## 5. Saved Routes and the tab bar
 
@@ -316,6 +319,6 @@ notes).
 | R1 | The gate: both Routes found and plausible (§ 1), then load time, plan time and nodes visited for Kuźnice → Łysa Polana and Zakopane → Turbacz; the two files' sizes | debug build, both files hand-pushed to `files/network/`; cold start; `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.RouteReceiver -f 0x00000020 --es from <lat,lon> --es to <lat,lon>`; `adb logcat -d -s KozicaRoute`; `ls -l` of both files in the build | *(date)* |
 | R2 | Our walking times against the signposts: five Trail sections in the Beskidy and five in the Tatry, each signpost's time beside ours | photographed or published signpost times; `RouteReceiver` for each section | *(date)* |
 | R3 | Orla Perć: a Route from Zawrat to Kozi Wierch takes it; one from Kozi Wierch to Zawrat does not | `RouteReceiver` both ways; the logged edges | *(date)* |
-| R4 | Search: "gerlach", "snieznik", "morskie oko", "polana" near Turbacz; the first results and their order. "polana" expects the clearings around Turbacz (§ 2) among the first results, with any other place whose name holds the word; those starting with it first, each group nearest Turbacz first | the release-shaped debug build, typed on the phone; screencap | *(date)* |
+| R4 | Search: "gerlach", "snieznik", "morskie oko", "polana" near Turbacz; the first results and their order. "polana" expects the clearings around Turbacz (§ 2) among the first results, whether their kind is clearing or place, with any other place whose name holds the word; those starting with it first, each group nearest Turbacz first | the release-shaped debug build, typed on the phone; screencap | *(date)* |
 | R5 | The Route on the map: Kuźnice → Morskie Oko via Zawrat drawn with the rest faded, the sheet's numbers and profile, light and dark | screencap of each | *(date)* |
 | R6 | The upgrade, both ways it reaches a phone: `main` before D as `assembleDebug -PreleaseShapedDebug`, opened; D's the same way over it, opened past the launch gate; a Route saved, the app killed and reopened; then D's release from the internal track over 0.7.0 from Play, updated in place as phase 2c's R2 was, opened | `adb install -r` of each APK, `am force-stop`, launch, screencap of the Routes tab; Play's install for the last step | *(date)* |
