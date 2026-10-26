@@ -218,10 +218,8 @@ fun MapScreen(
         val start = shown ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
         map.addOnCameraMoveStartedListener { reason ->
-            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
-                centreWanted = false
-                positionOutside = false
-            }
+            positionOutside = false
+            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) centreWanted = false
         }
         map.addOnCameraIdleListener {
             map.cameraPosition.toMapCamera()?.let { camera ->
@@ -339,6 +337,10 @@ fun MapScreen(
     }
     BackHandler(enabled = offered != null, onBack = viewModel::dismissOffer)
 
+    LaunchedEffect(state.fix, regions) {
+        val fix = state.fix ?: return@LaunchedEffect
+        if (regions?.contains(fix.latitude, fix.longitude) != false) positionOutside = false
+    }
     LaunchedEffect(map, centreWanted, state.fix) {
         val map = map ?: return@LaunchedEffect
         val fix = state.fix ?: return@LaunchedEffect
