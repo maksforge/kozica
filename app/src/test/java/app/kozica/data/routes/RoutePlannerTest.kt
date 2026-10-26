@@ -74,6 +74,18 @@ class RoutePlannerTest {
     }
 
     @Test
+    fun `a noisy ridge takes no climb from the real one before it`() {
+        val climb = network.part(3, 1.0, 0.7)
+        assertEquals(200.0, climb.ascent, 0.5)
+        assertEquals(0.0, climb.descent, 0.5)
+        assertEquals(network.edgeLength[3] * 0.3 / flat + 200 * 6, climb.seconds, 1.0)
+        val ridge = network.part(3, 0.7, 0.0)
+        assertEquals(0.0, ridge.ascent, 0.5)
+        assertEquals(0.0, ridge.descent, 0.5)
+        assertEquals(network.edgeLength[3] * 0.7 / flat, ridge.seconds, 1.0)
+    }
+
+    @Test
     fun `an edge walked backward swaps its ascent and descent`() {
         val route = planner.plan(listOf(c, d))
         assertEquals(
