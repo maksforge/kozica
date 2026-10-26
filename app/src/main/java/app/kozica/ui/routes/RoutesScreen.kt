@@ -48,6 +48,7 @@ fun RoutesScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var renaming by rememberSaveable { mutableStateOf<String?>(null) }
+    var draft by rememberSaveable { mutableStateOf("") }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     val rows = state.routes
 
@@ -71,7 +72,10 @@ fun RoutesScreen(
                                 viewModel.show(row.route.id)
                                 onShow()
                             },
-                            onRename = { renaming = row.route.id },
+                            onRename = {
+                                renaming = row.route.id
+                                draft = row.route.name
+                            },
                             onDelete = { deleting = row.route.id },
                         )
                     }
@@ -82,7 +86,8 @@ fun RoutesScreen(
     rows?.firstOrNull { it.route.id == renaming }?.let { row ->
         RouteNameDialog(
             title = stringResource(R.string.routes_rename),
-            initial = row.route.name,
+            name = draft,
+            onNameChange = { draft = it },
             confirm = stringResource(R.string.routes_rename),
             onConfirm = { name ->
                 viewModel.rename(row.route.id, name)

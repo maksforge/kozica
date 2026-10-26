@@ -19,6 +19,9 @@ class RouteRepository(
 
     suspend fun get(id: String): SavedRoute? = dao.get(id)?.toSaved()
 
+    /** The Route's name as it changes, null once it is deleted. */
+    fun observeName(id: String): Flow<String?> = dao.observeName(id)
+
     /** Saves [points] under [name], as a new Route when [id] is null; returns the Route's id. */
     suspend fun save(
         id: String?,

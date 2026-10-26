@@ -2,9 +2,9 @@ package app.kozica.data
 
 import androidx.room.Dao
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
@@ -36,10 +36,14 @@ interface RouteDao {
         at: Instant,
     )
 
+    @Query("SELECT name FROM routes WHERE id = :id")
+    fun observeName(id: String): Flow<String?>
+
     @Query("DELETE FROM routes WHERE id = :id")
     suspend fun delete(id: String)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    /** An UPDATE over an existing Route, not REPLACE's delete-then-insert, which would cascade to every child row. */
+    @Upsert
     suspend fun upsert(route: RouteEntity)
 
     @Query("DELETE FROM route_points WHERE routeId = :id")

@@ -25,6 +25,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -291,6 +292,68 @@ class MapViewModelTest {
             assertEquals(RouteUiState(), settled(viewModel) { it.route.points.isEmpty() }.route)
         }
 
+    @Test
+    fun `a Save that returns after another Route was opened leaves that Route's id alone`() =
+        runTest {
+            val asked = MutableStateFlow<String?>(null)
+            val written = CompletableDeferred<String>()
+            val other = SavedRoute("b", "Kopa", listOf(RoutePoint(49.0, 20.0, "A"), RoutePoint(49.0, 20.02, "C")))
+            val viewModel =
+                routingViewModel(
+                    routeToShow = asked,
+                    loadRoute = { other },
+                    saveRoute = { _, _, _ -> written.await() },
+                )
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.01)
+            viewModel.save("First")
+
+            asked.value = "b"
+            settled(viewModel) { it.route.savedId == "b" }
+            written.complete("a")
+
+            val route = settled(viewModel) { it.route.planned != null }.route
+            assertEquals("b" to "Kopa", route.savedId to route.name)
+        }
+
+    @Test
+    fun `a rename in the Routes tab renames the Route on the map, and a delete leaves its points unsaved`() =
+        runTest {
+            val asked = MutableStateFlow<String?>(null)
+            val name = MutableStateFlow<String?>("Kopa")
+            val saved = SavedRoute("r", "Kopa", listOf(RoutePoint(49.0, 20.0, "A"), RoutePoint(49.0, 20.02, "C")))
+            val viewModel =
+                routingViewModel(routeToShow = asked, loadRoute = { saved }, observeName = { name })
+            asked.value = "r"
+            settled(viewModel) { it.route.savedId == "r" }
+
+            name.value = "Przez Zawrat"
+            assertEquals("Przez Zawrat", settled(viewModel) { it.route.name == "Przez Zawrat" }.route.name)
+
+            name.value = null
+            val route = settled(viewModel) { it.route.savedId == null }.route
+            assertNull(route.name)
+            assertEquals(saved.points, route.points)
+        }
+
+    @Test
+    fun `the Save dialog closes on Save and goes with the Route it names`() =
+        runTest {
+            val viewModel = routingViewModel(saveRoute = { _, _, _ -> "r" })
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+
+            viewModel.editName("Kopa")
+            assertEquals("Kopa", settled(viewModel) { it.route.naming != null }.route.naming)
+            viewModel.save("Kopa")
+            assertNull(settled(viewModel) { it.route.savedId == "r" }.route.naming)
+
+            viewModel.editName("Kopa")
+            viewModel.removePoint(1)
+            viewModel.removePoint(0)
+            assertNull(settled(viewModel) { it.route.points.isEmpty() }.route.naming)
+        }
+
     private suspend fun settled(
         viewModel: MapViewModel,
         until: (MapUiState) -> Boolean,
@@ -327,6 +390,7 @@ private fun routingViewModel(
     routeToShow: MutableStateFlow<String?> = MutableStateFlow(null),
     loadRoute: suspend (String) -> SavedRoute? = { null },
     saveRoute: suspend (String?, String, List<RoutePoint>) -> String = { _, _, _ -> "" },
+    observeName: (String) -> Flow<String?> = { emptyFlow() },
 ) = MapViewModel(
     regions = flowOf(emptyList()),
     preferences = AppPreferences(MemoryPreferences()),
@@ -342,6 +406,7 @@ private fun routingViewModel(
     routeToShow = routeToShow,
     loadRoute = loadRoute,
     saveRoute = saveRoute,
+    observeName = observeName,
 )
 
 private fun mapViewModel(

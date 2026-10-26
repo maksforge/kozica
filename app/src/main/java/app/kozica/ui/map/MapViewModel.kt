@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -92,6 +93,8 @@ data class SearchUiState(
  * @param planned the Route last planned, null under two points or in a build with no network
  *   ([unavailable]). While [planning] it is the one before the latest change, kept so the map does not
  *   flash back to unfaded between the two, but it no longer matches [points].
+ * @param naming the Save dialog's name while it is open. Held here rather than in the sheet's saved
+ *   state, so it goes with the Route when a dead process comes back without one.
  */
 data class RouteUiState(
     val points: List<RoutePoint> = emptyList(),
@@ -101,6 +104,7 @@ data class RouteUiState(
     val planning: Boolean = false,
     val savedId: String? = null,
     val name: String? = null,
+    val naming: String? = null,
 )
 
 /** A demanding stretch with the places that name its two ends, either null where nothing is near. */
@@ -126,6 +130,7 @@ class MapViewModel(
     private val routeToShow: MutableStateFlow<String?> = MutableStateFlow(null),
     private val loadRoute: suspend (id: String) -> SavedRoute? = { null },
     private val saveRoute: suspend (id: String?, name: String, points: List<RoutePoint>) -> String = { _, _, _ -> "" },
+    private val observeName: (id: String) -> Flow<String?> = { emptyFlow() },
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -168,6 +173,9 @@ class MapViewModel(
 
     private var planning: Job? = null
 
+    // Changes whenever the map's Route is replaced, so a Save that returns late lands only on its own.
+    private var routeGeneration = 0
+
     val state: StateFlow<MapUiState> =
         combine(
             combine(packs, style, camera, location, fix) { packs, style, camera, location, fix ->
@@ -190,6 +198,7 @@ class MapViewModel(
                 routeToShow.compareAndSet(id, null)
             }
         }
+        viewModelScope.launch { followSavedName() }
         // Play fetches fast-follow packs by itself; this covers one it has not started and a Region a
         // later build adds. A failed or cancelled one waits for Retry (docs/phase-2c.md § 1).
         viewModelScope.launch {
@@ -306,16 +315,41 @@ class MapViewModel(
     /** Replaces whatever is on the map with a saved Route, planned again from today's network. */
     private fun show(saved: SavedRoute) {
         dismissOffer()
+        routeGeneration++
         route.update { RouteUiState(savedId = saved.id, name = saved.name) }
         changePoints { saved.points }
     }
 
+    /** A rename in the Routes tab renames the Route on the map; a delete leaves its points unsaved. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun followSavedName() {
+        route
+            .map { it.savedId }
+            .distinctUntilChanged()
+            .flatMapLatest { id -> id?.let { observeName(it).map { name -> id to name } } ?: emptyFlow() }
+            .collect { (id, name) ->
+                route.update {
+                    when {
+                        it.savedId != id -> it
+                        name == null -> it.copy(savedId = null, name = null)
+                        else -> it.copy(name = name)
+                    }
+                }
+            }
+    }
+
+    /** Opens the Save dialog with [draft], changes its name, or closes it on null. */
+    fun editName(draft: String?) {
+        route.update { it.copy(naming = draft) }
+    }
+
     /** Saves the points under [name]: over the Route they were opened from, or as a new one. */
     fun save(name: String) {
-        val current = route.value
+        val current = route.updateAndGet { it.copy(naming = null) }
+        val generation = routeGeneration
         viewModelScope.launch {
             val id = saveRoute(current.savedId, name, current.points)
-            route.update { it.copy(savedId = id, name = name) }
+            if (generation == routeGeneration) route.update { it.copy(savedId = id, name = name) }
         }
     }
 
@@ -332,6 +366,7 @@ class MapViewModel(
                         it.copy(points = points, planning = true)
                     }
                 }.points
+        if (points.isEmpty()) routeGeneration++
         planning?.cancel()
         if (points.size < 2) return
         planning =
@@ -397,6 +432,7 @@ class MapViewModel(
                         routeToShow = app.container.routeToShow,
                         loadRoute = app.container.routes::get,
                         saveRoute = app.container.routes::save,
+                        observeName = app.container.routes::observeName,
                     )
                 }
             }

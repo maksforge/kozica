@@ -412,6 +412,7 @@ fun MapScreen(
                     onRemove = viewModel::removePoint,
                     onMove = viewModel::movePoint,
                     onReverse = viewModel::reverse,
+                    onEditName = viewModel::editName,
                     onSave = viewModel::save,
                     modifier = Modifier.heightIn(max = sheetHeight),
                 )
