@@ -4,8 +4,8 @@ import android.content.Context
 
 /**
  * **The wipe guard, asked from a background entry point** — what every worker, receiver and
- * service must ask before it touches anything (ADR-0001). Nothing calls it today; phase 6's
- * recording service is the next entry point that will.
+ * service must ask before it touches anything (ADR-0001). `RecordingService` asks it, since a
+ * notification's action reaches it with no screen in front.
  *
  * The hazard is specific: the OS can start this process with no UI and no user present, and anything
  * that forces the container over a schema this build cannot open destroys the database in the
