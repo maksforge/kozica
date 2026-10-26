@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -343,15 +344,15 @@ class MapViewModelTest {
             viewModel.addPoint(49.0, 20.0)
             viewModel.addPoint(49.0, 20.02)
 
-            viewModel.editName("Kopa")
-            assertEquals("Kopa", settled(viewModel) { it.route.naming != null }.route.naming)
+            viewModel.showSaveDialog(true)
+            settled(viewModel) { it.route.naming }
             viewModel.save("Kopa")
-            assertNull(settled(viewModel) { it.route.savedId == "r" }.route.naming)
+            assertFalse(settled(viewModel) { it.route.savedId == "r" }.route.naming)
 
-            viewModel.editName("Kopa")
+            viewModel.showSaveDialog(true)
             viewModel.removePoint(1)
             viewModel.removePoint(0)
-            assertNull(settled(viewModel) { it.route.points.isEmpty() }.route.naming)
+            assertFalse(settled(viewModel) { it.route.points.isEmpty() }.route.naming)
         }
 
     private suspend fun settled(

@@ -58,12 +58,14 @@ internal fun RouteSheet(
     onRemove: (Int) -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
     onReverse: () -> Unit,
-    onEditName: (draft: String?) -> Unit,
+    onShowSaveDialog: (Boolean) -> Unit,
     onSave: (name: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var expanded by rememberSaveable { mutableStateOf(false) }
+    // Set as the dialog opens, so a draft restored after the Route itself was lost is never shown.
+    var draft by rememberSaveable { mutableStateOf("") }
     val planned = route.planned.takeUnless { route.planning }
     val open = expanded || route.points.size < 2
     Surface(
@@ -104,10 +106,9 @@ internal fun RouteSheet(
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                     TextButton(onClick = onReverse) { Text(stringResource(R.string.route_reverse)) }
                     TextButton(onClick = {
-                        onEditName(
-                            route.name
-                                ?: listOf(route.points.first(), route.points.last()).joinToString(" – ") { it.name() },
-                        )
+                        draft = route.name
+                            ?: listOf(route.points.first(), route.points.last()).joinToString(" – ") { it.name() }
+                        onShowSaveDialog(true)
                     }) { Text(stringResource(R.string.route_save)) }
                 }
             }
@@ -133,14 +134,14 @@ internal fun RouteSheet(
             }
         }
     }
-    route.naming?.let { draft ->
+    if (route.naming) {
         RouteNameDialog(
             title = stringResource(R.string.route_save),
             name = draft,
-            onNameChange = onEditName,
+            onNameChange = { draft = it },
             confirm = stringResource(R.string.route_save),
             onConfirm = onSave,
-            onDismiss = { onEditName(null) },
+            onDismiss = { onShowSaveDialog(false) },
         )
     }
 }
