@@ -247,3 +247,22 @@ the owner.
 The Alternatives' reason against a cache does not apply: a published release's assets are readable
 from any ref. What a reused release gives up is its own determinism check; the build its archives
 came from proved the Tatry's bytes repeat, from the same inputs.
+
+## Amendment — 2026-10-26: the newest dated extract that still has its md5
+
+The Decision's "the newest dated Geofabrik extract from before the pin" now reads: the newest dated
+extract from before the pin that Geofabrik still serves together with its md5. Geofabrik is thinning
+its dated extracts, removes a day's `.pbf` and its `.md5` separately, and its mirrors do not agree
+while it does: on 2026-10-26 `czech-republic-261018.osm.pbf.md5` answered 404 from one and 200 from
+another. v0.8.0's publish failed on that 404. The build now passes over a day whose extract or md5
+answers 404 and tries the day before; any other HTTP error still fails it.
+
+The Consequences' "a pin whose extract or diffs Geofabrik no longer keeps can't be rebuilt" narrows
+to: the build fails when Geofabrik keeps no dated extract with its md5 in the 400 days before the
+pin, or no longer keeps the diffs from it to the pin. Short of that, an older extract and more diffs
+stand in, and the data still comes out the same because the diffs reproduce the dated extracts.
+Read 2026-10-26 for Czechia: its 261001 extract brought by `pyosmium-up-to-date --end-id` to the
+261019 extract's sequence, 4944, matched that extract object for object (`osmium diff -s`:
+107,334,911 the same, none different or on one side only), and brought to 4943 it matched 261018,
+the extract 0.7.0 built the same pin from. Which day Geofabrik still keeps changes the download, not
+the archives.

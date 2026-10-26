@@ -261,9 +261,10 @@ Phase 1 § 5's first two bullets are this checkpoint, and stand as written there
   headers carry the same `osmosis_replication_timestamp`**. That timestamp is the data's date, and
   the one the map shows.
 - **Each extract is brought to its sequence as Poland's is today**, from the newest dated extract
-  before it, by `pyosmium-up-to-date --end-id`, then checked against its line of the pin. Sizes read
-  2026-10-20: Poland 2.11 GB, Czechia 0.95 GB, Slovakia 0.35 GB, so a release build downloads about
-  3.4 GB, not 2.1.
+  before it that Geofabrik still serves with its md5, by `pyosmium-up-to-date --end-id`, then checked
+  against its line of the pin; the build fails when Geofabrik keeps no such extract, or not the diffs
+  from it (ADR-0007's 2026-10-26 amendment). Sizes read 2026-10-20: Poland 2.11 GB, Czechia
+  0.95 GB, Slovakia 0.35 GB, so a release build downloads about 3.4 GB, not 2.1.
 - **Each country is cut into every Region before anything is merged**, one `osmium extract` pass per
   Region, each keeping the country's replication header. Not one `--config` pass for all nine:
   osmium keeps ID sets per polygon sized to OSM's largest IDs, and Poland cut for nine Regions in
