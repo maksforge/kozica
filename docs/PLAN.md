@@ -24,7 +24,7 @@ was extracted from and the first app built from it settled on exactly this split
 - [x] **Phase 2c** — Every Region arrives with the app: fast-follow packs, no picker
 - [x] **Phase 3** — Safe for a stranger: the Safety screen ← **the door: closed testing opens once its list is done**
 - [x] **Phase 4** — Elevation: contours and hillshading, from the three national lidar models
-- [ ] **Phase 5** — Route planning, and search by name
+- [x] **Phase 5** — Route planning, and search by name
 - [ ] **Phase 6** — The hike log
 - [ ] **Phase N** — Ship shape: screenshots, production access, **1.0**
 
