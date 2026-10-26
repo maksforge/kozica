@@ -20,10 +20,12 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.BatteryManager
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.GnssStatusCompat
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
@@ -41,7 +43,9 @@ import java.util.concurrent.Executors
  *
  * Pause stops GPS and arms the significant-motion sensor, which resumes the recording when it fires.
  * Every start, pause, resume, motion, provider change and stop is an event row with the battery
- * level, which is where the battery-per-hour reading comes from.
+ * level, which is where the battery-per-hour reading comes from. While recording, a `gnss` event at
+ * most once a minute, with the satellites seen and used in the fix, tells a live service with no fix
+ * from a dead or frozen one: the status callback reaches only a process that runs.
  *
  * Settings' Start row asks for precise location before it starts the service, hence the lint
  * suppression; `ServiceCompat` drops the service type below API 29, where it does not exist.
@@ -55,6 +59,7 @@ class RecorderService : Service() {
     private var segment = 0
     private var points = 0
     private var lastFix: Location? = null
+    private var lastHeartbeat = 0L
 
     private val listener =
         object : LocationListenerCompat {
@@ -69,6 +74,17 @@ class RecorderService : Service() {
             override fun onProviderEnabled(provider: String) = event("provider_on")
 
             override fun onProviderDisabled(provider: String) = event("provider_off")
+        }
+
+    private val gnss =
+        object : GnssStatusCompat.Callback() {
+            override fun onSatelliteStatusChanged(status: GnssStatusCompat) {
+                val now = SystemClock.elapsedRealtime()
+                if (state.value.paused || now - lastHeartbeat < HEARTBEAT_MS) return
+                lastHeartbeat = now
+                val used = (0 until status.satelliteCount).count { status.usedInFix(it) }
+                event("gnss", status.satelliteCount, used)
+            }
         }
 
     private val motion =
@@ -92,6 +108,10 @@ class RecorderService : Service() {
         flags: Int,
         startId: Int,
     ): Int {
+        if (intent?.action != ACTION_START && !state.value.recording) {
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
         when (intent?.action) {
             ACTION_START -> start()
             ACTION_PAUSE -> worker.execute { pause() }
@@ -105,6 +125,7 @@ class RecorderService : Service() {
 
     override fun onDestroy() {
         LocationManagerCompat.removeUpdates(locations, listener)
+        LocationManagerCompat.unregisterGnssStatusCallback(locations, gnss)
         significantMotion()?.let { sensors.cancelTriggerSensor(motion, it) }
         worker.execute { database.close() }
         worker.shutdown()
@@ -123,7 +144,10 @@ class RecorderService : Service() {
         state.value = GateState(recording = true, sensor = significantMotion() != null)
         segment = database.lastSegment() + 1
         event("start")
-        worker.execute { requestFixes() }
+        worker.execute {
+            requestFixes()
+            LocationManagerCompat.registerGnssStatusCallback(locations, worker, gnss)
+        }
     }
 
     private fun requestFixes() {
@@ -165,13 +189,18 @@ class RecorderService : Service() {
         stopSelf()
     }
 
-    private fun event(kind: String) {
+    private fun event(
+        kind: String,
+        satellites: Int? = null,
+        usedInFix: Int? = null,
+    ) {
         val battery =
             getSystemService(
                 BatteryManager::class.java,
             ).getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        Log.i(TAG, "$kind, segment $segment, $points points, battery $battery %")
-        database.event(kind, segment, battery)
+        val detail = satellites?.let { ", $usedInFix of $it satellites in the fix" } ?: ""
+        Log.i(TAG, "$kind, segment $segment, $points points, battery $battery %$detail")
+        database.event(kind, segment, battery, satellites, usedInFix)
     }
 
     private fun significantMotion(): Sensor? = sensors.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION)
@@ -219,6 +248,7 @@ class RecorderService : Service() {
         private const val NOTIFICATION_ID = 6
         private const val INTERVAL_MS = 5_000L
         private const val NOTIFY_EVERY = 12
+        private const val HEARTBEAT_MS = 60_000L
         private const val ACTION_START = "start"
         private const val ACTION_PAUSE = "pause"
         private const val ACTION_RESUME = "resume"
@@ -265,20 +295,26 @@ data class GateState(
  */
 private class GateDatabase(
     context: Context,
-) : SQLiteOpenHelper(context, "gate.db", null, 1) {
+) : SQLiteOpenHelper(context, "gate.db", null, 2) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             "CREATE TABLE gate_points (fix_time INTEGER, stored_at INTEGER, segment INTEGER, " +
                 "latitude REAL, longitude REAL, accuracy REAL, altitude REAL, speed REAL)",
         )
-        db.execSQL("CREATE TABLE gate_events (at INTEGER, kind TEXT, segment INTEGER, battery INTEGER)")
+        db.execSQL(
+            "CREATE TABLE gate_events (at INTEGER, kind TEXT, segment INTEGER, battery INTEGER, " +
+                "satellites INTEGER, used_in_fix INTEGER)",
+        )
     }
 
     override fun onUpgrade(
         db: SQLiteDatabase,
         oldVersion: Int,
         newVersion: Int,
-    ) = Unit
+    ) {
+        db.execSQL("ALTER TABLE gate_events ADD COLUMN satellites INTEGER")
+        db.execSQL("ALTER TABLE gate_events ADD COLUMN used_in_fix INTEGER")
+    }
 
     fun point(
         fix: Location,
@@ -304,6 +340,8 @@ private class GateDatabase(
         kind: String,
         segment: Int,
         battery: Int,
+        satellites: Int?,
+        usedInFix: Int?,
     ) {
         writableDatabase.insert(
             "gate_events",
@@ -313,6 +351,8 @@ private class GateDatabase(
                 put("kind", kind)
                 put("segment", segment)
                 put("battery", battery)
+                put("satellites", satellites)
+                put("used_in_fix", usedInFix)
             },
         )
     }
