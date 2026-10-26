@@ -280,9 +280,16 @@ fun MapScreen(
     val sidePadding = with(LocalDensity.current) { Spacing.block.roundToPx() }
     val topPadding = sidePadding * 3
     val bottomPadding = sidePadding * 5
+    // Each return to the map brings a new MapLibreMap, and these two would otherwise move the camera
+    // away from where the user left it; so each Route is fitted to, and each place centred on, once.
+    var fitted by rememberSaveable { mutableStateOf<Int?>(null) }
     LaunchedEffect(map, planned) {
+        if (planned == null) fitted = null
         val map = map ?: return@LaunchedEffect
         val line = planned?.line?.takeIf { it.size >= 2 } ?: return@LaunchedEffect
+        val route = planned.hashCode()
+        if (route == fitted) return@LaunchedEffect
+        fitted = route
         val bounds =
             LatLngBounds
                 .Builder()
@@ -294,9 +301,13 @@ fun MapScreen(
     }
 
     val offered = state.search.offered
+    var centred by rememberSaveable { mutableStateOf<Long?>(null) }
     LaunchedEffect(map, offered) {
+        if (offered == null) centred = null
         val map = map ?: return@LaunchedEffect
         val place = offered ?: return@LaunchedEffect
+        if (place.id == centred) return@LaunchedEffect
+        centred = place.id
         val zoom = maxOf(map.cameraPosition.zoom, OFFERED_ZOOM)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(place.latitude, place.longitude), zoom))
     }
