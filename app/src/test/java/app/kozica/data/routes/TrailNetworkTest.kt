@@ -41,6 +41,30 @@ class TrailNetworkTest {
     }
 
     @Test
+    fun `each direction takes its own climb`() {
+        val flat = { edge: Int -> network.edgeLength[edge] / (4000f / 3600) }
+        assertEquals(flat(2) + 1200, network.edgeSecondsForward[2], 1f)
+        assertEquals(flat(2), network.edgeSecondsBackward[2], 1f)
+        assertEquals(flat(3), network.edgeSecondsForward[3], 1f)
+        assertEquals(flat(3) + 1200, network.edgeSecondsBackward[3], 1f)
+    }
+
+    @Test
+    fun `a join on a one-way Trail's node stands on that node`() {
+        fun at(
+            edge: Int,
+            fraction: Double,
+            latitude: Double,
+            longitude: Double,
+        ) = Snap(edge, fraction, latitude, longitude, 0.0)
+
+        val fromB = router.leg(listOf(at(1, 0.0, 49.0, 20.01)), listOf(at(0, 0.0, 49.0, 20.0)), 49.0, 20.0)!!
+        assertEquals(listOf(100L), ways(fromB))
+        val toC = router.leg(listOf(at(3, 0.0, 49.01, 20.01)), listOf(at(1, 1.0, 49.0, 20.02)), 49.0, 20.02)!!
+        assertEquals(listOf(103L), ways(toC))
+    }
+
+    @Test
     fun `no way to an island says so`() {
         assertNull(router.leg(49.0, 20.0, 49.2, 20.205))
     }

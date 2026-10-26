@@ -200,7 +200,7 @@ class Router(
                 if (start.edge != end.edge) continue
                 val forward = end.fraction >= start.fraction
                 val possible = if (forward) network.canWalkForward(start.edge) else network.canWalkBackward(start.edge)
-                if (!possible) continue
+                if (!possible && end.fraction != start.fraction) continue
                 val seconds =
                     if (forward) network.edgeSecondsForward[start.edge] else network.edgeSecondsBackward[start.edge]
                 val total = offTrail(start) + abs(end.fraction - start.fraction) * seconds + offTrail(end)
@@ -225,15 +225,16 @@ class Router(
                 heap.push(node, seconds + heuristic(node))
             }
         }
+        // A join on a node stands on it, whichever way the edge may be walked.
         for ((s, start) in starts.withIndex()) {
-            if (network.canWalkBackward(start.edge)) {
+            if (network.canWalkBackward(start.edge) || start.fraction == 0.0) {
                 open(
                     network.edgeFrom[start.edge],
                     offTrail(start) + start.fraction * network.edgeSecondsBackward[start.edge],
                     -1 - s,
                 )
             }
-            if (network.canWalkForward(start.edge)) {
+            if (network.canWalkForward(start.edge) || start.fraction == 1.0) {
                 open(
                     network.edgeTo[start.edge],
                     offTrail(start) + (1 - start.fraction) * network.edgeSecondsForward[start.edge],
@@ -258,9 +259,11 @@ class Router(
                 val end = ends[e]
                 val rest =
                     when {
-                        node == network.edgeFrom[end.edge] && network.canWalkForward(end.edge) ->
+                        node == network.edgeFrom[end.edge] &&
+                            (network.canWalkForward(end.edge) || end.fraction == 0.0) ->
                             end.fraction * network.edgeSecondsForward[end.edge]
-                        node == network.edgeTo[end.edge] && network.canWalkBackward(end.edge) ->
+                        node == network.edgeTo[end.edge] &&
+                            (network.canWalkBackward(end.edge) || end.fraction == 1.0) ->
                             (1 - end.fraction) * network.edgeSecondsBackward[end.edge]
                         else -> Double.POSITIVE_INFINITY
                     }

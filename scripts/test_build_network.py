@@ -56,7 +56,7 @@ class ClimbTest(unittest.TestCase):
 
     def test_a_steady_climb_counts_in_full(self):
         climb = network["climb"]([25.0] * 40, [500 + 2.5 * i for i in range(41)])
-        self.assertAlmostEqual(climb.ascent, 100, delta=5)
+        self.assertAlmostEqual(climb.ascent, 100)
         self.assertEqual(climb.steep_ascent, 0)
 
     def test_a_steep_descent_is_counted_as_steep(self):
@@ -100,9 +100,35 @@ class FixtureTest(unittest.TestCase):
             self.assertEqual(written.read_bytes(), FIXTURE.read_bytes(),
                              "run `python3 scripts/test_build_network.py --write` and commit the fixture")
 
-    def test_the_walking_times_in_it(self):
+    def test_the_lengths_in_it(self):
         edges = fixture_edges()
         self.assertTrue(math.isclose(edges[0].length, 730, rel_tol=0.01))
+
+
+class Rising:
+    """4 m up every 0.01° east, under the dead band for any one way below."""
+
+    def height(self, lat: float, lon: float) -> float:
+        return 500 + 400 * (lon - 20)
+
+
+def way(refs: list[int], tags: dict | None = None) -> tuple:
+    return [(ref, 49.0, 20 + ref / 100) for ref in refs], tags or {}
+
+
+def edges_of(ways: dict) -> list:
+    return network["edges_of"](ways, Rising())[0]
+
+
+class EdgesTest(unittest.TestCase):
+    def test_ways_meeting_end_to_end_are_one_edge_so_their_climb_counts(self):
+        edges = edges_of({1: way([1, 2]), 2: way([3, 2]), 3: way([3, 4])})
+        self.assertEqual([[ref for ref, _, _ in edge.points] for edge in edges], [[1, 2, 3, 4]])
+        self.assertAlmostEqual(edges[0].climb.ascent, 12)
+
+    def test_a_junction_or_a_change_of_walking_cuts_an_edge(self):
+        self.assertEqual(len(edges_of({1: way([1, 2]), 2: way([2, 3]), 3: way([2, 5])})), 3)
+        self.assertEqual(len(edges_of({1: way([1, 2]), 2: way([2, 3], {"highway": "path", "oneway": "yes"})})), 2)
 
 
 if __name__ == "__main__":
