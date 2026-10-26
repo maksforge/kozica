@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -19,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
 import app.kozica.data.ThemeMode
+import app.kozica.record.hasMotionSensor
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.DetailScaffold
@@ -66,6 +68,17 @@ fun SettingsScreen(
                 checked = state.materialYou,
                 onChange = viewModel::setMaterialYou,
             )
+
+            // Only where the sensor exists: elsewhere a paused recording resumes by hand (docs/phase-6.md § 3).
+            if (remember { context.hasMotionSensor() }) {
+                SectionHeader(stringResource(R.string.record_channel))
+                SwitchRow(
+                    title = stringResource(R.string.record_auto_resume),
+                    subtitle = stringResource(R.string.record_auto_resume_hint),
+                    checked = state.autoResume,
+                    onChange = viewModel::setAutoResume,
+                )
+            }
 
             SectionHeader(stringResource(R.string.settings_language))
             LanguageRow()

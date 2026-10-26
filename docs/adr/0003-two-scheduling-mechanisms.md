@@ -84,3 +84,12 @@ again, with `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and
 `FOREGROUND_SERVICE_DATA_SYNC`; `ACCESS_NETWORK_STATE` stays stripped. Nothing of Kozica's own is
 scheduled: the work is the library's, started by a Region download, and the amendment above still
 describes the app.
+
+## Amendment — 2026-10-26: the recording service and the notification ask
+
+Phase 6's checkpoint B brings Kozica's first foreground service of its own, `location`, for recording
+a Hike ([`phase-6.md`](../phase-6.md) § 2), and with it `POST_NOTIFICATIONS`, asked once at the first
+Record and never at launch. It is started from the visible app and schedules nothing: no alarm, no
+work, no boot receiver. Its channel is created at `IMPORTANCE_LOW` for the reason above, and the
+service asks `schemaBlocksBackgroundWork()` on every start, as the 2026-10-18 amendment promised. The
+decision that Kozica schedules nothing stands.

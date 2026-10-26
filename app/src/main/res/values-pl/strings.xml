@@ -139,4 +139,27 @@
     <string name="safety_poland">Polska</string>
     <string name="safety_slovakia">Słowacja</string>
     <string name="safety_czechia">Czechy</string>
+
+    <string name="record_hike">Nagraj wycieczkę</string>
+    <string name="record_channel">Nagrywanie wycieczki</string>
+    <string name="record_recording">Nagrywanie</string>
+    <string name="record_paused">Wstrzymano</string>
+    <string name="record_resumed_moving">Wznowiono — jesteś w ruchu</string>
+    <string name="record_pause">Wstrzymaj</string>
+    <string name="record_resume">Wznów</string>
+    <string name="record_stop">Zakończ</string>
+    <string name="record_stop_title">Zakończyć nagrywanie?</string>
+    <string name="record_stop_body">Wycieczka zostanie zapisana i nie będzie można jej potem uzupełnić.</string>
+    <string name="record_keep">Nagrywaj dalej</string>
+    <string name="record_precise_title">Nagrywanie wycieczki wymaga dokładnej lokalizacji</string>
+    <string name="record_precise_body">Zezwól na dokładną lokalizację w ustawieniach aplikacji, aby nagrać wycieczkę. Przybliżona lokalizacja może się mylić o ponad kilometr.</string>
+    <string name="record_open_settings">Otwórz ustawienia</string>
+    <string name="record_no_notifications">Powiadomienia są wyłączone, więc poza aplikacją nie ma przycisku Zakończ</string>
+    <string name="record_location_off">Lokalizacja jest wyłączona — nic nie jest nagrywane</string>
+    <string name="record_by_hand">Na tym telefonie wznów ręcznie</string>
+    <string name="record_unfinished_title">Nagrywanie wycieczki nie zostało zakończone</string>
+    <string name="record_unfinished_resume">Wznów nagrywanie</string>
+    <string name="record_unfinished_finish">Zakończ w tym miejscu</string>
+    <string name="record_auto_resume">Wznawiaj, gdy ruszę</string>
+    <string name="record_auto_resume_hint">Wznawia się samo, gdy telefon wyczuje, że idziesz. Czasem może się wznowić, gdy siedzisz.</string>
 </resources>

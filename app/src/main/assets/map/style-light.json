@@ -17,6 +17,13 @@
     "features": []
    }
   },
+  "hike-track": {
+   "type": "geojson",
+   "data": {
+    "type": "FeatureCollection",
+    "features": []
+   }
+  },
   "regions": {
    "type": "geojson",
    "data": "asset://map/regions.geojson"
@@ -1807,6 +1814,64 @@
    },
    "paint": {
     "text-color": "#ffffff"
+   }
+  },
+  {
+   "id": "hike-track-casing",
+   "type": "line",
+   "source": "hike-track",
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     8.0,
+     13,
+     9.0,
+     15,
+     10.5,
+     17,
+     13.0
+    ]
+   }
+  },
+  {
+   "id": "hike-track",
+   "type": "line",
+   "source": "hike-track",
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#5e6c76",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     5.0,
+     13,
+     6.0,
+     15,
+     7.5,
+     17,
+     10.0
+    ]
    }
   }
  ]

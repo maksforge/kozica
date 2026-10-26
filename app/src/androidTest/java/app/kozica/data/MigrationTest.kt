@@ -56,6 +56,33 @@ class MigrationTest {
         db.query("SELECT name FROM sqlite_master WHERE name = 'items'").use { assertFalse(it.moveToFirst()) }
     }
 
+    @Test
+    fun migrate2To3KeepsASavedRouteAndTakesAHike() {
+        helper.createDatabase(TEST_DB, 2).apply {
+            execSQL("INSERT INTO routes (id, name, createdAt, updatedAt) VALUES ('r', 'Kuźnice – Morskie Oko', 1, 1)")
+            execSQL("INSERT INTO route_points VALUES ('r', 0, 49.2702, 19.9808, 'Kuźnice')")
+            execSQL("INSERT INTO route_points VALUES ('r', 1, 49.1972, 20.0700, NULL)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 3, true, MIGRATION_2_3)
+        db.query("SELECT r.name, COUNT(p.position) FROM routes r JOIN route_points p ON p.routeId = r.id").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Kuźnice – Morskie Oko", it.getString(0))
+            assertEquals(2, it.getInt(1))
+        }
+        db.execSQL(
+            "INSERT INTO hikes (id, name, startedAt, metres, movingSeconds, ascentFromGps) VALUES ('h', '', 1, 0, 0, 0)",
+        )
+        db.execSQL(
+            "INSERT INTO track_points (hikeId, stretch, time, latitude, longitude) VALUES ('h', 0, 2, 49.27, 19.98)",
+        )
+        db.query("SELECT COUNT(*) FROM track_points WHERE hikeId = 'h'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test.db"
     }

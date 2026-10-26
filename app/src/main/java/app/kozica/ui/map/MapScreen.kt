@@ -22,13 +22,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -106,6 +109,7 @@ import kotlin.time.Duration.Companion.seconds
 /** Home: the map, drawn by MapLibre from the Regions on the phone (docs/phase-2.md § 2). */
 @Composable
 fun MapScreen(
+    onRecord: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenSafety: () -> Unit,
     modifier: Modifier = Modifier,
@@ -278,6 +282,11 @@ fun MapScreen(
         state.fix?.let(component::forceLocationUpdate)
     }
 
+    LaunchedEffect(loaded, state.track) {
+        val style = loaded ?: return@LaunchedEffect
+        (style.getSource(HIKE_TRACK_SOURCE) as? GeoJsonSource)?.setGeoJson(trackGeoJson(state.track))
+    }
+
     val fade = remember(state.style) { state.style?.let(::fadeOf) }
     LaunchedEffect(loaded, state.route) {
         val style = loaded ?: return@LaunchedEffect
@@ -433,6 +442,16 @@ fun MapScreen(
                         )
                     }
                     OsmCredit(state.osmDate, relief = state.reliefShown)
+                }
+                if (state.recording == null) {
+                    FilledTonalButton(
+                        onClick = onRecord,
+                        modifier = Modifier.align(Alignment.BottomStart).padding(Spacing.tight),
+                    ) {
+                        Icon(painterResource(R.drawable.ic_record), contentDescription = null)
+                        Spacer(Modifier.width(Spacing.tight))
+                        Text(stringResource(R.string.record_hike))
+                    }
                 }
             }
             if (state.route.points.isNotEmpty()) {

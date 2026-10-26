@@ -1,5 +1,6 @@
 package app.kozica
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,8 +27,17 @@ import app.kozica.ui.wipe.SchemaMismatchScreen
  * all still work unchanged.
  */
 class MainActivity : AppCompatActivity() {
+    /** The recording notification's Stop, which opens the app to confirm (docs/phase-6.md § 2). */
+    private var stopAsked by mutableStateOf(false)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.action == ACTION_CONFIRM_STOP) stopAsked = true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null && intent?.action == ACTION_CONFIRM_STOP) stopAsked = true
 
         val app = application as MainApplication
 
@@ -89,10 +101,14 @@ class MainActivity : AppCompatActivity() {
                         // `AppContainer`, so not composing it is what keeps Room out of existence.
                         SchemaMismatchScreen(mismatch = mismatch, onContinue = app::consentToWipe)
                     } else {
-                        MainNavigation()
+                        MainNavigation(stopAsked = stopAsked, onStopAnswered = { stopAsked = false })
                     }
                 }
             }
         }
+    }
+
+    companion object {
+        const val ACTION_CONFIRM_STOP = "app.kozica.CONFIRM_STOP"
     }
 }

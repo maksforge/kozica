@@ -8,6 +8,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import app.kozica.data.AppPreferences
+import app.kozica.data.HikeRepository
 import app.kozica.data.RouteRepository
 import app.kozica.data.buildAppDatabase
 import app.kozica.data.location.positionFixes
@@ -24,6 +25,7 @@ import app.kozica.data.routes.TrailNetworks
 import app.kozica.data.routes.openPlaces
 import app.kozica.data.routes.placesFile
 import app.kozica.media.MediaFiles
+import app.kozica.record.Recorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,6 +75,10 @@ class AppContainer(
     val media by lazy { MediaFiles(appContext) }
 
     val routes by lazy { RouteRepository(database.routeDao()) }
+
+    val hikes by lazy { HikeRepository(database.hikeDao()) }
+
+    val recorder by lazy { Recorder(appContext, hikes, ::places) }
 
     /** A saved Route the Routes tab asked the map to show, until the map takes it. */
     val routeToShow = MutableStateFlow<String?>(null)
