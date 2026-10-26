@@ -55,7 +55,7 @@ class ClimbTest(unittest.TestCase):
         self.assertEqual((climb.ascent, climb.descent), (0, 0))
 
     def test_a_steady_climb_counts_in_full(self):
-        climb = network["climb"]([25.0] * 40, [500 + 2.5 * i for i in range(41)])
+        climb = network["climb"]([25.0] * 50, [500 + 2 * i for i in range(51)])
         self.assertAlmostEqual(climb.ascent, 100)
         self.assertEqual(climb.steep_ascent, 0)
 
@@ -65,10 +65,10 @@ class ClimbTest(unittest.TestCase):
         self.assertAlmostEqual(climb.steep_descent, 100)
 
     def test_a_gentle_descent_costs_no_time(self):
-        climb = network["climb"]([25.0] * 40, [600 - 2.5 * i for i in range(41)])
+        climb = network["climb"]([25.0] * 50, [600 - 2 * i for i in range(51)])
         self.assertAlmostEqual(climb.descent, 100)
         self.assertEqual(climb.steep_descent, 0)
-        self.assertAlmostEqual(network["walking_seconds"](1000, climb.ascent, climb.steep_descent), 900)
+        self.assertAlmostEqual(network["walking_seconds"](1250, climb.ascent, climb.steep_descent), 1125)
 
 
 class WalkingTimeTest(unittest.TestCase):

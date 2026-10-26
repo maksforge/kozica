@@ -41,11 +41,11 @@ class TrailNetworkTest {
     }
 
     @Test
-    fun `each direction takes its own climb`() {
+    fun `each direction takes its own climb, and its own steep descent`() {
         val flat = { edge: Int -> network.edgeLength[edge] / (4000f / 3600) }
         assertEquals(flat(2) + 1200, network.edgeSecondsForward[2], 1f)
-        assertEquals(flat(2), network.edgeSecondsBackward[2], 1f)
-        assertEquals(flat(3), network.edgeSecondsForward[3], 1f)
+        assertEquals(flat(2) + 600, network.edgeSecondsBackward[2], 1f)
+        assertEquals(flat(3) + 600, network.edgeSecondsForward[3], 1f)
         assertEquals(flat(3) + 1200, network.edgeSecondsBackward[3], 1f)
     }
 
