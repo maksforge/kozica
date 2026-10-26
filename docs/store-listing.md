@@ -238,14 +238,14 @@ Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz lub wieś albo przy
 0.8.0 never reached Play: its map-data build failed where Geofabrik had dropped a dated extract's
 md5, which 0.8.1 fixes. Testers go from 0.7.0 straight to 0.8.1, so these notes carry 0.8.0's too.
 
-**English** — 416/500:
+**English** — 488/500:
 
 ```
-Plan a hike: search for a peak, a hut, a pass or a village, or press and hold on the map, and Kozica draws a route over the marked Trails only, with its length, ascent and descent, the walking time to each point, a profile and a warning at every demanding stretch. Save routes and find them in the new Routes tab. The map now stays over the mountains it covers, with each Region named when you zoom out. All offline.
+Plan a hike: search for a peak, a hut, a pass or a village, or press and hold on the map, and Kozica draws a route over the marked Trails only, with its length, ascent and descent, the walking time to each point, an elevation profile and a warning at every demanding stretch. Save routes and find them in the new Routes tab. The map now stays over the mountains it covers, with each Region named when you zoom out, and the position button tells you when you are outside them. All offline.
 ```
 
-**Polish** — 439/500:
+**Polish** — 500/500:
 
 ```
-Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz lub wieś albo przytrzymaj palec na mapie, a Kozica wyznaczy trasę wyłącznie znakowanymi szlakami, z długością, podejściami i zejściami, czasem dojścia do każdego punktu, profilem i ostrzeżeniem na każdym wymagającym odcinku. Zapisuj trasy i znajduj je w nowej karcie Trasy. Mapa nie wychodzi już poza obejmowane góry, a po oddaleniu pokazuje nazwy regionów. Wszystko bez internetu.
+Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz lub wieś albo przytrzymaj palec na mapie, a Kozica wyznaczy trasę wyłącznie znakowanymi szlakami, z długością, podejściami i zejściami, czasem dojścia do każdego punktu, profilem wysokości i ostrzeżeniem na każdym wymagającym odcinku. Zapisuj trasy – znajdziesz je w nowej karcie Trasy. Mapa nie wychodzi już poza góry, które obejmuje, a po oddaleniu pokazuje nazwy regionów. Poza nimi przycisk pozycji powie ci o tym. Wszystko bez internetu.
 ```
