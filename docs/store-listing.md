@@ -216,7 +216,10 @@ Every mountain range now arrives with the app: right after you install Kozica, t
 Wszystkie pasma przychodzą teraz razem z aplikacją: zaraz po instalacji Sklep Play sam pobiera wszystkie dziewięć regionów, więc nie trzeba niczego wybierać. Ekran Regiony i pytanie przy pierwszym uruchomieniu zniknęły, a mapa otwiera się na Tatrach. Dopóki mapy się pobierają, linijka na mapie je odlicza.
 ```
 
-### 0.7.0 — the shape of the mountains
+### 0.8.0 — the shape of the mountains
+
+0.8.0 changes nothing on screen: it builds the Trail network that route planning will stand on (phase
+5's checkpoints A and B), so the notes stand as 0.7.0 wrote them, still the newest thing a user sees.
 
 **English** — 316/500:
 
