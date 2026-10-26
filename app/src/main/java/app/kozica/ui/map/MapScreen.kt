@@ -210,10 +210,16 @@ fun MapScreen(
     // MapLibre's compass shows once the map is turned, top-end by default: under the Safety and
     // Settings buttons and the banners below them unless it is moved below that whole overlay.
     var overlayHeight by remember { mutableIntStateOf(0) }
-    val compassEnd = with(LocalDensity.current) { Spacing.tight.roundToPx() }
+    val density = LocalDensity.current
+    val compassRim = with(density) { CompassDrawable.RIM.roundToPx() }
+    val compassEnd = with(density) { Spacing.tight.roundToPx() } - compassRim
     LaunchedEffect(map, overlayHeight) {
         val map = map ?: return@LaunchedEffect
-        map.uiSettings.setCompassMargins(0, overlayHeight, compassEnd, 0)
+        map.uiSettings.setCompassMargins(0, (overlayHeight - compassRim).coerceAtLeast(0), compassEnd, 0)
+    }
+    LaunchedEffect(map, colors) {
+        val map = map ?: return@LaunchedEffect
+        map.uiSettings.setCompassImage(CompassDrawable(colors, density))
     }
     val focus = LocalFocusManager.current
 
