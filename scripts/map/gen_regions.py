@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Writes the map's Region outlines, their name points and the mask outside them.
 
-    uv run --with shapely==2.1.1 python3 scripts/map/gen_regions.py && python3 scripts/map/gen_style.py
+    uv run -q --with shapely==2.2.0 python3 scripts/map/gen_regions.py && python3 scripts/map/gen_style.py
 
 Re-run whenever a polygon in scripts/regions/ changes; the output is committed, and gen_style.py reads
 its bounds. The mask is the world less the union of the Regions, which overlap by a few kilometres,
@@ -12,26 +12,19 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 
-from shapely.geometry import Polygon, box, mapping
+from shapely.geometry import box, mapping
 from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+from poly import read_poly  # noqa: E402
+
 REGIONS = ROOT / "scripts/regions"
 STRINGS = ROOT / "app/src/main/res/values/strings.xml"
 TARGET = ROOT / "app/src/main/assets/map/regions.geojson"
-
-
-def read_poly(path: Path) -> Polygon:
-    lines = path.read_text().split("\n")
-    points = []
-    for line in lines[2:]:
-        if line.strip() == "END":
-            break
-        lon, lat = line.split()
-        points.append((float(lon), float(lat)))
-    return Polygon(points)
 
 
 def rounded(geometry: dict) -> dict:
@@ -52,7 +45,7 @@ def main() -> None:
     ]
     for id, polygon in regions.items():
         features.append({"type": "Feature", "properties": {"kind": "region", "id": id},
-                         "geometry": rounded({"type": "LineString", "coordinates": list(polygon.exterior.coords)})})
+                         "geometry": rounded(mapping(polygon.boundary))})
         features.append({"type": "Feature", "properties": {"kind": "label", "id": id, "name": names[id]},
                          "geometry": rounded(mapping(polygon.representative_point()))})
     collection = {"type": "FeatureCollection", "bbox": [round(v, 5) for v in union.bounds], "features": features}

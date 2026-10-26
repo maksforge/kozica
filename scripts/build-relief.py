@@ -57,6 +57,9 @@ from shapely.ops import unary_union
 from skimage.measure import find_contours
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+from poly import read_poly  # noqa: E402
+
 WORK = ROOT / "map-data" / "relief"
 PARTS = WORK / "parts-v2"
 REGIONS = ROOT / "scripts" / "regions"
@@ -153,28 +156,6 @@ def map_build():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
-
-
-def read_poly(path: Path) -> Polygon | MultiPolygon:
-    outer, holes, ring, hole = [], [], None, False
-    for line in path.read_text().splitlines()[1:]:
-        line = line.strip()
-        if not line:
-            continue
-        if line == "END":
-            if ring is not None:
-                (holes if hole else outer).append(Polygon(ring))
-                ring = None
-            continue
-        if ring is None:
-            ring, hole = [], line.startswith("!")
-            continue
-        lon, lat = map(float, line.split()[:2])
-        ring.append((lon, lat))
-    area = unary_union(outer)
-    for h in holes:
-        area = area.difference(h)
-    return area
 
 
 def border(country: str, sequence: int, build) -> Polygon | MultiPolygon:
