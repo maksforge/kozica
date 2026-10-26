@@ -17,11 +17,14 @@ data class Snap(
     val metresAway: Double,
 )
 
-/** One edge of a leg, walked from `edgeFrom` to `edgeTo` when [forward]. */
+/** One edge of a leg, walked from fraction [from] of its length to [to], `edgeFrom` being 0. */
 data class Step(
     val edge: Int,
-    val forward: Boolean,
-)
+    val from: Double,
+    val to: Double,
+) {
+    val forward: Boolean get() = to > from
+}
 
 /** A leg's [seconds] include the walk from each point to where it joins the Trails, at 4 km/h. */
 data class Leg(
@@ -183,7 +186,7 @@ class Router(
         var best = Double.POSITIVE_INFINITY
         var bestNode = -1
         var bestEnd = -1
-        var direct: Triple<Int, Int, Boolean>? = null
+        var direct: Pair<Int, Int>? = null
         var visited = 0
 
         // Weighted while choosing, so a farther Trail wins only for a much shorter Route, never as a shortcut.
@@ -206,7 +209,7 @@ class Router(
                 val total = offTrail(start) + abs(end.fraction - start.fraction) * seconds + offTrail(end)
                 if (total < best) {
                     best = total
-                    direct = Triple(s, e, forward)
+                    direct = s to e
                 }
             }
         }
@@ -286,11 +289,11 @@ class Router(
         }
 
         if (best == Double.POSITIVE_INFINITY) return null
-        direct?.let { (s, e, forward) ->
+        direct?.let { (s, e) ->
             return Leg(
                 starts[s],
                 ends[e],
-                listOf(Step(starts[s].edge, forward)),
+                listOf(Step(starts[s].edge, starts[s].fraction, ends[e].fraction)).filter { it.from != it.to },
                 walked(starts[s], ends[e], best),
                 visited,
             )
@@ -298,17 +301,21 @@ class Router(
         val end = ends[bestEnd]
         val steps = ArrayDeque<Step>()
         val endForward = bestNode == network.edgeFrom[end.edge]
-        if (if (endForward) end.fraction > 0 else end.fraction < 1) steps.addFirst(Step(end.edge, endForward))
+        if (if (endForward) end.fraction > 0 else end.fraction < 1) {
+            steps.addFirst(Step(end.edge, if (endForward) 0.0 else 1.0, end.fraction))
+        }
         var node = bestNode
         while (via[node] >= 0) {
             val edge = via[node]
             val forward = network.edgeTo[edge] == node
-            steps.addFirst(Step(edge, forward))
+            steps.addFirst(if (forward) Step(edge, 0.0, 1.0) else Step(edge, 1.0, 0.0))
             node = if (forward) network.edgeFrom[edge] else network.edgeTo[edge]
         }
         val start = starts[-1 - via[node]]
         val startForward = node == network.edgeTo[start.edge]
-        if (if (startForward) start.fraction < 1 else start.fraction > 0) steps.addFirst(Step(start.edge, startForward))
+        if (if (startForward) start.fraction < 1 else start.fraction > 0) {
+            steps.addFirst(Step(start.edge, start.fraction, if (startForward) 1.0 else 0.0))
+        }
         return Leg(start, end, steps.toList(), walked(start, end, best), visited)
     }
 

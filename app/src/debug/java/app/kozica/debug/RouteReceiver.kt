@@ -5,18 +5,20 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
-import app.kozica.data.routes.Router
+import app.kozica.data.routes.RoutePlanner
+import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.TrailNetworks
 import java.io.File
 import kotlin.concurrent.thread
 
 /**
- * Plans one leg between two positions and logs its timings, for phase 5's gate (docs/phase-5.md § 1);
- * the leg's line goes to `cache/route.txt`, one `lat lon` per line. Delivery needs `-f 0x00000020`.
+ * Plans a Route and logs its timings and totals, for phase 5's readings (docs/phase-5.md § Readings);
+ * its line goes to `cache/route.txt`, one `lat lon height approach` per line. `via` is optional, its
+ * points separated by `;`. Delivery needs `-f 0x00000020`.
  *
  * ```bash
  * adb shell am broadcast -n <pkg>.debug/app.kozica.debug.RouteReceiver -f 0x00000020 \
- *   --es from 49.2697,19.9813 --es to 49.2010,20.0710
+ *   --es from 49.2697,19.9813 --es to 49.2010,20.0710 --es via '49.2420,20.0080'
  * adb logcat -d -s KozicaRoute
  * ```
  */
@@ -27,16 +29,22 @@ class RouteReceiver : BroadcastReceiver() {
     ) {
         val from = intent.getStringExtra("from")?.let(::position)
         val to = intent.getStringExtra("to")?.let(::position)
-        if (from == null || to == null) {
+        val via =
+            intent
+                .getStringExtra("via")
+                ?.split(";")
+                ?.map(::position)
+                .orEmpty()
+        if (from == null || to == null || via.any { it == null }) {
             resultCode = 1
-            resultData = "from and to are required, each as lat,lon"
+            resultData = "from and to are required and via is optional, each point as lat,lon, via's joined by ;"
             return
         }
         val pending = goAsync()
         val app = context.applicationContext
         thread(name = "RouteReceiver") {
             try {
-                plan(app, from, to)
+                plan(app, listOf(from) + via.filterNotNull() + listOf(to))
             } catch (e: Exception) {
                 Log.e(TAG, "planning failed", e)
             } finally {
@@ -47,8 +55,7 @@ class RouteReceiver : BroadcastReceiver() {
 
     private fun plan(
         context: Context,
-        from: Pair<Double, Double>,
-        to: Pair<Double, Double>,
+        points: List<RoutePoint>,
     ) {
         var started = SystemClock.elapsedRealtime()
         val network = TrailNetworks.load(context)
@@ -61,44 +68,44 @@ class RouteReceiver : BroadcastReceiver() {
             "load ${SystemClock.elapsedRealtime() - started} ms: ${network.nodeCount} nodes, ${network.edgeCount} edges",
         )
         started = SystemClock.elapsedRealtime()
-        val router = Router(network)
+        val planner = RoutePlanner(network)
         Log.i(TAG, "index ${SystemClock.elapsedRealtime() - started} ms")
         started = SystemClock.elapsedRealtime()
-        val starts = router.joins(from.first, from.second)
-        val ends = router.joins(to.first, to.second)
-        Log.i(
-            TAG,
-            "joins ${SystemClock.elapsedRealtime() - started} ms: ${starts.size} and ${ends.size} Trails within reach",
-        )
-        started = SystemClock.elapsedRealtime()
-        val leg = router.leg(starts, ends, to.first, to.second)
-        val searched = SystemClock.elapsedRealtime() - started
-        if (leg == null) {
-            Log.i(TAG, "search $searched ms: no way")
-            return
+        val route = planner.plan(points)
+        Log.i(TAG, "plan ${SystemClock.elapsedRealtime() - started} ms")
+        for ((i, leg) in route.legs.withIndex()) {
+            if (leg == null) {
+                Log.i(TAG, "leg ${i + 1}: no way")
+                continue
+            }
+            Log.i(
+                TAG,
+                "leg ${i + 1}: joined ${leg.start.metresAway.toInt()} m and ${leg.end.metresAway.toInt()} m " +
+                    "from its points, ${leg.steps.size} edges, ${leg.nodesVisited} nodes visited, " +
+                    "${route.minutesTo(i + 1)} min to its end",
+            )
         }
-        Log.i(TAG, "joined ${leg.start.metresAway.toInt()} m and ${leg.end.metresAway.toInt()} m from the points")
-        val metres = leg.steps.sumOf { network.edgeLength[it.edge].toDouble() }
         Log.i(
             TAG,
-            "search $searched ms: ${leg.nodesVisited} nodes visited, ${leg.steps.size} edges, about ${metres.toInt()} m, ${(leg.seconds / 60).toInt()} min",
+            "route: ${route.metres.toInt()} m, ascent ${route.ascent.toInt()} m, descent ${route.descent.toInt()} m, " +
+                "${route.minutes} min (${(route.seconds / 60).toInt()} unrounded)",
         )
+        for (stretch in route.demanding) {
+            Log.i(
+                TAG,
+                "demanding: sac ${stretch.sac} from ${stretch.fromMetres.toInt()} m to ${stretch.toMetres.toInt()} m",
+            )
+        }
         File(context.cacheDir, "route.txt").printWriter().use { out ->
-            for (step in leg.steps) {
-                val first = network.edgeFirstPoint[step.edge]
-                val points = first until first + network.edgePointCount[step.edge]
-                for (point in if (step.forward) points else points.reversed()) {
-                    out.println(
-                        "${network.pointLat[point] * 1e-7} ${network.pointLon[point] * 1e-7} ${network.edgeWay[step.edge]}",
-                    )
-                }
+            for (sample in route.line) {
+                out.println("${sample.latitude} ${sample.longitude} ${sample.heightMetres} ${sample.approach}")
             }
         }
     }
 
-    private fun position(text: String): Pair<Double, Double>? {
+    private fun position(text: String): RoutePoint? {
         val parts = text.split(",").mapNotNull { it.trim().toDoubleOrNull() }
-        return if (parts.size == 2) parts[0] to parts[1] else null
+        return if (parts.size == 2) RoutePoint(parts[0], parts[1]) else null
     }
 
     private companion object {
