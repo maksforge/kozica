@@ -126,10 +126,14 @@ hour of recording cost in battery?
   accuracy, the ones worse than 30 m too: § 2's filters would leave a still phone with no points at
   all, and the gate asks whether the service lives, not what a Track keeps. Pause and resume are a
   second debug row; while paused it arms the significant-motion sensor and logs `KozicaRecord
-  motion` when it fires.
+  motion` when it fires. While recording, a `gnss` event at most once a minute, from the GNSS status
+  callback, is the heartbeat: it tells a live service with no fix from a dead or frozen one.
 - **`scripts/track-gaps.py`**: reads a pulled database (with its `-wal`, checkpointed on the host)
   and prints the point count, the span, every gap over 60 s between fixes of any accuracy and the
-  longest; then, apart, the gaps § 2's 5 m and 30 m filters would have left.
+  longest; then, apart, the gaps § 2's 5 m and 30 m filters would have left. Gaps are on the clock
+  each fix was stored by, and run from a start or resume to the first fix and from the last fix to a
+  pause or stop. A gap the heartbeat spans reads "alive, no fix" and is listed apart; verdict 1's
+  bar applies to silence, neither fix nor heartbeat.
 - **The test phone, simulated:** `adb shell dumpsys battery unplug`, screen off with `adb shell input
   keyevent KEYCODE_SLEEP`, `adb shell dumpsys deviceidle force-idle`, four hours, then `dumpsys
   battery reset`. It never leaves USB (the PC's internet runs through it), so a real-walk reading
