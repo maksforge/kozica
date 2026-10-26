@@ -74,6 +74,9 @@ def palette(dark: bool) -> dict[str, str]:
         "shade_accent": tone(NV, pick(35, 10)),
         "contour": tone(P, pick(45, 55)),
         "contour_text": tone(P, pick(35, 70)),
+        "route": tone(P, pick(40, 60)),
+        "route_casing": tone(N, pick(100, 10)),
+        "route_number": tone(N, pick(100, 10)),
     }
 
 
@@ -83,6 +86,7 @@ def by_zoom(*stops: tuple[float, object]) -> list:
 
 TRAIL_WIDTHS = ((10, 2.0), (13, 3.0), (15, 4.5), (17, 7.0))
 SYMBOL_STEP = 18
+FADED_OPACITY = 0.3
 SLOT = ["-", ["coalesce", ["get", "index"], 0], ["/", ["-", ["coalesce", ["get", "count"], 1], 1], 2]]
 
 
@@ -106,6 +110,12 @@ def symbol_offset() -> list:
         return ["match", twice_slot, *slots, ["literal", [0, 0]]]
 
     return by_zoom(*((zoom, at(width)) for zoom, width in TRAIL_WIDTHS if zoom >= 13))
+
+
+def faded(layer: dict) -> dict:
+    """Marked for MapStyle.kt, which fades it while a Route is shown (docs/phase-5.md § 4)."""
+    assert not any(key.endswith("-opacity") for key in layer.get("paint", {})), layer["id"]
+    return layer | {"metadata": {"kozica:fade": True}}
 
 
 def layer(id: str, type: str, source_layer: str | None = None, **parts) -> dict:
@@ -171,21 +181,21 @@ def style(dark: bool) -> dict:
         layer("tracks", "line", "roads", filter=["==", ["get", "kind"], "track"],
               paint={"line-color": c["track"], "line-width": by_zoom((12, 0.8), (16, 2.0)),
                      "line-dasharray": ["literal", [5, 2]]}),
-        layer("paths", "line", "paths",
-              paint={"line-color": c["path"], "line-width": by_zoom((12, 0.6), (16, 1.4)),
-                     "line-dasharray": ["literal", [2, 2]]}),
-        {"id": "contour-labels", "type": "symbol", "source": "contours", "source-layer": "contours",
-         "minzoom": 12, "filter": ["get", "index"],
-         "layout": text_layout(10, **{"symbol-placement": "line", "text-field": ["to-string", ["get", "ele"]]}),
-         "paint": text_paint(c["contour_text"])},
-        layer("trail-casings", "line", "trails", filter=["==", ["get", "colour"], casing],
-              layout={"line-join": "round"},
-              paint={"line-color": c[f"{casing}_casing"], "line-width": trail_width(2.0),
-                     "line-offset": trail_offset()}),
-        layer("trails", "line", "trails",
-              layout={"line-join": "round"},
-              paint={"line-color": trail_colour, "line-width": trail_width(), "line-offset": trail_offset()}),
-        layer(
+        faded(layer("paths", "line", "paths",
+                    paint={"line-color": c["path"], "line-width": by_zoom((12, 0.6), (16, 1.4)),
+                           "line-dasharray": ["literal", [2, 2]]})),
+        faded({"id": "contour-labels", "type": "symbol", "source": "contours", "source-layer": "contours",
+               "minzoom": 12, "filter": ["get", "index"],
+               "layout": text_layout(10, **{"symbol-placement": "line", "text-field": ["to-string", ["get", "ele"]]}),
+               "paint": text_paint(c["contour_text"])}),
+        faded(layer("trail-casings", "line", "trails", filter=["==", ["get", "colour"], casing],
+                    layout={"line-join": "round"},
+                    paint={"line-color": c[f"{casing}_casing"], "line-width": trail_width(2.0),
+                           "line-offset": trail_offset()})),
+        faded(layer("trails", "line", "trails",
+                    layout={"line-join": "round"},
+                    paint={"line-color": trail_colour, "line-width": trail_width(), "line-offset": trail_offset()})),
+        faded(layer(
             "trail-symbols", "symbol", "trails", minzoom=14,
             layout={
                 "symbol-placement": "line",
@@ -198,8 +208,8 @@ def style(dark: bool) -> dict:
                 "icon-ignore-placement": True,
                 "icon-offset": symbol_offset(),
             },
-        ),
-        layer(
+        )),
+        faded(layer(
             "pois", "symbol", "pois",
             layout=text_layout(
                 12,
@@ -218,16 +228,34 @@ def style(dark: bool) -> dict:
                 },
             ),
             paint=text_paint(["match", ["get", "kind"], ["hut", "shelter"], c["hut_text"], c["text"]]),
-        ),
-        layer(
+        )),
+        faded(layer(
             "places", "symbol", "places",
             layout=text_layout(["match", ["get", "kind"], "town", 15, "village", 13, 11],
                                **{"text-field": ["get", "name"], "text-max-width": 8}),
             paint=text_paint(),
-        ),
+        )),
+        # The planned Route (docs/phase-5.md § 4), drawn from MapScreen.kt's GeoJSON over everything.
+        {"id": "route-casing", "type": "line", "source": "route", "filter": ["==", ["get", "approach"], "trail"],
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": c["route_casing"], "line-width": trail_width(6.0)}},
+        {"id": "route", "type": "line", "source": "route", "filter": ["==", ["get", "approach"], "trail"],
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": c["route"], "line-width": trail_width(3.0)}},
+        {"id": "route-off-trail", "type": "line", "source": "route", "filter": ["==", ["get", "approach"], "off"],
+         "paint": {"line-color": c["route"], "line-width": trail_width(), "line-dasharray": ["literal", [1, 1.5]]}},
+        {"id": "route-points", "type": "circle", "source": "route", "filter": ["==", ["geometry-type"], "Point"],
+         "paint": {"circle-color": c["route"], "circle-radius": 11, "circle-stroke-color": c["route_casing"],
+                   "circle-stroke-width": 2}},
+        {"id": "route-numbers", "type": "symbol", "source": "route", "filter": ["==", ["geometry-type"], "Point"],
+         "layout": text_layout(13, **{"text-field": ["get", "number"], "text-allow-overlap": True,
+                                      "text-ignore-placement": True}),
+         "paint": {"text-color": c["route_number"]}},
     ]
     return {
         "version": 8,
+        "metadata": {"kozica:faded-opacity": FADED_OPACITY},
+        "sources": {"route": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}}},
         "glyphs": "asset://map/glyphs/{fontstack}/{range}.pbf",
         "sprite": f"asset://map/sprite-{'dark' if dark else 'light'}",
         "layers": layers,

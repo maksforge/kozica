@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
@@ -49,6 +50,28 @@ class MapStyleTest {
                 .getValue("encoding")
                 .jsonPrimitive.content,
         )
+    }
+
+    @Test
+    fun `the Route's source is kept and its layers drawn once`() {
+        val withRoute =
+            """
+            {"version":8,"metadata":{"kozica:faded-opacity":0.3},
+             "sources":{"route":{"type":"geojson","data":{"type":"FeatureCollection","features":[]}}},
+             "layers":[
+              {"id":"trails","type":"line","source":"region","source-layer":"trails","metadata":{"kozica:fade":true}},
+              {"id":"roads","type":"line","source":"region","source-layer":"roads"},
+              {"id":"route","type":"line","source":"route"}
+            ]}
+            """.trimIndent()
+        val expanded = expandStyle(withRoute, regions)
+        val style = Json.parseToJsonElement(expanded).jsonObject
+        assertEquals(
+            listOf("trails-tatry", "trails-bieszczady", "roads-tatry", "roads-bieszczady", "route"),
+            style.layerIds(),
+        )
+        assertTrue("route" in style.getValue("sources").jsonObject)
+        assertEquals(Fade(listOf("trails-tatry", "trails-bieszczady"), 0.3f), fadeOf(expanded))
     }
 
     private fun kotlinx.serialization.json.JsonObject.layerIds() =

@@ -255,7 +255,7 @@ def place_kind(tags) -> str | None:
     place = tags.get("place")
     if place in ("town", "village", "hamlet"):
         return place
-    if place == "locality":
+    if place in ("locality", "quarter", "neighbourhood", "suburb"):
         return "place"
     if tags.get("natural") == "water":
         return "water"

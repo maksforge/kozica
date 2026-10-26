@@ -1,6 +1,7 @@
 package app.kozica.data.routes
 
 import android.content.Context
+import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 
@@ -11,5 +12,8 @@ fun openTrailNetwork(context: Context): InputStream? =
     } catch (_: FileNotFoundException) {
         null
     }
+
+/** The name index beside it. */
+fun placesFile(context: Context): File? = copiedPlaces(context)
 
 const val TRAIL_NETWORK = "trails.network"

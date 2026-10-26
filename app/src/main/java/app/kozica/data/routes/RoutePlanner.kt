@@ -2,10 +2,15 @@ package app.kozica.data.routes
 
 import kotlin.math.ceil
 
-/** A position the user put on a Route: its start, its end or a via point. */
+/**
+ * A position the user put on a Route: its start, its end or a via point.
+ *
+ * @param label the place's name, or null for a point with no place near it, shown by its position.
+ */
 data class RoutePoint(
     val latitude: Double,
     val longitude: Double,
+    val label: String? = null,
 )
 
 /** How the line comes to a vertex from the one before it. */
