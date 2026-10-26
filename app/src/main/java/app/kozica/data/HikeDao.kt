@@ -47,9 +47,13 @@ interface HikeDao {
     @Query("DELETE FROM track_points WHERE hikeId = :hikeId")
     suspend fun deletePoints(hikeId: String)
 
+    @Query("DELETE FROM hikes WHERE id = :id")
+    suspend fun delete(id: String)
+
     /**
      * Reads, encodes and deletes the rows of a Hike still open in one transaction, so no point is
-     * ever in neither and an ended Hike's Track is never encoded again from what is left.
+     * ever in neither and an ended Hike's Track is never encoded again from what is left. A Hike that
+     * stored no point is deleted instead (docs/phase-6.md § 2).
      */
     @Transaction
     suspend fun finish(
@@ -57,7 +61,9 @@ interface HikeDao {
         ending: suspend (hike: HikeEntity, points: List<TrackPointEntity>) -> HikeEnding,
     ) {
         val hike = get(id)?.takeIf { it.endedAt == null } ?: return
-        val end = ending(hike, points(id))
+        val points = points(id)
+        if (points.isEmpty()) return delete(id)
+        val end = ending(hike, points)
         end(id, end.name, end.endedAt, end.track, end.metres, end.movingSeconds)
         deletePoints(id)
     }
