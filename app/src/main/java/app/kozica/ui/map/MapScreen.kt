@@ -212,7 +212,7 @@ fun MapScreen(
     var overlayHeight by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val compassRim = with(density) { CompassDrawable.RIM.roundToPx() }
-    val compassEnd = with(density) { Spacing.tight.roundToPx() } - compassRim
+    val compassEnd = with(density) { Spacing.tight.roundToPx() }
     LaunchedEffect(map, overlayHeight) {
         val map = map ?: return@LaunchedEffect
         map.uiSettings.setCompassMargins(0, (overlayHeight - compassRim).coerceAtLeast(0), compassEnd, 0)

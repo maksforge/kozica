@@ -18,9 +18,8 @@ import androidx.compose.ui.unit.dp
  * beside it, a needle, and an N above the needle's north tip. MapLibre turns the whole image with
  * the map's bearing, so north is drawn at the top.
  *
- * MapLibre's compass view is a fixed 48dp and fit-centres its image, so the disc is drawn inside a
- * 48dp image with a transparent rim of [RIM]; back the compass margins off by that much and the
- * disc lines up with the 40dp buttons.
+ * The disc sits in a 48dp image, a transparent rim of [RIM] around it, because MapLibre sizes the
+ * compass to its image and the reset-to-north tap needs the same 48dp target as the buttons.
  */
 class CompassDrawable(
     colors: ColorScheme,
@@ -28,22 +27,22 @@ class CompassDrawable(
 ) : Drawable() {
     private val size = with(density) { VIEW_SIZE.roundToPx() }
     private val disc = with(density) { DISC_SIZE.toPx() / 2 }
-    private val letterOffset = with(density) { 13.dp.toPx() }
-    private val needleCentre = with(density) { 4.dp.toPx() }
-    private val needleHalfLength = with(density) { 10.dp.toPx() }
-    private val needleHalfWidth = with(density) { 4.5.dp.toPx() }
-    private val pivot = with(density) { 1.5.dp.toPx() }
+    private val letterMargin = with(density) { 1.5.dp.toPx() }
+    private val needleHalfWidth = with(density) { 5.5.dp.toPx() }
+    private val pivot = with(density) { 2.dp.toPx() }
 
     private val discPaint = fill(colors.secondaryContainer.toArgb())
     private val northPaint = fill(colors.primary.toArgb())
     private val southPaint = fill(colors.outline.toArgb())
     private val letterPaint =
         fill(colors.onSecondaryContainer.toArgb()).apply {
-            textSize = with(density) { 10.dp.toPx() }
+            textSize = with(density) { 13.dp.toPx() }
             textAlign = Paint.Align.CENTER
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
     private val letterBounds = Rect().also { letterPaint.getTextBounds(LETTER, 0, LETTER.length, it) }
+    private val needleHalfLength =
+        disc - letterMargin - letterBounds.height() - with(density) { 1.dp.toPx() }
     private val path = Path()
 
     override fun getIntrinsicWidth(): Int = size
@@ -55,23 +54,22 @@ class CompassDrawable(
         val cy = bounds.exactCenterY()
         canvas.drawCircle(cx, cy, disc, discPaint)
 
-        val letterCentre = cy - letterOffset
-        canvas.drawText(LETTER, cx, letterCentre - letterBounds.exactCenterY(), letterPaint)
+        val letterTop = cy - disc + letterMargin
+        canvas.drawText(LETTER, cx, letterTop - letterBounds.top, letterPaint)
 
-        val hub = cy + needleCentre
         path.reset()
-        path.moveTo(cx, hub - needleHalfLength)
-        path.lineTo(cx + needleHalfWidth, hub)
-        path.lineTo(cx - needleHalfWidth, hub)
+        path.moveTo(cx, cy - needleHalfLength)
+        path.lineTo(cx + needleHalfWidth, cy)
+        path.lineTo(cx - needleHalfWidth, cy)
         path.close()
         canvas.drawPath(path, northPaint)
         path.reset()
-        path.moveTo(cx, hub + needleHalfLength)
-        path.lineTo(cx + needleHalfWidth, hub)
-        path.lineTo(cx - needleHalfWidth, hub)
+        path.moveTo(cx, cy + needleHalfLength)
+        path.lineTo(cx + needleHalfWidth, cy)
+        path.lineTo(cx - needleHalfWidth, cy)
         path.close()
         canvas.drawPath(path, southPaint)
-        canvas.drawCircle(cx, hub, pivot, discPaint)
+        canvas.drawCircle(cx, cy, pivot, discPaint)
     }
 
     override fun setAlpha(alpha: Int) {
