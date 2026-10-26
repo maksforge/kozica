@@ -139,16 +139,6 @@ def moment(pin: Pin) -> str:
     return next(iter(stamps.values()))
 
 
-def exists(url: str) -> bool:
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=TIMEOUT):
-            return True
-    except urllib.error.HTTPError as error:
-        if error.code == 404:
-            return False
-        raise
-
-
 def header(pbf: Path, option: str) -> str:
     result = run(
         "osmium", "fileinfo", "-F", "pbf", "-g", f"header.option.{option}", pbf,
@@ -164,13 +154,19 @@ def header_sequence(pbf: Path) -> int:
     return int(value)
 
 
-def dated_extract(name: str) -> Path:
+def dated_extract(name: str) -> Path | None:
+    """None once Geofabrik has thinned the extract or its md5 away; it removes the two separately."""
     target = WORK / "extracts" / name
-    with urllib.request.urlopen(f"{GEOFABRIK}/{name}.md5", timeout=TIMEOUT) as response:
-        expected = response.read().decode().split()[0]
-    if target.exists() and digest(target, "md5") == expected:
-        return target
-    download(f"{GEOFABRIK}/{name}", target)
+    try:
+        with urllib.request.urlopen(f"{GEOFABRIK}/{name}.md5", timeout=TIMEOUT) as response:
+            expected = response.read().decode().split()[0]
+        if target.exists() and digest(target, "md5") == expected:
+            return target
+        download(f"{GEOFABRIK}/{name}", target)
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            return None
+        raise
     if digest(target, "md5") != expected:
         target.unlink()
         fail(f"{name} does not match Geofabrik's md5")
@@ -181,12 +177,7 @@ def newest_extract_before(country: str, sequence: int) -> Path:
     day = dt.date.fromisoformat(state_timestamp(country, sequence)[:10])
     for back in range(OLDEST_EXTRACT_DAYS):
         name = f"{country}-{day - dt.timedelta(days=back):%y%m%d}.osm.pbf"
-        # Geofabrik thins its dated extracts and can drop the md5 before the file; such an
-        # extract cannot be checked, so an older one plus replication diffs stands in for it.
-        if not exists(f"{GEOFABRIK}/{name}") or not exists(f"{GEOFABRIK}/{name}.md5"):
-            continue
-        extract = dated_extract(name)
-        if header_sequence(extract) <= sequence:
+        if (extract := dated_extract(name)) and header_sequence(extract) <= sequence:
             return extract
     fail(f"Geofabrik keeps no dated {country} extract from before sequence {sequence}")
 
