@@ -30,5 +30,12 @@
     <string name="debug_region_no_date" translatable="false">unknown date</string>
     <string name="debug_region_failed" translatable="false">%1$s: failed, error %2$d</string>
     <string name="debug_position_real" translatable="false">Use the real position</string>
+    <string name="debug_gate_idle" translatable="false">Gate recorder: stopped</string>
+    <string name="debug_gate_recording" translatable="false">Gate recorder: %1$d points, last fix %2$s</string>
+    <string name="debug_gate_paused" translatable="false">Gate recorder: paused, %1$d points, motion sensor %2$s</string>
+    <string name="debug_gate_start" translatable="false">Start the gate recorder</string>
+    <string name="debug_gate_pause" translatable="false">Pause the gate recorder</string>
+    <string name="debug_gate_resume" translatable="false">Resume the gate recorder</string>
+    <string name="debug_gate_stop" translatable="false">Stop the gate recorder</string>
     <string name="schema_mismatch_continue" translatable="false">Continue and start fresh</string>
 </resources>
