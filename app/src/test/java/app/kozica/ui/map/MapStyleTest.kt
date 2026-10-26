@@ -94,6 +94,43 @@ class MapStyleTest {
         assertEquals(CameraBounds(14.95, 48.95, 22.95, 51.12), cameraBoundsOf(expanded))
     }
 
+    @Test
+    fun `both styles' bounds are the Regions' polygons', so a changed polygon fails until gen_regions py is re-run`() {
+        val points =
+            File("../scripts/regions").listFiles { file -> file.extension == "poly" }!!.flatMap { file ->
+                file.readLines().mapNotNull { line ->
+                    line
+                        .trim()
+                        .split(Regex("\\s+"))
+                        .mapNotNull(String::toDoubleOrNull)
+                        .takeIf { it.size == 2 }
+                }
+            }
+        val polygons =
+            listOf(
+                points.minOf { it[0] },
+                points.minOf { it[1] },
+                points.maxOf { it[0] },
+                points.maxOf { it[1] },
+            )
+
+        for (theme in listOf("light", "dark")) {
+            val bounds = cameraBoundsOf(File("src/main/assets/map/style-$theme.json").readText())
+            listOf(bounds.west, bounds.south, bounds.east, bounds.north).zip(polygons).forEach { (style, poly) ->
+                assertEquals(theme, poly, style, 1e-5)
+            }
+        }
+    }
+
+    @Test
+    fun `a position is inside the bounds up to their edges`() {
+        val bounds = CameraBounds(west = 14.95, south = 48.95, east = 22.95, north = 51.12)
+
+        assertTrue(bounds.contains(latitude = 49.23, longitude = 19.98))
+        assertTrue(bounds.contains(latitude = 51.12, longitude = 14.95))
+        assertFalse(bounds.contains(latitude = 52.23, longitude = 21.01))
+    }
+
     private fun kotlinx.serialization.json.JsonObject.layerIds() =
         getValue("layers").jsonArray.map {
             it.jsonObject
