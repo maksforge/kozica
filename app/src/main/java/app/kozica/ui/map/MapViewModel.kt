@@ -93,8 +93,8 @@ data class SearchUiState(
  * @param planned the Route last planned, null under two points or in a build with no network
  *   ([unavailable]). While [planning] it is the one before the latest change, kept so the map does not
  *   flash back to unfaded between the two, but it no longer matches [points].
- * @param naming the Save dialog's name while it is open. Held here rather than in the sheet's saved
- *   state, so it goes with the Route when a dead process comes back without one.
+ * @param naming whether the Save dialog is open. Held here rather than in the sheet's saved state, so
+ *   it goes with the Route when a dead process comes back without one.
  */
 data class RouteUiState(
     val points: List<RoutePoint> = emptyList(),
@@ -104,7 +104,7 @@ data class RouteUiState(
     val planning: Boolean = false,
     val savedId: String? = null,
     val name: String? = null,
-    val naming: String? = null,
+    val naming: Boolean = false,
 )
 
 /** A demanding stretch with the places that name its two ends, either null where nothing is near. */
@@ -338,14 +338,13 @@ class MapViewModel(
             }
     }
 
-    /** Opens the Save dialog with [draft], changes its name, or closes it on null. */
-    fun editName(draft: String?) {
-        route.update { it.copy(naming = draft) }
+    fun showSaveDialog(shown: Boolean) {
+        route.update { it.copy(naming = shown) }
     }
 
     /** Saves the points under [name]: over the Route they were opened from, or as a new one. */
     fun save(name: String) {
-        val current = route.updateAndGet { it.copy(naming = null) }
+        val current = route.updateAndGet { it.copy(naming = false) }
         val generation = routeGeneration
         viewModelScope.launch {
             val id = saveRoute(current.savedId, name, current.points)
