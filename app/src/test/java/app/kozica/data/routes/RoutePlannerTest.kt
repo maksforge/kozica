@@ -62,6 +62,15 @@ class RoutePlannerTest {
     }
 
     @Test
+    fun `the phone's rule for part of an edge is the build's rule for the whole`() {
+        val almost = 1 - 1e-9
+        for (edge in 0 until network.edgeCount) {
+            assertEquals(network.edgeSecondsForward[edge].toDouble(), network.part(edge, 0.0, almost).seconds, 1.0)
+            assertEquals(network.edgeSecondsBackward[edge].toDouble(), network.part(edge, almost, 0.0).seconds, 1.0)
+        }
+    }
+
+    @Test
     fun `a leg to a summit midway along an edge climbs only its own side`() {
         val up = planner.plan(listOf(e, summit))
         assertEquals(100.0, up.ascent, 0.5)
