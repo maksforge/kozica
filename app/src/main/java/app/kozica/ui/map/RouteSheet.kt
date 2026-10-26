@@ -58,12 +58,12 @@ internal fun RouteSheet(
     onRemove: (Int) -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
     onReverse: () -> Unit,
+    onEditName: (draft: String?) -> Unit,
     onSave: (name: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var expanded by rememberSaveable { mutableStateOf(false) }
-    var naming by rememberSaveable { mutableStateOf(false) }
     val planned = route.planned.takeUnless { route.planning }
     val open = expanded || route.points.size < 2
     Surface(
@@ -103,7 +103,12 @@ internal fun RouteSheet(
             if (route.points.size >= 2) {
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                     TextButton(onClick = onReverse) { Text(stringResource(R.string.route_reverse)) }
-                    TextButton(onClick = { naming = true }) { Text(stringResource(R.string.route_save)) }
+                    TextButton(onClick = {
+                        onEditName(
+                            route.name
+                                ?: listOf(route.points.first(), route.points.last()).joinToString(" – ") { it.name() },
+                        )
+                    }) { Text(stringResource(R.string.route_save)) }
                 }
             }
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
@@ -128,16 +133,14 @@ internal fun RouteSheet(
             }
         }
     }
-    if (naming) {
+    route.naming?.let { draft ->
         RouteNameDialog(
             title = stringResource(R.string.route_save),
-            initial = route.name ?: listOf(route.points.first(), route.points.last()).joinToString(" – ") { it.name() },
+            name = draft,
+            onNameChange = onEditName,
             confirm = stringResource(R.string.route_save),
-            onConfirm = { name ->
-                onSave(name)
-                naming = false
-            },
-            onDismiss = { naming = false },
+            onConfirm = onSave,
+            onDismiss = { onEditName(null) },
         )
     }
 }
@@ -146,19 +149,19 @@ internal fun RouteSheet(
 @Composable
 internal fun RouteNameDialog(
     title: String,
-    initial: String,
+    name: String,
+    onNameChange: (String) -> Unit,
     confirm: String,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var name by rememberSaveable { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = onNameChange,
                 label = { Text(stringResource(R.string.route_name)) },
                 singleLine = true,
             )

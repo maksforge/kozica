@@ -56,6 +56,29 @@ class RouteRepositoryTest {
         }
 
     @Test
+    fun writingTheRouteRowOverItselfLeavesItsChildRowsAlone() =
+        runTest {
+            val id = routes.save(null, "Kuźnice – Morskie Oko", listOf(kuznice, zawrat))
+            val dao = database.routeDao()
+
+            dao.upsert(dao.get(id)!!.route.copy(name = "Przez Zawrat"))
+
+            assertEquals(SavedRoute(id, "Przez Zawrat", listOf(kuznice, zawrat)), routes.get(id))
+        }
+
+    @Test
+    fun theNameIsObservedThroughARenameAndADelete() =
+        runTest {
+            val id = routes.save(null, "Kuźnice – Morskie Oko", listOf(kuznice, zawrat))
+            routes.rename(id, "Przez Zawrat")
+            assertEquals("Przez Zawrat", routes.observeName(id).first())
+
+            routes.delete(id)
+
+            assertNull(routes.observeName(id).first())
+        }
+
+    @Test
     fun renameKeepsThePointsAndDeleteTakesThemWithIt() =
         runTest {
             val id = routes.save(null, "Kuźnice – Morskie Oko", listOf(kuznice, zawrat))
