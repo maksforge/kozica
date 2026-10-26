@@ -255,7 +255,7 @@ class MapViewModel(
         changePoints { it + RoutePoint(place.latitude, place.longitude, place.name) }
     }
 
-/** A long-press: the point joins at once, in press order, then takes the name of the place nearest it, if any is near. */
+    /** A long-press: the point joins at once, in press order, then takes the name of the place nearest it, if any is near. */
     fun addPoint(
         latitude: Double,
         longitude: Double,
