@@ -60,6 +60,9 @@
     <string name="route_end">End</string>
     <!-- A point between the start and the end. %1$s is its place's name, such as "Zawrat". -->
     <string name="route_via">Via %1$s</string>
+    <!-- What a screen reader says a tap on the Route sheet's handle does: shows or hides the points, the profile and Reverse. -->
+    <string name="route_details_show">Show route details</string>
+    <string name="route_details_hide">Hide route details</string>
     <string name="route_reverse">Reverse</string>
     <string name="route_move_up">Move up</string>
     <string name="route_move_down">Move down</string>
