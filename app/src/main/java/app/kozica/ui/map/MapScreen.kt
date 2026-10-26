@@ -208,12 +208,12 @@ fun MapScreen(
     }
     var searchText by rememberSaveable { mutableStateOf("") }
     // MapLibre's compass shows once the map is turned, top-end by default: under the Safety and
-    // Settings buttons unless it is moved below their row.
-    var topRowHeight by remember { mutableIntStateOf(0) }
+    // Settings buttons and the banners below them unless it is moved below that whole overlay.
+    var overlayHeight by remember { mutableIntStateOf(0) }
     val compassEnd = with(LocalDensity.current) { Spacing.tight.roundToPx() }
-    LaunchedEffect(map, topRowHeight) {
+    LaunchedEffect(map, overlayHeight) {
         val map = map ?: return@LaunchedEffect
-        map.uiSettings.setCompassMargins(0, topRowHeight, compassEnd, 0)
+        map.uiSettings.setCompassMargins(0, overlayHeight, compassEnd, 0)
     }
     val focus = LocalFocusManager.current
 
@@ -376,14 +376,17 @@ fun MapScreen(
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
                 // Above the position button, which search results reach down over.
-                Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().zIndex(1f)) {
+                Column(
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .zIndex(1f)
+                        .onSizeChanged { overlayHeight = it.height },
+                ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier =
-                            Modifier
-                                .onSizeChanged { topRowHeight = it.height }
-                                .padding(Spacing.tight),
+                        modifier = Modifier.padding(Spacing.tight),
                     ) {
                         SearchField(
                             text = searchText,
