@@ -143,6 +143,7 @@ app/src/debug/    the developer-only build: the sample-data seeder, Settings' de
                   relief pack, ui/map/FrameLog.kt logs frame times and CameraReceiver sets the
                   camera, for phase 4's readings; a network hand-pushed to files/network/ stands in
                   for the base assets, and RouteReceiver plans a leg and logs it, for phase 5's
+                  gate
 app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
                   settings, no continue button, no frame log, and the Regions, the relief and the
                   real position passed through

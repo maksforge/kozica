@@ -80,14 +80,15 @@ class Climb:
 def climb(lengths: list[float], heights: list[float]) -> Climb:
     """Ascent and descent past a dead band, and the parts of each steeper than STEEP_GRADE.
 
-    `lengths[i]` is the horizontal distance from point i to point i + 1."""
+    `lengths[i]` is the horizontal distance from point i to point i + 1. What is left inside the band at
+    the last point counts too, so the edges of a Route climb exactly what its ends differ by."""
     ascent = descent = steep_ascent = steep_descent = 0.0
     reference = heights[0]
     run = 0.0
-    for length, height in zip(lengths, heights[1:]):
+    for i, (length, height) in enumerate(zip(lengths, heights[1:])):
         run += length
         change = height - reference
-        if abs(change) < DEAD_BAND_METRES:
+        if abs(change) < DEAD_BAND_METRES and i < len(lengths) - 1:
             continue
         steep = run > 0 and abs(change) / run > STEEP_GRADE
         if change > 0:
@@ -392,28 +393,94 @@ def fill_heights(heights: list[float | None]) -> list[float] | None:
     return out
 
 
-def edges_of(ways: dict, relief: Relief) -> tuple[list[Edge], int]:
+@dataclass(frozen=True)
+class Piece:
+    way: int
+    points: list[tuple[int, float, float]]
+    flags: int
+    sac: int
+
+    def turned(self) -> Piece:
+        flags = {FORWARD_ONLY: BACKWARD_ONLY, BACKWARD_ONLY: FORWARD_ONLY}.get(self.flags, self.flags)
+        return Piece(self.way, self.points[::-1], flags, self.sac)
+
+
+def pieces_of(ways: dict) -> list[Piece]:
+    """Every way split at each of its inner nodes another Trail way, or the same one, passes through."""
     uses: dict[int, int] = {}
     for nodes, _ in ways.values():
         for ref, _, _ in nodes:
             uses[ref] = uses.get(ref, 0) + 1
-    edges, flat = [], 0
+    pieces = []
     for way_id in sorted(ways):
         nodes, tags = ways[way_id]
         cut = [0] + [i for i in range(1, len(nodes) - 1) if uses[nodes[i][0]] > 1] + [len(nodes) - 1]
         for start, end in zip(cut, cut[1:]):
             part = nodes[start:end + 1]
-            if part[0][0] == part[-1][0]:
-                continue
-            dense = densify(part)
-            heights = fill_heights([relief.height(lat, lon) for _, lat, lon in dense])
-            if heights is None:
-                heights = [0.0] * len(dense)
-                flat += 1
-            lengths = [distance(a[1], a[2], b[1], b[2]) for a, b in zip(dense, dense[1:])]
-            kept = [i for i, point in enumerate(dense) if point[0] != 0]
-            edges.append(Edge(way_id, [dense[i] for i in kept], [heights[i] for i in kept], sum(lengths),
-                              climb(lengths, heights), oneway(tags), SAC_GRADES.get(tags.get("sac_scale", ""), 0)))
+            if part[0][0] != part[-1][0]:
+                pieces.append(Piece(way_id, part, oneway(tags), SAC_GRADES.get(tags.get("sac_scale", ""), 0)))
+    return pieces
+
+
+def chains(pieces: list[Piece]) -> list[Piece]:
+    """docs/phase-5.md § 2's edges: pieces joined through every node where exactly two of them meet and
+    both walk alike, so a climb is measured across a way's end and only a real junction cuts it."""
+    at: dict[int, list[int]] = {}
+    for i, piece in enumerate(pieces):
+        at.setdefault(piece.points[0][0], []).append(i)
+        at.setdefault(piece.points[-1][0], []).append(i)
+    taken = [False] * len(pieces)
+
+    def beyond(node: int, current: int) -> int | None:
+        meeting = at[node]
+        if len(meeting) != 2:
+            return None
+        other = meeting[0] if meeting[1] == current else meeting[1]
+        return None if taken[other] else other
+
+    out = []
+    for first in range(len(pieces)):
+        if taken[first]:
+            continue
+        taken[first] = True
+        behind, ahead = [], [pieces[first]]
+        current = first
+        while (other := beyond((head := (behind[-1] if behind else ahead[0])).points[0][0], current)) is not None:
+            piece = pieces[other] if pieces[other].points[-1][0] == head.points[0][0] else pieces[other].turned()
+            if (piece.flags, piece.sac) != (head.flags, head.sac):
+                break
+            taken[other] = True
+            behind.append(piece)
+            current = other
+        current = first
+        while (other := beyond(ahead[-1].points[-1][0], current)) is not None:
+            tail = ahead[-1]
+            piece = pieces[other] if pieces[other].points[0][0] == tail.points[-1][0] else pieces[other].turned()
+            if (piece.flags, piece.sac) != (tail.flags, tail.sac):
+                break
+            taken[other] = True
+            ahead.append(piece)
+            current = other
+        chain = behind[::-1] + ahead
+        closed = len(chain) > 1 and chain[0].points[0][0] == chain[-1].points[-1][0]
+        for run in (chain[:-1], chain[-1:]) if closed else (chain,):
+            points = run[0].points + [point for piece in run[1:] for point in piece.points[1:]]
+            out.append(Piece(run[0].way, points, run[0].flags, run[0].sac))
+    return out
+
+
+def edges_of(ways: dict, relief: Relief) -> tuple[list[Edge], int]:
+    edges, flat = [], 0
+    for chain in chains(pieces_of(ways)):
+        dense = densify(chain.points)
+        heights = fill_heights([relief.height(lat, lon) for _, lat, lon in dense])
+        if heights is None:
+            heights = [0.0] * len(dense)
+            flat += 1
+        lengths = [distance(a[1], a[2], b[1], b[2]) for a, b in zip(dense, dense[1:])]
+        kept = [i for i, point in enumerate(dense) if point[0] != 0]
+        edges.append(Edge(chain.way, [dense[i] for i in kept], [heights[i] for i in kept], sum(lengths),
+                          climb(lengths, heights), chain.flags, chain.sac))
     return edges, flat
 
 
