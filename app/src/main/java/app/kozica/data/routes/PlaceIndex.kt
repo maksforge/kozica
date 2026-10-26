@@ -2,8 +2,9 @@ package app.kozica.data.routes
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import java.io.File
-import java.io.FileNotFoundException
+import java.io.IOException
 import kotlin.math.cos
 
 /** The kinds `scripts/build-network.py` writes, by the name it stores (docs/phase-5.md § 2). */
@@ -160,23 +161,32 @@ class PlaceIndex(
 
 /**
  * The assets' `places.sqlite`, copied out once per install of an APK, since SQLite cannot open a file
- * inside one; null when this build carries none. The copy is in `noBackupFilesDir`, which the next
- * install rewrites rather than restores.
+ * inside one; null when this build carries none or the copy fails. The copy is in `noBackupFilesDir`,
+ * which the next install rewrites rather than restores, and is named for the install it was made by,
+ * since the wall clock can run backwards between one install and the next.
  */
 fun copiedPlaces(context: Context): File? {
-    val copy = File(context.noBackupFilesDir, PLACES)
     val installed = context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
-    if (copy.exists() && copy.lastModified() >= installed) return copy
-    val asset =
-        try {
-            context.assets.open(PLACES)
-        } catch (_: FileNotFoundException) {
-            return null
-        }
-    val partial = File(context.noBackupFilesDir, "$PLACES.part")
-    asset.use { input -> partial.outputStream().use { input.copyTo(it) } }
-    check(partial.renameTo(copy)) { "could not move $partial into place" }
-    return copy
+    val copy = File(context.noBackupFilesDir, "places-$installed.sqlite")
+    if (copy.exists()) return copy
+    context.noBackupFilesDir.listFiles { file -> file.name.startsWith("places") }?.forEach { it.delete() }
+    val partial = File(context.noBackupFilesDir, "${copy.name}.part")
+    return try {
+        context.assets.open(PLACES).use { input -> partial.outputStream().use { input.copyTo(it) } }
+        if (partial.renameTo(copy)) copy else null
+    } catch (_: IOException) {
+        null
+    } finally {
+        partial.delete()
+    }
 }
+
+/** Null when [file] does not open as a database, so search shows its placeholder rather than crash. */
+fun openPlaces(file: File): PlaceIndex? =
+    try {
+        PlaceIndex(file)
+    } catch (_: SQLiteException) {
+        null
+    }
 
 const val PLACES = "places.sqlite"
