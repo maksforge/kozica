@@ -3,9 +3,23 @@
     Debug-only manifest additions. Merged into the debug variant and absent from a release build
     entirely, which is the point: a receiver that seeds sample data has no business shipping.
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Phase 6's gate recorder (docs/phase-6.md § 1). Main's manifest gains them at checkpoint B;
+        the location permissions the service type needs are main's, which lint reads this file without.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application>
+        <service
+            android:name=".debug.RecorderService"
+            android:exported="false"
+            android:foregroundServiceType="location"
+            tools:ignore="ForegroundServicePermission" />
         <!--
             `exported="true"` because `adb shell am broadcast` is another process, and there is no
             protected-broadcast exemption for a receiver we invented ourselves. That is only

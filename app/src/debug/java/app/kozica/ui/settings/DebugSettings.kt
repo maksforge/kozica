@@ -1,5 +1,10 @@
 package app.kozica.ui.settings
 
+import android.Manifest
+import android.os.Build
+import android.text.format.DateUtils
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,6 +25,7 @@ import app.kozica.data.location.clearPositionOverride
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.RegionState
+import app.kozica.debug.RecorderService
 import app.kozica.theme.Spacing
 import app.kozica.ui.common.SectionHeader
 import kotlinx.coroutines.launch
@@ -47,6 +53,46 @@ fun DebugSettings() {
     }
     regions?.forEach { PackState(packState(it)) } ?: PackState(stringResource(R.string.debug_region_reading))
     DebugRow(stringResource(R.string.debug_position_real), onClick = ::clearPositionOverride)
+    GateRecorder()
+}
+
+@Composable
+private fun GateRecorder() {
+    val context = LocalContext.current
+    val gate by RecorderService.gateState.collectAsStateWithLifecycle()
+    val ask =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
+            if (granted[Manifest.permission.ACCESS_FINE_LOCATION] == true) RecorderService.start(context)
+        }
+    val status =
+        when {
+            !gate.recording -> stringResource(R.string.debug_gate_idle)
+            gate.paused ->
+                stringResource(
+                    R.string.debug_gate_paused,
+                    gate.points,
+                    if (gate.sensor) "armed" else "absent",
+                )
+            else ->
+                stringResource(
+                    R.string.debug_gate_recording,
+                    gate.points,
+                    gate.lastFixMillis?.let { DateUtils.getRelativeTimeSpanString(it).toString() } ?: "none",
+                )
+        }
+    PackState(status)
+    when {
+        !gate.recording ->
+            DebugRow(stringResource(R.string.debug_gate_start)) {
+                val permissions =
+                    listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION) +
+                        if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
+                ask.launch(permissions.toTypedArray())
+            }
+        gate.paused -> DebugRow(stringResource(R.string.debug_gate_resume)) { RecorderService.resume(context) }
+        else -> DebugRow(stringResource(R.string.debug_gate_pause)) { RecorderService.pause(context) }
+    }
+    if (gate.recording) DebugRow(stringResource(R.string.debug_gate_stop)) { RecorderService.stop(context) }
 }
 
 @Composable
