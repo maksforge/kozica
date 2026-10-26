@@ -45,6 +45,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
+    // Every ViewModel here runs its io and compute work on this Main too, so none of it can resume
+    // on another thread after tearDown has unset Main.
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
@@ -64,6 +66,8 @@ class MapViewModelTest {
                     positions = { MutableSharedFlow<Location>() },
                     fetch = {},
                     confirmFetch = { false },
+                    io = Dispatchers.Main,
+                    compute = Dispatchers.Main,
                 )
             viewModel.darkTheme(false)
             viewModel.locationRead(LocationRead(LocationGrant.PRECISE, on = true))
@@ -280,6 +284,8 @@ private fun routingViewModel(
     confirmFetch = { false },
     places = places,
     planRoute = planRoute,
+    io = Dispatchers.Main,
+    compute = Dispatchers.Main,
 )
 
 private fun mapViewModel(
@@ -296,6 +302,8 @@ private fun mapViewModel(
     fetch = fetch,
     confirmFetch = { false },
     relief = relief,
+    io = Dispatchers.Main,
+    compute = Dispatchers.Main,
 )
 
 private fun tatry(state: RegionState) = Region("tatry", name = 0, state)
