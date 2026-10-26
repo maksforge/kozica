@@ -276,7 +276,7 @@ class RecordingService : Service() {
             .setContentText(text)
             .setWhen(recording.startedAt.toEpochMilli())
             .setShowWhen(true)
-            .setUsesChronometer(!recording.paused)
+            .setUsesChronometer(true)
             .addAction(toggle)
             .addAction(NotificationCompat.Action(0, getString(R.string.record_stop), confirmStop()))
             .build()
