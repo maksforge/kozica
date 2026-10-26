@@ -49,6 +49,49 @@
     <string name="map_confirm">Confirm</string>
     <string name="map_download_failed">Download failed</string>
 
+    <!-- Search and the Route (docs/phase-5.md § 4). "Trail" is a marked hiking trail, as on the signposts; a "route" is what the user plans over the Trails. -->
+    <string name="map_search">Search places</string>
+    <string name="map_search_clear">Clear search</string>
+    <!-- Shown in place of the search field and the Route in a build without the Trail network, such as a developer's. -->
+    <string name="map_planning_missing">Search and planning are not in this build</string>
+    <!-- The first point of a Route, and on the button that makes a found place the first. -->
+    <string name="route_start">Start</string>
+    <!-- The last point of a Route, and on the button that adds a found place as the new last. -->
+    <string name="route_end">End</string>
+    <!-- A point between the start and the end. %1$s is its place's name, such as "Zawrat". -->
+    <string name="route_via">Via %1$s</string>
+    <string name="route_reverse">Reverse</string>
+    <string name="route_move_up">Move up</string>
+    <string name="route_move_down">Move down</string>
+    <string name="route_remove">Remove point</string>
+    <!-- %1$s is a distance from the platform, such as "320 m": how far a point is from where its Route joins the Trails. -->
+    <string name="route_off_trail">%1$s from the nearest Trail</string>
+    <!-- %1$s and %2$s are two points' place names, such as "Kuźnice" and "Łysa Polana". -->
+    <string name="route_no_way">No way over the Trails between %1$s and %2$s</string>
+    <!-- %1$s names the stretch by the places at its ends, such as "Zawrat – Kozi Wierch", or by its distances along the Route, such as "4.2 km – 5.4 km". "Demanding" is the difficulty grade, as in "demanding mountain hiking". -->
+    <string name="route_demanding">Includes a demanding stretch: %1$s</string>
+    <string name="route_length">Length</string>
+    <string name="route_ascent">Ascent</string>
+    <string name="route_descent">Descent</string>
+    <string name="route_walking_time">Walking time</string>
+
+    <!-- The kinds of place search finds, each under its name in the results. -->
+    <string name="place_peak">Peak</string>
+    <string name="place_pass">Pass</string>
+    <!-- A staffed mountain hut, Polish "schronisko". -->
+    <string name="place_hut">Hut</string>
+    <!-- An unstaffed roof on or near a Trail, Polish "wiata". -->
+    <string name="place_shelter">Shelter</string>
+    <string name="place_viewpoint">Viewpoint</string>
+    <string name="place_town">Town</string>
+    <string name="place_village">Village</string>
+    <string name="place_hamlet">Hamlet</string>
+    <string name="place_lake">Lake</string>
+    <!-- A named mountain meadow, Polish "polana" or "hala". -->
+    <string name="place_clearing">Clearing</string>
+    <!-- A named spot where nobody lives: a valley floor, part of a forest, a former settlement. Polish "miejsce". -->
+    <string name="place_place">Place</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_appearance">Appearance</string>

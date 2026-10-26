@@ -211,8 +211,10 @@ with osmium and pyosmium (`build-map-data.py --discard-extracts --check-determin
 40 minutes, half of it fetching Poland's extract) unless the last version's `MAP-DATA-INPUTS.txt`
 matches, when its archives are reused instead (ADR-0007's 2026-10-25 amendment), so a bad
 dispatch, a bad relief pin or a missing secret fails before it, `bundleRelease -PmapPacks`, run all four `aab-*.py`
-artifact checks, print the signing certificate, **attach the nine `.pmtiles`,
-`scripts/map/MAP-DATA-LICENCE.txt` and `MAP-DATA-INPUTS.txt` to the GitHub release** (the ODbL offer and its notice, so it
+artifact checks, print the signing certificate, **attach the nine `.pmtiles`, the Trail network
+`trails.network` and the name index `places.sqlite` (which the bundle also carries in its base
+module), `scripts/map/MAP-DATA-LICENCE.txt`, `scripts/map/RELIEF-DATA-LICENCE.txt` and
+`MAP-DATA-INPUTS.txt` to the GitHub release** (the ODbL offer and its notices, so it
 comes before Play and a failed attach stops the run), upload the AAB **and its R8 mapping**, keep both as
 a build artifact for 90 days, delete the key. The attach is why the job has `contents: write`.
 
@@ -322,10 +324,9 @@ gitignored.
 ### Why internal, and what it does not prove
 
 Internal processes in minutes with no Google review, which is what makes it a sane
-automatic target. ⚠️ **It is not the track for an upgrade proof.** An internal-track
-install demands an uninstall on the device where a closed-track one updates in place, so a
-build that arrives this way cannot stand in for "an existing owner's install survived the
-update". Promoting to closed testing is what `publish-play-closed.yml` below is for, and
+automatic target. An internal-track build does update an install in place: phase 2c's R2 took
+0.3.0 from the internal track to 0.6.0 with no uninstall, its Regions kept. What it does not prove is
+the testers' path, closed testing, which has its own review and rollout. Promoting to closed testing is what `publish-play-closed.yml` below is for, and
 production has its own workflow after it. Both are manual: neither happens without you clicking
 *Run workflow*.
 

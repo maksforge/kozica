@@ -23,7 +23,7 @@ fun overridePosition(
     latitude: Double,
     longitude: Double,
     accuracy: Float = DEFAULT_ACCURACY,
-): Boolean {
+) {
     chosen.value =
         Location("debug").apply {
             this.latitude = latitude
@@ -32,7 +32,6 @@ fun overridePosition(
             time = System.currentTimeMillis()
             elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
         }
-    return true
 }
 
 fun clearPositionOverride() {

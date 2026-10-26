@@ -10,7 +10,15 @@ fun openTrailNetwork(context: Context): InputStream? =
     try {
         context.assets.open(TRAIL_NETWORK)
     } catch (_: FileNotFoundException) {
-        File(context.filesDir, "network/$TRAIL_NETWORK").takeIf { it.exists() }?.inputStream()
+        handPushed(context, TRAIL_NETWORK)?.inputStream()
     }
+
+/** The assets' name index, or one hand-pushed beside the network. */
+fun placesFile(context: Context): File? = copiedPlaces(context) ?: handPushed(context, PLACES)
+
+private fun handPushed(
+    context: Context,
+    name: String,
+): File? = File(context.filesDir, "network/$name").takeIf { it.exists() }
 
 const val TRAIL_NETWORK = "trails.network"

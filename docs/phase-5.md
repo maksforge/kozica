@@ -182,16 +182,19 @@ from cost 3 MB, so only OSM's own nodes are stored.
   `land` layer carries no name; and every `place=locality` as the neutral kind "place" (Polish
   *miejsce*), since the tag names anywhere nobody lives, a clearing as often as a valley floor, a
   forest part or a former settlement, and no layer reads it, since `places` stops at hamlets;
-  decided with the owner on 2026-10-25.
+  decided with the owner on 2026-10-25. Named parts of a town, `place=quarter`, `neighbourhood` and
+  `suburb`, join "place" too, decided with the owner on 2026-10-26 when C's search could not find
+  Kuźnice, a `place=quarter` of Zakopane and the trailhead this phase's own example starts from.
 - **Shipped in the app**, in the base module's assets, not as a pack: both are small, both are
   needed the moment the map opens, and both change only when the pin does, which is a release
   anyway. ADR-0010.
 - **Build output, never committed**, like the archives. `build-map-data.py` writes both to
   `map-data/base-assets/`, which is gitignored, and the base module takes that directory as an
   assets source only under `-PmapPacks`, which fails at configuration when either file is missing,
-  as it does for an archive. The module takes it from C on, when search and planning first read
-  the files; A builds, records and publishes them, and its gate read them from a build that took
-  them early, so no release carries 16 MB nothing reads. Without it (`ci.yml`'s `assembleDebug`, a local debug build) the debug
+  as it does for an archive. The module has taken it since C, when search and planning first
+  read the files; A built, recorded and published them, and its gate read them from a build that
+  took them early, so no release carried 16 MB nothing read. SQLite cannot open a file inside the
+  APK, so the name index is copied to `noBackupFilesDir` once per install. Without it (`ci.yml`'s `assembleDebug`, a local debug build) the debug
   half reads a copy hand-pushed to `files/network/`, as `RegionSource` does for an archive; with
   neither, search and planning say they are not in this build and the map works as before: a
   placeholder, never a crash.

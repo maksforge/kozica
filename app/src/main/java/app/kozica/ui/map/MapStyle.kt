@@ -4,7 +4,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.float
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -18,7 +20,7 @@ internal fun styleTemplate(dark: Boolean): String = if (dark) "map/style-dark.js
  * The template with one source per ready Region and each Region-sourced layer repeated per Region,
  * in the template's layer order, so one Region's land never paints over another's Trails
  * (docs/phase-2.md § 2). The relief's layers are drawn once, from [relief] and the contours beside
- * it, and dropped while it has not arrived (docs/phase-4.md § 3).
+ * it, and dropped while it has not arrived (docs/phase-4.md § 3). The Route's are drawn once too.
  */
 internal fun expandStyle(
     template: String,
@@ -28,6 +30,7 @@ internal fun expandStyle(
     val style = Json.parseToJsonElement(template).jsonObject
     val sources =
         buildJsonObject {
+            style["sources"]?.jsonObject?.forEach { (id, source) -> put(id, source) }
             for ((region, archive) in archives) {
                 put(region, pmtiles("vector", archive))
             }
@@ -46,7 +49,7 @@ internal fun expandStyle(
         style.getValue("layers").jsonArray.flatMap { element ->
             val layer = element.jsonObject
             when (layer["source"]?.jsonPrimitive?.content) {
-                null -> listOf(layer)
+                null, ROUTE_SOURCE -> listOf(layer)
                 RELIEF_SOURCE, CONTOURS_SOURCE -> if (relief != null) listOf(layer) else emptyList()
                 else ->
                     archives.map { (region, _) ->
@@ -60,6 +63,31 @@ internal fun expandStyle(
     return JsonObject(style + mapOf("sources" to sources, "layers" to JsonArray(layers))).toString()
 }
 
+/** The layers a shown Route fades, by their expanded ids, and the opacity they fade to. */
+internal data class Fade(
+    val layers: List<String>,
+    val opacity: Float,
+)
+
+internal fun fadeOf(style: String): Fade {
+    val json = Json.parseToJsonElement(style).jsonObject
+    val layers =
+        json.getValue("layers").jsonArray.map { it.jsonObject }.filter {
+            it["metadata"]
+                ?.jsonObject
+                ?.get("kozica:fade")
+                ?.jsonPrimitive
+                ?.boolean == true
+        }
+    val opacity =
+        json
+            .getValue("metadata")
+            .jsonObject
+            .getValue("kozica:faded-opacity")
+            .jsonPrimitive.float
+    return Fade(layers.map { it.getValue("id").jsonPrimitive.content }, opacity)
+}
+
 private fun pmtiles(
     type: String,
     archive: File,
@@ -70,3 +98,4 @@ private fun pmtiles(
 
 private const val RELIEF_SOURCE = "relief"
 private const val CONTOURS_SOURCE = "contours"
+internal const val ROUTE_SOURCE = "route"

@@ -128,8 +128,8 @@ app/src/main/java/<namespace>/
   data/backup/ export, restore, the manifest, the WAL checkpoint
   data/location/ the app's own reader of the phone's fixes; each variant wraps it in
                PositionOverride.kt
-  data/routes/ the Trail network's reader and the router (ADR-0010); each variant says where the
-               network comes from in NetworkSource.kt
+  data/routes/ the Trail network's reader, the router (ADR-0010) and the name index's search;
+               each variant says where the network and the index come from in NetworkSource.kt
   media/       MediaFiles.kt — the single path for persisting images, kind-aware
   theme/       generated palette, type scale, spacing, the night-mode window half
   ui/          Compose screens + ViewModels, one package per area; ui/map/ is Home
@@ -137,12 +137,12 @@ app/src/main/java/<namespace>/
 app/src/debug/    the developer-only build: the sample-data seeder, Settings' debug section and its
                   strings, the schema-mismatch screen's continue button, SeedReceiver for the
                   capture driver, data/regions/'s RegionSource.kt, which falls back to an archive
-                  hand-pushed to files/regions/<id>.pmtiles, and the position override: a long
-                  press on the map, Settings' "real position" row and PositionReceiver for
-                  scripted readings; a relief hand-pushed to files/relief/ stands in for the
+                  hand-pushed to files/regions/<id>.pmtiles, and the position override:
+                  PositionReceiver for scripted readings and Settings' "real position" row to
+                  undo it (the long press plans a Route in every build); a relief hand-pushed to files/relief/ stands in for the
                   relief pack, ui/map/FrameLog.kt logs frame times and CameraReceiver sets the
-                  camera, for phase 4's readings; a network hand-pushed to files/network/ stands in
-                  for the base assets, and RouteReceiver plans a Route and logs it, for phase 5's
+                  camera, for phase 4's readings; a network and a name index hand-pushed to
+                  files/network/ stand in for the base assets, and RouteReceiver plans a Route and logs it, for phase 5's
                   readings
 app/src/release/  only the other half of each seam, so main/ can call it unconditionally: no debug
                   settings, no continue button, no frame log, and the Regions, the relief and the

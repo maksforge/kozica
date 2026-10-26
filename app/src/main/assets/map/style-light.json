@@ -1,5 +1,17 @@
 {
  "version": 8,
+ "metadata": {
+  "kozica:faded-opacity": 0.3
+ },
+ "sources": {
+  "route": {
+   "type": "geojson",
+   "data": {
+    "type": "FeatureCollection",
+    "features": []
+   }
+  }
+ },
  "glyphs": "asset://map/glyphs/{fontstack}/{range}.pbf",
  "sprite": "asset://map/sprite-light",
  "layers": [
@@ -386,6 +398,9 @@
       2
      ]
     ]
+   },
+   "metadata": {
+    "kozica:fade": true
    }
   },
   {
@@ -416,6 +431,9 @@
     "text-color": "#7a450e",
     "text-halo-color": "#fff8ef",
     "text-halo-width": 1.2
+   },
+   "metadata": {
+    "kozica:fade": true
    }
   },
   {
@@ -590,6 +608,9 @@
       7.0
      ]
     ]
+   },
+   "metadata": {
+    "kozica:fade": true
    }
   },
   {
@@ -773,6 +794,9 @@
       7.0
      ]
     ]
+   },
+   "metadata": {
+    "kozica:fade": true
    }
   },
   {
@@ -1348,6 +1372,9 @@
       ]
      ]
     ]
+   },
+   "metadata": {
+    "kozica:fade": true
    }
   },
   {
@@ -1453,6 +1480,9 @@
     ],
     "text-halo-color": "#fff8ef",
     "text-halo-width": 1.2
+   },
+   "metadata": {
+    "kozica:fade": true
    }
   },
   {
@@ -1486,6 +1516,168 @@
     "text-color": "#1e1b16",
     "text-halo-color": "#fff8ef",
     "text-halo-width": 1.2
+   },
+   "metadata": {
+    "kozica:fade": true
+   }
+  },
+  {
+   "id": "route-casing",
+   "type": "line",
+   "source": "route",
+   "filter": [
+    "==",
+    [
+     "get",
+     "approach"
+    ],
+    "trail"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     8.0,
+     13,
+     9.0,
+     15,
+     10.5,
+     17,
+     13.0
+    ]
+   }
+  },
+  {
+   "id": "route",
+   "type": "line",
+   "source": "route",
+   "filter": [
+    "==",
+    [
+     "get",
+     "approach"
+    ],
+    "trail"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#88511a",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     5.0,
+     13,
+     6.0,
+     15,
+     7.5,
+     17,
+     10.0
+    ]
+   }
+  },
+  {
+   "id": "route-off-trail",
+   "type": "line",
+   "source": "route",
+   "filter": [
+    "==",
+    [
+     "get",
+     "approach"
+    ],
+    "off"
+   ],
+   "paint": {
+    "line-color": "#88511a",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     2.0,
+     13,
+     3.0,
+     15,
+     4.5,
+     17,
+     7.0
+    ],
+    "line-dasharray": [
+     "literal",
+     [
+      1,
+      1.5
+     ]
+    ]
+   }
+  },
+  {
+   "id": "route-points",
+   "type": "circle",
+   "source": "route",
+   "filter": [
+    "==",
+    [
+     "geometry-type"
+    ],
+    "Point"
+   ],
+   "paint": {
+    "circle-color": "#88511a",
+    "circle-radius": 11,
+    "circle-stroke-color": "#ffffff",
+    "circle-stroke-width": 2
+   }
+  },
+  {
+   "id": "route-numbers",
+   "type": "symbol",
+   "source": "route",
+   "filter": [
+    "==",
+    [
+     "geometry-type"
+    ],
+    "Point"
+   ],
+   "layout": {
+    "text-font": [
+     "Noto Sans Regular"
+    ],
+    "text-size": 13,
+    "text-field": [
+     "get",
+     "number"
+    ],
+    "text-allow-overlap": true,
+    "text-ignore-placement": true
+   },
+   "paint": {
+    "text-color": "#ffffff"
    }
   }
  ]

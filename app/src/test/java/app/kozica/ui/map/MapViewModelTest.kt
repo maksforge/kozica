@@ -9,6 +9,13 @@ import app.kozica.data.MapCamera
 import app.kozica.data.regions.GeoBounds
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
+import app.kozica.data.routes.Place
+import app.kozica.data.routes.PlaceKind
+import app.kozica.data.routes.PlaceSearch
+import app.kozica.data.routes.PlannedRoute
+import app.kozica.data.routes.RoutePlanner
+import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.TrailNetwork
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,6 +34,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -127,7 +136,108 @@ class MapViewModelTest {
             assertEquals(listOf(listOf("relief")), fetched)
             assertEquals(MapProgress.Downloading(ready = 1, total = 2), viewModel.state.value.progress)
         }
+
+    @Test
+    fun `long-pressed points are named after the place near them and planned from two on`() =
+        runTest {
+            val viewModel = routingViewModel()
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+
+            val route = settled(viewModel) { it.route.planned != null }.route
+
+            assertEquals(listOf("Near 49.0", "Near 49.0"), route.points.map { it.label })
+            assertNotNull(route.planned?.legs?.single())
+        }
+
+    @Test
+    fun `reverse plans the same points the other way`() =
+        runTest {
+            val viewModel = routingViewModel()
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            settled(viewModel) { it.route.planned != null }
+
+            viewModel.reverse()
+
+            val route =
+                settled(
+                    viewModel,
+                ) {
+                    it.route.planned != null &&
+                        it.route.points
+                            .first()
+                            .longitude == 20.02
+                }.route
+            assertEquals(listOf(20.02, 20.0), route.points.map { it.longitude })
+        }
+
+    @Test
+    fun `an offered place joins as the next point, under its name`() =
+        runTest {
+            val viewModel = routingViewModel()
+            val place = Place(1, PlaceKind.PEAK, 49.0, 20.01, "tatry", "Kopa")
+            viewModel.pick(place)
+            viewModel.addOffered()
+
+            val state = settled(viewModel) { it.route.points.isNotEmpty() }
+            assertEquals(listOf("Kopa"), state.route.points.map { it.label })
+            assertNull(state.search.offered)
+        }
+
+    @Test
+    fun `a build without the network says planning is not in it`() =
+        runTest {
+            val viewModel = routingViewModel(planRoute = { null })
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+
+            assertTrue(settled(viewModel) { it.route.unavailable }.route.unavailable)
+        }
+
+    private suspend fun settled(
+        viewModel: MapViewModel,
+        until: (MapUiState) -> Boolean,
+    ): MapUiState =
+        withContext(Dispatchers.Default) {
+            withTimeoutOrNull(5.seconds) { viewModel.state.first(until) }
+        } ?: error("the state never settled")
 }
+
+private val fixture =
+    TrailNetwork.read(
+        MapViewModelTest::class.java.getResource("/trails-fixture.network")!!.readBytes(),
+    )
+
+private object NearbyNames : PlaceSearch {
+    override fun search(
+        text: String,
+        latitude: Double,
+        longitude: Double,
+        limit: Int,
+    ) = emptyList<Place>()
+
+    override fun nearest(
+        latitude: Double,
+        longitude: Double,
+    ) = Place(0, PlaceKind.PLACE, latitude, longitude, "tatry", "Near $latitude")
+}
+
+private fun routingViewModel(
+    planRoute: suspend (List<RoutePoint>) -> PlannedRoute? = {
+        RoutePlanner(fixture).plan(it)
+    },
+) = MapViewModel(
+    regions = flowOf(emptyList()),
+    preferences = AppPreferences(MemoryPreferences()),
+    readAsset = { "" },
+    applicationScope = CoroutineScope(Dispatchers.Unconfined),
+    positions = { MutableSharedFlow<Location>() },
+    fetch = {},
+    confirmFetch = { false },
+    places = { NearbyNames },
+    planRoute = planRoute,
+)
 
 private fun mapViewModel(
     regions: Flow<List<Region>>,

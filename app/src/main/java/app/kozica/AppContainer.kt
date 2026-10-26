@@ -15,9 +15,18 @@ import app.kozica.data.location.withPositionOverride
 import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.regionStates
 import app.kozica.data.regions.reliefState
+import app.kozica.data.routes.PlaceIndex
+import app.kozica.data.routes.PlaceSearch
+import app.kozica.data.routes.PlannedRoute
+import app.kozica.data.routes.RoutePlanner
+import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.TrailNetworks
+import app.kozica.data.routes.placesFile
 import app.kozica.media.MediaFiles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * `internal` rather than private: [MainApplication] holds the one [AppPreferences] over this store
@@ -68,6 +77,18 @@ class AppContainer(
     val relief by lazy { reliefState(appContext) }
 
     val regionFiles by lazy { RegionFiles.of(appContext) }
+
+    private val placeIndex by lazy { placesFile(appContext)?.let(::PlaceIndex) }
+
+    private val planner by lazy { TrailNetworks.load(appContext)?.let(::RoutePlanner) }
+
+    private val planning = Mutex()
+
+    /** Null in a build without the name index. Blocks on its first call, which copies it out of the assets. */
+    fun places(): PlaceSearch? = placeIndex
+
+    /** Null in a build without the network. Blocks on its first call, which loads it (docs/phase-5.md § 1). */
+    suspend fun planRoute(points: List<RoutePoint>): PlannedRoute? = planning.withLock { planner?.plan(points) }
 
     @RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     fun positions(approximateOnly: Boolean): Flow<Location> =

@@ -216,19 +216,19 @@ Every mountain range now arrives with the app: right after you install Kozica, t
 Wszystkie pasma przychodzą teraz razem z aplikacją: zaraz po instalacji Sklep Play sam pobiera wszystkie dziewięć regionów, więc nie trzeba niczego wybierać. Ekran Regiony i pytanie przy pierwszym uruchomieniu zniknęły, a mapa otwiera się na Tatrach. Dopóki mapy się pobierają, linijka na mapie je odlicza.
 ```
 
-### 0.8.0 — the shape of the mountains
+### 0.8.0 — a route over the Trails
 
-0.8.0 changes nothing on screen: it builds the Trail network that route planning will stand on (phase
-5's checkpoints A and B), so the notes stand as 0.7.0 wrote them, still the newest thing a user sees.
+Search, points, the drawn Route and its sheet (phase 5's checkpoint C). Saving a Route is D's, so
+the notes promise none.
 
-**English** — 316/500:
-
-```
-The map now shows the shape of the mountains: shading as if lit from the north-west, and a contour line every 20 metres, with every 100 metres labelled. It is built from the Polish, Slovak and Czech laser surveys of the ground, so it follows the slope under the forest, not the treetops, and it arrives with the map.
-```
-
-**Polish** — 280/500:
+**English** — 379/500:
 
 ```
-Mapa pokazuje teraz kształt gór: cieniowanie jak przy świetle z północnego zachodu i poziomice co 20 metrów, z opisem co 100 metrów. Powstała z polskich, słowackich i czeskich laserowych pomiarów terenu, więc pod lasem pokazuje stok, a nie korony drzew, i przychodzi razem z mapą.
+Plan a hike: search for a peak, a hut, a pass or a village, or press and hold on the map, and Kozica draws a route between your points over the marked Trails only. You see its length, ascent and descent, the walking time to each point, an elevation profile, and a warning wherever it takes a demanding stretch. Times follow the rule on Polish signposts. Everything works offline.
+```
+
+**Polish** — 409/500:
+
+```
+Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz albo miejscowość lub przytrzymaj palec na mapie, a Kozica wyznaczy trasę między twoimi punktami wyłącznie znakowanymi szlakami. Zobaczysz jej długość, sumę podejść i zejść, czas dojścia do każdego punktu, profil wysokości i ostrzeżenie przy każdym wymagającym odcinku. Czasy liczone są tak jak na polskich drogowskazach. Wszystko działa bez internetu.
 ```

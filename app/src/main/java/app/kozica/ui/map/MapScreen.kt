@@ -6,15 +6,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.icu.text.MeasureFormat
-import android.icu.util.Measure
-import android.icu.util.MeasureUnit
 import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.os.SystemClock
 import android.provider.Settings
 import android.text.format.Formatter
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -51,6 +49,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
@@ -59,6 +59,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -71,7 +72,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
 import app.kozica.data.MapCamera
-import app.kozica.data.location.overridePosition
 import app.kozica.theme.LocalDarkTheme
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
@@ -85,6 +85,7 @@ import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdate
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.location.LocationComponent
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.LocationComponentOptions
@@ -92,9 +93,11 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonSource
 import java.time.Instant
-import java.util.Locale
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** Home: the map, drawn by MapLibre from the Regions on the phone (docs/phase-2.md § 2). */
@@ -175,10 +178,21 @@ fun MapScreen(
     val approximateOnly = state.location?.grant == LocationGrant.APPROXIMATE
     val age = rememberPositionAge(state.fix, approximateOnly)
     var dotActivated by remember { mutableStateOf(false) }
+    var loaded by remember { mutableStateOf<Style?>(null) }
+    var searchText by rememberSaveable { mutableStateOf("") }
+    val focus = LocalFocusManager.current
 
     LaunchedEffect(map) {
         val map = map ?: return@LaunchedEffect
-        map.addOnMapLongClickListener { overridePosition(it.latitude, it.longitude) }
+        map.addOnMapLongClickListener {
+            viewModel.addPoint(it.latitude, it.longitude)
+            true
+        }
+        map.addOnMapClickListener {
+            viewModel.dismissOffer()
+            focus.clearFocus()
+            false
+        }
         val start = shown ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
         map.addOnCameraMoveStartedListener { reason ->
@@ -195,11 +209,13 @@ fun MapScreen(
     LaunchedEffect(map, state.style) {
         val map = map ?: return@LaunchedEffect
         val style = state.style ?: return@LaunchedEffect
-        map.setStyle(Style.Builder().fromJson(style)) { loaded ->
+        loaded = null
+        map.setStyle(Style.Builder().fromJson(style)) { ready ->
+            loaded = ready
             if (!map.locationComponent.isLocationComponentActivated) {
                 map.locationComponent.activateLocationComponent(
                     LocationComponentActivationOptions
-                        .Builder(context, loaded)
+                        .Builder(context, ready)
                         .useDefaultLocationEngine(false)
                         .locationComponentOptions(dotOptions(context, colors, stale = false))
                         .build(),
@@ -238,6 +254,54 @@ fun MapScreen(
         state.fix?.let(component::forceLocationUpdate)
     }
 
+    val fade = remember(state.style) { state.style?.let(::fadeOf) }
+    LaunchedEffect(loaded, state.route) {
+        val style = loaded ?: return@LaunchedEffect
+        (
+            style.getSource(
+                ROUTE_SOURCE,
+            ) as? GeoJsonSource
+        )?.setGeoJson(routeGeoJson(state.route.points, state.route.planned))
+        val opacity = if (state.route.planned != null) fade?.opacity ?: 1f else 1f
+        for (id in fade?.layers.orEmpty()) {
+            when (val layer = style.getLayer(id)) {
+                is LineLayer -> layer.setProperties(PropertyFactory.lineOpacity(opacity))
+                is SymbolLayer ->
+                    layer.setProperties(
+                        PropertyFactory.iconOpacity(opacity),
+                        PropertyFactory.textOpacity(opacity),
+                    )
+            }
+        }
+    }
+
+    val planned = state.route.planned
+    // Clear of the search row above and the position button and credit below.
+    val sidePadding = with(LocalDensity.current) { Spacing.block.roundToPx() }
+    val topPadding = sidePadding * 3
+    val bottomPadding = sidePadding * 5
+    LaunchedEffect(map, planned) {
+        val map = map ?: return@LaunchedEffect
+        val line = planned?.line?.takeIf { it.size >= 2 } ?: return@LaunchedEffect
+        val bounds =
+            LatLngBounds
+                .Builder()
+                .includes(line.map { LatLng(it.latitude, it.longitude) })
+                .build()
+        map.animateCamera(
+            CameraUpdateFactory.newLatLngBounds(bounds, sidePadding, topPadding, sidePadding, bottomPadding),
+        )
+    }
+
+    val offered = state.search.offered
+    LaunchedEffect(map, offered) {
+        val map = map ?: return@LaunchedEffect
+        val place = offered ?: return@LaunchedEffect
+        val zoom = maxOf(map.cameraPosition.zoom, OFFERED_ZOOM)
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(place.latitude, place.longitude), zoom))
+    }
+    BackHandler(enabled = offered != null, onBack = viewModel::dismissOffer)
+
     LaunchedEffect(map, centreWanted, state.fix) {
         val map = map ?: return@LaunchedEffect
         val fix = state.fix ?: return@LaunchedEffect
@@ -246,53 +310,93 @@ fun MapScreen(
         map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(fix.latitude, fix.longitude)))
     }
 
-    Box(modifier.fillMaxSize()) {
-        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
-        Column(Modifier.align(Alignment.TopCenter).fillMaxWidth()) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
-                modifier = Modifier.align(Alignment.End).padding(Spacing.tight),
-            ) {
-                FilledTonalIconButton(onClick = onOpenSafety) {
-                    Icon(
-                        painterResource(R.drawable.ic_emergency),
-                        contentDescription = stringResource(R.string.safety_title),
+    Column(modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
+            // Above the position button, which search results reach down over.
+            Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().zIndex(1f)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(Spacing.tight),
+                ) {
+                    SearchField(
+                        text = searchText,
+                        available = state.search.available,
+                        onText = {
+                            searchText = it
+                            viewModel.search(it)
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                    FilledTonalIconButton(onClick = onOpenSafety) {
+                        Icon(
+                            painterResource(R.drawable.ic_emergency),
+                            contentDescription = stringResource(R.string.safety_title),
+                        )
+                    }
+                    FilledTonalIconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                    }
+                }
+                if (searchText.isNotBlank() && state.search.results.isNotEmpty()) {
+                    SearchResults(
+                        results = state.search.results,
+                        onPick = {
+                            searchText = ""
+                            focus.clearFocus()
+                            viewModel.pick(it)
+                        },
+                        modifier = Modifier.padding(horizontal = Spacing.tight),
                     )
                 }
-                FilledTonalIconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                offered?.let {
+                    OfferedPlace(
+                        place = it,
+                        first = state.route.points.isEmpty(),
+                        onAdd = viewModel::addOffered,
+                        modifier = Modifier.padding(horizontal = Spacing.tight),
+                    )
                 }
-            }
-            state.progress?.let {
-                ProgressLine(
-                    progress = it,
-                    onRetry = viewModel::retry,
-                    onConfirm = { viewModel.confirm(confirmation) },
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = Spacing.base),
+                state.progress?.let {
+                    ProgressLine(
+                        progress = it,
+                        onRetry = viewModel::retry,
+                        onConfirm = { viewModel.confirm(confirmation) },
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = Spacing.base),
+                    )
+                }
+                LocationBanner(
+                    read = state.location,
+                    age = age,
+                    preciseRefused = preciseRefused,
+                    onAllowPrecise = {
+                        askingForPrecise = true
+                        ask.launch(LOCATION_PERMISSIONS)
+                    },
                 )
             }
-            LocationBanner(
-                read = state.location,
-                age = age,
-                preciseRefused = preciseRefused,
-                onAllowPrecise = {
-                    askingForPrecise = true
-                    ask.launch(LOCATION_PERMISSIONS)
-                },
-            )
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(Spacing.tight),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.tight),
+            ) {
+                FilledTonalIconButton(onClick = showPosition) {
+                    Icon(
+                        painterResource(R.drawable.ic_my_location),
+                        contentDescription = stringResource(R.string.map_position_show),
+                    )
+                }
+                OsmCredit(state.osmDate, relief = state.reliefShown)
+            }
         }
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(Spacing.tight),
-            modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.tight),
-        ) {
-            FilledTonalIconButton(onClick = showPosition) {
-                Icon(
-                    painterResource(R.drawable.ic_my_location),
-                    contentDescription = stringResource(R.string.map_position_show),
-                )
-            }
-            OsmCredit(state.osmDate, relief = state.reliefShown)
+        if (state.route.points.isNotEmpty()) {
+            RouteSheet(
+                route = state.route,
+                onRemove = viewModel::removePoint,
+                onMove = viewModel::movePoint,
+                onReverse = viewModel::reverse,
+            )
         }
     }
 }
@@ -423,18 +527,6 @@ private fun android.app.Activity?.mayAskAgain(): Boolean =
 private fun Context.appSettings() =
     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
 
-/** Short units, so the platform's abbreviation sidesteps the case the host sentence would need. */
-private fun Duration.short(locale: Locale): String =
-    toComponents { hours, minutes, seconds, _ ->
-        val measures =
-            buildList {
-                if (hours > 0) add(Measure(hours, MeasureUnit.HOUR))
-                if (minutes > 0) add(Measure(minutes, MeasureUnit.MINUTE))
-                if (isEmpty()) add(Measure(seconds, MeasureUnit.SECOND))
-            }
-        MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT).formatMeasures(*measures.toTypedArray())
-    }
-
 @Composable
 private fun ProgressLine(
     progress: MapProgress,
@@ -539,6 +631,9 @@ private val CameraSaver =
         save = { camera -> camera?.let { doubleArrayOf(it.latitude, it.longitude, it.zoom) } },
         restore = { (latitude, longitude, zoom) -> MapCamera(latitude, longitude, zoom) },
     )
+
+/** Close enough that the Trails around a picked place are drawn. */
+private const val OFFERED_ZOOM = 13.0
 
 private const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 

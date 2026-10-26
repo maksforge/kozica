@@ -154,6 +154,8 @@ android {
                 .file("scripts/regions")
                 .listFiles { file -> file.extension == "poly" }!!
                 .map { ":region_${it.nameWithoutExtension}" } + ":relief"
+        // The network and the name index ship in the base module, not a pack (docs/phase-5.md § 2).
+        sourceSets["main"].assets.srcDir(rootProject.file("map-data/base-assets"))
     }
 
     lint {
