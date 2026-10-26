@@ -16,14 +16,15 @@ user-facing word genuinely differ, both are written here with the difference sta
 | **Shelter** | An unstaffed roof on or near a Trail. Polish UI: *wiata*. A staffed *chatka* is a Hut. | "hut", *chatka* |
 | **Route** | What the user plans: a start, an end and any via points, in an order the user can change, each leg joined over Trails only. It can be saved under a name. Polish UI: *trasa*. | "trail" for a route, "track" (kept for a recorded hike) |
 | **Region** | A group of neighbouring mountain ranges that the map data is built and delivered in, e.g. *Beskidy Zachodnie*. Its boundary follows the ranges, not administrative borders, and crosses into Slovakia and Czechia where the ranges do; it stops at Ukraine's and Germany's. The user never picks one: every Region arrives with the app. | "area", "pack", "map" (a Region is what the map shows, not the map itself) |
+| **Hike** | One recorded outing, from Record to Stop: its track, its photos, its note. Saved in the Hikes tab. Polish UI: *wycieczka*. | "activity", "walk", "trip", "recording" (the act, not the thing kept) |
+| **Track** | The line a Hike leaves: the phone's fixes in order, broken into stretches at each pause. Polish UI: *ślad*. | "route", "trail", "path" |
 
 ## Words we deliberately avoid
 
 - **"Trail" never names an unmarked way.** In the Tatras only marked Trails may be walked, so the
   word, the map and the copy keep a Path from passing for one.
 - **"Route" and "track" never name a Trail**, because each is kept for a concept of its own: what the
-  user plans (a Route, above) and the line a recorded hike leaves (phase 6, which gives "track" its
-  row).
+  user plans (a Route, above) and the line a Hike leaves (a Track, above).
 
 ## Naming conventions in code
 

@@ -25,7 +25,9 @@ was extracted from and the first app built from it settled on exactly this split
 - [x] **Phase 3** — Safe for a stranger: the Safety screen ← **the door: closed testing opens once its list is done**
 - [x] **Phase 4** — Elevation: contours and hillshading, from the three national lidar models
 - [x] **Phase 5** — Route planning, and search by name
-- [ ] **Phase 6** — The hike log
+- [ ] **Phase 6** — The hike log: record a hike, its photos and a note, look back, back it up, export GPX
+- [ ] **Phase 6b** — Walking a Route: following it on the way, and times from the user's own pace
+- [ ] **Phase 6c** — Named Trails: a whole Trail highlighted, the rest of the map fainter
 - [ ] **Phase N** — Ship shape: screenshots, production access, **1.0**
 
 ---
@@ -202,13 +204,24 @@ built with the map data and shipped in the app
 
 ## Phase 6 — The hike log
 
-Record a hike — the track, photos and notes — and look back at it. It brings the `location`
-foreground service, with `FOREGROUND_SERVICE_LOCATION` from API 34 and the Console's
-foreground-service declaration; the notifications ask; and photos, which Auto Backup cannot carry,
-so the manual Backup returns to Settings. Moved here from phase 5 with the owner on 2026-10-25:
-following a Route while walking, walking times from the user's own pace, named Trails with a whole
-Trail highlighted and the rest of the map fainter (which needs each Trail's name or relation id in
-the tiles, which `KozicaProfile` does not write today), and GPX export.
+Record a hike — the track, photos and notes — and look back at it, back it up and export it as GPX.
+It brings the `location` foreground service, with `FOREGROUND_SERVICE_LOCATION` from API 34 and the
+Console's foreground-service declaration; the notifications ask; and photos, which Auto Backup cannot
+carry, so the manual Backup returns to Settings, in the shape binky's backup grew into. Planned with
+the owner on 2026-10-26 in [`phase-6.md`](phase-6.md), which split off 6b and 6c by rule 2.
+
+## Phase 6b — Walking a Route
+
+Following a Route while walking, and walking times from the user's own pace. Moved here from phase 5
+with the owner on 2026-10-25, and out of phase 6 on 2026-10-26: a pace is learned from recorded
+hikes, so it comes after them, and following leans on phase 6's location service.
+
+## Phase 6c — Named Trails
+
+Named Trails, with a whole Trail highlighted and the rest of the map fainter. It needs each Trail's
+name or relation id in the tiles, which `KozicaProfile` does not write today: a map-data change, a
+rebuild and every Region's pack delivered again, needing nothing from 6 or 6b, so it can run beside
+either. Moved here from phase 5 with the owner on 2026-10-25.
 
 ## Phase N — Ship shape
 
