@@ -19,6 +19,7 @@ import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.RouteTotals
 import app.kozica.data.routes.TrailNetworks
 import app.kozica.data.routes.openPlaces
 import app.kozica.data.routes.placesFile
@@ -87,6 +88,8 @@ class AppContainer(
     private val planner by lazy { TrailNetworks.load(appContext)?.let(::RoutePlanner) }
 
     private val planning = Mutex()
+
+    val routeTotals by lazy { RouteTotals(::planRoute) }
 
     /** Null in a build without the name index. Blocks on its first call, which copies it out of the assets. */
     fun places(): PlaceSearch? = placeIndex
