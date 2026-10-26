@@ -61,8 +61,7 @@ class Recorder(
         now: Instant,
     ) {
         withContext(Dispatchers.IO) {
-            val hike = hikes.get(hikeId) ?: return@withContext
-            hikes.finish(hikeId, now) { first -> nameFor(hike.startedAt, first) }
+            hikes.finish(hikeId, now) { hike, first -> nameFor(hike.startedAt, first) }
         }
     }
 

@@ -13,18 +13,23 @@ import app.kozica.record.Recorder
 import app.kozica.record.Recording
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
 
 /**
+ * @param loaded false until the first reading; before it, a null [recording] does not mean nothing
+ *   records.
  * @param unfinished a Hike whose recording was lost with its process, offered to resume or finish
- *   while nothing records.
+ *   while nothing records and until one of the two is chosen.
  */
 data class RecordingUiState(
+    val loaded: Boolean = false,
     val recording: Recording? = null,
     val unfinished: HikeEntity? = null,
     val autoResume: Boolean = true,
@@ -39,17 +44,30 @@ class RecordingViewModel(
     private val finish: suspend (hikeId: String, now: Instant) -> Unit,
     private val applicationScope: CoroutineScope,
 ) : ViewModel() {
+    private val answered = MutableStateFlow<String?>(null)
+
     val state: StateFlow<RecordingUiState> =
         combine(
             recorder.recording,
             unfinished,
+            answered,
             preferences.autoResume,
             preferences.notificationsAsked,
-        ) { recording, unfinished, autoResume, asked ->
-            RecordingUiState(recording, unfinished.takeIf { recording == null }, autoResume, asked)
+        ) { recording, unfinished, answered, autoResume, asked ->
+            RecordingUiState(
+                loaded = true,
+                recording = recording,
+                unfinished = unfinished.takeIf { recording == null && it?.id != answered },
+                autoResume = autoResume,
+                notificationsAsked = asked,
+            )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecordingUiState())
 
-    fun start(hikeId: String?) = recorder.start(hikeId)
+    /** Starts a new Hike, or resumes an unfinished one unless it has already been resumed or finished. */
+    fun start(hikeId: String?) {
+        if (hikeId != null && !answer(hikeId)) return
+        recorder.start(hikeId)
+    }
 
     fun pause() = recorder.pause()
 
@@ -59,8 +77,11 @@ class RecordingViewModel(
 
     /** On the application's scope, so leaving the screen cannot cut it short. */
     fun finishUnfinished(hikeId: String) {
+        if (!answer(hikeId)) return
         applicationScope.launch { finish(hikeId, Instant.now()) }
     }
+
+    private fun answer(hikeId: String): Boolean = answered.getAndUpdate { hikeId } != hikeId
 
     fun notificationsAsked() {
         viewModelScope.launch { preferences.setNotificationsAsked() }

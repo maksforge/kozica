@@ -46,19 +46,18 @@ class HikeRepository(
     suspend fun track(hikeId: String): Track = dao.points(hikeId).toTrack()
 
     /**
-     * Ends [hikeId] at its last point, or at [now] with none, under the name [name] gives its first
-     * point; encodes its Track and deletes the rows in one transaction.
+     * Ends [hikeId] at its last point, or at [now] with none, under the name [name] gives it from
+     * its first point; does nothing to a Hike that has already ended.
      */
     suspend fun finish(
         hikeId: String,
         now: Instant,
-        name: suspend (first: TrackPoint?) -> String,
-    ) {
-        val track = track(hikeId)
+        name: suspend (hike: HikeEntity, first: TrackPoint?) -> String,
+    ) = dao.finish(hikeId) { hike, rows ->
+        val track = rows.toTrack()
         val points = track.flatten()
-        dao.finish(
-            id = hikeId,
-            name = name(points.firstOrNull()),
+        HikeEnding(
+            name = name(hike, points.firstOrNull()),
             endedAt = points.lastOrNull()?.let { Instant.ofEpochMilli(it.timeMillis) } ?: now,
             track = encodeTrack(track),
             metres = track.metres(),
