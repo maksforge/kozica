@@ -159,7 +159,7 @@
     <string name="record_by_hand">Na tym telefonie wznów ręcznie</string>
     <string name="record_unfinished_title">Nagrywanie wycieczki nie zostało zakończone</string>
     <string name="record_unfinished_resume">Wznów nagrywanie</string>
-    <string name="record_unfinished_finish">Zakończ w tym miejscu</string>
+    <string name="record_unfinished_finish">Zakończ na tym</string>
     <string name="record_auto_resume">Wznawiaj, gdy ruszę</string>
     <string name="record_auto_resume_hint">Wznawia się samo, gdy telefon wyczuje, że idziesz. Czasem może się wznowić, gdy siedzisz.</string>
 </resources>
