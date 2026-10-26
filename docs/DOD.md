@@ -98,13 +98,6 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       verdict 1, R8 verdict 3 (undecided until E), R9 after fixing a crash, R10's screen
       ([`phase-1.md`](phase-1.md) § 1).
 
-## Phase 5's last reading
-
-- [ ] **R6's Play step** ([`phase-5.md`](phase-5.md) § *Readings*): the first release carrying
-      schema 2, from the internal track, over 0.7.0 from Play, updated in place and opened past the
-      launch gate with a Route saved before and found after. Taken once that release is out; phase 5
-      closes in `PLAN.md` with it.
-
 ## After the closed test
 
 - [ ] **The production-access application is in, with its answers recorded verbatim** in
