@@ -15,12 +15,12 @@ import app.kozica.data.location.withPositionOverride
 import app.kozica.data.regions.RegionFiles
 import app.kozica.data.regions.regionStates
 import app.kozica.data.regions.reliefState
-import app.kozica.data.routes.PlaceIndex
 import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.TrailNetworks
+import app.kozica.data.routes.openPlaces
 import app.kozica.data.routes.placesFile
 import app.kozica.media.MediaFiles
 import kotlinx.coroutines.CoroutineScope
@@ -78,7 +78,7 @@ class AppContainer(
 
     val regionFiles by lazy { RegionFiles.of(appContext) }
 
-    private val placeIndex by lazy { placesFile(appContext)?.let(::PlaceIndex) }
+    private val placeIndex by lazy { placesFile(appContext)?.let(::openPlaces) }
 
     private val planner by lazy { TrailNetworks.load(appContext)?.let(::RoutePlanner) }
 
