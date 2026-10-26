@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -25,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,7 @@ internal fun SearchField(
     onText: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focus = LocalFocusManager.current
     TextField(
         value = text,
         onValueChange = onText,
@@ -59,6 +62,8 @@ internal fun SearchField(
             }
         },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        // Results follow the text as it is typed, so the key's work is only to clear the keyboard off them.
+        keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
         shape = MaterialTheme.shapes.extraLarge,
         colors =
             TextFieldDefaults.colors(
