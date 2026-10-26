@@ -42,7 +42,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        stopAsked = savedInstanceState?.getBoolean(STOP_ASKED) ?: (intent?.action == ACTION_CONFIRM_STOP)
+        // Recents relaunches a task with the intent that created it, so a Stop from the notification
+        // would otherwise ask again on every return.
+        val fromRecents = intent?.flags?.and(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
+        stopAsked = savedInstanceState?.getBoolean(STOP_ASKED)
+            ?: (intent?.action == ACTION_CONFIRM_STOP && !fromRecents)
 
         val app = application as MainApplication
 
