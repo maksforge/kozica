@@ -29,11 +29,11 @@ class CompassDrawable(
     colors: ColorScheme,
     private val density: Density,
 ) : Drawable() {
-    private val sizeDp = 48f
-    private val discRadiusDp = 20f
+    private val sizeDp = SIZE.value
+    private val discRadiusDp = DISC_RADIUS.value
     private val ringRadiusDp = 17f
     private val ringGapHalfAngle = 24f
-    private val northLetterRadiusDp = 16f
+    private val northLetterMarginDp = 1f
     private val northLetterSizeDp = 11f
     private val tickOuterDp = 15f
     private val minorTickInnerDp = 12.5f
@@ -117,7 +117,7 @@ class CompassDrawable(
         canvas.drawPath(southHalf, needleSouth)
         canvas.drawCircle(0f, 0f, hubRadiusDp.px(), hub)
 
-        val baseline = -northLetterRadiusDp.px() - letterBounds.exactCenterY()
+        val baseline = -(discRadiusDp - northLetterMarginDp).px() - letterBounds.top
         canvas.drawText("N", 0f, baseline, northLetter)
         canvas.restore()
     }
@@ -136,6 +136,8 @@ class CompassDrawable(
     override fun getOpacity() = PixelFormat.TRANSLUCENT
 
     companion object {
-        val RIM = 4.dp
+        private val SIZE = 48.dp
+        private val DISC_RADIUS = 20.dp
+        val RIM = SIZE / 2 - DISC_RADIUS
     }
 }
