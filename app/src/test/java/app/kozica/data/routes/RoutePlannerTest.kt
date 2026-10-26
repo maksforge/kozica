@@ -14,8 +14,12 @@ class RoutePlannerTest {
     private val a = RoutePoint(49.0, 20.0)
     private val b = RoutePoint(49.0, 20.01)
     private val c = RoutePoint(49.0, 20.02)
+    private val d = RoutePoint(49.01, 20.01)
     private val e = RoutePoint(49.2, 20.2)
+    private val summit = RoutePoint(49.2, 20.205)
     private val f = RoutePoint(49.2, 20.21)
+    private val warsaw = RoutePoint(52.23, 21.01)
+    private val flat = 4000.0 / 3600
 
     @Test
     fun `a signpost's rounding, up to 5 minutes`() {
@@ -31,7 +35,64 @@ class RoutePlannerTest {
         val leg = route.legs[0]!!.seconds
         assertEquals(15, route.minutesTo(1))
         assertEquals(roundedUpToFiveMinutes(2 * leg), route.minutes)
-        assertTrue(route.minutes < 2 * route.minutesTo(1))
+        assertTrue(route.minutes < 2 * route.minutesTo(1)!!)
+    }
+
+    @Test
+    fun `a time after a leg with no way is not given`() {
+        val route = planner.plan(listOf(a, b, e, f))
+        assertEquals(15, route.minutesTo(1))
+        assertNull(route.secondsToPoint[2])
+        assertNull(route.minutesTo(2))
+        assertNull(route.minutesTo(3))
+    }
+
+    @Test
+    fun `a point far from every Trail leaves its legs missing rather than failing`() {
+        val route = planner.plan(listOf(a, warsaw, b))
+        assertEquals(listOf(null, null), route.legs)
+        assertFalse(route.complete)
+        assertNull(route.minutesTo(2))
+    }
+
+    @Test
+    fun `a whole edge costs exactly what the build stored, each way`() {
+        assertEquals(EdgePart(network.edgeSecondsForward[4].toDouble(), 100.0, 60.0), network.part(4, 0.0, 1.0))
+        assertEquals(EdgePart(network.edgeSecondsBackward[4].toDouble(), 60.0, 100.0), network.part(4, 1.0, 0.0))
+    }
+
+    @Test
+    fun `a leg to a summit midway along an edge climbs only its own side`() {
+        val up = planner.plan(listOf(e, summit))
+        assertEquals(100.0, up.ascent, 0.5)
+        assertEquals(0.0, up.descent, 0.5)
+        assertEquals(network.edgeLength[4] / 2 / flat + 100 * 6, up.seconds, 2.0)
+        val down = planner.plan(listOf(summit, f))
+        assertEquals(0.0, down.ascent, 0.5)
+        assertEquals(60.0, down.descent, 0.5)
+        assertEquals(network.edgeLength[4] / 2 / flat + 60 * 3, down.seconds, 2.0)
+    }
+
+    @Test
+    fun `an edge walked backward swaps its ascent and descent`() {
+        val route = planner.plan(listOf(c, d))
+        assertEquals(
+            listOf(103L),
+            route.legs
+                .single()!!
+                .steps
+                .map { network.edgeWay[it.edge] },
+        )
+        assertEquals(200.0, route.ascent, 1.0)
+        assertEquals(0.0, route.descent, 1.0)
+    }
+
+    @Test
+    fun `a demanding stretch never runs across a leg with no way`() {
+        val route = planner.plan(listOf(a, d, e, f))
+        assertNull(route.legs[1])
+        assertEquals(2, route.demanding.size)
+        assertTrue(route.demanding[0].toMetres <= route.demanding[1].fromMetres)
     }
 
     @Test

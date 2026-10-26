@@ -23,7 +23,8 @@ def edge(way: int, refs: list[int], points: list[tuple[float, float]], heights: 
 
 
 def fixture_edges() -> list:
-    """A–B–C along a flat line, B→C one-way; A–D up and D–C down; E–F an island far from the rest.
+    """A–B–C along a flat line, B→C one-way; A–D up and D–C down; E–F a demanding island far from the rest,
+    over a summit midway.
 
     Node refs are OSM-like ids; only the ends of an edge are nodes of the network."""
     a, b, c, d = (49.0, 20.0), (49.0, 20.01), (49.0, 20.02), (49.01, 20.01)
@@ -33,7 +34,7 @@ def fixture_edges() -> list:
         edge(101, [2, 0, 3], [b, (49.0, 20.015), c], [500.0, 500.0, 500.0], flags=network["FORWARD_ONLY"]),
         edge(102, [1, 0, 4], [a, (49.005, 20.005), d], [500.0, 600.0, 700.0], sac=3),
         edge(103, [4, 3], [d, c], [700.0, 500.0]),
-        edge(104, [5, 6], [e, f], [900.0, 900.0]),
+        edge(104, [5, 0, 6], [e, (49.2, 20.205), f], [900.0, 1000.0, 940.0], sac=3),
     ]
 
 
