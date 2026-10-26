@@ -181,7 +181,9 @@ def newest_extract_before(country: str, sequence: int) -> Path:
     day = dt.date.fromisoformat(state_timestamp(country, sequence)[:10])
     for back in range(OLDEST_EXTRACT_DAYS):
         name = f"{country}-{day - dt.timedelta(days=back):%y%m%d}.osm.pbf"
-        if not exists(f"{GEOFABRIK}/{name}"):
+        # Geofabrik thins its dated extracts and can drop the md5 before the file; such an
+        # extract cannot be checked, so an older one plus replication diffs stands in for it.
+        if not exists(f"{GEOFABRIK}/{name}") or not exists(f"{GEOFABRIK}/{name}.md5"):
             continue
         extract = dated_extract(name)
         if header_sequence(extract) <= sequence:
