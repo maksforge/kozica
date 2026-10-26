@@ -7,7 +7,7 @@
           {
             "type": "command",
             "if": "Bash(git push*)",
-            "command": "git -C \"$CLAUDE_PROJECT_DIR\" fetch -q origin main 2>/dev/null; python3 \"$CLAUDE_PROJECT_DIR/scripts/notes-gate.py\" --pending",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/notes-gate.py\" --hook",
             "timeout": 30,
             "statusMessage": "Checking the next release has its notes"
           }
