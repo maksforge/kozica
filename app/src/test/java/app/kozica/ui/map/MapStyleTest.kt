@@ -1,6 +1,7 @@
 package app.kozica.ui.map
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -95,30 +96,73 @@ class MapStyleTest {
     }
 
     @Test
-    fun `both styles' bounds are the Regions' polygons', so a changed polygon fails until gen_regions py is re-run`() {
-        val points =
-            File("../scripts/regions").listFiles { file -> file.extension == "poly" }!!.flatMap { file ->
-                file.readLines().mapNotNull { line ->
-                    line
-                        .trim()
-                        .split(Regex("\\s+"))
-                        .mapNotNull(String::toDoubleOrNull)
-                        .takeIf { it.size == 2 }
+    fun `a changed polygon fails until gen_regions py redraws its Region's outline, ring for ring`() {
+        val outlines =
+            Json
+                .parseToJsonElement(File("src/main/assets/map/regions.geojson").readText())
+                .jsonObject
+                .getValue("features")
+                .jsonArray
+                .map { it.jsonObject }
+                .filter {
+                    it
+                        .getValue("properties")
+                        .jsonObject["kind"]
+                        ?.jsonPrimitive
+                        ?.content == "region"
+                }.associate { feature ->
+                    val geometry = feature.getValue("geometry").jsonObject
+                    val coordinates = geometry.getValue("coordinates").jsonArray
+                    val lines =
+                        if (geometry.getValue("type").jsonPrimitive.content == "LineString") {
+                            listOf(coordinates)
+                        } else {
+                            coordinates.map { it.jsonArray }
+                        }
+                    feature
+                        .getValue("properties")
+                        .jsonObject
+                        .getValue("id")
+                        .jsonPrimitive.content to
+                        lines
+                            .map { line ->
+                                line
+                                    .map { point ->
+                                        point.jsonArray.let {
+                                            rounded(
+                                                it[0].jsonPrimitive.double,
+                                                it[1].jsonPrimitive.double,
+                                            )
+                                        }
+                                    }.toSet()
+                            }.toSet()
                 }
-            }
-        val polygons =
+
+        assertEquals(polygons, outlines)
+    }
+
+    @Test
+    fun `both styles' bounds are the Regions' polygons' bounds`() {
+        val points = polygons.values.flatten().flatten()
+        val expected =
             listOf(
-                points.minOf { it[0] },
-                points.minOf { it[1] },
-                points.maxOf { it[0] },
-                points.maxOf { it[1] },
+                points.minOf { it.first },
+                points.minOf { it.second },
+                points.maxOf { it.first },
+                points.maxOf { it.second },
             )
 
         for (theme in listOf("light", "dark")) {
             val bounds = cameraBoundsOf(File("src/main/assets/map/style-$theme.json").readText())
-            listOf(bounds.west, bounds.south, bounds.east, bounds.north).zip(polygons).forEach { (style, poly) ->
-                assertEquals(theme, poly, style, 1e-5)
-            }
+            assertEquals(
+                theme,
+                expected,
+                listOf(bounds.west, bounds.south, bounds.east, bounds.north).map {
+                    Math.round(
+                        it * 1e5,
+                    )
+                },
+            )
         }
     }
 
@@ -130,6 +174,36 @@ class MapStyleTest {
         assertTrue(bounds.contains(latitude = 51.12, longitude = 14.95))
         assertFalse(bounds.contains(latitude = 52.23, longitude = 21.01))
     }
+
+    private val polygons =
+        File("../scripts/regions").listFiles { file -> file.extension == "poly" }!!.associate {
+            it.nameWithoutExtension to
+                rings(it)
+        }
+
+    /** An osmium polygon file's rings, each as its set of points in hundred-thousandths of a degree, as gen_regions.py rounds them. */
+    private fun rings(poly: File): Set<Set<Pair<Long, Long>>> {
+        val rings = mutableListOf<MutableSet<Pair<Long, Long>>>()
+        var ring: MutableSet<Pair<Long, Long>>? = null
+        for (line in poly
+            .readLines()
+            .drop(1)
+            .map(String::trim)
+            .filter(String::isNotEmpty)) {
+            val values = line.split(Regex("\\s+")).mapNotNull(String::toDoubleOrNull)
+            when {
+                line == "END" -> ring = null
+                ring != null && values.size == 2 -> ring.add(rounded(values[0], values[1]))
+                else -> ring = mutableSetOf<Pair<Long, Long>>().also(rings::add)
+            }
+        }
+        return rings.toSet()
+    }
+
+    private fun rounded(
+        longitude: Double,
+        latitude: Double,
+    ) = Math.round(longitude * 1e5) to Math.round(latitude * 1e5)
 
     private fun kotlinx.serialization.json.JsonObject.layerIds() =
         getValue("layers").jsonArray.map {
