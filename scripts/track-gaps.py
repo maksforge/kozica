@@ -156,6 +156,14 @@ def print_gaps(title: str, found: list[Gap]) -> None:
                   f"longest silence {g.silent_s:.0f} s")
 
 
+def print_filtered_gaps(found: list[Gap]) -> None:
+    # A still phone leaves gaps here by design (the 5 m filter), so heartbeats do not classify them.
+    print(f"gaps the release filters would leave: {len(found)} over {GAP_REPORTED_S} s, "
+          f"longest {max((g.seconds for g in found), default=0):.0f} s")
+    for g in found:
+        print(f"    {stamp(g.start_ms)} → {stamp(g.end_ms)}  {g.seconds:.0f} s")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("database", nargs="?", type=Path)
@@ -216,7 +224,7 @@ def main() -> int:
 
     every = gaps(fixes, events)
     print_gaps("gaps in storing, segment edges included, outside pauses", every)
-    print_gaps("gaps the release filters would leave", gaps(release_filtered(fixes), events))
+    print_filtered_gaps(gaps(release_filtered(fixes), events))
 
     deaths = []
     previous = None
