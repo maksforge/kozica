@@ -36,6 +36,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.util.UUID
@@ -48,14 +50,16 @@ import java.util.UUID
  * boot receiver restarts it. A recording the process loses waits for the next launch, which offers
  * to resume or finish it.
  *
- * Every fix and every database write runs on one serial dispatcher, so the rows arrive in order and
- * Stop's encoding sees the last of them.
+ * Every fix and every command runs whole, one at a time and in arrival order, under one lock: a
+ * suspended handler never lets another act on the state it read, and a fix still queued behind Stop
+ * finds nothing recording.
  */
 @SuppressLint("MissingPermission", "InlinedApi")
 class RecordingService : Service() {
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val serial = Dispatchers.IO.limitedParallelism(1)
     private val scope = CoroutineScope(SupervisorJob() + serial)
+    private val lock = Mutex()
     private lateinit var locations: LocationManager
     private lateinit var sensors: SensorManager
     private var stretch = 0
@@ -69,7 +73,7 @@ class RecordingService : Service() {
     private val listener =
         object : LocationListenerCompat {
             override fun onLocationChanged(location: Location) {
-                scope.launch { store(location) }
+                serially { store(location) }
             }
 
             override fun onProviderEnabled(provider: String) = locationOff(false)
@@ -80,7 +84,7 @@ class RecordingService : Service() {
     private val motion =
         object : TriggerEventListener() {
             override fun onTrigger(trigger: TriggerEvent?) {
-                scope.launch { resume(byMotion = true) }
+                serially { resume(byMotion = true) }
             }
         }
 
@@ -107,9 +111,9 @@ class RecordingService : Service() {
         when {
             action == ACTION_START -> start(intent.getStringExtra(EXTRA_HIKE))
             state == null -> stopSelf(startId)
-            action == ACTION_PAUSE -> scope.launch { pause() }
-            action == ACTION_RESUME -> scope.launch { resume(byMotion = false) }
-            action == ACTION_STOP -> scope.launch { stop() }
+            action == ACTION_PAUSE -> serially { pause() }
+            action == ACTION_RESUME -> serially { resume(byMotion = false) }
+            action == ACTION_STOP -> serially { stop() }
         }
         return START_NOT_STICKY
     }
@@ -131,14 +135,15 @@ class RecordingService : Service() {
             val now = Instant.now()
             // Reported before its row exists, so the new Hike never reads as a lost one.
             recorder.report(Recording(id, now, locationOff = off))
-            scope.launch {
+            serially {
                 hikes.start(id, now)
                 stretch = 0
                 begin()
             }
         } else {
-            scope.launch {
-                val hike = hikes.get(resumeId) ?: return@launch stop()
+            serially {
+                if (state != null) return@serially
+                val hike = hikes.get(resumeId)?.takeIf { it.endedAt == null } ?: return@serially stop()
                 stretch = hikes.nextStretch(resumeId)
                 recorder.report(
                     Recording(resumeId, hike.startedAt, metres = hikes.track(resumeId).metres(), locationOff = off),
@@ -202,12 +207,16 @@ class RecordingService : Service() {
     }
 
     private fun locationOff(off: Boolean) {
-        scope.launch {
-            val recording = state ?: return@launch
-            if (recording.locationOff == off) return@launch
+        serially {
+            val recording = state ?: return@serially
+            if (recording.locationOff == off) return@serially
             recorder.report(recording.copy(locationOff = off))
             notifyState(force = true)
         }
+    }
+
+    private fun serially(handler: suspend () -> Unit) {
+        scope.launch { lock.withLock { handler() } }
     }
 
     private suspend fun requestFixes() =
