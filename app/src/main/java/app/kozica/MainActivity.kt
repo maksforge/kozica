@@ -35,9 +35,14 @@ class MainActivity : AppCompatActivity() {
         if (intent.action == ACTION_CONFIRM_STOP) stopAsked = true
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(STOP_ASKED, stopAsked)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null && intent?.action == ACTION_CONFIRM_STOP) stopAsked = true
+        stopAsked = savedInstanceState?.getBoolean(STOP_ASKED) ?: (intent?.action == ACTION_CONFIRM_STOP)
 
         val app = application as MainApplication
 
@@ -110,5 +115,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val ACTION_CONFIRM_STOP = "app.kozica.CONFIRM_STOP"
+        private const val STOP_ASKED = "stop_asked"
     }
 }
