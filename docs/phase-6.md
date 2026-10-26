@@ -167,9 +167,21 @@ beside a failed walk is verdict 2.
 § 3. It is absent, or does not fire with the screen off → the phone falls back to resuming by hand,
 and the pause screen says so.
 
-### The verdict, taken *(date)*
+### The verdict, taken *(pending the walk)*
 
-*(Which one, the reading behind it.)*
+**Not yet taken: R2, the walk, is still owed.** What is read so far, 2026-10-26:
+
+- **The owner's phone at a window (R2a) passes the bar.** A still phone, screen locked, unplugged, no
+  exemption: 2.26 h, no gap over 60 s, through an hour of deep Doze. HyperOS keeps the GPS on
+  through deep Doze.
+- **The test phone (R1) keeps the service but not the GPS.** MIUI 12.5 holds the foreground service for
+  four hours of forced deep idle. It turns the GPS off for exactly as long as the idle lasts, and the
+  battery exemption makes no difference (R1b). The GPS is back within two seconds of the idle ending.
+  Deep idle needs about half an hour of stillness and ends on movement, so on a walk it costs at most
+  a long rest without Pause. The rule above holds: a failed R1 beside a passing walk adds no ask, and
+  *Known gaps* records it.
+
+B was built on R2a's reading. If the walk fails, verdict 2's hand-off is added to it.
 
 ## 2. Recording
 
@@ -434,6 +446,11 @@ because the share is the user's.
 
 ## Known gaps, deliberately
 
+- **On MIUI 12.5 (API 30), deep Doze turns the GPS off under a recording**, with or without the battery
+  exemption (R1, R1b). Deep Doze needs about half an hour of stillness and ends on movement, so the
+  gap is a long rest without Pause, during which there is nothing to record. The GPS is back within
+  seconds of moving. No ask would close it: the exemption was read and does not.
+
 - **Below API 34, GPS heights outside the grid are above the ellipsoid**, about 35–40 m above sea
   level in southern Poland, in the profile and in GPX. Ascent is unaffected (§ 5). Closing it means
   bundling a geoid model, for Hikes outside every Region on older phones.
@@ -455,12 +472,13 @@ host.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate, test phone: four hours forced idle, screen off, unplugged in software | § 1's commands; `scripts/track-gaps.py` on the pulled database | |
-| R2 | The gate, owner's phone: a real walk of two hours or more in a pocket, one pause, battery per hour | `scripts/track-gaps.py`; battery level before and after | |
-| R3 | The significant-motion sensor: present on both phones, and firing on the walk after the pause | `adb shell dumpsys sensorservice`; `adb logcat -s KozicaRecord` | |
-| R4 | Process death mid-recording: the next launch offers resume or finish, and no point is lost | `adb shell am kill` during a recording; the pulled database | |
-| R5 | Schema 2 to 3 on the test phone: the previous release-shaped build with a saved Route, this one over the top | `assembleDebug -PreleaseShapedDebug` both times; `dumpsys dbinfo` | |
+| R1 | The gate, test phone: four hours forced idle, screen off, unplugged in software | § 1's commands; `scripts/track-gaps.py` on the pulled database |**Service kept, GPS off in deep idle.** 2026-10-26, 16:55–21:27, indoors, so no fix at all (0 of about 30 satellites). The service was in the foreground from start to Stop. Heartbeats stopped at 17:22:20, the second `force-idle` began, and came back at 21:24:10, 2 s after `unforce`. **R1b**, the same with `dumpsys deviceidle whitelist +<pkg>`, 21:28–21:46: heartbeats stopped about 45 s into the idle again, so the exemption makes no difference |
+| R2 | The gate, owner's phone: a real walk of two hours or more in a pocket, one pause, battery per hour | `scripts/track-gaps.py`; battery level before and after |*(owed: the walk)* |
+| R2a | The gate on the owner's phone, still: a window, screen locked, unplugged, no exemption and no autostart (`device-gate.py`) | `scripts/track-gaps.py --pull -s <serial>`; `dumpsys batterystats --history` for Doze | **Pass**, 2026-10-26, 17:26–19:41: 1,593 fixes, 1,558 within 30 m, no gap over 60 s, longest lag from fix to storing 1.2 s. Deep Doze (`device_idle=full`) from 18:14:22 to 19:14:22, with fixes every 5 s through it. Battery 64 → 57 %, 3.1 %/h. The service was in the foreground at Stop |
+| R3 | The significant-motion sensor: present on both phones, and firing on the walk after the pause | `adb shell dumpsys sensorservice`; `adb logcat -s KozicaRecord` |**Present on both**: the test phone's MTK `SIGNIFICANT_MOTION`, and `sns_smd` on the owner's phone. Armed at a pause on the test phone (`motion sensor armed`). Firing on the walk is *(owed)* |
+| R4 | Process death mid-recording: the next launch offers resume or finish, and no point is lost | `adb shell am kill` during a recording; the pulled database |**Pass on the API 33 emulator**, 2026-10-26: a recording with 4 fixes, then `kill -9` of the process as root. The next launch offered 'A hike didn't finish recording'; Resume started a new stretch and carried the distance on (3.8 → 3.9 km); Stop finished it with the points of both stretches. Not yet read on a phone |
+| R5 | Schema 2 to 3 on the test phone: the previous release-shaped build with a saved Route, this one over the top | `assembleDebug -PreleaseShapedDebug` both times; `dumpsys dbinfo` |**Pass**, 2026-10-26, test phone: the release-shaped build of 6cec096 (schema 2) showed a saved Route, 48.9609, 19.9825 – 48.9241, 20.0074, 26.9 km. The release-shaped build of 1c09169 (schema 3) went over the top with no schema screen. It showed the same Route and queried `hikes` (`dumpsys dbinfo`), so `MIGRATION_2_3` ran rather than the fallback |
 | R6 | A Hike's ascent beside the planned Route over the same Trails | the Hikes tab and the Routes tab, same Trails | |
 | R7 | Auto Backup with photos past the budget: the database still in the backup | `adb shell bmgr backupnow`; the marker file | |
 | R8 | A GPX export opened in another app, with its photos as waypoints | the share sheet to Mapy.cz or Files | |
-| R9 | Each row of § 2's table, with the API level: on the owner's phone (API 36) approximate only, its upgrade kept, denied for good, notifications denied (does it record, what the bar says) and the notification swiped away (the service runs on); on the test phone (API 30) denied and location off; and on both, the `location` service starting with no `SecurityException` | `adb shell pm revoke`/`grant`, `cmd location set-location-enabled`, a screencap per state; `adb logcat -d \| grep SecurityException`; `adb shell dumpsys activity services` | |
+| R9 | Each row of § 2's table, with the API level: on the owner's phone (API 36) approximate only, its upgrade kept, denied for good, notifications denied (does it record, what the bar says) and the notification swiped away (the service runs on); on the test phone (API 30) denied and location off; and on both, the `location` service starting with no `SecurityException` | `adb shell pm revoke`/`grant`, `cmd location set-location-enabled`, a screencap per state; `adb logcat -d \| grep SecurityException`; `adb shell dumpsys activity services` |**Partly read**, 2026-10-26. API 33 emulator: approximate only led to the precise-location screen; the next Record made the upgrade ask; notifications denied still recorded, with the bar's line. Owner's phone (API 36): location switched off mid-recording showed 'Location is off — nothing is being recorded' in the notification, and switching it back on brought back the distance. The rest *(owed)* |
