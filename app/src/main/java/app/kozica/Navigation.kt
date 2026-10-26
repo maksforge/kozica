@@ -13,9 +13,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -88,7 +89,11 @@ fun MainNavigation(
             onNotificationsAsked = recordingViewModel::notificationsAsked,
             onStart = recordingViewModel::start,
         )
-    var stopping by remember { mutableStateOf(false) }
+    var stopping by rememberSaveable { mutableStateOf(false) }
+    val nothingToStop = recording.loaded && recording.recording == null
+    LaunchedEffect(stopAsked, nothingToStop) {
+        if (stopAsked && nothingToStop) onStopAnswered()
+    }
     if ((stopping || stopAsked) && recording.recording != null) {
         StopDialog(
             onStop = {
@@ -101,8 +106,6 @@ fun MainNavigation(
                 onStopAnswered()
             },
         )
-    } else if (stopAsked) {
-        onStopAnswered()
     }
     recording.unfinished?.let { hike ->
         UnfinishedDialog(hike = hike, onResume = record, onFinish = recordingViewModel::finishUnfinished)
