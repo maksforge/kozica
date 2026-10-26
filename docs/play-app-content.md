@@ -113,6 +113,9 @@ The answer rests on one fact per route data could take:
    what "collect" means, and that is the reason to give. What the developer then holds is a mail in
    a mailbox, kept until the sender asks for it to be deleted, as the policy's *Deleting your data*
    states.
+4. **A saved Route is not location.** It is a name and the points the user picked on the map or
+   from search, never a fix from the phone, and it lives in the database that point 2's backup
+   already carries. Since phase 5's checkpoint D; still no data collected.
 
 Would change any of it:
 

@@ -21,6 +21,7 @@
 
     <!-- Common actions -->
     <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
 
     <!-- "Maps" are the Regions, which arrive from Play after the install. %1$d of %2$d have arrived. "Play" is the Google Play Store app. -->
     <string name="map_downloading">Downloading maps — %1$d of %2$d</string>
@@ -64,6 +65,10 @@
     <string name="route_details_show">Show route details</string>
     <string name="route_details_hide">Hide route details</string>
     <string name="route_reverse">Reverse</string>
+    <!-- On the Route sheet's button, and as the title and confirm button of the dialog that names the Route. -->
+    <string name="route_save">Save route</string>
+    <!-- The label of the field holding a Route's name, such as "Kuźnice – Morskie Oko". -->
+    <string name="route_name">Name</string>
     <string name="route_move_up">Move up</string>
     <string name="route_move_down">Move down</string>
     <string name="route_remove">Remove point</string>
@@ -77,6 +82,19 @@
     <string name="route_ascent">Ascent</string>
     <string name="route_descent">Descent</string>
     <string name="route_walking_time">Walking time</string>
+
+    <!-- The tab bar and the Routes tab (docs/phase-5.md § 5). "Map" names the tab, not the map data. -->
+    <string name="nav_map">Map</string>
+    <!-- The tab and the screen listing the Routes the user saved. -->
+    <string name="routes_title">Routes</string>
+    <string name="routes_empty">No saved routes yet</string>
+    <!-- In a saved Route's menu, and as the title and confirm button of the dialog that renames it. -->
+    <string name="routes_rename">Rename</string>
+    <string name="routes_delete">Delete route</string>
+    <!-- %1$s is the Route's name, such as "Kuźnice – Morskie Oko". -->
+    <string name="routes_delete_confirm">Delete %1$s?</string>
+    <!-- What a screen reader says for the button that opens a saved Route's menu. %1$s is its name. -->
+    <string name="routes_more">Options for %1$s</string>
 
     <!-- The kinds of place search finds, each under its name in the results. -->
     <string name="place_peak">Peak</string>

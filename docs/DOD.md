@@ -41,8 +41,8 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       `make-feature-graphic.py`. Commit the concept image and record its provenance in
       `art/README.md` — where the art came from is the thing most likely to block a first upload, and
       it is discovered late.
-- [ ] **Drop the dormant `items` table.** `ui/items/` is gone; `ItemEntity` stays until phase 5's
-      `MIGRATION_1_2` replaces it ([`phase-0.md`](phase-0.md) § *Not in*).
+- [x] **Drop the dormant `items` table.** Phase 5's `MIGRATION_1_2` replaced it with saved Routes
+      ([`phase-5.md`](phase-5.md) § 5).
 - [x] **Rewrite `scripts/edge-to-edge.py`'s SCENES** against your screens. Home and Settings; each
       new screen brings its own scenes.
 - [x] **Run the artifact gates before the first tag.** Overtaken: all four never ran locally before a
@@ -97,6 +97,13 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 - [x] **Take phase 1's phone readings before phase 2 builds on MapLibre.** Taken 2026-10-19: R1
       verdict 1, R8 verdict 3 (undecided until E), R9 after fixing a crash, R10's screen
       ([`phase-1.md`](phase-1.md) § 1).
+
+## Phase 5's last reading
+
+- [ ] **R6's Play step** ([`phase-5.md`](phase-5.md) § *Readings*): the first release carrying
+      schema 2, from the internal track, over 0.7.0 from Play, updated in place and opened past the
+      launch gate with a Route saved before and found after. Taken once that release is out; phase 5
+      closes in `PLAN.md` with it.
 
 ## After the closed test
 

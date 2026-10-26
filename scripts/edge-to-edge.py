@@ -1289,9 +1289,11 @@ SCENES = [
 
     # --- a wiped install: the first launch, which no seeded run can show ------------------------
     Scene("home-empty", "home", [("wipe", "")], suite="empty"),
+    Scene("routes-empty", "home", [("wipe", ""), ("tap", "Routes")], suite="empty"),
 
-    # --- the root ------------------------------------------------------------------------------
+    # --- the two tabs, over the tab bar ---------------------------------------------------------
     Scene("home", "home", []),
+    Scene("routes", "home", [("tap", "Routes")]),
 
     # --- pushed screens: no bottom bar, so the navigation-bar inset is the app's own problem ----
     Scene("safety", "detail", [("tap", "Safety")]),

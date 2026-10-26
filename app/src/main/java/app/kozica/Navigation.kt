@@ -4,9 +4,17 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -16,6 +24,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.kozica.ui.backup.BackupScreen
 import app.kozica.ui.map.MapScreen
+import app.kozica.ui.routes.RoutesScreen
 import app.kozica.ui.safety.SafetyScreen
 import app.kozica.ui.settings.SettingsScreen
 import app.kozica.ui.support.LicenceTextScreen
@@ -46,13 +55,35 @@ internal fun appEntryDecorators(): List<NavEntryDecorator<NavKey>> =
 
 /**
  * The app shell: a [NavDisplay] rooted at [Home], so Back from anywhere walks back there and Back
- * from there exits. No bottom bar until phase 5 brings the tabs that fill it.
+ * from there exits, and the tab bar under the two tabs, Map and [Routes] (docs/phase-5.md § 5).
  */
 @Composable
 fun MainNavigation(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Home)
     val activity = LocalActivity.current
-    Scaffold(modifier = modifier) { insets ->
+    val showMap = { while (backStack.size > 1) backStack.removeLastOrNull() }
+    Scaffold(
+        modifier = modifier,
+        bottomBar = {
+            val top = backStack.lastOrNull()
+            if (top == Home || top == Routes) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = top == Home,
+                        onClick = showMap,
+                        icon = { Icon(painterResource(R.drawable.ic_map), contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_map)) },
+                    )
+                    NavigationBarItem(
+                        selected = top == Routes,
+                        onClick = { if (top != Routes) backStack.add(Routes) },
+                        icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
+                        label = { Text(stringResource(R.string.routes_title)) },
+                    )
+                }
+            }
+        },
+    ) { insets ->
         NavDisplay(
             backStack = backStack,
             // **The keyboard is an inset like any other, and this Scaffold owns them.**
@@ -82,6 +113,9 @@ fun MainNavigation(modifier: Modifier = Modifier) {
                             onOpenSettings = { backStack.add(Settings) },
                             onOpenSafety = { backStack.add(Safety) },
                         )
+                    }
+                    entry<Routes> {
+                        RoutesScreen(onShow = showMap)
                     }
                     entry<Safety> {
                         SafetyScreen(onBack = { backStack.removeLastOrNull() })

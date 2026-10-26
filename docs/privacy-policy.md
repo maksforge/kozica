@@ -16,8 +16,9 @@ short because the app does very little.
 Kozica has no account, no sign-in and no server. **The app has no permission to use the internet**,
 so it cannot send anything anywhere.
 
-What it keeps (your settings, including where you left the map) is stored **only in the app's
-private storage on your own phone**, and is readable only by the app.
+What it keeps (your settings, including where you left the map, and the routes you save, each a name
+and the points you chose) is stored **only in the app's private storage on your own phone**, and is
+readable only by the app.
 
 There is no analytics, no crash reporting, no advertising, and no third-party SDK that phones home.
 
@@ -46,7 +47,8 @@ These are done by the operating system or by Google, not by Kozica, but they are
 "where could my data be":
 
 1. **Android's automatic backup.** If it is enabled on your phone, Android backs up the app's
-   database and its small preview images, not its settings, to your own Google Drive, in a space
+   database, which holds your saved routes, and its small preview images, not its settings, to your
+   own Google Drive, in a space
    that does not count against your storage quota and that Google states apps cannot read. You can
    turn this off in your phone's settings.
 2. **Google Play.** Installing and updating an app is a transaction between your phone and Google,

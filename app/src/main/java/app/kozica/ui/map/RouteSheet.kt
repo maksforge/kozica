@@ -20,10 +20,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,10 +58,12 @@ internal fun RouteSheet(
     onRemove: (Int) -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
     onReverse: () -> Unit,
+    onSave: (name: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var expanded by rememberSaveable { mutableStateOf(false) }
+    var naming by rememberSaveable { mutableStateOf(false) }
     val planned = route.planned.takeUnless { route.planning }
     val open = expanded || route.points.size < 2
     Surface(
@@ -89,11 +93,18 @@ internal fun RouteSheet(
                         .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape),
                 )
             }
+            route.name?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
             when {
                 route.unavailable -> Text(stringResource(R.string.map_planning_missing))
                 route.points.size < 2 -> Unit
                 planned == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
                 else -> Totals(planned, locale)
+            }
+            if (route.points.size >= 2) {
+                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = onReverse) { Text(stringResource(R.string.route_reverse)) }
+                    TextButton(onClick = { naming = true }) { Text(stringResource(R.string.route_save)) }
+                }
             }
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                 if (planned != null) Warnings(planned, route, locale)
@@ -113,15 +124,50 @@ internal fun RouteSheet(
                     if (planned != null && planned.metres > 0) {
                         Profile(planned.line, locale, Modifier.padding(top = Spacing.base))
                     }
-                    if (route.points.size >= 2) {
-                        TextButton(onClick = onReverse, modifier = Modifier.align(Alignment.End)) {
-                            Text(stringResource(R.string.route_reverse))
-                        }
-                    }
                 }
             }
         }
     }
+    if (naming) {
+        RouteNameDialog(
+            title = stringResource(R.string.route_save),
+            initial = route.name ?: listOf(route.points.first(), route.points.last()).joinToString(" – ") { it.name() },
+            confirm = stringResource(R.string.route_save),
+            onConfirm = { name ->
+                onSave(name)
+                naming = false
+            },
+            onDismiss = { naming = false },
+        )
+    }
+}
+
+/** Asks for a Route's name, for Save and for Rename; a blank name cannot be confirmed. */
+@Composable
+internal fun RouteNameDialog(
+    title: String,
+    initial: String,
+    confirm: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var name by rememberSaveable { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text(stringResource(R.string.route_name)) },
+                singleLine = true,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(name.trim()) }, enabled = name.isNotBlank()) { Text(confirm) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }
 
 @Composable

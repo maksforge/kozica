@@ -1,6 +1,28 @@
 package app.kozica.data
 
 import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+
+/**
+ * Saved Routes replace the dormant `items` table, which no release ever wrote a row to: its screen
+ * went in phase 0 (docs/phase-5.md § 5). Transcribed from `schemas/…/2.json`.
+ */
+val MIGRATION_1_2 =
+    object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS `items`")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `routes` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                    "`createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+            )
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `route_points` (`routeId` TEXT NOT NULL, `position` INTEGER NOT NULL, " +
+                    "`latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `label` TEXT, " +
+                    "PRIMARY KEY(`routeId`, `position`), FOREIGN KEY(`routeId`) REFERENCES `routes`(`id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+        }
+    }
 
 /**
  * Every migration this build can run, in the order they were written.
@@ -13,7 +35,7 @@ import androidx.room.migration.Migration
  * and `*APP_MIGRATIONS` spreads an array into one. `SchemaGate` converts it to a list of integer
  * pairs so the reachability rule can be a pure function.
  */
-val APP_MIGRATIONS: Array<Migration> = arrayOf()
+val APP_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
 
 /*
  * ---------------------------------------------------------------------------------------------
@@ -23,7 +45,7 @@ val APP_MIGRATIONS: Array<Migration> = arrayOf()
  *     val MIGRATION_1_2 =
  *         object : Migration(1, 2) {
  *             override fun migrate(db: SupportSQLiteDatabase) {
- *                 db.execSQL("ALTER TABLE `items` ADD COLUMN `favourite` INTEGER NOT NULL DEFAULT 0")
+ *                 db.execSQL("ALTER TABLE `routes` ADD COLUMN `favourite` INTEGER NOT NULL DEFAULT 0")
  *             }
  *         }
  *

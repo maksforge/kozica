@@ -16,6 +16,9 @@ import kotlinx.serialization.Serializable
  */
 @Serializable data object Home : NavKey
 
+/** The second tab, beside [Home]; pushed over it, so Back returns to the map. */
+@Serializable data object Routes : NavKey
+
 @Serializable data object Settings : NavKey
 
 @Serializable data object Backup : NavKey
