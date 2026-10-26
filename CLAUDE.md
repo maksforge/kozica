@@ -148,8 +148,9 @@ app/src/release/  only the other half of each seam, so main/ can call it uncondi
                   settings, no continue button, no frame log, and the Regions, the relief and the
                   real position passed through
 scripts/          the Python toolchain. project.py is the one place the app's identity lives
-scripts/map/      the planetiler profile build-map-data.py runs, decode-tile.py, and the style and
-                  sprite generators
+scripts/map/      the planetiler profile build-map-data.py runs, decode-tile.py, the style and
+                  sprite generators, and gen_regions.py, which writes the Regions' outlines and
+                  the mask outside them from scripts/regions/ (re-run it when a polygon changes)
 scripts/regions/  one boundary polygon per Region
 region_<id>/      one fast-follow asset pack per polygon in scripts/regions/, all built by
                   gradle/region-pack.gradle.kts; they join the build only with -PmapPacks

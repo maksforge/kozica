@@ -74,6 +74,26 @@ class MapStyleTest {
         assertEquals(Fade(listOf("trails-tatry", "trails-bieszczady"), 0.3f), fadeOf(expanded))
     }
 
+    @Test
+    fun `the Regions' outlines are drawn once, and their bounds are where the camera may go`() {
+        val withRegions =
+            """
+            {"version":8,"metadata":{"kozica:faded-opacity":0.3,"kozica:bounds":[14.95,48.95,22.95,51.12]},
+             "sources":{"regions":{"type":"geojson","data":"asset://map/regions.geojson"}},
+             "layers":[
+              {"id":"land","type":"fill","source":"region","source-layer":"land"},
+              {"id":"outside","type":"fill","source":"regions"}
+            ]}
+            """.trimIndent()
+        val expanded = expandStyle(withRegions, regions)
+
+        assertEquals(
+            listOf("land-tatry", "land-bieszczady", "outside"),
+            Json.parseToJsonElement(expanded).jsonObject.layerIds(),
+        )
+        assertEquals(CameraBounds(14.95, 48.95, 22.95, 51.12), cameraBoundsOf(expanded))
+    }
+
     private fun kotlinx.serialization.json.JsonObject.layerIds() =
         getValue("layers").jsonArray.map {
             it.jsonObject

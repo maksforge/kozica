@@ -19,6 +19,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from gen_scheme import N, NV, P, S, T  # noqa: E402
 
 ASSETS = ROOT / "app/src/main/assets/map"
+# Written by gen_regions.py, whose bounds are where the camera may go.
+REGIONS = ASSETS / "regions.geojson"
 FONT = ["Noto Sans Regular"]
 
 TRAIL = {
@@ -74,6 +76,8 @@ def palette(dark: bool) -> dict[str, str]:
         "shade_accent": tone(NV, pick(35, 10)),
         "contour": tone(P, pick(45, 55)),
         "contour_text": tone(P, pick(35, 70)),
+        "outside": tone(NV, pick(82, 6)),
+        "region_edge": tone(P, pick(40, 70)),
         "route": tone(P, pick(40, 60)),
         "route_casing": tone(N, pick(100, 10)),
         "route_number": tone(N, pick(100, 10)),
@@ -158,6 +162,9 @@ def style(dark: bool) -> dict:
         {"id": "contours", "type": "line", "source": "contours", "source-layer": "contours",
          "paint": {"line-color": c["contour"], "line-opacity": 0.6,
                    "line-width": by_zoom((11, ["case", ["get", "index"], 0.6, 0.3]), (16, ["case", ["get", "index"], 1.4, 0.8]))}},
+        # Beyond the Regions there is no map, only the relief's smeared edges: shaded over as nothing.
+        {"id": "outside", "type": "fill", "source": "regions", "filter": ["==", ["get", "kind"], "outside"],
+         "paint": {"fill-color": c["outside"], "fill-opacity": 0.85}},
         layer("water-area", "fill", "water", filter=["==", ["geometry-type"], "Polygon"],
               paint={"fill-color": c["water"]}),
         layer(
@@ -235,6 +242,15 @@ def style(dark: bool) -> dict:
                                **{"text-field": ["get", "name"], "text-max-width": 8}),
             paint=text_paint(),
         )),
+        # Zoomed out, below where land and towns draw, the Regions themselves are the map.
+        {"id": "region-edges", "type": "line", "source": "regions", "maxzoom": 10,
+         "filter": ["==", ["get", "kind"], "region"],
+         "paint": {"line-color": c["region_edge"], "line-width": 1.5, "line-dasharray": ["literal", [3, 2]],
+                   "line-opacity": by_zoom((8, 1.0), (10, 0.0))}},
+        {"id": "region-names", "type": "symbol", "source": "regions", "maxzoom": 9,
+         "filter": ["==", ["get", "kind"], "label"],
+         "layout": text_layout(by_zoom((5, 12), (8, 16)), **{"text-field": ["get", "name"], "text-max-width": 7}),
+         "paint": text_paint(c["region_edge"]) | {"text-opacity": by_zoom((8, 1.0), (9, 0.0))}},
         # The planned Route (docs/phase-5.md § 4), drawn from MapScreen.kt's GeoJSON over everything.
         {"id": "route-casing", "type": "line", "source": "route", "filter": ["==", ["get", "approach"], "trail"],
          "layout": {"line-join": "round", "line-cap": "round"},
@@ -254,8 +270,10 @@ def style(dark: bool) -> dict:
     ]
     return {
         "version": 8,
-        "metadata": {"kozica:faded-opacity": FADED_OPACITY},
-        "sources": {"route": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}}},
+        "metadata": {"kozica:faded-opacity": FADED_OPACITY,
+                     "kozica:bounds": json.loads(REGIONS.read_text())["bbox"]},
+        "sources": {"route": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
+                    "regions": {"type": "geojson", "data": "asset://map/regions.geojson"}},
         "glyphs": "asset://map/glyphs/{fontstack}/{range}.pbf",
         "sprite": f"asset://map/sprite-{'dark' if dark else 'light'}",
         "layers": layers,
