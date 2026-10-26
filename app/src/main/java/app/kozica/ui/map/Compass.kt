@@ -31,6 +31,8 @@ class CompassDrawable(
     private val needleHalfWidth = with(density) { 7.dp.toPx() }
     private val shoulder = with(density) { 5.dp.toPx() }
     private val letterCentre = with(density) { 7.5.dp.toPx() }
+    private val hub = with(density) { 3.dp.toPx() }
+    private val ring = with(density) { 1.dp.toPx() }
 
     private val discPaint = fill(colors.secondaryContainer.toArgb())
     private val northPaint = fill(colors.primary.toArgb())
@@ -40,6 +42,12 @@ class CompassDrawable(
             textSize = with(density) { 10.dp.toPx() }
             textAlign = Paint.Align.CENTER
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+    private val ringPaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = ring
+            color = colors.onSecondaryContainer.toArgb()
         }
     private val letterBounds = Rect().also { letterPaint.getTextBounds(LETTER, 0, LETTER.length, it) }
     private val path = Path()
@@ -55,6 +63,8 @@ class CompassDrawable(
 
         canvas.half(cx, cy, -1f, northPaint)
         canvas.half(cx, cy, 1f, southPaint)
+        canvas.drawCircle(cx, cy, hub, discPaint)
+        canvas.drawCircle(cx, cy, hub - ring / 2, ringPaint)
         canvas.drawText(LETTER, cx, cy - letterCentre - letterBounds.exactCenterY(), letterPaint)
     }
 
@@ -74,12 +84,12 @@ class CompassDrawable(
     }
 
     override fun setAlpha(alpha: Int) {
-        listOf(discPaint, northPaint, southPaint, letterPaint).forEach { it.alpha = alpha }
+        listOf(discPaint, northPaint, southPaint, ringPaint, letterPaint).forEach { it.alpha = alpha }
         invalidateSelf()
     }
 
     override fun setColorFilter(colorFilter: ColorFilter?) {
-        listOf(discPaint, northPaint, southPaint, letterPaint).forEach { it.colorFilter = colorFilter }
+        listOf(discPaint, northPaint, southPaint, ringPaint, letterPaint).forEach { it.colorFilter = colorFilter }
         invalidateSelf()
     }
 
