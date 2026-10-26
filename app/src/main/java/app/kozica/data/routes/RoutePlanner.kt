@@ -1,0 +1,196 @@
+package app.kozica.data.routes
+
+import kotlin.math.abs
+import kotlin.math.ceil
+
+/** A position the user put on a Route: its start, its end or a via point. */
+data class RoutePoint(
+    val latitude: Double,
+    val longitude: Double,
+)
+
+/** How the line comes to a vertex from the one before it. */
+enum class Approach {
+    TRAIL,
+
+    /** The walk between a point and where it joins the Trails, drawn dashed; its vertices have the join's height. */
+    OFF_TRAIL,
+
+    /** Across a leg with no way over the Trails: neither drawn nor counted in [RouteSample.metres]. */
+    NO_WAY,
+}
+
+/** One vertex of the drawn line and the profile, [metres] along the Route. */
+data class RouteSample(
+    val latitude: Double,
+    val longitude: Double,
+    val metres: Double,
+    val heightMetres: Double,
+    val approach: Approach,
+)
+
+/** A stretch graded `demanding_mountain_hiking` or harder, by distance along the Route, at its hardest [sac]. */
+data class DemandingStretch(
+    val fromMetres: Double,
+    val toMetres: Double,
+    val sac: Int,
+)
+
+/**
+ * docs/phase-5.md § 3: a Route's legs, one per pair of consecutive points, null where no way over the
+ * Trails joins them; the totals and the rest cover the legs that were found.
+ */
+data class PlannedRoute(
+    val legs: List<Leg?>,
+    val line: List<RouteSample>,
+    val ascent: Double,
+    val descent: Double,
+    val seconds: Double,
+    val secondsToPoint: List<Double>,
+    val demanding: List<DemandingStretch>,
+) {
+    val metres: Double get() = line.lastOrNull()?.metres ?: 0.0
+    val complete: Boolean get() = legs.all { it != null }
+    val minutes: Int get() = roundedUpToFiveMinutes(seconds)
+
+    fun minutesTo(point: Int): Int = roundedUpToFiveMinutes(secondsToPoint[point])
+}
+
+/** As a signpost gives it: the unrounded sum, rounded up to the next 5 minutes. */
+fun roundedUpToFiveMinutes(seconds: Double): Int = ceil(seconds / 300 - 1e-9).toInt() * 5
+
+class RoutePlanner(
+    private val network: TrailNetwork,
+    private val router: Router = Router(network),
+) {
+    fun plan(points: List<RoutePoint>): PlannedRoute {
+        require(points.size >= 2) { "a Route has a start and an end" }
+        val joins = points.map { router.joins(it.latitude, it.longitude) }
+        val legs =
+            points.indices.drop(1).map { i ->
+                router.leg(joins[i - 1], joins[i], points[i].latitude, points[i].longitude)
+            }
+        val line = mutableListOf<RouteSample>()
+        val demanding = mutableListOf<DemandingStretch>()
+        var ascent = 0.0
+        var descent = 0.0
+        val secondsToPoint = mutableListOf(0.0)
+        for ((i, leg) in legs.withIndex()) {
+            secondsToPoint += secondsToPoint.last() + (leg?.seconds ?: 0.0)
+            if (leg == null) continue
+            val reached = if (line.isEmpty() || legs[i - 1] != null) Approach.OFF_TRAIL else Approach.NO_WAY
+            line.join(points[i].latitude, points[i].longitude, heightAt(leg.start), reached)
+            line.join(leg.start.latitude, leg.start.longitude, heightAt(leg.start), Approach.OFF_TRAIL)
+            for (step in leg.steps) {
+                val portion = abs(step.to - step.from)
+                val climbed = if (step.forward) network.edgeAscent[step.edge] else network.edgeDescent[step.edge]
+                val dropped = if (step.forward) network.edgeDescent[step.edge] else network.edgeAscent[step.edge]
+                ascent += portion * climbed
+                descent += portion * dropped
+                val from = line.last().metres
+                walk(step, line)
+                val sac = network.edgeSac[step.edge].toInt()
+                if (sac >= DEMANDING_SAC) demanding.extend(from, line.last().metres, sac)
+            }
+            line.join(leg.end.latitude, leg.end.longitude, heightAt(leg.end), Approach.TRAIL)
+            line.join(points[i + 1].latitude, points[i + 1].longitude, heightAt(leg.end), Approach.OFF_TRAIL)
+        }
+        return PlannedRoute(legs, line, ascent, descent, secondsToPoint.last(), secondsToPoint, demanding)
+    }
+
+    /** The step's stretch of its edge's line, in walking order, ends interpolated. */
+    private fun walk(
+        step: Step,
+        line: MutableList<RouteSample>,
+    ) {
+        val first = network.edgeFirstPoint[step.edge]
+        val along = along(step.edge)
+        val total = along.last()
+        val (low, high) = if (step.forward) step.from to step.to else step.to to step.from
+        val inside = along.indices.filter { along[it] > low * total && along[it] < high * total }
+        val start = sampleAt(first, along, step.from * total)
+        val end = sampleAt(first, along, step.to * total)
+        val between =
+            (if (step.forward) inside else inside.reversed()).map { k ->
+                Triple(
+                    network.pointLat[first + k] * 1e-7,
+                    network.pointLon[first + k] * 1e-7,
+                    network.pointHeight[first + k] / 10.0,
+                )
+            }
+        for ((lat, lon, height) in listOf(start) + between + listOf(end)) line.join(lat, lon, height, Approach.TRAIL)
+    }
+
+    private fun sampleAt(
+        first: Int,
+        along: DoubleArray,
+        metres: Double,
+    ): Triple<Double, Double, Double> {
+        val k = (1 until along.size).firstOrNull { along[it] >= metres } ?: (along.size - 1)
+        val span = along[k] - along[k - 1]
+        val t = if (span == 0.0) 0.0 else ((metres - along[k - 1]) / span).coerceIn(0.0, 1.0)
+
+        fun lerp(
+            a: Number,
+            b: Number,
+        ) = a.toDouble() + (b.toDouble() - a.toDouble()) * t
+        return Triple(
+            lerp(network.pointLat[first + k - 1], network.pointLat[first + k]) * 1e-7,
+            lerp(network.pointLon[first + k - 1], network.pointLon[first + k]) * 1e-7,
+            lerp(network.pointHeight[first + k - 1], network.pointHeight[first + k]) / 10.0,
+        )
+    }
+
+    private fun heightAt(snap: Snap): Double {
+        val along = along(snap.edge)
+        return sampleAt(network.edgeFirstPoint[snap.edge], along, snap.fraction * along.last()).third
+    }
+
+    /** Metres from the edge's first point to each of its points. */
+    private fun along(edge: Int): DoubleArray {
+        val first = network.edgeFirstPoint[edge]
+        val along = DoubleArray(network.edgePointCount[edge])
+        for (k in 1 until along.size) along[k] = along[k - 1] + segmentMetres(first + k - 1)
+        return along
+    }
+
+    private fun segmentMetres(point: Int): Double =
+        Router.metres(
+            network.pointLat[point] * 1e-7,
+            network.pointLon[point] * 1e-7,
+            network.pointLat[point + 1] * 1e-7,
+            network.pointLon[point + 1] * 1e-7,
+        )
+
+    /** Appends a vertex unless it is where the line already stands. */
+    private fun MutableList<RouteSample>.join(
+        latitude: Double,
+        longitude: Double,
+        heightMetres: Double,
+        approach: Approach,
+    ) {
+        val last = lastOrNull()
+        val step = last?.let { Router.metres(it.latitude, it.longitude, latitude, longitude) } ?: 0.0
+        if (last != null && step < SAME_PLACE_METRES) return
+        val metres = (last?.metres ?: 0.0) + if (approach == Approach.NO_WAY) 0.0 else step
+        add(RouteSample(latitude, longitude, metres, heightMetres, approach))
+    }
+
+    private fun MutableList<DemandingStretch>.extend(
+        from: Double,
+        to: Double,
+        sac: Int,
+    ) {
+        val last = lastOrNull()
+        if (last != null && from - last.toMetres < SAME_PLACE_METRES) {
+            set(size - 1, DemandingStretch(last.fromMetres, to, maxOf(last.sac, sac)))
+        } else {
+            add(DemandingStretch(from, to, sac))
+        }
+    }
+
+    private companion object {
+        const val DEMANDING_SAC = 3
+        const val SAME_PLACE_METRES = 0.5
+    }
+}

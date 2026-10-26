@@ -64,6 +64,12 @@ class ClimbTest(unittest.TestCase):
         self.assertAlmostEqual(climb.descent, 100)
         self.assertAlmostEqual(climb.steep_descent, 100)
 
+    def test_a_gentle_descent_costs_no_time(self):
+        climb = network["climb"]([25.0] * 40, [600 - 2.5 * i for i in range(41)])
+        self.assertAlmostEqual(climb.descent, 100)
+        self.assertEqual(climb.steep_descent, 0)
+        self.assertAlmostEqual(network["walking_seconds"](1000, climb.ascent, climb.steep_descent), 900)
+
 
 class WalkingTimeTest(unittest.TestCase):
     def test_the_pttk_marker_rule(self):
