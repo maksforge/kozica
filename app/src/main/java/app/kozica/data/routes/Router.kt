@@ -189,13 +189,13 @@ class Router(
         var visited = 0
 
         // Weighted while choosing, so a farther Trail wins only for a much shorter Route, never as a shortcut.
-        fun offTrail(snap: Snap) = snap.metresAway / FLAT * JOIN_WEIGHT
+        fun offTrail(snap: Snap) = snap.metresAway / FLAT_METRES_PER_SECOND * JOIN_WEIGHT
 
         fun walked(
             start: Snap,
             end: Snap,
             weighted: Double,
-        ) = weighted - (JOIN_WEIGHT - 1) * (start.metresAway + end.metresAway) / FLAT
+        ) = weighted - (JOIN_WEIGHT - 1) * (start.metresAway + end.metresAway) / FLAT_METRES_PER_SECOND
 
         for ((s, start) in starts.withIndex()) {
             for ((e, end) in ends.withIndex()) {
@@ -213,7 +213,8 @@ class Router(
         }
 
         fun heuristic(node: Int): Double =
-            metres(network.nodeLat[node] * 1e-7, network.nodeLon[node] * 1e-7, toLatitude, toLongitude) / FLAT
+            metres(network.nodeLat[node] * 1e-7, network.nodeLon[node] * 1e-7, toLatitude, toLongitude) /
+                FLAT_METRES_PER_SECOND
 
         fun open(
             node: Int,
@@ -402,7 +403,6 @@ class Router(
         /** How far from a point a Trail may be and still be considered for joining it. */
         const val JOIN_METRES = 1500.0
         const val JOIN_WEIGHT = 10.0
-        internal const val FLAT = 4000.0 / 3600
         private const val EARTH_RADIUS = 6_371_008.8
         private const val CELL_LAT_E7 = 100_000
         private const val CELL_LON_E7 = 150_000
