@@ -232,3 +232,17 @@ Plan a hike: search for a peak, a hut, a pass or a village, or press and hold on
 ```
 Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz lub wieś albo przytrzymaj palec na mapie, a Kozica wyznaczy trasę wyłącznie znakowanymi szlakami, z długością, podejściami i zejściami, czasem dojścia do każdego punktu, profilem wysokości i ostrzeżeniem na każdym wymagającym odcinku. Czasy jak na polskich drogowskazach. Zapisz trasę pod nazwą i znajdź ją w nowej karcie Trasy. Wszystko bez internetu.
 ```
+
+### 0.8.1 — the map stays over the Regions
+
+**English** — 316/500:
+
+```
+The map now stays over the nine Regions: it no longer pans or zooms out to where there is nothing to show, and what lies outside them is shaded. Zoomed out, each Region is outlined and named. If you tap the position button while you are outside the mountains the map covers, Kozica says so instead of moving the map.
+```
+
+**Polish** — 342/500:
+
+```
+Mapa nie wychodzi już poza dziewięć regionów: nie przesuniesz jej ani nie oddalisz tam, gdzie nie ma nic do pokazania, a to, co leży poza nimi, jest przyciemnione. Po oddaleniu każdy region ma zaznaczoną granicę i nazwę. Jeśli dotkniesz przycisku pozycji, będąc poza górami, które obejmuje mapa, Kozica powie ci o tym, zamiast przesuwać mapę.
+```
