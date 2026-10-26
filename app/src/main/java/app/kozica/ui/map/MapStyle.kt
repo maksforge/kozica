@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -20,7 +21,8 @@ internal fun styleTemplate(dark: Boolean): String = if (dark) "map/style-dark.js
  * The template with one source per ready Region and each Region-sourced layer repeated per Region,
  * in the template's layer order, so one Region's land never paints over another's Trails
  * (docs/phase-2.md § 2). The relief's layers are drawn once, from [relief] and the contours beside
- * it, and dropped while it has not arrived (docs/phase-4.md § 3). The Route's are drawn once too.
+ * it, and dropped while it has not arrived (docs/phase-4.md § 3). A layer whose source the template
+ * itself defines, the Route's or the Regions' outlines, is drawn once too.
  */
 internal fun expandStyle(
     template: String,
@@ -28,6 +30,7 @@ internal fun expandStyle(
     relief: File? = null,
 ): String {
     val style = Json.parseToJsonElement(template).jsonObject
+    val own = style["sources"]?.jsonObject?.keys.orEmpty()
     val sources =
         buildJsonObject {
             style["sources"]?.jsonObject?.forEach { (id, source) -> put(id, source) }
@@ -48,9 +51,17 @@ internal fun expandStyle(
     val layers =
         style.getValue("layers").jsonArray.flatMap { element ->
             val layer = element.jsonObject
-            when (layer["source"]?.jsonPrimitive?.content) {
-                null, ROUTE_SOURCE -> listOf(layer)
-                RELIEF_SOURCE, CONTOURS_SOURCE -> if (relief != null) listOf(layer) else emptyList()
+            val source = layer["source"]?.jsonPrimitive?.content
+            when {
+                source == null || source in own -> listOf(layer)
+                source == RELIEF_SOURCE || source == CONTOURS_SOURCE ->
+                    if (relief !=
+                        null
+                    ) {
+                        listOf(layer)
+                    } else {
+                        emptyList()
+                    }
                 else ->
                     archives.map { (region, _) ->
                         val id = layer.getValue("id").jsonPrimitive.content
@@ -61,6 +72,27 @@ internal fun expandStyle(
             }
         }
     return JsonObject(style + mapOf("sources" to sources, "layers" to JsonArray(layers))).toString()
+}
+
+/** Where the camera may go: the Regions' bounds, written by `scripts/map/gen_regions.py`. */
+internal data class CameraBounds(
+    val west: Double,
+    val south: Double,
+    val east: Double,
+    val north: Double,
+)
+
+internal fun cameraBoundsOf(style: String): CameraBounds {
+    val (west, south, east, north) =
+        Json
+            .parseToJsonElement(style)
+            .jsonObject
+            .getValue("metadata")
+            .jsonObject
+            .getValue("kozica:bounds")
+            .jsonArray
+            .map { it.jsonPrimitive.double }
+    return CameraBounds(west, south, east, north)
 }
 
 /** The layers a shown Route fades, by their expanded ids, and the opacity they fade to. */

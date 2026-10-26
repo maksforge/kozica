@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.SystemClock
 import android.provider.Settings
 import android.text.format.Formatter
+import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -181,6 +182,19 @@ fun MapScreen(
     val age = rememberPositionAge(state.fix, approximateOnly)
     var dotActivated by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf<Style?>(null) }
+    var regions by remember { mutableStateOf<CameraBounds?>(null) }
+    // The zoom that shows every Region depends on the view's size, so it is taken again on a resize.
+    var mapSize by remember { mutableStateOf(0 to 0) }
+    DisposableEffect(mapView) {
+        val listener =
+            View.OnLayoutChangeListener { view, _, _, _, _, _, _, _, _ -> mapSize = view.width to view.height }
+        mapView.addOnLayoutChangeListener(listener)
+        onDispose { mapView.removeOnLayoutChangeListener(listener) }
+    }
+    LaunchedEffect(map, regions, mapSize) {
+        val map = map ?: return@LaunchedEffect
+        map.keepToRegions(regions ?: return@LaunchedEffect)
+    }
     var searchText by rememberSaveable { mutableStateOf("") }
     val focus = LocalFocusManager.current
 
@@ -214,6 +228,7 @@ fun MapScreen(
         loaded = null
         map.setStyle(Style.Builder().fromJson(style)) { ready ->
             loaded = ready
+            regions = cameraBoundsOf(style)
             if (!map.locationComponent.isLocationComponentActivated) {
                 map.locationComponent.activateLocationComponent(
                     LocationComponentActivationOptions
@@ -419,6 +434,13 @@ fun MapScreen(
             }
         }
     }
+}
+
+/** The camera stays over the Regions and zooms out no further than shows them all: beyond that there is no map. */
+private fun MapLibreMap.keepToRegions(bounds: CameraBounds) {
+    val regions = LatLngBounds.from(bounds.north, bounds.east, bounds.south, bounds.west)
+    setLatLngBoundsForCameraTarget(regions)
+    getCameraForLatLngBounds(regions, intArrayOf(0, 0, 0, 0))?.zoom?.let(::setMinZoomPreference)
 }
 
 @Composable
