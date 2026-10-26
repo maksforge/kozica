@@ -207,6 +207,15 @@ tasks.withType<Test>().configureEach {
         .files(fileTree(rootProject.layout.projectDirectory.dir("translations")))
         .withPropertyName("stagedTranslationsReadByUnitTests")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    // MapStyleTest holds the styles' bounds to the Regions' polygons, the same way.
+    inputs
+        .dir(layout.projectDirectory.dir("src/main/assets/map"))
+        .withPropertyName("mapStylesReadByUnitTests")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs
+        .dir(rootProject.layout.projectDirectory.dir("scripts/regions"))
+        .withPropertyName("regionPolygonsReadByUnitTests")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 // Room exports the compiled schema as JSON, and those files are what make a migration reviewable
