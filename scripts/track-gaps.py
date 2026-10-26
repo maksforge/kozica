@@ -5,8 +5,10 @@ Reads `gate.db` from the debug build's `RecorderService`, pulled off the phone, 
 count, the span, every gap over 60 s in storing fixes of any accuracy outside a pause, the gaps § 2's
 5 m and 30 m filters would have left, the battery per hour and the motion events. Gaps are measured
 on `stored_at`, the clock the events use, from each segment's start or resume to its pause or stop.
-A gap the service's once-a-minute `gnss` heartbeat spans is "alive, no fix"; the verdict is verdict
-1's bar on the rest: no silence, neither fix nor heartbeat, over 2 minutes outside a pause.
+A gap the service's once-a-minute `gnss` heartbeat spans with no satellite in a fix is "alive, no
+fix"; a heartbeat with satellites in a fix means a fix was never stored, so it excuses nothing. The
+verdict is verdict 1's bar on the rest: no silence, neither fix nor heartbeat, over 2 minutes
+outside a pause.
 
 Usage:
 
@@ -63,6 +65,7 @@ class Gap:
     start_ms: int
     end_ms: int
     heartbeats: int
+    undelivered: int
     silent_s: float
 
     @property
@@ -71,7 +74,7 @@ class Gap:
 
     @property
     def alive(self) -> bool:
-        return self.heartbeats > 0 and self.silent_s <= GAP_ALLOWED_S
+        return self.heartbeats > 0 and self.undelivered == 0 and self.silent_s <= GAP_ALLOWED_S
 
 
 def pull(serial: str) -> Path:
@@ -109,7 +112,7 @@ def segment_edges(events: list[Event]) -> dict[int, tuple[int | None, int | None
 
 def gaps(fixes: list[Fix], events: list[Event]) -> list[Gap]:
     edges = segment_edges(events)
-    heartbeats = [e.at for e in events if e.kind == "gnss"]
+    heartbeats = [e for e in events if e.kind == "gnss"]
     found = []
     for segment in sorted({f.segment for f in fixes} | edges.keys()):
         opened, closed = edges.get(segment, (None, None))
@@ -119,10 +122,11 @@ def gaps(fixes: list[Fix], events: list[Event]) -> list[Gap]:
         for a, b in zip(marks, marks[1:]):
             if (b - a) / 1000 <= GAP_REPORTED_S:
                 continue
-            inside = [h for h in heartbeats if a < h < b]
-            beats = [a, *inside, b]
+            inside = [h for h in heartbeats if a < h.at < b]
+            no_fix = [h.at for h in inside if h.used_in_fix == 0]
+            beats = [a, *no_fix, b]
             silent_s = max(y - x for x, y in zip(beats, beats[1:])) / 1000
-            found.append(Gap(a, b, len(inside), silent_s))
+            found.append(Gap(a, b, len(no_fix), len(inside) - len(no_fix), silent_s))
     return found
 
 
@@ -139,12 +143,17 @@ def release_filtered(fixes: list[Fix]) -> list[Fix]:
 
 def print_gaps(title: str, found: list[Gap]) -> None:
     print(f"{title}: {len(found)} over {GAP_REPORTED_S} s")
-    groups = (("silent", [g for g in found if not g.alive]), ("alive, no fix", [g for g in found if g.alive]))
+    groups = (
+        ("silent", [g for g in found if not g.alive and not g.undelivered]),
+        ("fix seen, never stored", [g for g in found if g.undelivered]),
+        ("alive, no fix", [g for g in found if g.alive]),
+    )
     for name, group in groups:
         print(f"  {name}: {len(group)}")
         for g in group:
             print(f"    {stamp(g.start_ms)} → {stamp(g.end_ms)}  {g.seconds:.0f} s, "
-                  f"{g.heartbeats} heartbeats, longest silence {g.silent_s:.0f} s")
+                  f"{g.heartbeats} no-fix heartbeats, {g.undelivered} with a fix, "
+                  f"longest silence {g.silent_s:.0f} s")
 
 
 def main() -> int:
@@ -196,7 +205,9 @@ def main() -> int:
     if heartbeats:
         used = max(e.used_in_fix or 0 for e in heartbeats)
         seen = max(e.satellites or 0 for e in heartbeats)
-        print(f"gnss heartbeats: {len(heartbeats)}, at most {used} satellites in a fix, {seen} seen")
+        with_fix = sum(1 for e in heartbeats if e.used_in_fix)
+        print(f"gnss heartbeats: {len(heartbeats)}, {with_fix} with a fix, "
+              f"at most {used} satellites in a fix, {seen} seen")
     batteries = [(e.at, e.battery) for e in events if e.battery is not None]
     if len(batteries) >= 2 and batteries[-1][0] > batteries[0][0]:
         hours = (batteries[-1][0] - batteries[0][0]) / 3_600_000
@@ -222,7 +233,7 @@ def main() -> int:
         print("no fixes: the reading says nothing")
         return 1
     silence = max((g.silent_s for g in every), default=0)
-    print(f"longest silence (no fix and no heartbeat): {silence:.0f} s")
+    print(f"longest silence (no stored fix and no no-fix heartbeat): {silence:.0f} s")
     passed = silence <= GAP_ALLOWED_S and not deaths
     print(f"verdict bar (no silence over {GAP_ALLOWED_S} s outside a pause, no death): {'PASS' if passed else 'FAIL'}")
     return 0 if passed else 2

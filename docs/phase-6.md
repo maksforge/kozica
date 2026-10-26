@@ -132,8 +132,9 @@ hour of recording cost in battery?
   and prints the point count, the span, every gap over 60 s between fixes of any accuracy and the
   longest; then, apart, the gaps § 2's 5 m and 30 m filters would have left. Gaps are on the clock
   each fix was stored by, and run from a start or resume to the first fix and from the last fix to a
-  pause or stop. A gap the heartbeat spans reads "alive, no fix" and is listed apart; verdict 1's
-  bar applies to silence, neither fix nor heartbeat.
+  pause or stop. A gap spanned by heartbeats with no satellite in a fix reads "alive, no fix" and
+  is listed apart; one with a satellite in a fix means a fix never stored, and excuses nothing.
+  Verdict 1's bar applies to silence, neither a stored fix nor a no-fix heartbeat.
 - **The test phone, simulated:** `adb shell dumpsys battery unplug`, screen off with `adb shell input
   keyevent KEYCODE_SLEEP`, `adb shell dumpsys deviceidle force-idle`, four hours, then `dumpsys
   battery reset`. It never leaves USB (the PC's internet runs through it), so a real-walk reading
