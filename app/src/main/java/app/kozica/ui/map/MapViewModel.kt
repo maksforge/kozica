@@ -20,6 +20,7 @@ import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -117,6 +118,8 @@ class MapViewModel(
     relief: Flow<Region?> = flowOf(null),
     private val places: suspend () -> PlaceSearch? = { null },
     private val planRoute: suspend (List<RoutePoint>) -> PlannedRoute? = { null },
+    private val io: CoroutineDispatcher = Dispatchers.IO,
+    private val compute: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -134,7 +137,7 @@ class MapViewModel(
                 .map { (regions, relief) -> regions.readyArchives() to (relief?.state as? RegionState.Ready)?.archive }
                 .distinctUntilChanged(),
         ) { template, (archives, relief) -> expandStyle(template, archives, relief) }
-            .flowOn(Dispatchers.IO)
+            .flowOn(io)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val location = MutableStateFlow<LocationRead?>(null)
@@ -172,7 +175,7 @@ class MapViewModel(
     init {
         viewModelScope.launch { camera.compareAndSet(null, preferences.mapCamera.first() ?: TATRY) }
         viewModelScope.launch {
-            val found = withContext(Dispatchers.IO) { places() } != null
+            val found = withContext(io) { places() } != null
             search.update { it.copy(available = found) }
         }
         // Play fetches fast-follow packs by itself; this covers one it has not started and a Region a
@@ -233,7 +236,7 @@ class MapViewModel(
                         emptyList()
                     } else {
                         withContext(
-                            Dispatchers.IO,
+                            io,
                         ) { places()?.search(text, centre.latitude, centre.longitude) }.orEmpty()
                     }
                 search.update { it.copy(results = results) }
@@ -263,7 +266,7 @@ class MapViewModel(
         val point = RoutePoint(latitude, longitude)
         changePoints { it + point }
         viewModelScope.launch {
-            val label = withContext(Dispatchers.IO) { places()?.nearest(latitude, longitude)?.name } ?: return@launch
+            val label = withContext(io) { places()?.nearest(latitude, longitude)?.name } ?: return@launch
             route.update { state ->
                 state.copy(points = state.points.map { if (it === point) it.copy(label = label) else it })
             }
@@ -303,7 +306,7 @@ class MapViewModel(
         if (points.size < 2) return
         planning =
             viewModelScope.launch {
-                val planned = withContext(Dispatchers.Default) { planRoute(points) }
+                val planned = withContext(compute) { planRoute(points) }
                 if (planned == null) {
                     route.update {
                         it.copy(
@@ -315,7 +318,7 @@ class MapViewModel(
                     }
                     return@launch
                 }
-                val stretches = withContext(Dispatchers.IO) { name(planned) }
+                val stretches = withContext(io) { name(planned) }
                 route.update {
                     it.copy(planned = planned, stretches = stretches, unavailable = false, planning = false)
                 }
