@@ -128,7 +128,7 @@ fun StopDialog(
     )
 }
 
-/** A recording lost with its process: resumed in a new stretch, or finished at its last point, never thrown away. */
+/** A recording lost with its process: resumed in a new stretch, or finished at its last point, or discarded if it kept none. */
 @Composable
 fun UnfinishedDialog(
     hike: HikeEntity,

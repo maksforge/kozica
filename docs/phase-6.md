@@ -211,7 +211,7 @@ all (§ 7). The encoding is B's to choose, under a round-trip test.
 away, named with the date and the nearest named place to where it started, by phase 5's rule for
 demanding stretches (peaks, passes and Huts first, within 500 m); the date alone when nothing is that
 close. Renaming is in the Hike's details. A Hike that stored no point, a Record and Stop with no
-fix between them, is discarded rather than saved as an empty one (decided with the owner on
+fix kept between them, is discarded rather than saved as an empty one (decided with the owner on
 2026-10-26).
 
 **One recording at a time**, never tied to a saved Route in this phase.
