@@ -126,6 +126,14 @@ class EdgesTest(unittest.TestCase):
         self.assertEqual([[ref for ref, _, _ in edge.points] for edge in edges], [[1, 2, 3, 4]])
         self.assertAlmostEqual(edges[0].climb.ascent, 12)
 
+    def test_a_loop_is_kept_whole(self):
+        def walked(ways: dict) -> list:
+            return sorted(sorted(tuple(sorted(pair)) for pair in zip(refs, refs[1:])) for edge in edges_of(ways)
+                          for refs in [[ref for ref, _, _ in edge.points]])
+
+        self.assertEqual(walked({1: way([5, 1]), 2: way([1, 2, 3, 1])}), [[(1, 2), (2, 3)], [(1, 3)], [(1, 5)]])
+        self.assertEqual(walked({1: way([1, 2, 3, 4, 2, 5])}), [[(1, 2)], [(2, 3), (3, 4)], [(2, 4)], [(2, 5)]])
+
     def test_a_junction_or_a_change_of_walking_cuts_an_edge(self):
         self.assertEqual(len(edges_of({1: way([1, 2]), 2: way([2, 3]), 3: way([2, 5])})), 3)
         self.assertEqual(len(edges_of({1: way([1, 2]), 2: way([2, 3], {"highway": "path", "oneway": "yes"})})), 2)

@@ -130,9 +130,9 @@ and when 2 and 3 both hold, one rethink answers both.
 
 **Verdict 1: B goes ahead on this format.** On the test phone, from the base assets of a
 `-PmapPacks` debug build and from a cold start, three runs each: the network loads in 190 ms and its
-grid index builds in 347 ms, once per process; a leg then takes 44–50 ms to find its joins and
+grid index builds in 349 ms, once per process; a leg then takes 43–50 ms to find its joins and
 73–76 ms to search, so about 120 ms for either Route. The files are 9.6 MB and 6.1 MB, 15.7 MB
-together: 9,907 nodes, 12,828 edges, 889,144 points and 49,117 places at the pin, each built twice
+together: 10,009 nodes, 12,939 edges, 890,182 points and 49,117 places at the pin, each built twice
 to the same bytes.
 
 Both Routes follow drawn Trails end to end, drawn over the network to check. What neither verdict
@@ -152,7 +152,8 @@ from cost 3 MB, so only OSM's own nodes are stored.
 - **`trails.network`**: every way that the map draws as a Trail, from the union of the nine
   Regions. An edge runs from one junction to the next, through as many ways as meet end to end
   between them, and is cut early only where the walking changes (its one-way direction or its
-  `sac_scale` grade); it keeps its first way's OSM id. A climb split at every way's end would lose
+  `sac_scale` grade), and a way that closes on itself is cut in its middle too, so a loop is
+  kept with no edge from a node to itself; an edge keeps its first way's OSM id. A climb split at every way's end would lose
   up to the dead band each time. The ways are the ones `KozicaProfile.java` lists for its `route=hiking` relations, written
   to `map-data/archives/<id>.ways` beside each Region's built archive, before `install()` moves the
   archive into its pack, so the list never ships and the rule stays written once; their tags and
@@ -343,7 +344,7 @@ notes).
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate: both Routes found and plausible (§ 1), then load time, plan time and nodes visited for Kuźnice → Łysa Polana and Zakopane → Turbacz; the two files' sizes | debug build, both files hand-pushed to `files/network/`; cold start; `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.RouteReceiver -f 0x00000020 --es from <lat,lon> --es to <lat,lon>`; `adb logcat -d -s KozicaRoute`; `ls -l` of both files in the build | 2026-10-26, test phone, `-PmapPacks` debug build reading its base assets (`files/network/` removed), Kuźnice 49.2700,19.9805 → Łysa Polana 49.2589,20.1170 and Zakopane 49.2950,19.9500 → Turbacz 49.5431,20.1114, three cold starts each: load 142–145 ms, index 346–347 ms, joins 44–50 ms, search 73–76 ms (155 nodes, 16.8 km, 331 min) and 75–76 ms (250 nodes, 57.4 km, 926 min). `trails.network` 9,580,618 bytes, `places.sqlite` 6,148,096. Both Routes drawn over the network follow its Trails. Retaken after the edges were joined between junctions; the first reading, 2026-10-25, had 62,930 nodes and 13,080,136 bytes and searched in 88–112 ms. **Verdict 1** (§ 1) |
+| R1 | The gate: both Routes found and plausible (§ 1), then load time, plan time and nodes visited for Kuźnice → Łysa Polana and Zakopane → Turbacz; the two files' sizes | debug build, both files hand-pushed to `files/network/`; cold start; `adb shell am broadcast -n io.github.srednimax.kozica.debug/app.kozica.debug.RouteReceiver -f 0x00000020 --es from <lat,lon> --es to <lat,lon>`; `adb logcat -d -s KozicaRoute`; `ls -l` of both files in the build | 2026-10-26, test phone, `-PmapPacks` debug build reading its base assets (`files/network/` removed), Kuźnice 49.2700,19.9805 → Łysa Polana 49.2589,20.1170 and Zakopane 49.2950,19.9500 → Turbacz 49.5431,20.1114, three cold starts each: load 142–143 ms, index 348–351 ms, joins 43–50 ms, search 73–75 ms (155 nodes, 16.8 km, 331 min) and 75–76 ms (250 nodes, 57.4 km, 926 min). `trails.network` 9,597,124 bytes, `places.sqlite` 6,148,096. Both Routes drawn over the network follow its Trails. Retaken after the edges were joined between junctions and loops kept; the first reading, 2026-10-25, had 62,930 nodes and 13,080,136 bytes and searched in 88–112 ms. **Verdict 1** (§ 1) |
 | R2 | Our walking times against the signposts: five Trail sections in the Beskidy and five in the Tatry, each signpost's time beside ours | photographed or published signpost times; `RouteReceiver` for each section | *(date)* |
 | R3 | Orla Perć: a Route from Zawrat to Kozi Wierch takes it; one from Kozi Wierch to Zawrat does not | `RouteReceiver` both ways; the logged edges | *(date)* |
 | R4 | Search: "gerlach", "snieznik", "morskie oko", "polana" near Turbacz; the first results and their order. "polana" expects the clearings around Turbacz (§ 2) among the first results, whether their kind is clearing or place, with any other place whose name holds the word; those starting with it first, each group nearest Turbacz first | the release-shaped debug build, typed on the phone; screencap | *(date)* |

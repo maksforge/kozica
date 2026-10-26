@@ -406,7 +406,9 @@ class Piece:
 
 
 def pieces_of(ways: dict) -> list[Piece]:
-    """Every way split at each of its inner nodes another Trail way, or the same one, passes through."""
+    """Every way split at each of its inner nodes another Trail way, or the same one, passes through, and
+    a piece that closes on itself split again in its middle, so a loop is kept without an edge from a
+    node to itself."""
     uses: dict[int, int] = {}
     for nodes, _ in ways.values():
         for ref, _, _ in nodes:
@@ -417,8 +419,12 @@ def pieces_of(ways: dict) -> list[Piece]:
         cut = [0] + [i for i in range(1, len(nodes) - 1) if uses[nodes[i][0]] > 1] + [len(nodes) - 1]
         for start, end in zip(cut, cut[1:]):
             part = nodes[start:end + 1]
-            if part[0][0] != part[-1][0]:
-                pieces.append(Piece(way_id, part, oneway(tags), SAC_GRADES.get(tags.get("sac_scale", ""), 0)))
+            closed = part[0][0] == part[-1][0]
+            if closed and len(part) < 3:
+                continue
+            middle = len(part) // 2
+            for half in (part[:middle + 1], part[middle:]) if closed else (part,):
+                pieces.append(Piece(way_id, half, oneway(tags), SAC_GRADES.get(tags.get("sac_scale", ""), 0)))
     return pieces
 
 
