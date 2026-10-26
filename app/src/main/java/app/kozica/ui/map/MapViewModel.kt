@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.kozica.MainApplication
 import app.kozica.data.AppPreferences
 import app.kozica.data.MapCamera
+import app.kozica.data.SavedRoute
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
 import app.kozica.data.routes.DemandingStretch
@@ -98,6 +99,8 @@ data class RouteUiState(
     val stretches: List<NamedStretch> = emptyList(),
     val unavailable: Boolean = false,
     val planning: Boolean = false,
+    val savedId: String? = null,
+    val name: String? = null,
 )
 
 /** A demanding stretch with the places that name its two ends, either null where nothing is near. */
@@ -120,6 +123,9 @@ class MapViewModel(
     private val planRoute: suspend (List<RoutePoint>) -> PlannedRoute? = { null },
     private val io: CoroutineDispatcher = Dispatchers.IO,
     private val compute: CoroutineDispatcher = Dispatchers.Default,
+    private val routeToShow: MutableStateFlow<String?> = MutableStateFlow(null),
+    private val loadRoute: suspend (id: String) -> SavedRoute? = { null },
+    private val saveRoute: suspend (id: String?, name: String, points: List<RoutePoint>) -> String = { _, _, _ -> "" },
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -177,6 +183,12 @@ class MapViewModel(
         viewModelScope.launch {
             val found = withContext(io) { places() } != null
             search.update { it.copy(available = found) }
+        }
+        viewModelScope.launch {
+            routeToShow.filterNotNull().collect { id ->
+                loadRoute(id)?.let(::show)
+                routeToShow.compareAndSet(id, null)
+            }
         }
         // Play fetches fast-follow packs by itself; this covers one it has not started and a Region a
         // later build adds. A failed or cancelled one waits for Retry (docs/phase-2c.md § 1).
@@ -291,12 +303,30 @@ class MapViewModel(
         changePoints { it.reversed() }
     }
 
+    /** Replaces whatever is on the map with a saved Route, planned again from today's network. */
+    private fun show(saved: SavedRoute) {
+        dismissOffer()
+        route.update { RouteUiState(savedId = saved.id, name = saved.name) }
+        changePoints { saved.points }
+    }
+
+    /** Saves the points under [name]: over the Route they were opened from, or as a new one. */
+    fun save(name: String) {
+        val current = route.value
+        viewModelScope.launch {
+            val id = saveRoute(current.savedId, name, current.points)
+            route.update { it.copy(savedId = id, name = name) }
+        }
+    }
+
     private fun changePoints(change: (List<RoutePoint>) -> List<RoutePoint>) {
         val points =
             route
                 .updateAndGet {
                     val points = change(it.points)
-                    if (points.size < 2) {
+                    if (points.isEmpty()) {
+                        RouteUiState()
+                    } else if (points.size < 2) {
                         it.copy(points = points, planned = null, stretches = emptyList(), planning = false)
                     } else {
                         it.copy(points = points, planning = true)
@@ -364,6 +394,9 @@ class MapViewModel(
                         app.container.relief,
                         app.container::places,
                         app.container::planRoute,
+                        routeToShow = app.container.routeToShow,
+                        loadRoute = app.container.routes::get,
+                        saveRoute = app.container.routes::save,
                     )
                 }
             }

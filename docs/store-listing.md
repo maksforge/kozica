@@ -218,17 +218,17 @@ Wszystkie pasma przychodzą teraz razem z aplikacją: zaraz po instalacji Sklep 
 
 ### 0.8.0 — a route over the Trails
 
-Search, points, the drawn Route and its sheet (phase 5's checkpoint C). Saving a Route is D's, so
-the notes promise none.
+Search, points, the drawn Route and its sheet (phase 5's checkpoint C), and saved Routes with the
+tab bar (D).
 
-**English** — 379/500:
-
-```
-Plan a hike: search for a peak, a hut, a pass or a village, or press and hold on the map, and Kozica draws a route between your points over the marked Trails only. You see its length, ascent and descent, the walking time to each point, an elevation profile, and a warning wherever it takes a demanding stretch. Times follow the rule on Polish signposts. Everything works offline.
-```
-
-**Polish** — 409/500:
+**English** — 413/500:
 
 ```
-Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz albo miejscowość lub przytrzymaj palec na mapie, a Kozica wyznaczy trasę między twoimi punktami wyłącznie znakowanymi szlakami. Zobaczysz jej długość, sumę podejść i zejść, czas dojścia do każdego punktu, profil wysokości i ostrzeżenie przy każdym wymagającym odcinku. Czasy liczone są tak jak na polskich drogowskazach. Wszystko działa bez internetu.
+Plan a hike: search for a peak, a hut, a pass or a village, or press and hold on the map, and Kozica draws a route between your points over the marked Trails only, with its length, ascent and descent, the walking time to each point, an elevation profile, and a warning at every demanding stretch. Times follow the rule on Polish signposts. Save a route under a name and find it in the new Routes tab. All offline.
+```
+
+**Polish** — 410/500:
+
+```
+Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz lub wieś albo przytrzymaj palec na mapie, a Kozica wyznaczy trasę wyłącznie znakowanymi szlakami, z długością, podejściami i zejściami, czasem dojścia do każdego punktu, profilem wysokości i ostrzeżeniem na każdym wymagającym odcinku. Czasy jak na polskich drogowskazach. Zapisz trasę pod nazwą i znajdź ją w nowej karcie Trasy. Wszystko bez internetu.
 ```

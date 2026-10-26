@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import app.kozica.data.AppPreferences
 import app.kozica.data.MapCamera
+import app.kozica.data.SavedRoute
 import app.kozica.data.regions.GeoBounds
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
@@ -241,6 +242,55 @@ class MapViewModelTest {
             assertTrue(settled(viewModel) { it.route.unavailable }.route.unavailable)
         }
 
+    @Test
+    fun `a saved Route asked for by the Routes tab replaces the map's and is planned again`() =
+        runTest {
+            val asked = MutableStateFlow<String?>(null)
+            val saved = SavedRoute("r", "Kopa", listOf(RoutePoint(49.0, 20.0, "A"), RoutePoint(49.0, 20.02, "C")))
+            val viewModel = routingViewModel(routeToShow = asked, loadRoute = { if (it == "r") saved else null })
+            viewModel.addPoint(49.0, 20.01)
+
+            asked.value = "r"
+
+            val route = settled(viewModel) { it.route.savedId == "r" && it.route.planned != null }.route
+            assertEquals("Kopa", route.name)
+            assertEquals(saved.points, route.points)
+            assertNull("the request is taken once", asked.value)
+        }
+
+    @Test
+    fun `saving again writes over the Route it was opened from`() =
+        runTest {
+            val writes = mutableListOf<Pair<String?, String>>()
+            val viewModel =
+                routingViewModel(saveRoute = { id, name, _ ->
+                    writes += id to name
+                    id ?: "new"
+                })
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+
+            viewModel.save("First")
+            settled(viewModel) { it.route.savedId == "new" }
+            viewModel.save("Second")
+
+            assertEquals("Second", settled(viewModel) { it.route.name == "Second" }.route.name)
+            assertEquals(listOf(null to "First", "new" to "Second"), writes)
+        }
+
+    @Test
+    fun `removing every point forgets the saved Route, so the next is saved as new`() =
+        runTest {
+            val viewModel = routingViewModel(saveRoute = { _, _, _ -> "r" })
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.save("Kopa")
+            settled(viewModel) { it.route.savedId == "r" }
+
+            viewModel.removePoint(0)
+
+            assertEquals(RouteUiState(), settled(viewModel) { it.route.points.isEmpty() }.route)
+        }
+
     private suspend fun settled(
         viewModel: MapViewModel,
         until: (MapUiState) -> Boolean,
@@ -274,6 +324,9 @@ private fun routingViewModel(
     planRoute: suspend (List<RoutePoint>) -> PlannedRoute? = {
         RoutePlanner(fixture).plan(it)
     },
+    routeToShow: MutableStateFlow<String?> = MutableStateFlow(null),
+    loadRoute: suspend (String) -> SavedRoute? = { null },
+    saveRoute: suspend (String?, String, List<RoutePoint>) -> String = { _, _, _ -> "" },
 ) = MapViewModel(
     regions = flowOf(emptyList()),
     preferences = AppPreferences(MemoryPreferences()),
@@ -286,6 +339,9 @@ private fun routingViewModel(
     planRoute = planRoute,
     io = Dispatchers.Main,
     compute = Dispatchers.Main,
+    routeToShow = routeToShow,
+    loadRoute = loadRoute,
+    saveRoute = saveRoute,
 )
 
 private fun mapViewModel(

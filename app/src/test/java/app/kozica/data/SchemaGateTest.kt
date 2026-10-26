@@ -33,19 +33,16 @@ class SchemaGateTest {
      * through three releases upgrades straight to 4, walking three migrations in a row, and nobody
      * ever tests that path by hand.
      *
-     * At schema 1 there is nothing to walk yet, so this asserts the honest thing — that the set is
-     * empty *because* the app has only ever written one version. The moment [APP_SCHEMA_VERSION]
-     * climbs, replace this with the real list.
+     * Released builds have written schema 1 (0.2.0 to 0.8.0) and now 2, with saved Routes.
      */
     @Test
     fun `the shipped migrations reach this build's version`() {
-        if (APP_SCHEMA_VERSION == 1) {
-            assertTrue(
-                "schema 1 has nothing to migrate from — replace this with the real list on the first bump",
-                shipped.isEmpty(),
-            )
-            return
-        }
+        assertEquals(2, APP_SCHEMA_VERSION)
+        assertEquals(
+            "a release-shaped launch over a 1.x install opens, and Room migrates",
+            SchemaGate.Open,
+            schemaGateDecision(onDiskVersion = 1, appSchemaVersion = 2, steps = shipped, destructiveAllowed = false),
+        )
         for (from in 1 until APP_SCHEMA_VERSION) {
             assertTrue(
                 "$from → $APP_SCHEMA_VERSION is not reachable by the registered migrations",

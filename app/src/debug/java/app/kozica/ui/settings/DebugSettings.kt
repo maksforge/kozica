@@ -40,10 +40,10 @@ fun DebugSettings() {
 
     SectionHeader(stringResource(R.string.debug_section))
     DebugRow(stringResource(R.string.debug_seed)) {
-        scope.launch { SampleData.seed(app.container.items) }
+        scope.launch { SampleData.seed(app.container.routes) }
     }
     DebugRow(stringResource(R.string.debug_wipe)) {
-        scope.launch { SampleData.wipe(app.container.items) }
+        scope.launch { SampleData.wipe(app.container.routes) }
     }
     regions?.forEach { PackState(packState(it)) } ?: PackState(stringResource(R.string.debug_region_reading))
     DebugRow(stringResource(R.string.debug_position_real), onClick = ::clearPositionOverride)

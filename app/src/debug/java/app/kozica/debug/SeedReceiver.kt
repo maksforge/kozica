@@ -48,7 +48,7 @@ class SeedReceiver : BroadcastReceiver() {
                     // rest on it — add a named variant instead, applied on top. Every scene, every
                     // before/after comparison and every listing screenshot depends on this fixture
                     // being the same fixture it was last week.
-                    "" -> SampleData.seed(app.container.items)
+                    "" -> SampleData.seed(app.container.routes)
                     else -> {
                         pending.setResult(1, "unknown variant: $variant", null)
                         return@launch
