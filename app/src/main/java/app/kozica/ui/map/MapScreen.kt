@@ -18,10 +18,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -321,93 +323,98 @@ fun MapScreen(
         map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(fix.latitude, fix.longitude)))
     }
 
-    Column(modifier.fillMaxSize()) {
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
-            // Above the position button, which search results reach down over.
-            Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().zIndex(1f)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(Spacing.tight),
-                ) {
-                    SearchField(
-                        text = searchText,
-                        available = state.search.available,
-                        onText = {
-                            searchText = it
-                            viewModel.search(it)
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    FilledTonalIconButton(onClick = onOpenSafety) {
-                        Icon(
-                            painterResource(R.drawable.ic_emergency),
-                            contentDescription = stringResource(R.string.safety_title),
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        // A share of the height rather than a fixed one, so landscape and a large font still leave the map.
+        val sheetHeight = maxHeight / 2
+        Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
+                // Above the position button, which search results reach down over.
+                Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().zIndex(1f)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(Spacing.tight),
+                    ) {
+                        SearchField(
+                            text = searchText,
+                            available = state.search.available,
+                            onText = {
+                                searchText = it
+                                viewModel.search(it)
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        FilledTonalIconButton(onClick = onOpenSafety) {
+                            Icon(
+                                painterResource(R.drawable.ic_emergency),
+                                contentDescription = stringResource(R.string.safety_title),
+                            )
+                        }
+                        FilledTonalIconButton(onClick = onOpenSettings) {
+                            Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                        }
+                    }
+                    if (searchText.isNotBlank() && state.search.results.isNotEmpty()) {
+                        SearchResults(
+                            results = state.search.results,
+                            onPick = {
+                                searchText = ""
+                                focus.clearFocus()
+                                viewModel.pick(it)
+                            },
+                            modifier = Modifier.padding(horizontal = Spacing.tight),
                         )
                     }
-                    FilledTonalIconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+                    offered?.let {
+                        OfferedPlace(
+                            place = it,
+                            first = state.route.points.isEmpty(),
+                            onAdd = viewModel::addOffered,
+                            modifier = Modifier.padding(horizontal = Spacing.tight),
+                        )
                     }
-                }
-                if (searchText.isNotBlank() && state.search.results.isNotEmpty()) {
-                    SearchResults(
-                        results = state.search.results,
-                        onPick = {
-                            searchText = ""
-                            focus.clearFocus()
-                            viewModel.pick(it)
+                    state.progress?.let {
+                        ProgressLine(
+                            progress = it,
+                            onRetry = viewModel::retry,
+                            onConfirm = { viewModel.confirm(confirmation) },
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = Spacing.base),
+                        )
+                    }
+                    LocationBanner(
+                        read = state.location,
+                        age = age,
+                        preciseRefused = preciseRefused,
+                        onAllowPrecise = {
+                            askingForPrecise = true
+                            ask.launch(LOCATION_PERMISSIONS)
                         },
-                        modifier = Modifier.padding(horizontal = Spacing.tight),
                     )
                 }
-                offered?.let {
-                    OfferedPlace(
-                        place = it,
-                        first = state.route.points.isEmpty(),
-                        onAdd = viewModel::addOffered,
-                        modifier = Modifier.padding(horizontal = Spacing.tight),
-                    )
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(Spacing.tight),
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.tight),
+                ) {
+                    FilledTonalIconButton(onClick = showPosition) {
+                        Icon(
+                            painterResource(R.drawable.ic_my_location),
+                            contentDescription = stringResource(R.string.map_position_show),
+                        )
+                    }
+                    OsmCredit(state.osmDate, relief = state.reliefShown)
                 }
-                state.progress?.let {
-                    ProgressLine(
-                        progress = it,
-                        onRetry = viewModel::retry,
-                        onConfirm = { viewModel.confirm(confirmation) },
-                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = Spacing.base),
-                    )
-                }
-                LocationBanner(
-                    read = state.location,
-                    age = age,
-                    preciseRefused = preciseRefused,
-                    onAllowPrecise = {
-                        askingForPrecise = true
-                        ask.launch(LOCATION_PERMISSIONS)
-                    },
+            }
+            if (state.route.points.isNotEmpty()) {
+                RouteSheet(
+                    route = state.route,
+                    onRemove = viewModel::removePoint,
+                    onMove = viewModel::movePoint,
+                    onReverse = viewModel::reverse,
+                    modifier = Modifier.heightIn(max = sheetHeight),
                 )
             }
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(Spacing.tight),
-                modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.tight),
-            ) {
-                FilledTonalIconButton(onClick = showPosition) {
-                    Icon(
-                        painterResource(R.drawable.ic_my_location),
-                        contentDescription = stringResource(R.string.map_position_show),
-                    )
-                }
-                OsmCredit(state.osmDate, relief = state.reliefShown)
-            }
-        }
-        if (state.route.points.isNotEmpty()) {
-            RouteSheet(
-                route = state.route,
-                onRemove = viewModel::removePoint,
-                onMove = viewModel::movePoint,
-                onReverse = viewModel::reverse,
-            )
         }
     }
 }

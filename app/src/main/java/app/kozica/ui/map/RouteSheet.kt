@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -40,6 +39,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.kozica.R
 import app.kozica.data.routes.Approach
@@ -70,7 +70,18 @@ internal fun RouteSheet(
         Column(Modifier.padding(horizontal = Spacing.base).padding(bottom = Spacing.base)) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(vertical = Spacing.base),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            enabled = route.points.size >= 2,
+                            onClickLabel =
+                                stringResource(
+                                    if (expanded) R.string.route_details_hide else R.string.route_details_show,
+                                ),
+                            role = Role.Button,
+                        ) { expanded = !expanded }
+                        .padding(vertical = Spacing.base),
             ) {
                 Box(
                     Modifier
@@ -82,13 +93,11 @@ internal fun RouteSheet(
                 route.unavailable -> Text(stringResource(R.string.map_planning_missing))
                 route.points.size < 2 -> Unit
                 planned == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
-                else -> {
-                    Totals(planned, locale)
-                    Warnings(route, locale)
-                }
+                else -> Totals(planned, locale)
             }
-            if (open) {
-                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                if (planned != null) Warnings(planned, route, locale)
+                if (open) {
                     route.points.forEachIndexed { i, point ->
                         PointRow(
                             index = i,
@@ -141,10 +150,10 @@ private fun Total(
 
 @Composable
 private fun Warnings(
+    planned: PlannedRoute,
     route: RouteUiState,
     locale: Locale,
 ) {
-    val planned = route.planned ?: return
     val lines =
         planned.legs.mapIndexedNotNull { i, leg ->
             if (leg != null) {
@@ -197,8 +206,8 @@ private fun PointRow(
         Column(Modifier.weight(1f).padding(horizontal = Spacing.tight)) {
             val name = point.name()
             when (index) {
-                0 -> Role(stringResource(R.string.route_start))
-                count - 1 -> Role(stringResource(R.string.route_end))
+                0 -> PointRole(stringResource(R.string.route_start))
+                count - 1 -> PointRole(stringResource(R.string.route_end))
             }
             Text(
                 if (index == 0 || index == count - 1) name else stringResource(R.string.route_via, name),
@@ -226,7 +235,7 @@ private fun PointRow(
 }
 
 @Composable
-private fun Role(text: String) {
+private fun PointRole(text: String) {
     Text(text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
