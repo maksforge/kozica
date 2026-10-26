@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.1](https://github.com/maksforge/kozica/compare/v0.8.0...v0.8.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* clear the outside-position banner on any camera move or a fix inside the Regions ([e265861](https://github.com/maksforge/kozica/commit/e265861c7d937a4604db53dfa0652bcb4226c28d))
+* fall back to an older Geofabrik extract when a dated one has lost its md5 ([6eec81a](https://github.com/maksforge/kozica/commit/6eec81aa4be3f886c74c787c6a3c6e29e8833fb3))
+* keep fading Region names from hiding the towns and peaks beneath them ([36ebf9a](https://github.com/maksforge/kozica/commit/36ebf9aeef003aadc41734b48df5bde164e1d131))
+* keep the map over the Regions, shade what lies outside them, and name them when zoomed out ([5a421fb](https://github.com/maksforge/kozica/commit/5a421fb91cddc62ddf6feae2d5625da3aa508ecc))
+* let a Route's fit finish while the sheet grows, and say so when the position lies outside the Regions ([c54f6b4](https://github.com/maksforge/kozica/commit/c54f6b4d70ba4df1e41265c29d05447e66fcd4c2))
+* pass over a dated extract whose md5 or file answers 404 on the download itself ([6c93822](https://github.com/maksforge/kozica/commit/6c93822906fe3be31bcc0ff72b513a428cc6008b))
+
 ## [0.8.0](https://github.com/maksforge/kozica/compare/v0.7.0...v0.8.0) (2026-10-26)
 
 
