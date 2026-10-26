@@ -3,6 +3,7 @@ package app.kozica.ui.routes
 import app.kozica.data.SavedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.RouteTotals
 import app.kozica.data.routes.TrailNetwork
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,19 +44,14 @@ class RoutesViewModelTest {
             val viewModel =
                 RoutesViewModel(
                     saved = flowOf(listOf(SavedRoute("z", "Żleb", nowhere), SavedRoute("a", "Ascent", across))),
-                    planRoute = { RoutePlanner(network).plan(it) },
+                    totals = RouteTotals { RoutePlanner(network).plan(it) },
                     renameRoute = { _, _ -> },
                     deleteRoute = {},
                     routeToShow = asked,
                     compute = Dispatchers.Main,
                 )
 
-            val rows =
-                withContext(Dispatchers.Default) {
-                    withTimeoutOrNull(5.seconds) {
-                        viewModel.state.first { state -> state.routes?.firstOrNull()?.minutes != null }
-                    }
-                }!!.routes!!
+            val rows = planned(viewModel)
 
             assertEquals(listOf("Ascent", "Żleb"), rows.map { it.route.name })
             assertEquals(RoutePlanner(network).plan(across).minutes, rows[0].minutes)
@@ -64,4 +60,31 @@ class RoutesViewModelTest {
             viewModel.show("a")
             assertEquals("a", asked.value)
         }
+
+    @Test
+    fun `a Route planned on one visit to the tab is not planned again on the next`() =
+        runTest {
+            val asked = mutableListOf<List<RoutePoint>>()
+            val totals =
+                RouteTotals {
+                    asked += it
+                    RoutePlanner(network).plan(it)
+                }
+            val saved = flowOf(listOf(SavedRoute("a", "Ascent", across)))
+
+            repeat(2) {
+                val visit = RoutesViewModel(saved, totals, { _, _ -> }, {}, MutableStateFlow(null), Dispatchers.Main)
+                val row = planned(visit).single()
+                assertEquals(RoutePlanner(network).plan(across).minutes, row.minutes)
+            }
+
+            assertEquals(listOf(across), asked)
+        }
+
+    private suspend fun planned(viewModel: RoutesViewModel): List<RouteRow> =
+        withContext(Dispatchers.Default) {
+            withTimeoutOrNull(5.seconds) {
+                viewModel.state.first { state -> state.routes?.firstOrNull()?.minutes != null }
+            }
+        }!!.routes!!
 }
