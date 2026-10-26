@@ -52,6 +52,8 @@ class AppPreferences(
         val MAP_LATITUDE = doublePreferencesKey("map_latitude")
         val MAP_LONGITUDE = doublePreferencesKey("map_longitude")
         val MAP_ZOOM = doublePreferencesKey("map_zoom")
+        val AUTO_RESUME = booleanPreferencesKey("auto_resume")
+        val NOTIFICATIONS_ASKED = booleanPreferencesKey("notifications_asked")
     }
 
     /**
@@ -96,6 +98,12 @@ class AppPreferences(
             MapCamera(latitude, longitude, zoom)
         }
 
+    /** Whether the motion sensor resumes a paused recording (docs/phase-6.md § 3). On by default. */
+    val autoResume: Flow<Boolean> = store.data.map { it[Keys.AUTO_RESUME] ?: true }
+
+    /** Whether Record has asked for notifications, which it does once (docs/phase-6.md § 2). */
+    val notificationsAsked: Flow<Boolean> = store.data.map { it[Keys.NOTIFICATIONS_ASKED] ?: false }
+
     /**
      * The theme mode, read once, before any Activity exists.
      *
@@ -108,6 +116,14 @@ class AppPreferences(
 
     suspend fun setThemeMode(mode: ThemeMode) {
         store.edit { it[Keys.THEME_MODE] = mode.name }
+    }
+
+    suspend fun setAutoResume(enabled: Boolean) {
+        store.edit { it[Keys.AUTO_RESUME] = enabled }
+    }
+
+    suspend fun setNotificationsAsked() {
+        store.edit { it[Keys.NOTIFICATIONS_ASKED] = true }
     }
 
     suspend fun setMaterialYou(enabled: Boolean) {

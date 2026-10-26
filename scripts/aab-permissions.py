@@ -82,9 +82,11 @@ EXPECTED = {
     # applicationId, which differs between the debug and release builds, so it is
     # matched by suffix rather than spelled out.
     "*.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION": "AndroidX, signature-level",
-    "android.permission.ACCESS_FINE_LOCATION": "the position button: the dot on the map",
-    "android.permission.ACCESS_COARSE_LOCATION": "the position button: asked with fine, for the approximate option",
-    "android.permission.FOREGROUND_SERVICE": "Play Asset Delivery's extraction service, which unpacks a Region",
+    "android.permission.ACCESS_FINE_LOCATION": "the position button: the dot on the map; and recording a Hike, which needs it",
+    "android.permission.ACCESS_COARSE_LOCATION": "the position button and Record: asked with fine, for the approximate option",
+    "android.permission.FOREGROUND_SERVICE": "Play Asset Delivery's extraction service, which unpacks a Region; and the Hike recording service",
+    "android.permission.FOREGROUND_SERVICE_LOCATION": "the Hike recording service's type, declared in the Console",
+    "android.permission.POST_NOTIFICATIONS": "the Hike recording's notification, asked at the first Record",
     "android.permission.FOREGROUND_SERVICE_DATA_SYNC": "the same service's type, declared in the Console",
     "android.permission.WAKE_LOCK": "WorkManager, which runs Play Asset Delivery's ExtractionWorker",
     "android.permission.RECEIVE_BOOT_COMPLETED": "WorkManager, rescheduling that work after a reboot",

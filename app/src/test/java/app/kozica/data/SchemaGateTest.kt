@@ -33,16 +33,24 @@ class SchemaGateTest {
      * through three releases upgrades straight to 4, walking three migrations in a row, and nobody
      * ever tests that path by hand.
      *
-     * Released builds have written schema 1 (0.2.0 to 0.8.0) and now 2, with saved Routes.
+     * Released builds have written schema 1 (0.2.0 to 0.8.0), 2 with saved Routes (0.8.1), and now 3,
+     * with recorded Hikes.
      */
     @Test
     fun `the shipped migrations reach this build's version`() {
-        assertEquals(2, APP_SCHEMA_VERSION)
-        assertEquals(
-            "a release-shaped launch over a 1.x install opens, and Room migrates",
-            SchemaGate.Open,
-            schemaGateDecision(onDiskVersion = 1, appSchemaVersion = 2, steps = shipped, destructiveAllowed = false),
-        )
+        assertEquals(3, APP_SCHEMA_VERSION)
+        for (from in 1..2) {
+            assertEquals(
+                "a release-shaped launch over a schema-$from install opens, and Room migrates",
+                SchemaGate.Open,
+                schemaGateDecision(
+                    onDiskVersion = from,
+                    appSchemaVersion = 3,
+                    steps = shipped,
+                    destructiveAllowed = false,
+                ),
+            )
+        }
         for (from in 1 until APP_SCHEMA_VERSION) {
             assertTrue(
                 "$from → $APP_SCHEMA_VERSION is not reachable by the registered migrations",

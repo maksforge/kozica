@@ -14,6 +14,7 @@ import app.kozica.MainApplication
 import app.kozica.data.AppPreferences
 import app.kozica.data.MapCamera
 import app.kozica.data.SavedRoute
+import app.kozica.data.hikes.Track
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
 import app.kozica.data.routes.DemandingStretch
@@ -21,6 +22,7 @@ import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
+import app.kozica.record.Recording
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +57,8 @@ import java.time.Instant
  * @param camera where a new map view opens, null until the stored camera is read.
  * @param location null until the first resume reads it.
  * @param fix the newest position, null until the first arrives or while location cannot be read.
+ * @param recording the Hike being recorded, null when none is.
+ * @param track the recording Hike's Track so far, drawn live (docs/phase-6.md § 2).
  */
 data class MapUiState(
     val regions: List<Region>? = null,
@@ -65,6 +69,8 @@ data class MapUiState(
     val fix: Location? = null,
     val search: SearchUiState = SearchUiState(),
     val route: RouteUiState = RouteUiState(),
+    val recording: Recording? = null,
+    val track: Track = emptyList(),
 ) {
     private val ready: List<RegionState.Ready> get() = regions.orEmpty().mapNotNull { it.state as? RegionState.Ready }
 
@@ -131,6 +137,8 @@ class MapViewModel(
     private val loadRoute: suspend (id: String) -> SavedRoute? = { null },
     private val saveRoute: suspend (id: String?, name: String, points: List<RoutePoint>) -> String = { _, _, _ -> "" },
     private val observeName: (id: String) -> Flow<String?> = { emptyFlow() },
+    private val recording: Flow<Recording?> = flowOf(null),
+    private val observeTrack: (hikeId: String) -> Flow<Track> = { flowOf(emptyList()) },
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -176,6 +184,13 @@ class MapViewModel(
     // Changes whenever the map's Route is replaced, so a Save that returns late lands only on its own.
     private var routeGeneration = 0
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val track: Flow<Track> =
+        recording
+            .map { it?.hikeId }
+            .distinctUntilChanged()
+            .flatMapLatest { id -> id?.let(observeTrack) ?: flowOf(emptyList()) }
+
     val state: StateFlow<MapUiState> =
         combine(
             combine(packs, style, camera, location, fix) { packs, style, camera, location, fix ->
@@ -183,8 +198,11 @@ class MapViewModel(
             },
             search,
             route,
-        ) { map, search, route -> map.copy(search = search, route = route) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
+            recording,
+            track.onStart { emit(emptyList()) },
+        ) { map, search, route, recording, track ->
+            map.copy(search = search, route = route, recording = recording, track = track)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     init {
         viewModelScope.launch { camera.compareAndSet(null, preferences.mapCamera.first() ?: TATRY) }
@@ -432,6 +450,8 @@ class MapViewModel(
                         loadRoute = app.container.routes::get,
                         saveRoute = app.container.routes::save,
                         observeName = app.container.routes::observeName,
+                        recording = app.container.recorder.recording,
+                        observeTrack = app.container.hikes::observeTrack,
                     )
                 }
             }

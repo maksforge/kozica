@@ -129,3 +129,4 @@ private fun pmtiles(
 private const val RELIEF_SOURCE = "relief"
 private const val CONTOURS_SOURCE = "contours"
 internal const val ROUTE_SOURCE = "route"
+internal const val HIKE_TRACK_SOURCE = "hike-track"

@@ -5,7 +5,7 @@ title: Privacy Policy
 
 # Privacy Policy
 
-_Last updated: 22 October 2026_
+_Last updated: 26 October 2026_
 
 Kozica is an Android app for hiking in the Polish mountains: an offline map of the trails, drawn in
 their signpost colours. This policy describes what the app does with information about you. It is
@@ -16,8 +16,8 @@ short because the app does very little.
 Kozica has no account, no sign-in and no server. **The app has no permission to use the internet**,
 so it cannot send anything anywhere.
 
-What it keeps (your settings, including where you left the map, and the routes you save, each a name
-and the points you chose) is stored **only in the app's private storage on your own phone**, and is
+What it keeps (your settings, including where you left the map; the routes you save, each a name
+and the points you chose; and the hikes you record) is stored **only in the app's private storage on your own phone**, and is
 readable only by the app.
 
 There is no analytics, no crash reporting, no advertising, and no third-party SDK that phones home.
@@ -30,6 +30,11 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
   position button to centre it, that spot is where you were. The settings are not part of Android's
   backup below, so that spot stays on the phone. You can allow only an approximate location, or none, and
   the map works without it.
+- **Your location while you record a hike**, only once you tap Record and allow precise location. The
+  app then keeps the hike's track, where you walked and when, in its private storage on the phone,
+  for as long as you keep the hike. It is never sent anywhere by the app. While a hike records, a
+  notification says so, and the app reads your location with the screen off until you stop it.
+  Recording asks for notifications once, for that notification; you can say no and still record.
 
 ## When you write to the developer
 
@@ -47,7 +52,8 @@ These are done by the operating system or by Google, not by Kozica, but they are
 "where could my data be":
 
 1. **Android's automatic backup.** If it is enabled on your phone, Android backs up the app's
-   database, which holds your saved routes, and its small preview images, not its settings, to your
+   database, which holds your saved routes and your recorded hikes with their tracks, and its small
+   preview images, not its settings, to your
    own Google Drive, in a space
    that does not count against your storage quota and that Google states apps cannot read. You can
    turn this off in your phone's settings.

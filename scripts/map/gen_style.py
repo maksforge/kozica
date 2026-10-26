@@ -81,6 +81,7 @@ def palette(dark: bool) -> dict[str, str]:
         "route": tone(P, pick(40, 60)),
         "route_casing": tone(N, pick(100, 10)),
         "route_number": tone(N, pick(100, 10)),
+        "hike_track": tone(T, pick(45, 70)),
     }
 
 
@@ -268,12 +269,20 @@ def style(dark: bool) -> dict:
          "layout": text_layout(13, **{"text-field": ["get", "number"], "text-allow-overlap": True,
                                       "text-ignore-placement": True}),
          "paint": {"text-color": c["route_number"]}},
+        # The Hike being recorded (docs/phase-6.md § 2), each stretch its own line, above the Route.
+        {"id": "hike-track-casing", "type": "line", "source": "hike-track",
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": c["route_casing"], "line-width": trail_width(6.0)}},
+        {"id": "hike-track", "type": "line", "source": "hike-track",
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": c["hike_track"], "line-width": trail_width(3.0)}},
     ]
     return {
         "version": 8,
         "metadata": {"kozica:faded-opacity": FADED_OPACITY,
                      "kozica:bounds": json.loads(REGIONS.read_text())["bbox"]},
         "sources": {"route": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
+                    "hike-track": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "regions": {"type": "geojson", "data": "asset://map/regions.geojson"}},
         "glyphs": "asset://map/glyphs/{fontstack}/{range}.pbf",
         "sprite": f"asset://map/sprite-{'dark' if dark else 'light'}",

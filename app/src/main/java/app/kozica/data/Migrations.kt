@@ -25,6 +25,36 @@ val MIGRATION_1_2 =
     }
 
 /**
+ * Recorded Hikes (docs/phase-6.md § 2): three new tables, nothing existing touched. Transcribed from
+ * `schemas/…/3.json`.
+ */
+val MIGRATION_2_3 =
+    object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `hikes` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                    "`startedAt` INTEGER NOT NULL, `endedAt` INTEGER, `track` BLOB, `note` TEXT, " +
+                    "`metres` REAL NOT NULL, `movingSeconds` INTEGER NOT NULL, `ascentMetres` REAL, " +
+                    "`descentMetres` REAL, `ascentFromGps` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+            )
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `track_points` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`hikeId` TEXT NOT NULL, `stretch` INTEGER NOT NULL, `time` INTEGER NOT NULL, " +
+                    "`latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `altitude` REAL, " +
+                    "FOREIGN KEY(`hikeId`) REFERENCES `hikes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_points_hikeId` ON `track_points` (`hikeId`)")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `hike_photos` (`id` TEXT NOT NULL, `hikeId` TEXT NOT NULL, " +
+                    "`photoPath` TEXT NOT NULL, `thumbnailPath` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, " +
+                    "`takenAt` INTEGER, `latitude` REAL, `longitude` REAL, `caption` TEXT, PRIMARY KEY(`id`), " +
+                    "FOREIGN KEY(`hikeId`) REFERENCES `hikes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_hike_photos_hikeId` ON `hike_photos` (`hikeId`)")
+        }
+    }
+
+/**
  * Every migration this build can run, in the order they were written.
  *
  * **Registering it here is the half that is easy to forget**, and forgetting it fails silently: the
@@ -35,7 +65,7 @@ val MIGRATION_1_2 =
  * and `*APP_MIGRATIONS` spreads an array into one. `SchemaGate` converts it to a list of integer
  * pairs so the reachability rule can be a pure function.
  */
-val APP_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+val APP_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 
 /*
  * ---------------------------------------------------------------------------------------------

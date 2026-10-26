@@ -18,6 +18,14 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <!--
+        Hike recording's `location` foreground service and its notification (docs/phase-6.md § 2).
+        Notifications are asked at the first Record, never at launch.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
         The <intent> entries are for hand-offs to the phone app (DIAL on tel:), a mail app, Play and
         a browser. None of the launches needs them — package visibility has never blocked
         `startActivity`, and each launch is a try/catch around `ActivityNotFoundException`. What
@@ -87,6 +95,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".record.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!--
             The camera app writes the photo it takes into a file we own, and hands back a Uri for

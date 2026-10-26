@@ -27,8 +27,10 @@ Read at **versionCode _, versionName _** by `publish-play.yml`'s verify step on 
 | Permission | Whose | What it is for | Console consequence |
 | --- | --- | --- | --- |
 | `…DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | its own non-exported receivers, signature-level | none: not user-visible |
-| `ACCESS_FINE_LOCATION` | Kozica | the position button: the dot, its accuracy circle and heading on the map, read on the phone only | the location permission declaration; Data safety stays "no data collected", because nothing leaves the device |
+| `ACCESS_FINE_LOCATION` | Kozica | the position button: the dot, its accuracy circle and heading on the map, read on the phone only; and recording a Hike, whose Track is stored on the phone | the location permission declaration; Data safety stays "no data collected", because nothing leaves the device |
 | `ACCESS_COARSE_LOCATION` | Kozica | asked with fine, as Android requires from API 31 for the approximate option | as fine |
+| `FOREGROUND_SERVICE_LOCATION` | Kozica | the Hike recording service, started from the visible app at Record | the foreground service declaration below |
+| `POST_NOTIFICATIONS` | Kozica | the recording's notification, asked once at the first Record | none |
 
 **Features**: `android.hardware.location` and `android.hardware.location.gps`, both
 `required="false"`. Declaring a location permission makes Play assume the hardware is required
@@ -116,13 +118,17 @@ The answer rests on one fact per route data could take:
 4. **A saved Route is not location.** It is a name and the points the user picked on the map or
    from search, never a fix from the phone, and it lives in the database that point 2's backup
    already carries. Since phase 5's checkpoint D; still no data collected.
+5. **A recorded Hike is location, stored and not collected.** Its Track is the phone's fixes, kept
+   in the database on the device, and leaves it only by point 2's backup, which is the user's own,
+   or by a share the user makes. Play's "collected" means transmitted off the device by the app,
+   which never happens. Since phase 6's checkpoint B; still no data collected.
 
 Would change any of it:
 
 - **`INTERNET` on the artifact**, from our code or a dependency. Every answer here becomes a question.
 - **Anything the app sends by itself**, such as crash reporting or analytics. There is none today.
-- **Storing location**, which phase 6's hike recording does, or a photo's metadata surviving into
-  storage or a backup. Reading it to draw the dot is not collection: it never leaves the device.
+- **A photo's metadata surviving into storage or a backup.** Reading the location to draw the dot is
+  not collection: it never leaves the device.
 - **The preferences file joining the backup.** It holds the map's last centre, which is the user's
   position at the fix's precision after the position button centred it. `AppBackupAgent` carries
   only the database and thumbnails today, so that centre stays on the phone; the policy says so.
@@ -149,8 +155,18 @@ carries the library, E's and F's, and this section gets that date. The answers t
   on the trail where there is no signal.
 - **Type:** `dataSync`, which covers transferring to the device the data the app needs to work.
 
-Phase 6's hike recording brings a `location` service. Each foreground service the app gains is
-recorded here with its type and the declaration's answers.
+**`location`, for recording a Hike**, from phase 6's checkpoint B ([`phase-6.md`](phase-6.md) § 2).
+**Not yet declared in the Console**: declared with the first release that carries it, in the same
+sitting as `dataSync`'s, with a short video of Record, the notification and Stop, and this section
+gets that date. The answers to give:
+
+- **What the user sees:** after pressing Record, a notification that a hike is recording, with its
+  time and distance and Pause and Stop, until the user stops it.
+- **Why it cannot wait:** the user walks with the phone in a pocket and the screen off for hours,
+  and the track is the feature; a fix missed is a part of the hike lost.
+- **Type:** `location`, started from the visible app; no background location permission is asked.
+
+Each foreground service the app gains is recorded here with its type and the declaration's answers.
 
 ## Privacy policy
 

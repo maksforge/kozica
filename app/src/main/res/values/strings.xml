@@ -204,4 +204,30 @@
     <string name="safety_poland">Poland</string>
     <string name="safety_slovakia">Slovakia</string>
     <string name="safety_czechia">Czechia</string>
+
+    <!-- Recording a Hike (docs/phase-6.md § 2–3). "Hike" is CONTEXT.md's term: Polish "wycieczka". -->
+    <string name="record_hike">Record hike</string>
+    <string name="record_channel">Hike recording</string>
+    <string name="record_recording">Recording</string>
+    <string name="record_paused">Paused</string>
+    <string name="record_resumed_moving">Resumed — you\'re moving</string>
+    <string name="record_pause">Pause</string>
+    <string name="record_resume">Resume</string>
+    <string name="record_stop">Stop</string>
+    <string name="record_stop_title">Stop recording?</string>
+    <string name="record_stop_body">The hike is saved and you can\'t add to it afterwards.</string>
+    <string name="record_keep">Keep recording</string>
+    <string name="record_precise_title">Recording a hike needs precise location</string>
+    <string name="record_precise_body">Allow precise location in the app\'s settings to record a hike. Approximate location can be off by more than a kilometre.</string>
+    <string name="record_open_settings">Open settings</string>
+    <string name="record_no_notifications">Notifications are off, so there\'s no Stop button outside the app</string>
+    <string name="record_location_off">Location is off — nothing is being recorded</string>
+    <string name="record_by_hand">Resume by hand on this phone</string>
+    <string name="record_unfinished_title">A hike didn\'t finish recording</string>
+    <string name="record_unfinished_resume">Resume recording</string>
+    <string name="record_unfinished_finish">Finish it here</string>
+    <string name="record_auto_resume">Resume when I start moving</string>
+    <string name="record_auto_resume_hint">Resumes by itself when the phone senses you walking. It can sometimes resume while you\'re sitting still.</string>
+    <!-- A Hike's default name: its date, then the nearest named place to where it started. -->
+    <string name="hike_name" translatable="false">%1$s · %2$s</string>
 </resources>

@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val materialYou: Boolean = false,
+    val autoResume: Boolean = true,
 )
 
 class SettingsViewModel(
@@ -28,8 +29,9 @@ class SettingsViewModel(
         combine(
             preferences.themeMode,
             preferences.materialYou,
-        ) { theme, materialYou ->
-            SettingsUiState(theme, materialYou)
+            preferences.autoResume,
+        ) { theme, materialYou, autoResume ->
+            SettingsUiState(theme, materialYou, autoResume)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     /**
@@ -43,6 +45,10 @@ class SettingsViewModel(
     fun setThemeMode(mode: ThemeMode) {
         applyThemeMode(mode)
         viewModelScope.launch { preferences.setThemeMode(mode) }
+    }
+
+    fun setAutoResume(enabled: Boolean) {
+        viewModelScope.launch { preferences.setAutoResume(enabled) }
     }
 
     fun setMaterialYou(enabled: Boolean) {

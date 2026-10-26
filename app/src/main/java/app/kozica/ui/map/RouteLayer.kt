@@ -1,5 +1,6 @@
 package app.kozica.ui.map
 
+import app.kozica.data.hikes.Track
 import app.kozica.data.routes.Approach
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
@@ -48,6 +49,30 @@ internal fun routeGeoJson(
         put("features", JsonArray(features))
     }.toString()
 }
+
+/** The style's `hike-track` source: one line per stretch, so nothing joins two across a pause. */
+internal fun trackGeoJson(track: Track): String =
+    buildJsonObject {
+        put("type", "FeatureCollection")
+        put(
+            "features",
+            JsonArray(
+                track.filter { it.size >= 2 }.map { stretch ->
+                    buildJsonObject {
+                        put("type", "Feature")
+                        put(
+                            "geometry",
+                            buildJsonObject {
+                                put("type", "LineString")
+                                put("coordinates", JsonArray(stretch.map { position(it.longitude, it.latitude) }))
+                            },
+                        )
+                        put("properties", JsonObject(emptyMap()))
+                    }
+                },
+            ),
+        )
+    }.toString()
 
 private fun position(
     longitude: Double,
