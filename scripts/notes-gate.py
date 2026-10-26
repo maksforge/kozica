@@ -40,6 +40,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -105,7 +106,7 @@ def notes_versions(text: str) -> list[str]:
 # The gate above can only fail on release-please's PR, because that is the first place versionName
 # carries the new number - and by then the fix is a separate docs PR, one extra PR per release. --pending
 # predicts the number instead, from the same commits release-please will read, so the notes can be
-# written on the branch that brings the change. It is what Claude Code's push hook runs
+# written on the branch that brings the change. Claude Code's push hook runs it through --hook
 # (.claude/settings.json); nothing in CI calls it.
 
 MANIFEST = ".release-please-manifest.json"
@@ -207,9 +208,34 @@ def pending(base: str) -> int:
     return OWED
 
 
+PUSH = re.compile(r"\bgit\b[^;&|]*\bpush\b")
+WHERE = re.compile(r"\bcd\s+(\S+)|\bgit\s+-C\s+(\S+)")
+
+
+def hook() -> int:
+    """Claude Code's PreToolUse event on stdin: --pending for the checkout a `git push` pushes from.
+
+    That checkout's own copy of this script runs, so a linked worktree is judged by its branch and
+    not by whatever the main checkout has out. Claude Code also fires the hook on commands it cannot
+    parse, a heredoc or a `$VAR`, which is why a command with no push in it passes here.
+    """
+    event = json.load(sys.stdin)
+    command = event.get("tool_input", {}).get("command", "")
+    if not PUSH.search(command):
+        return 0
+    where = event.get("cwd") or str(ROOT)
+    for match in WHERE.finditer(command):
+        where = os.path.join(where, os.path.expanduser((match[1] or match[2]).strip("'\"")))
+    found = subprocess.run(["git", "-C", where, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    root = Path(found.stdout.strip()) if found.returncode == 0 else ROOT
+    subprocess.run(["git", "-C", str(root), "fetch", "-q", "origin", "main"], capture_output=True)
+    return subprocess.run([sys.executable, str(root / "scripts/notes-gate.py"), "--pending"]).returncode
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--report", action="store_true", help="print the state and always exit 0")
+    parser.add_argument("--hook", action="store_true", help="read Claude Code's PreToolUse event on stdin")
     parser.add_argument(
         "--pending",
         nargs="?",
@@ -218,6 +244,8 @@ def main() -> int:
         help=f"predict release-please's next version from BASE + this branch; exit {OWED} if its notes are unwritten",
     )
     args = parser.parse_args()
+    if args.hook:
+        return hook()
     if args.pending:
         return pending(args.pending)
 
