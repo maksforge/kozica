@@ -22,6 +22,7 @@
     <string name="map_location_allow">Zezwól</string>
     <string name="map_location_off">Lokalizacja jest wyłączona.</string>
     <string name="map_position_stale">Ostatnia pozycja %1$s temu.</string>
+    <string name="map_position_outside">Jesteś poza górami, które obejmuje mapa.</string>
     <string name="map_location_settings">Ustawienia</string>
 
     <string name="map_retry">Spróbuj ponownie</string>

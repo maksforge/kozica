@@ -134,6 +134,7 @@ fun MapScreen(
     var preciseRefused by rememberSaveable { mutableStateOf(false) }
     var askingForPrecise by remember { mutableStateOf(false) }
     var centreWanted by remember { mutableStateOf(false) }
+    var positionOutside by remember { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
         viewModel.locationRead(context.readLocation())
         onPauseOrDispose {}
@@ -191,9 +192,14 @@ fun MapScreen(
         mapView.addOnLayoutChangeListener(listener)
         onDispose { mapView.removeOnLayoutChangeListener(listener) }
     }
+    LaunchedEffect(map, regions) {
+        val map = map ?: return@LaunchedEffect
+        map.setLatLngBoundsForCameraTarget(regions?.latLngBounds() ?: return@LaunchedEffect)
+    }
+    // Setting the bounds jumps the camera, ending a Route's fit, so only the minimum zoom follows the sheet's resizes.
     LaunchedEffect(map, regions, mapSize) {
         val map = map ?: return@LaunchedEffect
-        map.keepToRegions(regions ?: return@LaunchedEffect)
+        map.zoomOutNoFurtherThan(regions ?: return@LaunchedEffect)
     }
     var searchText by rememberSaveable { mutableStateOf("") }
     val focus = LocalFocusManager.current
@@ -212,7 +218,10 @@ fun MapScreen(
         val start = shown ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
         map.addOnCameraMoveStartedListener { reason ->
-            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) centreWanted = false
+            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
+                centreWanted = false
+                positionOutside = false
+            }
         }
         map.addOnCameraIdleListener {
             map.cameraPosition.toMapCamera()?.let { camera ->
@@ -335,7 +344,9 @@ fun MapScreen(
         val fix = state.fix ?: return@LaunchedEffect
         if (!centreWanted) return@LaunchedEffect
         centreWanted = false
-        map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(fix.latitude, fix.longitude)))
+        // The camera cannot leave the Regions, so it would stop short on a shaded spot with the dot off-screen.
+        positionOutside = regions?.contains(fix.latitude, fix.longitude) == false
+        if (!positionOutside) map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(fix.latitude, fix.longitude)))
     }
 
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -406,6 +417,7 @@ fun MapScreen(
                             ask.launch(LOCATION_PERMISSIONS)
                         },
                     )
+                    if (positionOutside) WarningBanner(title = stringResource(R.string.map_position_outside))
                 }
                 Column(
                     horizontalAlignment = Alignment.End,
@@ -436,11 +448,16 @@ fun MapScreen(
     }
 }
 
-/** The camera stays over the Regions and zooms out no further than shows them all: beyond that there is no map. */
-private fun MapLibreMap.keepToRegions(bounds: CameraBounds) {
-    val regions = LatLngBounds.from(bounds.north, bounds.east, bounds.south, bounds.west)
-    setLatLngBoundsForCameraTarget(regions)
-    getCameraForLatLngBounds(regions, intArrayOf(0, 0, 0, 0))?.zoom?.let(::setMinZoomPreference)
+private fun CameraBounds.latLngBounds() = LatLngBounds.from(north, east, south, west)
+
+/** As far as shows every Region north-up and flat, so the limit depends on the view's size alone. */
+private fun MapLibreMap.zoomOutNoFurtherThan(regions: CameraBounds) {
+    getCameraForLatLngBounds(
+        regions.latLngBounds(),
+        intArrayOf(0, 0, 0, 0),
+        0.0,
+        0.0,
+    )?.zoom?.let(::setMinZoomPreference)
 }
 
 @Composable

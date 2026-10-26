@@ -54,14 +54,7 @@ internal fun expandStyle(
             val source = layer["source"]?.jsonPrimitive?.content
             when {
                 source == null || source in own -> listOf(layer)
-                source == RELIEF_SOURCE || source == CONTOURS_SOURCE ->
-                    if (relief !=
-                        null
-                    ) {
-                        listOf(layer)
-                    } else {
-                        emptyList()
-                    }
+                source == RELIEF_SOURCE || source == CONTOURS_SOURCE -> listOfNotNull(layer.takeIf { relief != null })
                 else ->
                     archives.map { (region, _) ->
                         val id = layer.getValue("id").jsonPrimitive.content
@@ -80,7 +73,12 @@ internal data class CameraBounds(
     val south: Double,
     val east: Double,
     val north: Double,
-)
+) {
+    fun contains(
+        latitude: Double,
+        longitude: Double,
+    ) = latitude in south..north && longitude in west..east
+}
 
 internal fun cameraBoundsOf(style: String): CameraBounds {
     val (west, south, east, north) =

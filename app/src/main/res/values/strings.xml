@@ -38,6 +38,7 @@
     <string name="map_location_off">Location is turned off.</string>
     <!-- %1$s is a short elapsed time from the platform, such as "45 s", "5 min" or "1 hr, 5 min". -->
     <string name="map_position_stale">Last position %1$s ago.</string>
+    <string name="map_position_outside">You\'re outside the mountains this map covers.</string>
     <!-- Opens Android's settings, not the app's own Settings screen. -->
     <string name="map_location_settings">Settings</string>
 
