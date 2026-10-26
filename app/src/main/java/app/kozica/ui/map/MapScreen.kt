@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -206,6 +207,14 @@ fun MapScreen(
         map.zoomOutNoFurtherThan(regions ?: return@LaunchedEffect)
     }
     var searchText by rememberSaveable { mutableStateOf("") }
+    // MapLibre's compass shows once the map is turned, top-end by default: under the Safety and
+    // Settings buttons unless it is moved below their row.
+    var topRowHeight by remember { mutableIntStateOf(0) }
+    val compassEnd = with(LocalDensity.current) { Spacing.tight.roundToPx() }
+    LaunchedEffect(map, topRowHeight) {
+        val map = map ?: return@LaunchedEffect
+        map.uiSettings.setCompassMargins(0, topRowHeight, compassEnd, 0)
+    }
     val focus = LocalFocusManager.current
 
     LaunchedEffect(map) {
@@ -371,7 +380,10 @@ fun MapScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(Spacing.tight),
+                        modifier =
+                            Modifier
+                                .onSizeChanged { topRowHeight = it.height }
+                                .padding(Spacing.tight),
                     ) {
                         SearchField(
                             text = searchText,
