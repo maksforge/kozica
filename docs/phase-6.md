@@ -31,10 +31,10 @@ either.
   hardware sensor instead (§ 3).
 - **Precise location is already asked** at the position button (phase 2), and from API 31 the user
   can grant approximate only. Recording reuses the same ask, at its own moment (§ 2).
-- **Nothing in the app is scheduled, and it posts no notification.** The only foreground service in
-  the bundle is Play Asset Delivery's `dataSync`, whose Console declaration is still open in
-  `DOD.md`. The recording's notification is the app's first, and `POST_NOTIFICATIONS` is its first
-  notification ask.
+- **Nothing in the app is scheduled, and it posts no notification of its own.** The only foreground
+  service in the bundle is Play Asset Delivery's `dataSync`, whose notification and channel are the
+  library's, and whose Console declaration is still open in `DOD.md`. The recording's notification
+  is Kozica's first, and `POST_NOTIFICATIONS` is its first notification ask.
 - **`aab-permissions.py` forbids `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`** (Play restricts it). If the
   gate's verdict 2 needs a battery exemption, it is a hand-off to the system's list, never the
   direct request.
@@ -187,8 +187,8 @@ ends (§ 5).
 
 **The notification's channel**, "Hike recording", is created at `IMPORTANCE_LOW`: no sound and no
 heads-up, for a notification that is up for hours. A channel's importance can only be lowered
-afterwards, and only by the user (ADR-0003), so this is decided once. It is the app's only channel,
-and every change to the notification, auto-resume's included (§ 3), is a silent update of the same
+afterwards, and only by the user (ADR-0003), so this is decided once. It is Kozica's only channel of its
+own (Play Asset Delivery creates one for its `dataSync` service), and every change to the notification, auto-resume's included (§ 3), is a silent update of the same
 one.
 
 **Fixes.** `GPS_PROVIDER`, at least 5 s and 5 m apart (Android requires both before it sends the
