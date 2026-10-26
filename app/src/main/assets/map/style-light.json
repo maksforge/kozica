@@ -1620,7 +1620,16 @@
      "get",
      "name"
     ],
-    "text-max-width": 7
+    "text-max-width": 7,
+    "text-ignore-placement": [
+     "step",
+     [
+      "zoom"
+     ],
+     false,
+     8,
+     true
+    ]
    },
    "paint": {
     "text-color": "#88511a",

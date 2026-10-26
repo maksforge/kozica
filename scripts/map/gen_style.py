@@ -249,7 +249,8 @@ def style(dark: bool) -> dict:
                    "line-opacity": by_zoom((8, 1.0), (10, 0.0))}},
         {"id": "region-names", "type": "symbol", "source": "regions", "maxzoom": 9,
          "filter": ["==", ["get", "kind"], "label"],
-         "layout": text_layout(by_zoom((5, 12), (8, 16)), **{"text-field": ["get", "name"], "text-max-width": 7}),
+         "layout": text_layout(by_zoom((5, 12), (8, 16)),
+                               **{"text-field": ["get", "name"], "text-max-width": 7, "text-ignore-placement": ["step", ["zoom"], False, 8, True]}),
          "paint": text_paint(c["region_edge"]) | {"text-opacity": by_zoom((8, 1.0), (9, 0.0))}},
         # The planned Route (docs/phase-5.md § 4), drawn from MapScreen.kt's GeoJSON over everything.
         {"id": "route-casing", "type": "line", "source": "route", "filter": ["==", ["get", "approach"], "trail"],
