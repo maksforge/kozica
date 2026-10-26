@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.8.0](https://github.com/maksforge/kozica/compare/v0.7.0...v0.8.0) (2026-10-26)
+
+
+### Features
+
+* build the Trail network and the name index, and plan a leg over them in the debug build ([056c5ef](https://github.com/maksforge/kozica/commit/056c5ef17273ebd06ee405423f019e7a6e24614e))
+* count a descent as steep from a 10 % grade, as R2's signposts read it ([1cde8ff](https://github.com/maksforge/kozica/commit/1cde8ff4a6a45fe38445b88ee499d227198cfb0b))
+* plan a Route through its points, with its totals, the time to each point, its profile and its demanding stretches ([bfac0c0](https://github.com/maksforge/kozica/commit/bfac0c03291e4c45e19127b80f4d6cd297590ae7))
+* save Routes under a name and list them in a Routes tab beside the map ([097276c](https://github.com/maksforge/kozica/commit/097276c9d7f5aceee6aaab1d51b1e9bb150464b4))
+* search places and plan a Route over the Trails on the map ([b9b8b2a](https://github.com/maksforge/kozica/commit/b9b8b2aba11d23c49c4a6882075ba3e93f60a2da))
+* translate saved Routes and the tab bar into Polish ([891c198](https://github.com/maksforge/kozica/commit/891c1987eb3e947f0cee0aa3417121818d1eef48))
+* translate search and the Route into Polish ([3438779](https://github.com/maksforge/kozica/commit/3438779cbf88628f3b2cc457f1e6a7897e2d20ee))
+
+
+### Bug Fixes
+
+* add long-pressed points in press order and keep the last Route shown while the next is planned ([968e45b](https://github.com/maksforge/kozica/commit/968e45bcce7efc2f818c33ae0442b577c1c2a394))
+* cap the Route sheet at half the height, warnings in its scroll, and label its handle ([dee7720](https://github.com/maksforge/kozica/commit/dee77208f77f40e6fe0aa86d7ae409329a5967f1))
+* copy the name index once per install and show the placeholder when the copy fails ([1e03d89](https://github.com/maksforge/kozica/commit/1e03d89c220d4abe84f1b8c81b46bb6bb76e470d))
+* fit the camera to each Route and centre each offered place only once ([52c2298](https://github.com/maksforge/kozica/commit/52c2298f53b10021a612f42df6cea9087fdbd0e8))
+* give part of an edge its own climb and time, and give no time after a missing leg ([0bd2eef](https://github.com/maksforge/kozica/commit/0bd2eef3e0a1d0d285ad9473bb3827126f301567))
+* hide the keyboard on its Search key ([3ce1d77](https://github.com/maksforge/kozica/commit/3ce1d77839fb2506395a9f9d9df71069d569e340))
+* keep a Trail way that closes on itself in the network ([d84bad9](https://github.com/maksforge/kozica/commit/d84bad93fbc8bcaa94acb80784cba464806da838))
+* keep the map's Route in step with the saved one, and Save over it without a cascade ([7cc6556](https://github.com/maksforge/kozica/commit/7cc6556bea75fbe7345e62bccde991163aeb768b))
+* keep the Save dialog's text in Compose state so typing does not lag behind the field ([990cac4](https://github.com/maksforge/kozica/commit/990cac4ee44f0bfed9f32b165e5ff941a85ae70c))
+* lose no climb at a way's end, and let a join on a one-way edge's node stand on it ([90b230a](https://github.com/maksforge/kozica/commit/90b230a4308955d567a7f7e5ae0b71d191f34909))
+* run the dead band and the steep rule over the part of an edge walked, not a share of its raw rise ([55ee94b](https://github.com/maksforge/kozica/commit/55ee94b1a0010b290be473997ffaffdc06638a46))
+* run the push hook's notes gate in the checkout the push comes from, and only on a push ([a703cfe](https://github.com/maksforge/kozica/commit/a703cfea6edaf9ad6db915bc5eea58464d64e121))
+
+
+### Performance Improvements
+
+* plan each saved Route's totals once per process, not on every visit to the tab ([1cc01d4](https://github.com/maksforge/kozica/commit/1cc01d41bb3c48b6a6eafc7142babb55a7d93a1a))
+
 ## [0.7.0](https://github.com/maksforge/kozica/compare/v0.6.0...v0.7.0) (2026-10-25)
 
 
