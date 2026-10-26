@@ -31,6 +31,38 @@
     <string name="map_confirm">Potwierdź</string>
     <string name="map_download_failed">Pobieranie nie powiodło się</string>
 
+    <string name="map_search">Szukaj miejsc</string>
+    <string name="map_search_clear">Wyczyść wyszukiwanie</string>
+    <string name="map_planning_missing">Wyszukiwania i planowania nie ma w tej wersji</string>
+    <string name="route_start">Start</string>
+    <string name="route_end">Meta</string>
+    <string name="route_via">Przez %1$s</string>
+    <string name="route_details_show">Pokaż szczegóły trasy</string>
+    <string name="route_details_hide">Ukryj szczegóły trasy</string>
+    <string name="route_reverse">Odwróć</string>
+    <string name="route_move_up">Przesuń wyżej</string>
+    <string name="route_move_down">Przesuń niżej</string>
+    <string name="route_remove">Usuń punkt</string>
+    <string name="route_off_trail">%1$s od najbliższego szlaku</string>
+    <string name="route_no_way">Brak przejścia szlakami między %1$s a %2$s</string>
+    <string name="route_demanding">Zawiera wymagający odcinek: %1$s</string>
+    <string name="route_length">Długość</string>
+    <string name="route_ascent">Podejścia</string>
+    <string name="route_descent">Zejścia</string>
+    <string name="route_walking_time">Czas przejścia</string>
+
+    <string name="place_peak">Szczyt</string>
+    <string name="place_pass">Przełęcz</string>
+    <string name="place_hut">Schronisko</string>
+    <string name="place_shelter">Wiata</string>
+    <string name="place_viewpoint">Punkt widokowy</string>
+    <string name="place_town">Miasto</string>
+    <string name="place_village">Wieś</string>
+    <string name="place_hamlet">Przysiółek</string>
+    <string name="place_lake">Jezioro</string>
+    <string name="place_clearing">Polana</string>
+    <string name="place_place">Miejsce</string>
+
 
     <string name="settings_title">Ustawienia</string>
     <string name="settings_appearance">Wygląd</string>
