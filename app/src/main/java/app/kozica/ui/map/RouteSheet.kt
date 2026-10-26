@@ -60,7 +60,7 @@ internal fun RouteSheet(
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val planned = route.planned
+    val planned = route.planned.takeUnless { route.planning }
     val open = expanded || route.points.size < 2
     Surface(
         shape = MaterialTheme.shapes.extraLarge.copy(bottomStart = CornerSize(0), bottomEnd = CornerSize(0)),

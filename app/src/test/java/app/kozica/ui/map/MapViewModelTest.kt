@@ -16,9 +16,11 @@ import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.TrailNetwork
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -144,10 +146,50 @@ class MapViewModelTest {
             viewModel.addPoint(49.0, 20.0)
             viewModel.addPoint(49.0, 20.02)
 
-            val route = settled(viewModel) { it.route.planned != null }.route
+            val route =
+                settled(viewModel) { state ->
+                    state.route.planned != null &&
+                        state.route.points.all { it.label != null }
+                }.route
 
             assertEquals(listOf("Near 49.0", "Near 49.0"), route.points.map { it.label })
             assertNotNull(route.planned?.legs?.single())
+        }
+
+    @Test
+    fun `long-pressed points join in the order pressed, however long their names take`() =
+        runTest {
+            val viewModel = routingViewModel(places = { awaitCancellation() })
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+
+            assertEquals(
+                listOf(20.0, 20.02),
+                viewModel.state.value.route.points
+                    .map { it.longitude },
+            )
+        }
+
+    @Test
+    fun `the last Route stays on the map while the next is planned`() =
+        runTest {
+            val held = CompletableDeferred<Unit>()
+            var plans = 0
+            val viewModel =
+                routingViewModel(planRoute = {
+                    if (plans++ > 0) held.await()
+                    RoutePlanner(fixture).plan(it)
+                })
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            val first = settled(viewModel) { it.route.planned != null && !it.route.planning }.route.planned
+
+            viewModel.reverse()
+
+            val planning = settled(viewModel) { it.route.planning }.route
+            assertEquals(first, planning.planned)
+            held.complete(Unit)
         }
 
     @Test
@@ -224,6 +266,7 @@ private object NearbyNames : PlaceSearch {
 }
 
 private fun routingViewModel(
+    places: suspend () -> PlaceSearch? = { NearbyNames },
     planRoute: suspend (List<RoutePoint>) -> PlannedRoute? = {
         RoutePlanner(fixture).plan(it)
     },
@@ -235,7 +278,7 @@ private fun routingViewModel(
     positions = { MutableSharedFlow<Location>() },
     fetch = {},
     confirmFetch = { false },
-    places = { NearbyNames },
+    places = places,
     planRoute = planRoute,
 )
 

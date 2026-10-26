@@ -87,14 +87,16 @@ data class SearchUiState(
 )
 
 /**
- * @param planned the Route through [points], null under two points, while it is planned, or in a
- *   build with no network ([unavailable]).
+ * @param planned the Route last planned, null under two points or in a build with no network
+ *   ([unavailable]). While [planning] it is the one before the latest change, kept so the map does not
+ *   flash back to unfaded between the two, but it no longer matches [points].
  */
 data class RouteUiState(
     val points: List<RoutePoint> = emptyList(),
     val planned: PlannedRoute? = null,
     val stretches: List<NamedStretch> = emptyList(),
     val unavailable: Boolean = false,
+    val planning: Boolean = false,
 )
 
 /** A demanding stretch with the places that name its two ends, either null where nothing is near. */
@@ -253,14 +255,18 @@ class MapViewModel(
         changePoints { it + RoutePoint(place.latitude, place.longitude, place.name) }
     }
 
-    /** A long-press: the point is named after the place nearest it, if any is near. */
+/** A long-press: the point joins at once, in press order, then takes the name of the place nearest it, if any is near. */
     fun addPoint(
         latitude: Double,
         longitude: Double,
     ) {
+        val point = RoutePoint(latitude, longitude)
+        changePoints { it + point }
         viewModelScope.launch {
-            val label = withContext(Dispatchers.IO) { places()?.nearest(latitude, longitude)?.name }
-            changePoints { it + RoutePoint(latitude, longitude, label) }
+            val label = withContext(Dispatchers.IO) { places()?.nearest(latitude, longitude)?.name } ?: return@launch
+            route.update { state ->
+                state.copy(points = state.points.map { if (it === point) it.copy(label = label) else it })
+            }
         }
     }
 
@@ -286,11 +292,12 @@ class MapViewModel(
         val points =
             route
                 .updateAndGet {
-                    it.copy(
-                        points = change(it.points),
-                        planned = null,
-                        stretches = emptyList(),
-                    )
+                    val points = change(it.points)
+                    if (points.size < 2) {
+                        it.copy(points = points, planned = null, stretches = emptyList(), planning = false)
+                    } else {
+                        it.copy(points = points, planning = true)
+                    }
                 }.points
         planning?.cancel()
         if (points.size < 2) return
@@ -298,11 +305,20 @@ class MapViewModel(
             viewModelScope.launch {
                 val planned = withContext(Dispatchers.Default) { planRoute(points) }
                 if (planned == null) {
-                    route.update { it.copy(unavailable = true) }
+                    route.update {
+                        it.copy(
+                            planned = null,
+                            stretches = emptyList(),
+                            unavailable = true,
+                            planning = false,
+                        )
+                    }
                     return@launch
                 }
                 val stretches = withContext(Dispatchers.IO) { name(planned) }
-                route.update { it.copy(planned = planned, stretches = stretches, unavailable = false) }
+                route.update {
+                    it.copy(planned = planned, stretches = stretches, unavailable = false, planning = false)
+                }
             }
     }
 
