@@ -1,5 +1,8 @@
 package app.kozica.ui.settings
 
+import android.content.Context
+import android.content.res.Configuration
+import android.os.LocaleList
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -73,4 +76,19 @@ fun setAppLanguage(language: AppLanguage?) {
     AppCompatDelegate.setApplicationLocales(
         language?.let { LocaleListCompat.forLanguageTags(it.tag) } ?: LocaleListCompat.getEmptyLocaleList(),
     )
+}
+
+/**
+ * This context in the app's chosen language. Below Android 13 AppCompat applies that language to
+ * activities only, so a service's notification or the application context's strings would otherwise
+ * come out in the phone's language.
+ */
+fun Context.inAppLanguage(): Context {
+    val locales = AppCompatDelegate.getApplicationLocales()
+    if (locales.isEmpty) return this
+    val configuration =
+        Configuration(
+            resources.configuration,
+        ).apply { setLocales(LocaleList.forLanguageTags(locales.toLanguageTags())) }
+    return createConfigurationContext(configuration)
 }
