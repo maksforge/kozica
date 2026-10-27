@@ -55,13 +55,17 @@ class Recorder(
 
     fun stop() = RecordingService.send(context, RecordingService.ACTION_STOP)
 
-    /** Ends [hikeId] at its last point and names it, or discards it if it kept no point; Stop's ending, and a lost recording's. */
+    /**
+     * Ends [hikeId] at its last point and names it, or discards it if it kept no point, then reads
+     * its ascent; Stop's ending, and a lost recording's.
+     */
     suspend fun finish(
         hikeId: String,
         now: Instant,
     ) {
         withContext(Dispatchers.IO) {
             hikes.finish(hikeId, now) { hike, first -> nameFor(hike.startedAt, first) }
+            hikes.fillClimbs()
         }
     }
 

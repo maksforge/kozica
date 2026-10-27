@@ -11,9 +11,12 @@ import app.kozica.data.AppPreferences
 import app.kozica.data.HikeRepository
 import app.kozica.data.RouteRepository
 import app.kozica.data.buildAppDatabase
+import app.kozica.data.hikes.HikeHeights
 import app.kozica.data.location.positionFixes
 import app.kozica.data.location.withPositionOverride
 import app.kozica.data.regions.RegionFiles
+import app.kozica.data.regions.RegionOutline
+import app.kozica.data.regions.RegionState
 import app.kozica.data.regions.regionStates
 import app.kozica.data.regions.reliefState
 import app.kozica.data.routes.PlaceSearch
@@ -29,6 +32,7 @@ import app.kozica.record.Recorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -76,12 +80,27 @@ class AppContainer(
 
     val routes by lazy { RouteRepository(database.routeDao()) }
 
-    val hikes by lazy { HikeRepository(database.hikeDao()) }
+    val hikeHeights by lazy {
+        HikeHeights(
+            appContext,
+            RegionOutline.of(
+                appContext.assets
+                    .open(REGIONS_OUTLINE)
+                    .bufferedReader()
+                    .use { it.readText() },
+            ),
+        ) { (relief.first().state as? RegionState.Ready)?.archive }
+    }
+
+    val hikes by lazy { HikeRepository(database.hikeDao(), hikeHeights::of, { media.delete(it) }) }
 
     val recorder by lazy { Recorder(appContext, hikes, ::places) }
 
     /** A saved Route the Routes tab asked the map to show, until the map takes it. */
     val routeToShow = MutableStateFlow<String?>(null)
+
+    /** A Hike the Hikes tab asked the map to show, until the map takes it. */
+    val hikeToShow = MutableStateFlow<String?>(null)
 
     val regions by lazy { regionStates(appContext) }
 
@@ -107,3 +126,5 @@ class AppContainer(
     fun positions(approximateOnly: Boolean): Flow<Location> =
         positionFixes(appContext, approximateOnly).withPositionOverride()
 }
+
+private const val REGIONS_OUTLINE = "map/regions.geojson"

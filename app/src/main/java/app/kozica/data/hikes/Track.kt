@@ -97,6 +97,33 @@ fun Track.movingSeconds(): Long =
         }
     }.roundToLong()
 
+/** Metres from the first point to each point in order, along each stretch and never across a pause. */
+fun Track.along(): List<Double> {
+    val along = mutableListOf<Double>()
+    var metres = 0.0
+    for (stretch in this) {
+        stretch.forEachIndexed { i, point ->
+            if (i > 0) metres += stretch[i - 1].metresTo(point)
+            along += metres
+        }
+    }
+    return along
+}
+
+/** The points [first] to [last] of the Track in order, both kept, in the stretches they were in (docs/phase-6.md § 4). */
+fun Track.trim(
+    first: Int,
+    last: Int,
+): Track {
+    var at = 0
+    return mapNotNull { stretch ->
+        val from = at
+        at += stretch.size
+        val kept = stretch.filterIndexed { i, _ -> from + i in first..last }
+        kept.takeIf { it.isNotEmpty() }
+    }
+}
+
 /** About 0.7 km/h, below the slowest climb on a steep Trail. */
 const val MOVING_METRES_PER_SECOND = 0.2
 

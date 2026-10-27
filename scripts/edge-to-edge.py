@@ -1290,10 +1290,14 @@ SCENES = [
     # --- a wiped install: the first launch, which no seeded run can show ------------------------
     Scene("home-empty", "home", [("wipe", "")], suite="empty"),
     Scene("routes-empty", "home", [("wipe", ""), ("tap", "Routes")], suite="empty"),
+    Scene("hikes-empty", "home", [("wipe", ""), ("tap", "Hikes")], suite="empty"),
 
-    # --- the two tabs, over the tab bar ---------------------------------------------------------
+    # --- the three tabs, over the tab bar ---------------------------------------------------------
     Scene("home", "home", []),
     Scene("routes", "home", [("tap", "Routes")]),
+    Scene("hikes", "home", [("tap", "Hikes")], seed="hikes"),
+    Scene("hike-sheet", "home", [("tap", "Hikes"), ("tap", "Kuźnice – Kasprowy Wierch")], seed="hikes"),
+    Scene("hike-trim", "home", [("tap", "Hikes"), ("tap", "Kuźnice – Kasprowy Wierch"), ("tap", "Trim")], seed="hikes"),
 
     # --- pushed screens: no bottom bar, so the navigation-bar inset is the app's own problem ----
     Scene("safety", "detail", [("tap", "Safety")]),

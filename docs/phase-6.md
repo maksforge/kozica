@@ -294,6 +294,11 @@ distance, total time and ascent. A Hike's details: the Track on the map with the
 faded as a Route's is, distance, moving time and total time, ascent and descent, the profile, the
 photos, the note, and Rename, Export (F), Trim and Delete.
 
+**The details open on the Map tab**, as a saved Route does (decided with the owner on 2026-10-27): a
+tapped Hike replaces whatever Route is on the map, its sheet takes the Route sheet's place, and a
+long press or a found place closes it again. One map, with everything it already draws, rather than
+a second map view in a screen of its own.
+
 **Moving time** leaves out pauses and stretches with no movement; **total time** runs from Record to
 Stop. Saved Routes and Hikes stay separate lists: one is a plan, the other what happened.
 
@@ -307,7 +312,8 @@ deleted with their rows.
 **Copy:** "Hikes", "No hikes yet. Press Record on the map to record one.", "Distance", "Moving
 time", "Total time", "Ascent", "Descent", "Rename", "Trim", "Trim the start and end of the track",
 "The cut part of the track is deleted. This can't be undone.", "Delete hike?", "Delete this hike and
-its %d photos? This can't be undone." (plural).
+its %d photos? This can't be undone." (plural), and "This can't be undone." alone for a Hike with no
+photos.
 
 ## 5. Ascent and descent
 
@@ -486,7 +492,7 @@ host.
 | R3 | The significant-motion sensor: present on both phones, and firing on the walk after the pause | `adb shell dumpsys sensorservice`; `adb logcat -s KozicaRecord` |**Present on both**: the test phone's MTK `SIGNIFICANT_MOTION`, and `sns_smd` on the owner's phone. Armed at a pause on the test phone (`motion sensor armed`). Firing on the walk is *(owed)* |
 | R4 | Process death mid-recording: the next launch offers resume or finish, and no point is lost | `adb root; adb shell kill -9 $(pidof <pkg>)` (emulator) during a recording; the pulled database |**Partly read on the API 33 emulator**, 2026-10-26: a recording with 4 fixes, then the kill. The next launch offered 'A hike didn't finish recording'; Resume started a new stretch and the bar carried the distance on (3.8 → 3.9 km); after Stop the Hike's row was there. No point counts were pulled, so "no point is lost" is *(owed)*. Not yet read on a phone |
 | R5 | Schema 2 to 3 on the test phone: the previous release-shaped build with a saved Route, this one over the top | `assembleDebug -PreleaseShapedDebug` both times; `dumpsys dbinfo` |**Pass**, 2026-10-26, test phone: the release-shaped build of 6cec096 (schema 2) showed a saved Route, 48.9609, 19.9825 – 48.9241, 20.0074, 26.9 km. The release-shaped build of 1c09169 (schema 3) went over the top with no schema screen. It showed the same Route, which is what shows `MIGRATION_2_3` kept the rows; `hikes` answered a query (`dumpsys dbinfo`), so schema 3 is live. A release-shaped build has `isDebuggable = false`, so no destructive fallback |
-| R6 | A Hike's ascent beside the planned Route over the same Trails | the Hikes tab and the Routes tab, same Trails | |
+| R6 | A Hike's ascent beside the planned Route over the same Trails | the Hikes tab and the Routes tab, same Trails | **Read on a recorded line, 2026-10-27**, test phone, debug build with the Regions, the network and the relief hand-pushed: the `route-hike` seed plans Kuźnice → Kasprowy Wierch and records its planned line as a Hike. Planned 969 m, the Hike 975 m from the grid, 6.5 km both; the network sums each edge's climb apart and the Hike one run, so the 6 m. The same build read 1,040 m for the `hikes` seed's Kasprowy line, as the host read it with `build-network.py`'s sampler (1,039.6 m). A walked Hike beside its Route is *(owed: the walk)* |
 | R7 | Auto Backup with photos past the budget: the database still in the backup | `adb shell bmgr backupnow`; the marker file | |
 | R8 | A GPX export opened in another app, with its photos as waypoints | the share sheet to Mapy.cz or Files | |
 | R9 | Each row of § 2's table, with the API level: on the owner's phone (API 36) approximate only, its upgrade kept, denied for good, notifications denied (does it record, what the bar says) and the notification swiped away (the service runs on); on the test phone (API 30) denied and location off; and on both, the `location` service starting with no `SecurityException` | `adb shell pm revoke`/`grant`, `cmd location set-location-enabled`, a screencap per state; `adb logcat -d \| grep SecurityException`; `adb shell dumpsys activity services` |**Partly read**, 2026-10-26. API 33 emulator, no screencaps: approximate only led to the precise-location screen; the next Record made the upgrade ask; notifications denied still recorded, with the bar's line. Owner's phone (API 36): location switched off mid-recording showed 'Location is off — nothing is being recorded' in the notification, and switching it back on brought back the distance; two screenshots at 20:13 of the recording bar and the notification, none of the location-off state. *Owed:* on the owner's phone approximate only, its upgrade kept, denied for good, notifications denied and the notification swiped away; on the test phone denied and location off; on both, the `location` service starting with no `SecurityException` |

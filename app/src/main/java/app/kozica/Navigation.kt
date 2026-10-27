@@ -32,6 +32,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.backup.BackupScreen
+import app.kozica.ui.hikes.HikesScreen
 import app.kozica.ui.map.MapScreen
 import app.kozica.ui.record.RecordingBar
 import app.kozica.ui.record.RecordingViewModel
@@ -69,7 +70,9 @@ internal fun appEntryDecorators(): List<NavEntryDecorator<NavKey>> =
 
 /**
  * The app shell: a [NavDisplay] rooted at [Home], so Back from anywhere walks back there and Back
- * from there exits, and the tab bar under the two tabs, Map and [Routes] (docs/phase-5.md § 5).
+ * from there exits, and the tab bar under the three tabs, Map, [Routes] and [Hikes]
+ * (docs/phase-5.md § 5, docs/phase-6.md § 4). A tab replaces the one above Home rather than
+ * stacking on it, so Back from either returns to the map.
  */
 @Composable
 fun MainNavigation(
@@ -82,6 +85,12 @@ fun MainNavigation(
     val backStack = rememberNavBackStack(Home)
     val activity = LocalActivity.current
     val showMap = { while (backStack.size > 1) backStack.removeLastOrNull() }
+    val showTab = { tab: NavKey ->
+        if (backStack.lastOrNull() != tab) {
+            showMap()
+            backStack.add(tab)
+        }
+    }
     val recording by recordingViewModel.state.collectAsStateWithLifecycle()
     val record =
         rememberRecordStart(
@@ -123,7 +132,7 @@ fun MainNavigation(
                         onStop = { stopping = true },
                     )
                 }
-                if (top == Home || top == Routes) {
+                if (top == Home || top == Routes || top == Hikes) {
                     NavigationBar {
                         NavigationBarItem(
                             selected = top == Home,
@@ -133,9 +142,15 @@ fun MainNavigation(
                         )
                         NavigationBarItem(
                             selected = top == Routes,
-                            onClick = { if (top != Routes) backStack.add(Routes) },
+                            onClick = { showTab(Routes) },
                             icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                             label = { Text(stringResource(R.string.routes_title)) },
+                        )
+                        NavigationBarItem(
+                            selected = top == Hikes,
+                            onClick = { showTab(Hikes) },
+                            icon = { Icon(painterResource(R.drawable.ic_hike), contentDescription = null) },
+                            label = { Text(stringResource(R.string.hikes_title)) },
                         )
                     }
                 }
@@ -175,6 +190,9 @@ fun MainNavigation(
                     }
                     entry<Routes> {
                         RoutesScreen(onShow = showMap)
+                    }
+                    entry<Hikes> {
+                        HikesScreen(onShow = showMap)
                     }
                     entry<Safety> {
                         SafetyScreen(onBack = { backStack.removeLastOrNull() })

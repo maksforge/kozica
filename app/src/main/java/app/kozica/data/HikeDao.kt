@@ -15,6 +15,92 @@ interface HikeDao {
     @Query("SELECT * FROM hikes WHERE id = :id")
     suspend fun get(id: String): HikeEntity?
 
+    @Query("SELECT * FROM hikes WHERE id = :id")
+    fun observe(id: String): Flow<HikeEntity?>
+
+    @Query(
+        "SELECT id, name, startedAt, endedAt, metres, ascentMetres, ascentFromGps FROM hikes " +
+            "WHERE endedAt IS NOT NULL ORDER BY startedAt DESC",
+    )
+    fun observeEnded(): Flow<List<HikeSummary>>
+
+    /** Ended Hikes whose height grid has not been read, at Stop or by a build before it was. */
+    @Query("SELECT id FROM hikes WHERE endedAt IS NOT NULL AND ascentMetres IS NULL")
+    suspend fun withoutClimb(): List<String>
+
+    @Query("UPDATE hikes SET name = :name WHERE id = :id")
+    suspend fun rename(
+        id: String,
+        name: String,
+    )
+
+    @Query(
+        "UPDATE hikes SET ascentMetres = :ascent, descentMetres = :descent, ascentFromGps = :fromGps " +
+            "WHERE id = :id",
+    )
+    suspend fun setClimb(
+        id: String,
+        ascent: Double,
+        descent: Double,
+        fromGps: Boolean,
+    )
+
+    @Query(
+        "UPDATE hikes SET startedAt = :startedAt, endedAt = :endedAt, track = :track, metres = :metres, " +
+            "movingSeconds = :movingSeconds, ascentMetres = :ascent, descentMetres = :descent, " +
+            "ascentFromGps = :fromGps WHERE id = :id",
+    )
+    suspend fun trimmed(
+        id: String,
+        startedAt: Instant,
+        endedAt: Instant,
+        track: ByteArray,
+        metres: Double,
+        movingSeconds: Long,
+        ascent: Double,
+        descent: Double,
+        fromGps: Boolean,
+    )
+
+    /** A photo taken outside the kept span keeps its place in the Hike but loses its pin (docs/phase-6.md § 4). */
+    @Query(
+        "UPDATE hike_photos SET latitude = NULL, longitude = NULL " +
+            "WHERE hikeId = :hikeId AND (takenAt < :from OR takenAt > :to)",
+    )
+    suspend fun unpinOutside(
+        hikeId: String,
+        from: Instant,
+        to: Instant,
+    )
+
+    @Transaction
+    suspend fun trim(
+        id: String,
+        trim: HikeTrim,
+    ) {
+        trimmed(
+            id,
+            trim.startedAt,
+            trim.endedAt,
+            trim.track,
+            trim.metres,
+            trim.movingSeconds,
+            trim.ascent,
+            trim.descent,
+            trim.fromGps,
+        )
+        unpinOutside(id, trim.startedAt, trim.endedAt)
+    }
+
+    @Query("SELECT COUNT(*) FROM hike_photos WHERE hikeId = :hikeId")
+    fun observePhotoCount(hikeId: String): Flow<Int>
+
+    @Insert
+    suspend fun insertPhoto(photo: HikePhotoEntity)
+
+    @Query("SELECT * FROM hike_photos WHERE hikeId = :hikeId")
+    suspend fun photos(hikeId: String): List<HikePhotoEntity>
+
     /** The Hike with no end, if a recording was lost with its process (docs/phase-6.md § 2). */
     @Query("SELECT * FROM hikes WHERE endedAt IS NULL ORDER BY startedAt DESC LIMIT 1")
     fun observeUnfinished(): Flow<HikeEntity?>
@@ -68,6 +154,28 @@ interface HikeDao {
         deletePoints(id)
     }
 }
+
+/** A Hike as the Hikes tab lists it, without its Track. */
+data class HikeSummary(
+    val id: String,
+    val name: String,
+    val startedAt: Instant,
+    val endedAt: Instant?,
+    val metres: Double,
+    val ascentMetres: Double?,
+    val ascentFromGps: Boolean,
+)
+
+class HikeTrim(
+    val startedAt: Instant,
+    val endedAt: Instant,
+    val track: ByteArray,
+    val metres: Double,
+    val movingSeconds: Long,
+    val ascent: Double,
+    val descent: Double,
+    val fromGps: Boolean,
+)
 
 class HikeEnding(
     val name: String,

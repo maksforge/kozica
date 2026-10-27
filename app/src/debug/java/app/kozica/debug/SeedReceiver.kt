@@ -49,6 +49,8 @@ class SeedReceiver : BroadcastReceiver() {
                     // before/after comparison and every listing screenshot depends on this fixture
                     // being the same fixture it was last week.
                     "" -> SampleData.seed(app.container.routes)
+                    "hikes" -> SampleData.seedHikes(app.container.hikes)
+                    "route-hike" -> SampleData.seedRouteHike(app.container.hikes, app.container::planRoute)
                     else -> {
                         pending.setResult(1, "unknown variant: $variant", null)
                         return@launch
