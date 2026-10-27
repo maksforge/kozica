@@ -8,7 +8,7 @@ the `VectorDrawable`s.
 | --- | --- | --- |
 | `mark.py`'s MARK and HOLE curves | anchor points in `draw-mark.py` → `mark.py`, in place | drawn — provenance below |
 | `drawable/ic_launcher_{background,foreground,monochrome}.xml`, `drawable/ic_notification.xml`, `mipmap-*`, `play-icon-512.png` | `mark.py` → `make-launcher-icon.py` | generated |
-| `play-feature-graphic.png` (1024×500) | `mark.py` (+ `feature-background.png` if present) → `make-feature-graphic.py` | generated |
+| `play-feature-graphic.png`, `play-feature-graphic-pl.png` (1024×500, English and Polish) | `mark.py` (+ `feature-background.png` if present) → `make-feature-graphic.py` | generated |
 | `play-screenshots/<n>_<scene>-<tag>.png` | `scripts/screenshots.py --build release --numbered` → `pad-screenshot.py` | — |
 
 ## The mark
