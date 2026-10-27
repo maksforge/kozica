@@ -162,4 +162,24 @@
     <string name="record_unfinished_finish">Zakończ na tym</string>
     <string name="record_auto_resume">Wznawiaj, gdy ruszę</string>
     <string name="record_auto_resume_hint">Wznawia się samo, gdy telefon wyczuje, że idziesz. Czasem może się wznowić, gdy siedzisz.</string>
+
+    <string name="hikes_title">Wycieczki</string>
+    <string name="hikes_empty">Nie masz jeszcze wycieczek. Naciśnij Nagraj wycieczkę na mapie, aby nagrać pierwszą.</string>
+    <string name="hike_distance">Dystans</string>
+    <string name="hike_moving_time">Czas w ruchu</string>
+    <string name="hike_total_time">Czas całkowity</string>
+    <string name="hike_from_gps">Częściowo z wysokości GPS, mniej dokładnie</string>
+    <string name="hike_close">Zamknij wycieczkę</string>
+    <string name="hike_trim">Przytnij</string>
+    <string name="hike_trim_title">Przytnij początek i koniec śladu</string>
+    <string name="hike_trim_body">Odcięta część śladu zostanie usunięta. Tego nie można cofnąć.</string>
+    <string name="hike_delete">Usuń</string>
+    <string name="hike_delete_title">Usunąć wycieczkę?</string>
+    <string name="hike_delete_body">Tego nie można cofnąć.</string>
+    <plurals name="hike_delete_body_photos">
+        <item quantity="one">Usunąć tę wycieczkę i jej %d zdjęcie? Tego nie można cofnąć.</item>
+        <item quantity="few">Usunąć tę wycieczkę i jej %d zdjęcia? Tego nie można cofnąć.</item>
+        <item quantity="many">Usunąć tę wycieczkę i jej %d zdjęć? Tego nie można cofnąć.</item>
+        <item quantity="other">Usunąć tę wycieczkę i jej %d zdjęcia? Tego nie można cofnąć.</item>
+    </plurals>
 </resources>
