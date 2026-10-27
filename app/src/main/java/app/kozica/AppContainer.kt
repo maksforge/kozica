@@ -17,6 +17,8 @@ import app.kozica.data.backup.BackupExports
 import app.kozica.data.backup.BackupRestorer
 import app.kozica.data.backup.EXPORTS_DIRECTORY
 import app.kozica.data.buildAppDatabase
+import app.kozica.data.gpx.GPX_DIRECTORY
+import app.kozica.data.gpx.GpxFiles
 import app.kozica.data.hikes.HikeHeights
 import app.kozica.data.location.positionFixes
 import app.kozica.data.location.withPositionOverride
@@ -115,6 +117,8 @@ class AppContainer(
     }
 
     val routes by lazy { RouteRepository(database.routeDao()) }
+
+    val gpxFiles by lazy { GpxFiles(File(appContext.cacheDir, GPX_DIRECTORY)) }
 
     val hikeHeights by lazy {
         HikeHeights(

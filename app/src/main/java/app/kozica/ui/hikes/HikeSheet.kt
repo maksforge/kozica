@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,6 +68,7 @@ internal fun HikeSheet(
     onSetNote: (String) -> Unit,
     onAddPhotos: () -> Unit,
     onOpenPhoto: (id: String) -> Unit,
+    onExportGpx: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -124,13 +126,14 @@ internal fun HikeSheet(
                     valueRange = 0f..total.toFloat(),
                 )
             }
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            FlowRow(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 if (keep == null) {
                     TextButton(onClick = {
                         draft = hike.name
                         renaming = true
                     }) { Text(stringResource(R.string.routes_rename)) }
                     TextButton(onClick = onStartTrim) { Text(stringResource(R.string.hike_trim)) }
+                    TextButton(onClick = onExportGpx) { Text(stringResource(R.string.gpx_export)) }
                     TextButton(onClick = { deleting = true }) { Text(stringResource(R.string.hike_delete)) }
                 } else {
                     TextButton(onClick = onCancelTrim) { Text(stringResource(R.string.action_cancel)) }

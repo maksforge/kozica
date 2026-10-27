@@ -26,6 +26,11 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
 settings, and your photos if you choose, to a single file. The file leaves the phone only when you
 share it or save it to a folder you choose yourself; the app sends it nowhere.
 
+**GPX files.** A hike or a saved route can be exported as a GPX file, for another map app or a
+watch. A hike's file holds its track with the times you walked it, its name, its note, and where
+its photos were taken, with their captions but not the photos. The file leaves the phone only
+through the app you pick to share it with.
+
 ## What the app can access, and why
 
 - **Your location**, only once you tap the position button and allow it, to draw where you are on
@@ -80,8 +85,7 @@ The app is not directed at children and collects nothing from anyone.
 
 Uninstalling the app removes everything it stored on the phone. A copy can be in three other places:
 
-- **A backup file you exported**, wherever you shared or saved it.
-
+- **A backup file or a GPX file you exported**, wherever you shared or saved it.
 - **Android's backup in your Google Drive**, if backup is on. It outlives an uninstall, which is how
   a reinstall gets your data back. Delete it under Backups in Google Drive, or manage it in your
   phone's backup settings.

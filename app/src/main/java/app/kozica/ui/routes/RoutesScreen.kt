@@ -23,11 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,9 +37,11 @@ import app.kozica.R
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.DetailScaffold
+import app.kozica.ui.common.shareGpx
 import app.kozica.ui.map.RouteNameDialog
 import app.kozica.ui.map.length
 import app.kozica.ui.map.walkingTime
+import kotlinx.coroutines.launch
 
 /** The Routes tab (docs/phase-5.md § 5): saved Routes by name; one opens on the map. */
 @Composable
@@ -51,6 +55,8 @@ fun RoutesScreen(
     var draft by rememberSaveable { mutableStateOf("") }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     val rows = state.routes
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     DetailScaffold(title = stringResource(R.string.routes_title), onBack = null, modifier = modifier) { content ->
         when {
@@ -77,6 +83,9 @@ fun RoutesScreen(
                                 draft = row.route.name
                             },
                             onDelete = { deleting = row.route.id },
+                            onExportGpx = {
+                                scope.launch { viewModel.exportGpx(row.route.id)?.let(context::shareGpx) }
+                            },
                         )
                     }
                 }
@@ -119,6 +128,7 @@ private fun RouteRowItem(
     onShow: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
+    onExportGpx: () -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var menu by remember { mutableStateOf(false) }
@@ -150,6 +160,14 @@ private fun RouteRowItem(
                     onClick = {
                         menu = false
                         onRename()
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.gpx_export)) },
+                    enabled = row.metres != null,
+                    onClick = {
+                        menu = false
+                        onExportGpx()
                     },
                 )
                 DropdownMenuItem(
