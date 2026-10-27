@@ -83,19 +83,21 @@ fun destructiveMigrationAllowed(): Boolean = BuildConfig.DEBUG
 /**
  * Builds the database.
  *
- * **Nothing may call this before the launch gate has decided** (ADR-0001). `MainApplication` holds
- * the only reference behind a `lazy` that is forced after the gate passes; that structure *is* the
- * guard, and it is the reason no repository, worker or ViewModel constructs a database of its own.
+ * **Nothing may call this for the live file before the launch gate has decided** (ADR-0001).
+ * `MainApplication` holds the only reference behind a `lazy` that is forced after the gate passes.
  *
- * `fallbackToDestructiveMigration(dropAllTables = true)` is applied only when
- * [destructiveMigrationAllowed] — an explicit `if` rather than a conditional argument, because the
- * two builds genuinely take different paths and reading it as one expression hides that.
+ * A restore opens its staged copy through this with [allowDestructiveMigration] pinned false, so a
+ * debug build never empties the file it was asked to restore (docs/phase-6.md § 7).
  */
-fun buildAppDatabase(context: Context): AppDatabase =
+fun buildAppDatabase(
+    context: Context,
+    name: String = APP_DATABASE_FILE,
+    allowDestructiveMigration: Boolean = destructiveMigrationAllowed(),
+): AppDatabase =
     Room
-        .databaseBuilder(context, AppDatabase::class.java, APP_DATABASE_FILE)
+        .databaseBuilder(context, AppDatabase::class.java, name)
         .apply {
-            if (destructiveMigrationAllowed()) {
+            if (allowDestructiveMigration) {
                 fallbackToDestructiveMigration(dropAllTables = true)
             } else {
                 addMigrations(*APP_MIGRATIONS)

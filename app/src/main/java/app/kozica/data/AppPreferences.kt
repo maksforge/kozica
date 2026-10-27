@@ -5,10 +5,12 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.time.Instant
 
 /** Which colour scheme applies, regardless of what the phone is set to. */
 enum class ThemeMode {
@@ -54,6 +56,7 @@ class AppPreferences(
         val MAP_ZOOM = doublePreferencesKey("map_zoom")
         val AUTO_RESUME = booleanPreferencesKey("auto_resume")
         val NOTIFICATIONS_ASKED = booleanPreferencesKey("notifications_asked")
+        val LAST_EVERYTHING_EXPORT = longPreferencesKey("last_everything_export")
     }
 
     /**
@@ -79,15 +82,12 @@ class AppPreferences(
      */
     val materialYou: Flow<Boolean> = store.data.map { it[Keys.MATERIAL_YOU] ?: false }
 
-    /**
-     * The tree Uri the user picked for automatic backups, if any.
-     *
-     * Stored as a string because that is what `Uri.toString()`/`Uri.parse()` round-trip, and because
-     * the persisted permission grant it refers to is held by the system, not here. A stored Uri whose
-     * grant has been revoked reads back fine and fails at write time — so treat this as a *hint*, and
-     * handle the failure where the write happens.
-     */
+    /** The remembered export folder's tree Uri: a hint, checked against the grants on every read. */
     val backupFolderUri: Flow<String?> = store.data.map { it[Keys.BACKUP_FOLDER_URI] }
+
+    /** When the last Everything export started, or null before the first (docs/phase-6.md § 7). */
+    val lastEverythingExport: Flow<Instant?> =
+        store.data.map { prefs -> prefs[Keys.LAST_EVERYTHING_EXPORT]?.let(Instant::ofEpochMilli) }
 
     /** The camera as the map screen last stopped on, or null before it ever has. */
     val mapCamera: Flow<MapCamera?> =
@@ -135,6 +135,19 @@ class AppPreferences(
             prefs[Keys.MAP_LATITUDE] = camera.latitude
             prefs[Keys.MAP_LONGITUDE] = camera.longitude
             prefs[Keys.MAP_ZOOM] = camera.zoom
+        }
+    }
+
+    suspend fun setLastEverythingExport(at: Instant?) {
+        store.edit { prefs ->
+            if (at ==
+                null
+            ) {
+                prefs.remove(Keys.LAST_EVERYTHING_EXPORT)
+            } else {
+                prefs[Keys.LAST_EVERYTHING_EXPORT] =
+                    at.toEpochMilli()
+            }
         }
     }
 

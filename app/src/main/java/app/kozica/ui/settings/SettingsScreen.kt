@@ -36,6 +36,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenLicences: () -> Unit,
     onOpenSupport: () -> Unit,
+    onOpenBackup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel =
         viewModel(factory = SettingsViewModel.Factory, extras = appViewModelExtras()),
@@ -79,6 +80,9 @@ fun SettingsScreen(
                     onChange = viewModel::setAutoResume,
                 )
             }
+
+            SectionHeader(stringResource(R.string.settings_data))
+            SettingsRow(stringResource(R.string.settings_backup), onClick = onOpenBackup)
 
             SectionHeader(stringResource(R.string.settings_language))
             LanguageRow()

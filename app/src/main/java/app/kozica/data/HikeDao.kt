@@ -105,6 +105,9 @@ interface HikeDao {
     @Insert
     suspend fun insertPhoto(photo: HikePhotoEntity)
 
+    @Query("SELECT COUNT(*) FROM hike_photos WHERE addedAt > :since")
+    fun observePhotosAddedAfter(since: Instant): Flow<Int>
+
     @Query("SELECT * FROM hike_photos WHERE hikeId = :hikeId")
     suspend fun photos(hikeId: String): List<HikePhotoEntity>
 

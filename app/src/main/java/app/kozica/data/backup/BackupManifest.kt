@@ -1,42 +1,47 @@
 package app.kozica.data.backup
 
+import app.kozica.media.MediaKind
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import java.time.Instant
 
-/** The entry inside the archive that says what the archive is. */
-const val MANIFEST_ENTRY = "manifest.json"
-
-/** Where the database copy sits inside the archive. */
-const val DATABASE_ENTRY = "database/kozica.db"
+/** The archive layout's version, apart from the database schema. */
+const val BACKUP_FORMAT_VERSION = 1
 
 /**
- * What a backup says about itself.
- *
- * **A restore reads this first and refuses on a schema it does not understand.** Without a manifest
- * the only way to find out an archive is from a newer version of the app is to open its database and
- * have Room throw — by which point the app has already replaced the live file. The manifest is what
- * makes "refuse politely" possible.
- *
- * Kotlin note: `@Serializable` with defaults is how kotlinx.serialization spells "optional". Give
- * every field added later a default, or a new version of the app cannot read an old archive.
+ * What an archive says about itself, and the authority for what it holds (ADR-0005): the
+ * confirmation reads this, never the filename. [mediaCounts] is keyed by [MediaKind.name] so an
+ * unknown kind decodes as an unknown key.
  */
 @Serializable
 data class BackupManifest(
-    /** The `APP_SCHEMA_VERSION` of the build that wrote it. */
+    val format: Int = BACKUP_FORMAT_VERSION,
+    val scope: BackupScope,
     val schemaVersion: Int,
-    /** Epoch millis. Shown to the user when they pick a file to restore. */
-    val createdAt: Long,
-    /** The app's `versionName`, for a human reading a support email. Never acted on. */
-    val appVersion: String = "",
-)
+    val createdAtEpochMilli: Long,
+    val mediaCounts: Map<String, Int> = emptyMap(),
+) {
+    val createdAt: Instant get() = Instant.ofEpochMilli(createdAtEpochMilli)
 
-/**
- * `ignoreUnknownKeys` so a *newer* archive with extra fields still parses far enough for the schema
- * check to reject it with a sentence instead of an exception. `isLenient` is deliberately not set:
- * the input is machine-written, and accepting malformed JSON would only hide a broken writer.
- */
-val backupJson: Json =
+    fun countFor(kind: MediaKind): Int = mediaCounts[kind.name] ?: 0
+}
+
+private val manifestJson =
     Json {
         ignoreUnknownKeys = true
+        encodeDefaults = true
         prettyPrint = true
+    }
+
+fun encodeManifest(manifest: BackupManifest): String = manifestJson.encodeToString(manifest)
+
+/** Null for anything that is not a manifest of ours, an unknown scope included. */
+fun decodeManifest(text: String): BackupManifest? =
+    try {
+        manifestJson.decodeFromString<BackupManifest>(text)
+    } catch (e: SerializationException) {
+        null
+    } catch (e: IllegalArgumentException) {
+        null
     }

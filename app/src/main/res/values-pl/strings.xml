@@ -89,6 +89,7 @@
     <string name="settings_language_system">Systemowy</string>
     <string name="settings_language_report">Coś brzmi nie tak?</string>
     <string name="settings_language_report_hint">Napisz, jeśli jakieś słowo jest nie tak w twoim języku. Otwiera aplikację pocztową z już wpisanym językiem, w którym czytasz.</string>
+    <string name="settings_data">Twoje dane</string>
     <string name="settings_backup">Kopia zapasowa i przywracanie</string>
     <string name="settings_about">O aplikacji</string>
     <string name="settings_support">Pomoc i opinie</string>
@@ -107,10 +108,80 @@
     <string name="support_rate_hint">Otwiera stronę aplikacji w Google Play. Ocena jest dobrowolna i niczego nie odblokowuje.</string>
     <string name="support_no_play">Na tym telefonie nie ma Google Play ani przeglądarki do otwarcia.</string>
 
+    <string name="backup_auto_title">Automatyczna kopia zapasowa</string>
+    <string name="backup_auto_never">Na tym telefonie nie odnotowano automatycznej kopii zapasowej</string>
+    <string name="backup_auto_recorded">Ostatnia automatyczna kopia: %1$s</string>
+    <string name="backup_auto_stale">Ostatnia automatyczna kopia: %1$s, ponad dwa tygodnie temu</string>
+    <plurals name="backup_auto_excluded">
+        <item quantity="one">%d miniatura zdjęcia się nie zmieściła i została pominięta</item>
+        <item quantity="few">%d miniatury zdjęć się nie zmieściły i zostały pominięte</item>
+        <item quantity="many">%d miniatur zdjęć się nie zmieściło i zostało pominiętych</item>
+        <item quantity="other">%d miniatury zdjęć się nie zmieściło i zostało pominiętych</item>
+    </plurals>
+    <string name="backup_auto_photos">Automatyczna kopia zachowuje twoje wycieczki, notatki i trasy, ale nie zdjęcia. Wyeksportuj wszystko, aby zachować zdjęcia.</string>
+    <string name="backup_auto_settings">Ustawienia kopii zapasowej</string>
+    <string name="backup_export_title">Eksport</string>
     <string name="backup_explainer">Wszystko zostaje na tym telefonie. Kopia zapasowa to pojedynczy plik, który przechowujesz, gdzie chcesz.</string>
-    <string name="backup_export_records">Eksportuj dane</string>
-    <string name="backup_export_everything">Eksportuj wszystko</string>
+    <string name="backup_scope_records">Dane</string>
+    <string name="backup_scope_everything">Wszystko</string>
+    <string name="backup_scope_records_help">Twoje wycieczki, notatki, trasy i ustawienia, z miniaturami zdjęć. Plik jest na tyle mały, że możesz wysłać go sobie mailem.</string>
+    <string name="backup_scope_everything_help">Dane i zdjęcia w pełnym rozmiarze. Plik może być duży.</string>
+    <string name="backup_export_share">Eksportuj i udostępnij</string>
+    <string name="backup_export_folder">Zapisz w folderze %1$s</string>
+    <string name="backup_exporting">Eksportowanie…</string>
+    <string name="backup_share">Udostępnij kopię zapasową</string>
+    <string name="backup_export_failed">Nie udało się zapisać kopii zapasowej. Sprawdź, czy na telefonie jest wolne miejsce.</string>
+    <string name="backup_folder_title">Folder eksportu</string>
+    <string name="backup_folder_none">Nie wybrano folderu. Kopia zapasowa otwiera menu udostępniania.</string>
+    <string name="backup_folder_chosen">Kopie zapasowe można zapisywać w folderze %1$s.</string>
+    <string name="backup_folder_unavailable">Kozica nie może już zapisywać w wybranym folderze. Wybierz go ponownie albo go zapomnij.</string>
+    <string name="backup_folder_choose">Wybierz folder</string>
+    <string name="backup_folder_change">Zmień folder</string>
+    <string name="backup_folder_forget">Zapomnij folder</string>
+    <string name="backup_folder_saved">Zapisano jako %1$s</string>
+    <string name="backup_folder_refused">Folder nie przyjął pliku, więc jest on w menu udostępniania.</string>
+    <string name="backup_folder_not_remembered">Kozica nie może zachować dostępu do tego folderu.</string>
+    <string name="backup_folder_no_picker">Na tym telefonie nie ma wyboru folderów.</string>
+    <string name="backup_restore_title">Przywracanie</string>
+    <string name="backup_restore_help">Przywrócenie zastępuje twoje wycieczki, notatki, trasy i ustawienia tymi z kopii. Zdjęcia, które są już na telefonie, zostają. To, co masz teraz, zostanie najpierw zapisane w sekcji Zapisane kopie.</string>
     <string name="backup_restore">Przywróć z pliku…</string>
+    <string name="backup_restore_confirm_title">Przywrócić tę kopię?</string>
+    <string name="backup_restore_confirm_body">Kopia „%1$s” z %2$s. Zastąpi twoje wycieczki, notatki, trasy i ustawienia. To, co masz teraz, zostanie najpierw zapisane.</string>
+    <string name="backup_restore_confirm">Przywróć</string>
+    <string name="backup_restoring">Przywracanie…</string>
+    <string name="backup_refused_title">Nie przywrócono</string>
+    <string name="backup_refused_not_a_backup">Ten plik nie jest kopią zapasową Kozicy. Na telefonie nic się nie zmieniło.</string>
+    <string name="backup_refused_newer">Tę kopię utworzyła nowsza wersja Kozicy (wersja danych %1$d; ta odczytuje najwyżej %2$d). Zaktualizuj aplikację i spróbuj ponownie. Na telefonie nic się nie zmieniło.</string>
+    <string name="backup_refused_too_large">Ten plik jest za duży, aby go przywrócić. Na telefonie nic się nie zmieniło.</string>
+    <string name="backup_refused_unreadable">Nie udało się otworzyć danych z tej kopii. Na telefonie nic się nie zmieniło.</string>
+    <string name="backup_restored_title">Przywrócono</string>
+    <string name="backup_restored_scope">Kopia „%1$s” z %2$s.</string>
+    <plurals name="backup_restored_images">
+        <item quantity="one">Przywrócono %d obraz.</item>
+        <item quantity="few">Przywrócono %d obrazy.</item>
+        <item quantity="many">Przywrócono %d obrazów.</item>
+        <item quantity="other">Przywrócono %d obrazu.</item>
+    </plurals>
+    <plurals name="backup_restored_kept">
+        <item quantity="one">Zachowano %d obraz, który był już na telefonie.</item>
+        <item quantity="few">Zachowano %d obrazy, które były już na telefonie.</item>
+        <item quantity="many">Zachowano %d obrazów, które były już na telefonie.</item>
+        <item quantity="other">Zachowano %d obrazu, które były już na telefonie.</item>
+    </plurals>
+    <string name="backup_restored_snapshot">To, co było wcześniej, jest zapisane w sekcji Zapisane kopie.</string>
+    <string name="backup_restored_close_help">Kozica zamknie się, aby to dokończyć. Otwórz ją ponownie, aby zobaczyć przywrócone dane.</string>
+    <string name="backup_restored_close">Zamknij Kozicę</string>
+    <string name="preserved_title">Zapisane kopie</string>
+    <string name="preserved_empty">Brak zapisanych kopii.</string>
+    <string name="preserved_help">Kozica zapisuje kopię przed każdym przywróceniem, więc przywrócenie można cofnąć, i nigdy sama jej nie usuwa.</string>
+    <string name="preserved_kind_snapshot">Sprzed przywrócenia</string>
+    <string name="preserved_kind_wipe">Ze starszej wersji aplikacji</string>
+    <string name="preserved_not_restorable">Kozica nie może jej wczytać z powrotem. Udostępnij ją, aby ją zachować.</string>
+    <string name="preserved_restore">Przywróć</string>
+    <string name="preserved_share">Udostępnij</string>
+    <string name="preserved_delete">Usuń</string>
+    <string name="preserved_delete_title">Usunąć tę kopię?</string>
+    <string name="preserved_delete_body">Plik %1$s zostanie usunięty. Tego nie można cofnąć.</string>
 
     <string name="licences_map_data">Dane mapy tej wersji</string>
     <string name="licences_map_data_hint">Otwiera stronę wydania tej wersji na GitHubie, gdzie pliki mapy są udostępnione na licencji Open Database License.</string>
@@ -198,4 +269,11 @@
         <item quantity="many">Nie udało się dodać %d zdjęć: Kozica nie może odczytać tych plików jako obrazów</item>
         <item quantity="other">Nie udało się dodać %d zdjęcia: Kozica nie może odczytać tych plików jako obrazów</item>
     </plurals>
+    <plurals name="hikes_photos_not_backed_up">
+        <item quantity="one">%d zdjęcie nie jest w żadnej kopii zapasowej</item>
+        <item quantity="few">%d zdjęcia nie są w żadnej kopii zapasowej</item>
+        <item quantity="many">%d zdjęć nie jest w żadnej kopii zapasowej</item>
+        <item quantity="other">%d zdjęcia nie jest w żadnej kopii zapasowej</item>
+    </plurals>
+    <string name="hikes_backup_export">Eksportuj</string>
 </resources>
