@@ -161,6 +161,22 @@ data class HikePhoto(
     val pin: Pin?,
 )
 
+/** Adds each of [sources] in turn, going on past one that fails; returns how many failed. */
+internal suspend fun <T> addEach(
+    sources: List<T>,
+    add: suspend (T) -> Unit,
+): Int =
+    sources.count { source ->
+        try {
+            add(source)
+            false
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            true
+        }
+    }
+
 /** The stored ascent, else one read from [heights] when at least one height came back. */
 internal fun shownClimb(
     stored: Climb?,
@@ -234,6 +250,7 @@ class MapViewModel(
     private val saveCaption: suspend (photoId: String, caption: String) -> Unit = { _, _ -> },
     private val savePinRemoved: suspend (photoId: String) -> Unit = {},
     private val deleteStoredPhoto: suspend (photoId: String) -> Unit = {},
+    private val photosLeftOut: MutableStateFlow<Int> = MutableStateFlow(0),
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -581,15 +598,8 @@ class MapViewModel(
         val id = shownHike.value ?: return
         if (sources.isEmpty()) return
         applicationScope.launch {
-            for (source in sources) {
-                try {
-                    savePhoto(id, source)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    // A picked file that does not decode as an image is left out; the rest go on.
-                }
-            }
+            val failed = addEach(sources) { savePhoto(id, it) }
+            if (failed > 0) photosLeftOut.update { it + failed }
         }
     }
 
@@ -724,6 +734,7 @@ class MapViewModel(
                         saveCaption = app.container.hikes::setCaption,
                         savePinRemoved = app.container.hikes::unpin,
                         deleteStoredPhoto = app.container.hikes::deletePhoto,
+                        photosLeftOut = app.container.photosLeftOut,
                     )
                 }
             }

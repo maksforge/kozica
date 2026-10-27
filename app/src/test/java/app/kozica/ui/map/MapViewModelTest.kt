@@ -380,6 +380,26 @@ class MapViewModelTest {
             assertEquals(listOf("caption p Hala", "unpin p", "delete p"), stored)
         }
 
+    @Test
+    fun `a picked file that is not an image is counted and the rest are still added`() =
+        runTest {
+            val added = mutableListOf<String>()
+
+            val failed =
+                addEach(listOf("a.jpg", "empty.png", "b.jpg")) {
+                    if (it ==
+                        "empty.png"
+                    ) {
+                        error("not an image")
+                    } else {
+                        added += it
+                    }
+                }
+
+            assertEquals(listOf("a.jpg", "b.jpg"), added)
+            assertEquals(1, failed)
+        }
+
     private suspend fun settled(
         viewModel: MapViewModel,
         until: (MapUiState) -> Boolean,

@@ -112,7 +112,7 @@ class HikeRepository(
         caption: String,
     ) = dao.setCaption(photoId, caption.trim().ifEmpty { null })
 
-    /** "Remove from hike": the photo stays in the Hike's strip, off its Track and map (decided with the owner on 2026-10-27). */
+    /** "Remove from map": the photo stays in the Hike's strip, off its Track and map (decided with the owner on 2026-10-27). */
     suspend fun unpin(photoId: String) = dao.unpin(photoId)
 
     /** The row, then its files. */

@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,8 +31,10 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.backup.BackupScreen
+import app.kozica.ui.common.WarningBanner
 import app.kozica.ui.hikes.HikesScreen
 import app.kozica.ui.map.MapScreen
 import app.kozica.ui.record.RecordingBar
@@ -126,6 +129,19 @@ fun MainNavigation(
         bottomBar = {
             val top = backStack.lastOrNull()
             Column {
+                if (recording.photosLeftOut > 0) {
+                    WarningBanner(
+                        title =
+                            pluralStringResource(
+                                R.plurals.photos_left_out,
+                                recording.photosLeftOut,
+                                recording.photosLeftOut,
+                            ),
+                        actionLabel = stringResource(R.string.action_ok),
+                        onAct = recordingViewModel::dismissPhotosLeftOut,
+                        modifier = Modifier.padding(Spacing.tight),
+                    )
+                }
                 recording.recording?.let {
                     RecordingBar(
                         recording = it,

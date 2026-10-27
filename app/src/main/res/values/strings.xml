@@ -23,6 +23,7 @@
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_save">Save</string>
+    <string name="action_ok">OK</string>
 
     <!-- "Maps" are the Regions, which arrive from Play after the install. %1$d of %2$d have arrived. "Play" is the Google Play Store app. -->
     <string name="map_downloading">Downloading maps — %1$d of %2$d</string>
@@ -265,8 +266,13 @@
     <string name="hike_add_note">Add a note</string>
     <!-- A short text under one photo. -->
     <string name="photo_caption">Caption</string>
-    <!-- Takes the photo's pin off the hike's track and map; the photo itself stays in the hike. -->
-    <string name="photo_remove">Remove from hike</string>
+    <!-- Takes the photo's pin off the hike's track on the map; the photo itself stays in the hike. -->
+    <string name="photo_remove">Remove from map</string>
     <string name="photo_delete">Delete photo</string>
     <string name="photo_close">Close photo</string>
+    <!-- Over the tab bar when a taken or picked file could not be read as an image; %d is never zero. -->
+    <plurals name="photos_left_out">
+        <item quantity="one">%d photo couldn\'t be added: the file isn\'t an image Kozica can read</item>
+        <item quantity="other">%d photos couldn\'t be added: the files aren\'t images Kozica can read</item>
+    </plurals>
 </resources>
