@@ -36,6 +36,9 @@
         The three <package> entries are the Safety screen's rescue apps, and they are load-bearing:
         `getLaunchIntentForPackage` returns null for a package this app cannot see, and that null is
         how the screen tells an installed app from a missing one.
+
+        The two SEND entries are load-bearing too: ui/common/Share.kt grants each app that takes a
+        share its read access ahead of the share sheet, and lists them through these.
     -->
     <queries>
         <intent>
@@ -56,6 +59,14 @@
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND_MULTIPLE" />
+            <data android:mimeType="*/*" />
         </intent>
     </queries>
 
