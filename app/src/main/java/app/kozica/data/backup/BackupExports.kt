@@ -46,16 +46,23 @@ class BackupExports(
         toFolder: Boolean,
     ): ExportResult {
         val now = Instant.now()
-        val archive =
-            lock.withLock {
+        return lock.withLock {
+            val archive =
                 try {
                     withContext(Dispatchers.IO) { exportsDir.deleteRecursively() }
                     exporter.exportTo(File(exportsDir, exportFileName(scope, now)), scope, now)
                 } catch (e: IOException) {
                     return ExportResult.Failed
                 }
-            }
-        if (scope == BackupScope.Everything) preferences.setLastEverythingExport(now)
+            if (scope == BackupScope.Everything) preferences.setLastEverythingExport(now)
+            handOver(archive, toFolder)
+        }
+    }
+
+    private suspend fun handOver(
+        archive: File,
+        toFolder: Boolean,
+    ): ExportResult {
         if (!toFolder) return ExportResult.Share(archive)
         return when (val folder = contentResolver.exportFolderState(preferences.backupFolderUri.first())) {
             ExportFolderState.None -> ExportResult.Share(archive)

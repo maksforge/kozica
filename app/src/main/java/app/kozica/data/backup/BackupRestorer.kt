@@ -37,13 +37,15 @@ const val RESTORE_MAX_TOTAL_BYTES: Long = 2L * 1024 * 1024 * 1024
 
 sealed interface RestoreOutcome {
     /**
-     * [snapshot] is the Records export of what was replaced, in `preserved/`. [mediaComplete] is
-     * false when an image could not be written; the database is restored either way.
+     * [snapshot] is the Records export of what was replaced, in `preserved/`. [imagesWritten]
+     * counts what reached the disk; [mediaComplete] is false when an image could not be written. The
+     * database is restored either way.
      */
     data class Restored(
         val manifest: BackupManifest,
         val merge: MediaMergePlan,
         val snapshot: File,
+        val imagesWritten: Int = 0,
         val mediaComplete: Boolean = true,
     ) : RestoreOutcome
 
@@ -180,11 +182,11 @@ class BackupRestorer(
                 )
 
             swapInStagedDatabase()
-            val mediaComplete = extractMedia(open)
+            val media = extractMedia(open)
             if (stagedPreferences.isFile) stagedPreferences.renameTo(File(filesDir, RESTORED_PREFERENCES_PATH))
             if (declared.scope == BackupScope.Everything) stageEverythingExport(declared.createdAtEpochMilli)
 
-            RestoreOutcome.Restored(declared, merge, snapshot, mediaComplete)
+            RestoreOutcome.Restored(declared, merge, snapshot, media.written, media.complete)
         }
 
     /** Opens the copy with the real migrations; false when this build cannot open it at all. */
@@ -213,15 +215,24 @@ class BackupRestorer(
         PRESERVED_SIDECAR_SUFFIXES.forEach { File(staged.path + it).delete() }
     }
 
-    /** A name already on the phone is the same image (ADR-0005), so it is never written over. */
-    private fun extractMedia(open: () -> InputStream): Boolean =
-        forEachEntry(open) { entry, stream ->
-            if (entry is ArchiveEntry.Media) {
-                val target = File(filesDir, entry.relativePath)
-                if (!target.exists()) stream.drainThroughPartTo(target)
+    /** Through a `.part`, so an image already on the phone is replaced whole or not at all. */
+    private fun extractMedia(open: () -> InputStream): MediaPass {
+        var written = 0
+        val complete =
+            forEachEntry(open) { entry, stream ->
+                if (entry is ArchiveEntry.Media) {
+                    stream.drainThroughPartTo(File(filesDir, entry.relativePath))
+                    written++
+                }
+                true
             }
-            true
-        }
+        return MediaPass(written, complete)
+    }
+
+    private data class MediaPass(
+        val written: Int,
+        val complete: Boolean,
+    )
 
     /** Best effort: losing it only brings the Hikes banner back. */
     private fun stageEverythingExport(createdAtEpochMilli: Long) {

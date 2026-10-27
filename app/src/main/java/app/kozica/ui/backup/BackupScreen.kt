@@ -380,7 +380,7 @@ private fun RestoreFinished(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(top = Spacing.base),
         )
-        val overlaid = restored.merge.overlaid.size
+        val overlaid = restored.imagesWritten
         Text(
             pluralStringResource(R.plurals.backup_restored_images, overlaid, overlaid),
             style = MaterialTheme.typography.bodyMedium,

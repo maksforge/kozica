@@ -229,21 +229,22 @@ class RestoreTest {
         }
 
     @Test
-    fun anEverythingRestoreNeverWritesOverAPhotoAlreadyThereAndStagesItsTime() =
+    fun anEverythingRestoreRepairsAPhotoAlreadyThereAndStagesItsTime() =
         runTest {
-            val kept = File(filesDir, "photos/3f2504e0-4f89-41d3-9a0c-0305e82c3303.jpg")
+            val damaged = File(filesDir, "photos/3f2504e0-4f89-41d3-9a0c-0305e82c3303.jpg")
             val added = File(filesDir, "photos/3f2504e0-4f89-41d3-9a0c-0305e82c3304.jpg")
-            listOf(kept, added).forEach { it.apply { parentFile?.mkdirs() }.writeText("from the archive") }
+            listOf(damaged, added).forEach { it.apply { parentFile?.mkdirs() }.writeText("from the archive") }
             val archive =
                 exporterFor(databaseHolding("Restored"))
                     .exportTo(File(root, "a.zip"), BackupScope.Everything, Instant.ofEpochMilli(1_793_088_000_000))
-            kept.writeText("already on the phone")
+            damaged.writeText("")
             added.delete()
 
             val outcome = restorerFor(databaseHolding("Already here")).restore(open = { archive.inputStream() })
 
             assertTrue((outcome as RestoreOutcome.Restored).mediaComplete)
-            assertEquals("already on the phone", kept.readText())
+            assertEquals(2, outcome.imagesWritten)
+            assertEquals("from the archive", damaged.readText())
             assertEquals("from the archive", added.readText())
             assertTrue(File(filesDir, "photos").listFiles()!!.none { it.name.endsWith(".part") })
             assertEquals(Instant.ofEpochMilli(1_793_088_000_000), adoptRestoredEverythingExport(filesDir))
