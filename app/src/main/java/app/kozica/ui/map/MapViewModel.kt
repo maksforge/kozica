@@ -594,11 +594,13 @@ class MapViewModel(
     }
 
     /** One at a time, past the screen's life, each appearing in the strip as it is written. */
-    fun addPhotos(sources: List<Uri>) {
-        val id = shownHike.value ?: return
+    fun addPhotos(
+        hikeId: String,
+        sources: List<Uri>,
+    ) {
         if (sources.isEmpty()) return
         applicationScope.launch {
-            val failed = addEach(sources) { savePhoto(id, it) }
+            val failed = addEach(sources) { savePhoto(hikeId, it) }
             if (failed > 0) photosLeftOut.update { it + failed }
         }
     }

@@ -134,6 +134,9 @@ internal fun PhotoViewer(
             confirmButton = {
                 TextButton(onClick = {
                     deleting = false
+                    // Moved off first, since the screen closes the viewer on a photo it can no longer find.
+                    val next = photos.getOrNull(pager.currentPage + 1) ?: photos.getOrNull(pager.currentPage - 1)
+                    if (next != null) onShown(next.id) else onClose()
                     onDelete(current.id)
                 }) { Text(stringResource(R.string.hike_delete)) }
             },
