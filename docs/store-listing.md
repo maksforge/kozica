@@ -263,3 +263,17 @@ Record a hike: press Record on the map and Kozica keeps your track with the scre
 ```
 Nagraj wycieczkę: naciśnij Nagraj wycieczkę na mapie, a Kozica zapisze twój ślad przy wygaszonym ekranie i telefonie w kieszeni, z przyciskami Wstrzymaj i Zakończ w powiadomieniu. W karcie Wycieczki czekają z dystansem, czasami, podejściami i profilem. Dodaj notatkę i zdjęcia z aparatu albo wybrane potem – trafią tam, gdzie je zrobiono. Wycieczki i trasy wyeksportujesz do GPX. W Ustawieniach zapiszesz wszystko w jednym pliku, ze zdjęciami, i przywrócisz na dowolnym telefonie. Bez internetu.
 ```
+
+### 0.9.1 — the recording notification in the app's language
+
+**English** — 176/500:
+
+```
+The hike recording notification and the names of new hikes now follow the language you chose in Kozica's settings on Android 12 and older too, instead of your phone's language.
+```
+
+**Polish** — 170/500:
+
+```
+Powiadomienie o nagrywaniu wycieczki i nazwy nowych wycieczek są teraz w języku wybranym w ustawieniach Kozicy także na Androidzie 12 i starszym, a nie w języku telefonu.
+```
