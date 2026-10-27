@@ -97,6 +97,12 @@ class GpxTest {
         assertEquals("kozica 2026-10-27.gpx", gpxFileName("?*", date))
     }
 
+    @Test
+    fun `a file name cut short never ends halfway through an emoji`() {
+        val date = LocalDate.of(2026, 10, 27)
+        assertEquals("${"a".repeat(59)} 2026-10-27.gpx", gpxFileName("a".repeat(59) + "\uD83C\uDFD4 Tatry", date))
+    }
+
     private fun parse(gpx: Gpx): Document {
         val text = StringBuilder().also { gpx.write(it) }.toString()
         val factory = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }

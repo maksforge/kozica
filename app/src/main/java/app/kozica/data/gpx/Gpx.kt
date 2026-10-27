@@ -114,6 +114,7 @@ fun gpxFileName(
             .filterNot { it in FORBIDDEN_IN_FILE_NAMES || it.isISOControl() }
             .trim()
             .take(MAX_NAME_CHARS)
+            .let { if (it.lastOrNull()?.isHighSurrogate() == true) it.dropLast(1) else it }
             .trim()
     return if (safe.isEmpty()) "kozica $date.gpx" else "$safe $date.gpx"
 }
