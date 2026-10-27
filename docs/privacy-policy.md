@@ -5,7 +5,7 @@ title: Privacy Policy
 
 # Privacy Policy
 
-_Last updated: 26 October 2026_
+_Last updated: 27 October 2026_
 
 Kozica is an Android app for hiking in the Polish mountains: an offline map of the trails, drawn in
 their signpost colours. This policy describes what the app does with information about you. It is
@@ -22,13 +22,17 @@ readable only by the app.
 
 There is no analytics, no crash reporting, no advertising, and no third-party SDK that phones home.
 
+**Backup files.** Settings has **Backup and restore**, which writes your routes, hikes, notes and
+settings, and your photos if you choose, to a single file. The file leaves the phone only when you
+share it or save it to a folder you choose yourself; the app sends it nowhere.
+
 ## What the app can access, and why
 
 - **Your location**, only once you tap the position button and allow it, to draw where you are on
   the map. It is read on the phone and used there, never sent anywhere, and the app keeps no record
   of it. The map does remember where you left it, in the app's settings: if you last used the
-  position button to centre it, that spot is where you were. The settings are not part of Android's
-  backup below, so that spot stays on the phone. You can allow only an approximate location, or none, and
+  position button to centre it, that spot is where you were. The settings go into Android's backup
+  below with the rest of the app's data. You can allow only an approximate location, or none, and
   the map works without it.
 - **Your location while you record a hike**, only once you tap Record and allow precise location. The
   app then keeps the hike's track, where you walked and when, in its private storage on the phone,
@@ -57,11 +61,11 @@ These are done by the operating system or by Google, not by Kozica, but they are
 "where could my data be":
 
 1. **Android's automatic backup.** If it is enabled on your phone, Android backs up the app's
-   database, which holds your saved routes and your recorded hikes with their tracks, and its small
-   preview images, not its settings, to your
-   own Google Drive, in a space
-   that does not count against your storage quota and that Google states apps cannot read. You can
-   turn this off in your phone's settings.
+   database, which holds your saved routes and your recorded hikes with their tracks and notes, its
+   settings, and as many of its small photo previews as fit, not the photos themselves, to your own
+   Google Drive, in a space that does not count against your storage quota and that Google states
+   apps cannot read. When you move to a new phone with Android's own phone-to-phone transfer, the
+   photos go too, straight to the new phone. You can turn backup off in your phone's settings.
 2. **Google Play.** Installing and updating an app is a transaction between your phone and Google,
    with its own privacy policy. The developer of this app receives aggregate, anonymous statistics —
    install counts, crash rates, country-level breakdowns — and no information about individuals.
@@ -74,7 +78,9 @@ The app is not directed at children and collects nothing from anyone.
 
 ## Deleting your data
 
-Uninstalling the app removes everything it stored on the phone. A copy can be in two other places:
+Uninstalling the app removes everything it stored on the phone. A copy can be in three other places:
+
+- **A backup file you exported**, wherever you shared or saved it.
 
 - **Android's backup in your Google Drive**, if backup is on. It outlives an uninstall, which is how
   a reinstall gets your data back. Delete it under Backups in Google Drive, or manage it in your
