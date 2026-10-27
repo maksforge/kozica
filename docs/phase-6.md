@@ -482,7 +482,8 @@ target reopening the file after the ROM killed the app starts the process too.
   the user's own share; at F, so does a GPX.
 - **`play-app-content.md`** (B): the `location` foreground service's declaration and its answers
   (the owner's, with a short video), recording a Hike added to the `ACCESS_FINE_LOCATION` and
-  `ACCESS_COARSE_LOCATION` rows, and Data safety's reasoning for stored location. It stays "no data collected": nothing is transmitted off the device by the app.
+  `ACCESS_COARSE_LOCATION` rows, and Data safety's reasoning for stored location. It stays "no data
+  collected": nothing is transmitted off the device by the app.
 - **`scripts/aab-permissions.py`** (B): `FOREGROUND_SERVICE_LOCATION` and `POST_NOTIFICATIONS` join
   the allowlist, and `FOREGROUND_SERVICE`, `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` gain
   the recording as a reason, in step with `play-app-content.md`'s rows.
