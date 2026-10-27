@@ -169,6 +169,7 @@
         <item quantity="one">%d photo preview didn\'t fit and was left out</item>
         <item quantity="other">%d photo previews didn\'t fit and were left out</item>
     </plurals>
+    <string name="backup_auto_over_quota">The last automatic backup was too large for Android\'s backup space and wasn\'t saved. Export to keep a copy.</string>
     <string name="backup_auto_photos">Automatic backup keeps your hikes, notes and Routes, not your photos. Export everything to keep the photos.</string>
     <!-- Opens Android's own backup settings. -->
     <string name="backup_auto_settings">Backup settings</string>
@@ -212,6 +213,7 @@
     <string name="backup_refused_newer">This backup was made by a newer version of Kozica (data version %1$d; this one reads up to %2$d). Update the app and try again. Nothing on the phone was changed.</string>
     <string name="backup_refused_too_large">This file is too large to restore. Nothing on the phone was changed.</string>
     <string name="backup_refused_unreadable">The data in this backup couldn\'t be opened. Nothing on the phone was changed.</string>
+    <string name="backup_refused_recording">A hike is still recording. Stop or finish it first, then restore. Nothing on the phone was changed.</string>
     <string name="backup_restored_title">Restored</string>
     <!-- %1$s is "Records" or "Everything", %2$s the date and time the backup was made. -->
     <string name="backup_restored_scope">%1$s backup from %2$s.</string>
@@ -225,6 +227,7 @@
         <item quantity="one">%d image already on the phone was kept.</item>
         <item quantity="other">%d images already on the phone were kept.</item>
     </plurals>
+    <string name="backup_restored_media_incomplete">Some images couldn\'t be written, probably for lack of space. Keep the backup file: it still has them.</string>
     <string name="backup_restored_snapshot">What you had before is saved under Saved copies.</string>
     <string name="backup_restored_close_help">Kozica closes to finish. Open it again to see the restored data.</string>
     <string name="backup_restored_close">Close Kozica</string>

@@ -8,7 +8,6 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.IOException
 
 /*
@@ -71,29 +70,49 @@ fun ContentResolver.exportFolderState(stored: String?): ExportFolderState {
     return ExportFolderState.Remembered(uri = uri, label = label)
 }
 
-/** Never throws: any provider failure is [FolderWrite.Refused], and the caller shares instead. */
+/**
+ * Never throws: any provider failure is [FolderWrite.Refused], and the caller shares instead. A
+ * document left half-written is deleted, so the folder never holds a zip that looks whole and is not.
+ */
 suspend fun ContentResolver.writeExportToFolder(
     tree: Uri,
     archive: File,
 ): FolderWrite =
     withContext(Dispatchers.IO) {
-        try {
-            val parent = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
-            val target =
+        val target =
+            providerCall {
+                val parent =
+                    DocumentsContract.buildDocumentUriUsingTree(
+                        tree,
+                        DocumentsContract.getTreeDocumentId(tree),
+                    )
                 DocumentsContract.createDocument(this@writeExportToFolder, parent, ZIP_MIME, archive.name)
-                    ?: return@withContext FolderWrite.Refused
-            val output = openOutputStream(target) ?: return@withContext FolderWrite.Refused
-            output.use { archive.inputStream().use { input -> input.copyTo(output) } }
+            } ?: return@withContext FolderWrite.Refused
+        val copied =
+            providerCall {
+                openOutputStream(target)?.use { output -> archive.inputStream().use { it.copyTo(output) } }
+            } != null
+        if (copied) {
             FolderWrite.Written(displayName(target) ?: archive.name)
-        } catch (e: FileNotFoundException) {
-            FolderWrite.Refused
-        } catch (e: IOException) {
-            FolderWrite.Refused
-        } catch (e: SecurityException) {
-            FolderWrite.Refused
-        } catch (e: IllegalArgumentException) {
+        } else {
+            providerCall { DocumentsContract.deleteDocument(this@writeExportToFolder, target) }
             FolderWrite.Refused
         }
+    }
+
+private inline fun <T> providerCall(call: () -> T): T? =
+    try {
+        call()
+    } catch (e: IOException) {
+        null
+    } catch (e: SecurityException) {
+        null
+    } catch (e: IllegalArgumentException) {
+        null
+    } catch (e: IllegalStateException) {
+        null
+    } catch (e: UnsupportedOperationException) {
+        null
     }
 
 /** A tree Uri is not a document Uri; the provider answers only for the rebuilt one. */

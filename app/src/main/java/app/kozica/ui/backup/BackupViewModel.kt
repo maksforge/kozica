@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -175,8 +176,13 @@ class BackupViewModel(
 
     fun confirmRestore() {
         val pending = transient.value.pendingRestore ?: return
+        if (transient.value.working != null) return
         transient.update { it.copy(working = BackupWork.Restoring, pendingRestore = null) }
         viewModelScope.launch {
+            if (container.hikes.observeUnfinished().first() != null) {
+                transient.update { it.copy(working = null, refusal = RestoreRefusal.RecordingUnderway) }
+                return@launch
+            }
             val outcome = container.backupRestorer.restore(open = { pending.source.open() })
             transient.update {
                 when (outcome) {

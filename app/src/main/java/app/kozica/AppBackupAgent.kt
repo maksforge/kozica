@@ -13,6 +13,7 @@ import app.kozica.data.backup.autoBackupFileSet
 import app.kozica.data.backup.checkpointDatabaseTo
 import app.kozica.data.backup.clearAutoBackupMarker
 import app.kozica.data.backup.writeAutoBackupMarker
+import app.kozica.data.backup.writeOverQuotaMarker
 import java.io.File
 import java.time.Instant
 
@@ -29,12 +30,19 @@ class AppBackupAgent : BackupAgent() {
             if (databaseFile.isFile) checkpointDatabaseTo(databaseFile, staged)
             val set = autoBackupFileSet(filesDir, staged, deviceToDeviceTransfer = data.isDeviceToDeviceTransfer())
             set.files.forEach { fullBackupFile(it, data) }
-            // The transport can still fail after this; there is no callback to say so.
+            // A quota rejection comes back through onQuotaExceeded; no other transport failure does.
             writeAutoBackupMarker(filesDir, Instant.now(), set.excludedThumbnails)
         } finally {
             staged.delete()
             staged.parentFile?.delete()
         }
+    }
+
+    override fun onQuotaExceeded(
+        backupDataBytes: Long,
+        quotaBytes: Long,
+    ) {
+        writeOverQuotaMarker(filesDir)
     }
 
     override fun onRestoreFinished() {

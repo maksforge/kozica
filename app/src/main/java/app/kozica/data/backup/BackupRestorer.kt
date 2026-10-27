@@ -12,6 +12,8 @@ import app.kozica.data.buildAppDatabase
 import app.kozica.data.readUserVersion
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
@@ -27,15 +29,22 @@ const val STAGED_DATABASE_FILE = "restore-staged.db"
  */
 const val RESTORED_PREFERENCES_PATH = "restore/app_preferences.preferences_pb"
 
+/** A restored Everything archive's time, relative to `filesDir`, for the next process start. */
+const val RESTORED_EVERYTHING_EXPORT_PATH = "restore/everything-export.txt"
+
 /** A floor under a hostile or broken archive filling the phone. */
 const val RESTORE_MAX_TOTAL_BYTES: Long = 2L * 1024 * 1024 * 1024
 
 sealed interface RestoreOutcome {
-    /** [snapshot] is the Records export of what was replaced, in `preserved/`. */
+    /**
+     * [snapshot] is the Records export of what was replaced, in `preserved/`. [mediaComplete] is
+     * false when an image could not be written; the database is restored either way.
+     */
     data class Restored(
         val manifest: BackupManifest,
         val merge: MediaMergePlan,
         val snapshot: File,
+        val mediaComplete: Boolean = true,
     ) : RestoreOutcome
 
     /** Nothing on the phone was touched. */
@@ -55,6 +64,9 @@ sealed interface RestoreRefusal {
     data object TooLarge : RestoreRefusal
 
     data object Unreadable : RestoreRefusal
+
+    /** Checked by the caller: a restore would swap the database under the recording. */
+    data object RecordingUnderway : RestoreRefusal
 }
 
 /**
@@ -67,6 +79,7 @@ class BackupRestorer(
     private val preservedDir: File,
     private val exporter: BackupExporter,
     private val databaseName: String,
+    private val lock: Mutex = Mutex(),
     private val schemaVersion: Int = APP_SCHEMA_VERSION,
     private val io: CoroutineDispatcher = Dispatchers.IO,
 ) {
@@ -93,6 +106,11 @@ class BackupRestorer(
     suspend fun restore(
         open: () -> InputStream,
         now: Instant = Instant.now(),
+    ): RestoreOutcome = lock.withLock { restoreUnlocked(open, now) }
+
+    private suspend fun restoreUnlocked(
+        open: () -> InputStream,
+        now: Instant,
     ): RestoreOutcome =
         withContext(io) {
             clearStaging()
@@ -162,10 +180,11 @@ class BackupRestorer(
                 )
 
             swapInStagedDatabase()
-            extractMedia(open)
+            val mediaComplete = extractMedia(open)
             if (stagedPreferences.isFile) stagedPreferences.renameTo(File(filesDir, RESTORED_PREFERENCES_PATH))
+            if (declared.scope == BackupScope.Everything) stageEverythingExport(declared.createdAtEpochMilli)
 
-            RestoreOutcome.Restored(manifest = declared, merge = merge, snapshot = snapshot)
+            RestoreOutcome.Restored(declared, merge, snapshot, mediaComplete)
         }
 
     /** Opens the copy with the real migrations; false when this build cannot open it at all. */
@@ -194,10 +213,25 @@ class BackupRestorer(
         PRESERVED_SIDECAR_SUFFIXES.forEach { File(staged.path + it).delete() }
     }
 
-    private fun extractMedia(open: () -> InputStream) {
+    /** A name already on the phone is the same image (ADR-0005), so it is never written over. */
+    private fun extractMedia(open: () -> InputStream): Boolean =
         forEachEntry(open) { entry, stream ->
-            if (entry is ArchiveEntry.Media) stream.drainTo(File(filesDir, entry.relativePath))
+            if (entry is ArchiveEntry.Media) {
+                val target = File(filesDir, entry.relativePath)
+                if (!target.exists()) stream.drainThroughPartTo(target)
+            }
             true
+        }
+
+    /** Best effort: losing it only brings the Hikes banner back. */
+    private fun stageEverythingExport(createdAtEpochMilli: Long) {
+        try {
+            File(filesDir, RESTORED_EVERYTHING_EXPORT_PATH).apply {
+                parentFile?.mkdirs()
+                writeText(createdAtEpochMilli.toString())
+            }
+        } catch (e: IOException) {
+            return
         }
     }
 
@@ -239,6 +273,19 @@ fun adoptRestoredPreferences(filesDir: File): Boolean {
 }
 
 /**
+ * When the restored Everything archive was made, once, at the next process start; null when the
+ * last restore was not one.
+ */
+fun adoptRestoredEverythingExport(filesDir: File): Instant? {
+    val staged = File(filesDir, RESTORED_EVERYTHING_EXPORT_PATH)
+    if (!staged.isFile) return null
+    val at = runCatching { staged.readText().trim().toLong() }.getOrNull()?.let(Instant::ofEpochMilli)
+    staged.delete()
+    staged.parentFile?.delete()
+    return at
+}
+
+/**
  * Hands every allowlisted entry to [onEntry], which returns false to stop. Returns false when the
  * archive could not be walked to its end: truncated, not a zip, or carrying a traversal entry, which
  * refuses the whole file on every API level.
@@ -268,6 +315,16 @@ private inline fun forEachEntry(
 private fun InputStream.drainTo(target: File): Long {
     target.parentFile?.mkdirs()
     return target.outputStream().use { copyTo(it) }
+}
+
+private fun InputStream.drainThroughPartTo(target: File) {
+    val part = File(target.path + ".part")
+    try {
+        drainTo(part)
+        if (!part.renameTo(target)) throw IOException("Cannot rename $part")
+    } finally {
+        part.delete()
+    }
 }
 
 private fun InputStream.discard(): Long {

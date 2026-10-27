@@ -85,7 +85,7 @@ class AppPreferences(
     /** The remembered export folder's tree Uri: a hint, checked against the grants on every read. */
     val backupFolderUri: Flow<String?> = store.data.map { it[Keys.BACKUP_FOLDER_URI] }
 
-    /** When the last Everything export started, or null before the first (docs/phase-6.md § 7). */
+    /** When the last whole Everything export started, or null before the first (docs/phase-6.md § 7). */
     val lastEverythingExport: Flow<Instant?> =
         store.data.map { prefs -> prefs[Keys.LAST_EVERYTHING_EXPORT]?.let(Instant::ofEpochMilli) }
 
@@ -138,16 +138,15 @@ class AppPreferences(
         }
     }
 
-    suspend fun setLastEverythingExport(at: Instant?) {
+    suspend fun setLastEverythingExport(at: Instant) {
+        store.edit { it[Keys.LAST_EVERYTHING_EXPORT] = at.toEpochMilli() }
+    }
+
+    /** Never moves it back: a restored archive can be older than the last export. */
+    suspend fun raiseLastEverythingExport(to: Instant) {
         store.edit { prefs ->
-            if (at ==
-                null
-            ) {
-                prefs.remove(Keys.LAST_EVERYTHING_EXPORT)
-            } else {
-                prefs[Keys.LAST_EVERYTHING_EXPORT] =
-                    at.toEpochMilli()
-            }
+            val current = prefs[Keys.LAST_EVERYTHING_EXPORT]
+            if (current == null || current < to.toEpochMilli()) prefs[Keys.LAST_EVERYTHING_EXPORT] = to.toEpochMilli()
         }
     }
 

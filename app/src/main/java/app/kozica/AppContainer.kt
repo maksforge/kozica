@@ -97,17 +97,21 @@ class AppContainer(
         )
     }
 
+    /** Exports and restores share scratch files, so one runs at a time. */
+    private val backupLock = Mutex()
+
     val backupExports by lazy {
         BackupExports(
             backupExporter,
             File(appContext.cacheDir, EXPORTS_DIRECTORY),
             preferences,
             appContext.contentResolver,
+            backupLock,
         )
     }
 
     val backupRestorer by lazy {
-        BackupRestorer(appContext, appContext.filesDir, preservedDir, backupExporter, APP_DATABASE_FILE)
+        BackupRestorer(appContext, appContext.filesDir, preservedDir, backupExporter, APP_DATABASE_FILE, backupLock)
     }
 
     val routes by lazy { RouteRepository(database.routeDao()) }

@@ -156,6 +156,18 @@ class AutoBackupTest {
     }
 
     @Test
+    fun `an over-quota attempt reads as such until a backup goes through`() {
+        writeAutoBackupMarker(filesDir, Instant.parse("2026-10-27T06:15:00Z"))
+        writeOverQuotaMarker(filesDir)
+
+        assertEquals(AutoBackupStatus.OverQuota, autoBackupStatus(readAutoBackupMarker(filesDir), Instant.now()))
+
+        val at = Instant.parse("2026-10-28T06:15:00Z")
+        writeAutoBackupMarker(filesDir, at)
+        assertEquals(AutoBackupStatus.Recorded(at, stale = false), autoBackupStatus(readAutoBackupMarker(filesDir), at))
+    }
+
+    @Test
     fun `no marker is never a working backup`() {
         assertEquals(AutoBackupStatus.NeverRecorded, autoBackupStatus(null, Instant.now()))
     }
@@ -229,6 +241,14 @@ class AutoBackupTest {
         assertTrue(adoptRestoredPreferences(filesDir))
         assertEquals("restored preferences", File(filesDir, PREFERENCES_FILE_PATH).readText())
         assertFalse(adoptRestoredPreferences(filesDir))
+    }
+
+    @Test
+    fun `a restored Everything archive's time is handed over at the next start, once`() {
+        write(File(filesDir, RESTORED_EVERYTHING_EXPORT_PATH), "1793088000000")
+
+        assertEquals(Instant.ofEpochMilli(1_793_088_000_000), adoptRestoredEverythingExport(filesDir))
+        assertNull(adoptRestoredEverythingExport(filesDir))
     }
 
     private fun sized(

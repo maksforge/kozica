@@ -14,12 +14,15 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.io.IOException
+import java.time.Instant
 import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -223,6 +226,44 @@ class RestoreTest {
             assertEquals("Kasprowy from the ridge", photo.readText())
             assertEquals("changed since", File(filesDir, PREFERENCES_FILE_PATH).readText())
             assertEquals("preferences", File(filesDir, RESTORED_PREFERENCES_PATH).readText())
+        }
+
+    @Test
+    fun anEverythingRestoreNeverWritesOverAPhotoAlreadyThereAndStagesItsTime() =
+        runTest {
+            val kept = File(filesDir, "photos/3f2504e0-4f89-41d3-9a0c-0305e82c3303.jpg")
+            val added = File(filesDir, "photos/3f2504e0-4f89-41d3-9a0c-0305e82c3304.jpg")
+            listOf(kept, added).forEach { it.apply { parentFile?.mkdirs() }.writeText("from the archive") }
+            val archive =
+                exporterFor(databaseHolding("Restored"))
+                    .exportTo(File(root, "a.zip"), BackupScope.Everything, Instant.ofEpochMilli(1_793_088_000_000))
+            kept.writeText("already on the phone")
+            added.delete()
+
+            val outcome = restorerFor(databaseHolding("Already here")).restore(open = { archive.inputStream() })
+
+            assertTrue((outcome as RestoreOutcome.Restored).mediaComplete)
+            assertEquals("already on the phone", kept.readText())
+            assertEquals("from the archive", added.readText())
+            assertTrue(File(filesDir, "photos").listFiles()!!.none { it.name.endsWith(".part") })
+            assertEquals(Instant.ofEpochMilli(1_793_088_000_000), adoptRestoredEverythingExport(filesDir))
+        }
+
+    @Test
+    fun aMediaPassThatCannotReadTheArchiveIsReportedIncomplete() =
+        runTest {
+            File(filesDir, "photos/3f2504e0-4f89-41d3-9a0c-0305e82c3304.jpg")
+                .apply { parentFile?.mkdirs() }
+                .writeText("from the archive")
+            val archive = exporterFor(databaseHolding("Restored")).exportTo(File(root, "a.zip"), BackupScope.Everything)
+            var opens = 0
+
+            val outcome =
+                restorerFor(databaseHolding("Already here")).restore(open = {
+                    if (++opens > 1) throw IOException("gone") else archive.inputStream()
+                })
+
+            assertFalse((outcome as RestoreOutcome.Restored).mediaComplete)
         }
 
     private fun throwawayName(prefix: String) = "$prefix-${UUID.randomUUID()}.db".also { databaseNames += it }

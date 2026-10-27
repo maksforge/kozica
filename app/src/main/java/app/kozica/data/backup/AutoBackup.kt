@@ -29,6 +29,7 @@ const val AUTO_BACKUP_BUDGET_BYTES: Long = 20L * 1024 * 1024
 
 private const val MARKER_LAST_BACKUP_KEY = "lastBackupAtEpochMilli"
 private const val MARKER_EXCLUDED_KEY = "excludedThumbnails"
+private const val MARKER_OVER_QUOTA_KEY = "overQuota"
 
 data class AutoBackupSet(
     val files: List<File>,
@@ -86,22 +87,32 @@ fun autoBackupFileSet(
     return AutoBackupSet(core + admission.files, admission.excludedThumbnails)
 }
 
+/** [overQuota]: the last attempt was rejected whole, and carries no time worth showing. */
 data class AutoBackupMarker(
-    val lastBackupAt: Instant,
+    val lastBackupAt: Instant?,
     val excludedThumbnails: Int = 0,
+    val overQuota: Boolean = false,
 )
 
-/** Temp-then-rename, so a kill mid-write leaves the previous marker rather than garbage. */
 fun writeAutoBackupMarker(
     filesDir: File,
     at: Instant,
     excludedThumbnails: Int = 0,
+) = writeMarker(filesDir, "$MARKER_LAST_BACKUP_KEY=${at.toEpochMilli()}\n$MARKER_EXCLUDED_KEY=$excludedThumbnails\n")
+
+/** Over what [writeAutoBackupMarker] wrote moments before, from the same attempt's measuring pass. */
+fun writeOverQuotaMarker(filesDir: File) = writeMarker(filesDir, "$MARKER_OVER_QUOTA_KEY=true\n")
+
+/** Temp-then-rename, so a kill mid-write leaves the previous marker rather than garbage. */
+private fun writeMarker(
+    filesDir: File,
+    text: String,
 ) {
     val marker = File(filesDir, AUTO_BACKUP_MARKER_FILE)
     val part = File(filesDir, "$AUTO_BACKUP_MARKER_FILE.part")
     try {
         filesDir.mkdirs()
-        part.writeText("$MARKER_LAST_BACKUP_KEY=${at.toEpochMilli()}\n$MARKER_EXCLUDED_KEY=$excludedThumbnails\n")
+        part.writeText(text)
         if (!part.renameTo(marker)) {
             part.copyTo(marker, overwrite = true)
             part.delete()
@@ -123,12 +134,14 @@ fun readAutoBackupMarker(filesDir: File): AutoBackupMarker? {
                     val separator = line.indexOf('=')
                     if (separator <= 0) null else line.substring(0, separator) to line.substring(separator + 1)
                 }.toMap()
-        values[MARKER_LAST_BACKUP_KEY]?.trim()?.toLongOrNull()?.let { millis ->
-            AutoBackupMarker(
-                lastBackupAt = Instant.ofEpochMilli(millis),
-                excludedThumbnails = values[MARKER_EXCLUDED_KEY]?.trim()?.toIntOrNull()?.coerceAtLeast(0) ?: 0,
-            )
-        }
+        val overQuota = values[MARKER_OVER_QUOTA_KEY]?.trim() == "true"
+        val lastBackupAt = values[MARKER_LAST_BACKUP_KEY]?.trim()?.toLongOrNull()?.let(Instant::ofEpochMilli)
+        if (lastBackupAt == null && !overQuota) return null
+        AutoBackupMarker(
+            lastBackupAt = lastBackupAt,
+            excludedThumbnails = values[MARKER_EXCLUDED_KEY]?.trim()?.toIntOrNull()?.coerceAtLeast(0) ?: 0,
+            overQuota = overQuota,
+        )
     } catch (e: IOException) {
         null
     }
@@ -138,9 +151,11 @@ fun clearAutoBackupMarker(filesDir: File) {
     File(filesDir, AUTO_BACKUP_MARKER_FILE).delete()
 }
 
-/** Backup settings' three states (docs/phase-6.md § 7). */
+/** Backup settings' states (docs/phase-6.md § 7). */
 sealed interface AutoBackupStatus {
     data object NeverRecorded : AutoBackupStatus
+
+    data object OverQuota : AutoBackupStatus
 
     data class Recorded(
         val at: Instant,
@@ -154,10 +169,11 @@ fun autoBackupStatus(
     marker: AutoBackupMarker?,
     now: Instant,
 ): AutoBackupStatus {
-    if (marker == null) return AutoBackupStatus.NeverRecorded
+    if (marker?.overQuota == true) return AutoBackupStatus.OverQuota
+    val at = marker?.lastBackupAt ?: return AutoBackupStatus.NeverRecorded
     return AutoBackupStatus.Recorded(
-        at = marker.lastBackupAt,
-        stale = Duration.between(marker.lastBackupAt, now) > AUTO_BACKUP_STALE_AFTER,
+        at = at,
+        stale = Duration.between(at, now) > AUTO_BACKUP_STALE_AFTER,
         excludedThumbnails = marker.excludedThumbnails,
     )
 }

@@ -118,6 +118,7 @@
         <item quantity="many">%d miniatur zdjęć się nie zmieściło i zostało pominiętych</item>
         <item quantity="other">%d miniatury zdjęć się nie zmieściło i zostało pominiętych</item>
     </plurals>
+    <string name="backup_auto_over_quota">Ostatnia automatyczna kopia była za duża na miejsce na kopie zapasowe Androida i nie została zapisana. Wyeksportuj dane, aby zachować kopię.</string>
     <string name="backup_auto_photos">Automatyczna kopia zachowuje twoje wycieczki, notatki i trasy, ale nie zdjęcia. Wyeksportuj wszystko, aby zachować zdjęcia.</string>
     <string name="backup_auto_settings">Ustawienia kopii zapasowej</string>
     <string name="backup_export_title">Eksport</string>
@@ -154,6 +155,7 @@
     <string name="backup_refused_newer">Tę kopię utworzyła nowsza wersja Kozicy (wersja danych %1$d; ta odczytuje najwyżej %2$d). Zaktualizuj aplikację i spróbuj ponownie. Na telefonie nic się nie zmieniło.</string>
     <string name="backup_refused_too_large">Ten plik jest za duży, aby go przywrócić. Na telefonie nic się nie zmieniło.</string>
     <string name="backup_refused_unreadable">Nie udało się otworzyć danych z tej kopii. Na telefonie nic się nie zmieniło.</string>
+    <string name="backup_refused_recording">Wycieczka wciąż jest nagrywana. Najpierw zakończ nagrywanie, a potem przywróć kopię. Na telefonie nic się nie zmieniło.</string>
     <string name="backup_restored_title">Przywrócono</string>
     <string name="backup_restored_scope">Kopia „%1$s” z %2$s.</string>
     <plurals name="backup_restored_images">
@@ -168,6 +170,7 @@
         <item quantity="many">Zachowano %d obrazów, które były już na telefonie.</item>
         <item quantity="other">Zachowano %d obrazu, które były już na telefonie.</item>
     </plurals>
+    <string name="backup_restored_media_incomplete">Nie udało się zapisać części obrazów, prawdopodobnie z braku miejsca. Zachowaj plik kopii: wciąż je zawiera.</string>
     <string name="backup_restored_snapshot">To, co było wcześniej, jest zapisane w sekcji Zapisane kopie.</string>
     <string name="backup_restored_close_help">Kozica zamknie się, aby to dokończyć. Otwórz ją ponownie, aby zobaczyć przywrócone dane.</string>
     <string name="backup_restored_close">Zamknij Kozicę</string>
