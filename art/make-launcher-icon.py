@@ -30,15 +30,9 @@ RES = ART.parent / "app/src/main/res"
 
 CANVAS = 108  # adaptive-icon canvas, in dp
 VISIBLE = 72  # the most any launcher shows of it — what the flat assets are cropped to
-ART_SIZE = 55  # longest side of the mark — bounded by SAFE_DIAMETER, see below
+ART_SIZE = 55  # longest side of the mark — bounded by SAFE_DIAMETER
 
-# A launcher may mask the icon down to a 66dp circle, so anything outside that gets clipped.
-# For this mark that is a real constraint rather than a formality: it is nearly square, so at
-# 60dp a tall narrow mark might use, its extremities reach 36dp from the
-# centre against a 33dp safe radius and a circular launcher would cut them off. 54dp is the
-# largest size that puts the whole outline inside the circle — and even shrunk to fit, it
-# carries about 19% more ink than the mark it replaces, because a compact silhouette uses the
-# canvas that a narrow one wastes. main() asserts the property rather than trusting this note.
+# A launcher may mask the icon to this circle and clip whatever lies outside it.
 SAFE_DIAMETER = 66
 
 DENSITIES = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
