@@ -124,6 +124,32 @@ fun Track.trim(
     }
 }
 
+/** Where a photo sits on a Track. */
+data class Pin(
+    val latitude: Double,
+    val longitude: Double,
+)
+
+/**
+ * Where a photo taken at [timeMillis] sits on the Track (docs/phase-6.md § 6): within a stretch, the
+ * Track's position at that moment; between two stretches, the last point before them, where the user
+ * stopped; before the first point or after the last, nowhere.
+ */
+fun Track.pinAt(timeMillis: Long): Pin? {
+    if (timeMillis < (flatten().firstOrNull()?.timeMillis ?: return null)) return null
+    val stretch = firstOrNull { it.isNotEmpty() && timeMillis <= it.last().timeMillis } ?: return null
+    val after = stretch.indexOfFirst { it.timeMillis >= timeMillis }
+    if (after == 0 && timeMillis < stretch[0].timeMillis) return lastFixAt(timeMillis)
+    val b = stretch[after]
+    val a = stretch.getOrNull(after - 1)?.takeIf { b.timeMillis > timeMillis } ?: return Pin(b.latitude, b.longitude)
+    val share = (timeMillis - a.timeMillis).toDouble() / (b.timeMillis - a.timeMillis)
+    return Pin(a.latitude + (b.latitude - a.latitude) * share, a.longitude + (b.longitude - a.longitude) * share)
+}
+
+/** The last point at or before [timeMillis], where the camera button pins a photo (docs/phase-6.md § 6). */
+fun Track.lastFixAt(timeMillis: Long): Pin? =
+    flatten().lastOrNull { it.timeMillis <= timeMillis }?.let { Pin(it.latitude, it.longitude) }
+
 /** About 0.7 km/h, below the slowest climb on a steep Trail. */
 const val MOVING_METRES_PER_SECOND = 0.2
 

@@ -130,3 +130,7 @@ private const val RELIEF_SOURCE = "relief"
 private const val CONTOURS_SOURCE = "contours"
 internal const val ROUTE_SOURCE = "route"
 internal const val HIKE_TRACK_SOURCE = "hike-track"
+internal const val HIKE_PHOTOS_SOURCE = "hike-photos"
+
+/** The layer drawing [HIKE_PHOTOS_SOURCE], which a tap is checked against. */
+internal const val HIKE_PHOTOS_LAYER = "hike-photos"

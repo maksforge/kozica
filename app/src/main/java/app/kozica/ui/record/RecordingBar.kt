@@ -41,12 +41,13 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-/** Under every tab while a Hike records: what it has so far, and Pause, Resume and Stop. */
+/** Under every tab while a Hike records: what it has so far, and Pause, Resume, the camera and Stop. */
 @Composable
 fun RecordingBar(
     recording: Recording,
     onPause: () -> Unit,
     onResume: () -> Unit,
+    onTakePhoto: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -105,6 +106,12 @@ fun RecordingBar(
                             contentDescription = stringResource(R.string.record_pause),
                         )
                     }
+                }
+                FilledTonalIconButton(onClick = onTakePhoto) {
+                    Icon(
+                        painterResource(R.drawable.ic_photo_camera),
+                        contentDescription = stringResource(R.string.hike_take_photo),
+                    )
                 }
                 FilledTonalIconButton(onClick = onStop) {
                     Icon(painterResource(R.drawable.ic_stop), contentDescription = stringResource(R.string.record_stop))

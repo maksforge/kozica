@@ -92,7 +92,7 @@ class AppContainer(
         ) { (relief.first().state as? RegionState.Ready)?.archive }
     }
 
-    val hikes by lazy { HikeRepository(database.hikeDao(), hikeHeights::of, { media.delete(it) }) }
+    val hikes by lazy { HikeRepository(database.hikeDao(), hikeHeights::of, { media.delete(it) }, media::persistPhoto) }
 
     val recorder by lazy { Recorder(appContext, hikes, ::places, applicationScope) }
 

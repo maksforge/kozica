@@ -1,19 +1,28 @@
 package app.kozica.ui.hikes
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +34,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -36,12 +47,13 @@ import app.kozica.ui.map.Profile
 import app.kozica.ui.map.RouteNameDialog
 import app.kozica.ui.map.length
 import app.kozica.ui.map.short
+import coil3.compose.AsyncImage
 import java.time.Duration
 import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 
-/** docs/phase-6.md § 4: a Hike's totals and profile under its Track on the map, and what can be done to it. */
+/** docs/phase-6.md § 4 and § 6: a Hike's totals, profile, note and photos under its Track on the map, and what can be done to it. */
 @Composable
 internal fun HikeSheet(
     hike: HikeUiState,
@@ -52,6 +64,9 @@ internal fun HikeSheet(
     onCancelTrim: () -> Unit,
     onTrim: () -> Unit,
     onDelete: () -> Unit,
+    onSetNote: (String) -> Unit,
+    onAddPhotos: () -> Unit,
+    onOpenPhoto: (id: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -59,6 +74,7 @@ internal fun HikeSheet(
     var draft by rememberSaveable { mutableStateOf("") }
     var confirmingTrim by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
+    var editingNote by rememberSaveable { mutableStateOf(false) }
     val keep = hike.keep
     Surface(
         shape = MaterialTheme.shapes.extraLarge.copy(bottomStart = CornerSize(0), bottomEnd = CornerSize(0)),
@@ -95,6 +111,10 @@ internal fun HikeSheet(
             }
             if (hike.profile.size >= 2) {
                 Profile(hike.profile, locale, Modifier.padding(top = Spacing.base), kept = keep)
+            }
+            if (keep == null) {
+                Note(hike.note, onEdit = { editingNote = true }, Modifier.padding(top = Spacing.base))
+                PhotoStrip(hike, onAddPhotos, onOpenPhoto, Modifier.padding(top = Spacing.base))
             }
             val total = hike.along.lastOrNull() ?: 0.0
             if (keep != null && total > 0) {
@@ -133,6 +153,18 @@ internal fun HikeSheet(
                 renaming = false
             },
             onDismiss = { renaming = false },
+        )
+    }
+    if (editingNote) {
+        TextDialog(
+            title = stringResource(R.string.hike_note),
+            initial = hike.note.orEmpty(),
+            onSave = {
+                editingNote = false
+                onSetNote(it)
+            },
+            onDismiss = { editingNote = false },
+            singleLine = false,
         )
     }
     if (confirmingTrim) {
@@ -222,3 +254,65 @@ private fun Total(
         Text(value, style = MaterialTheme.typography.titleMedium)
     }
 }
+
+@Composable
+private fun Note(
+    note: String?,
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (note == null) {
+        TextButton(onClick = onEdit, modifier = modifier) { Text(stringResource(R.string.hike_add_note)) }
+        return
+    }
+    val label = stringResource(R.string.hike_note)
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clickable(onClickLabel = label, onClick = onEdit),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(note, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun PhotoStrip(
+    hike: HikeUiState,
+    onAdd: () -> Unit,
+    onOpen: (id: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val missing = missingPhoto()
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.tight),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        // First, so a photo written while the strip is on screen is not scrolled out of it.
+        item {
+            OutlinedButton(onClick = onAdd) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Spacer(Modifier.width(Spacing.tight))
+                Text(stringResource(R.string.hike_add_photos))
+            }
+        }
+        items(hike.photos, key = { it.id }) { photo ->
+            AsyncImage(
+                model = photo.thumbnail,
+                contentDescription = photo.caption ?: hike.name,
+                contentScale = ContentScale.Crop,
+                error = missing,
+                fallback = missing,
+                modifier =
+                    Modifier
+                        .size(THUMBNAIL_SIZE)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { onOpen(photo.id) },
+            )
+        }
+    }
+}
+
+private val THUMBNAIL_SIZE = 72.dp

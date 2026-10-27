@@ -39,6 +39,7 @@ import app.kozica.ui.record.RecordingViewModel
 import app.kozica.ui.record.StopDialog
 import app.kozica.ui.record.UnfinishedDialog
 import app.kozica.ui.record.rememberRecordStart
+import app.kozica.ui.record.rememberTakePhoto
 import app.kozica.ui.routes.RoutesScreen
 import app.kozica.ui.safety.SafetyScreen
 import app.kozica.ui.settings.SettingsScreen
@@ -92,6 +93,7 @@ fun MainNavigation(
         }
     }
     val recording by recordingViewModel.state.collectAsStateWithLifecycle()
+    val takePhoto = rememberTakePhoto(onTaken = recordingViewModel::addPhoto, onDiscard = recordingViewModel::discard)
     val record =
         rememberRecordStart(
             notificationsAsked = recording.notificationsAsked,
@@ -129,6 +131,7 @@ fun MainNavigation(
                         recording = it,
                         onPause = recordingViewModel::pause,
                         onResume = recordingViewModel::resume,
+                        onTakePhoto = { takePhoto(it.hikeId) },
                         onStop = { stopping = true },
                     )
                 }
