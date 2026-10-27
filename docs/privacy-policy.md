@@ -32,8 +32,9 @@ its photos were taken, with their captions but not the photos.
 
 **Sharing a file.** Some phones' share screens only hand a file over if every app that can receive
 one may read it before you choose, so the app allows that when you share a backup or a GPX file.
-Once you pick an app, the others lose that access. The one you picked keeps it at most until the app
-or the phone next restarts, and so do all of them if you close the share screen without picking.
+Once you pick an app, the others lose that access. The one you picked keeps it at most until you
+next start the app afresh or restart the phone, and so do all of them if you close the share screen
+without picking.
 The app itself sends the file nowhere.
 
 ## What the app can access, and why
