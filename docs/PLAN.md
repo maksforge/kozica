@@ -221,7 +221,8 @@ hikes, so it comes after them, and following leans on phase 6's location service
 Named Trails, with a whole Trail highlighted and the rest of the map fainter. It needs each Trail's
 name or relation id in the tiles, which `KozicaProfile` does not write today: a map-data change, a
 rebuild and every Region's pack delivered again, needing nothing from 6 or 6b, so it can run beside
-either. Moved here from phase 5 with the owner on 2026-10-25.
+either. Moved here from phase 5 with the owner on 2026-10-25. Planned with the owner on 2026-10-27 in
+[`phase-6c.md`](phase-6c.md): tap or search a Trail, see it whole, and make it a Route or a GPX file.
 
 ## Phase N — Ship shape
 
