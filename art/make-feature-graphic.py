@@ -14,17 +14,14 @@ it on a live listing, and the first app built from the template reproduced it al
 layout is declared against the *cropped* frame — see CROP — and main() measures what it produced and
 exits non-zero rather than trusting that the constants still hold.
 
-**The colours are read out of `theme/Color.kt`**, never pasted: the palette is regenerated from seeds
-by `scripts/gen_scheme.py`, and pasted inks stay the old hue on a ground that has moved — which is
-exactly what happened the first time an app built from this template changed its palette.
-
-The ground is `feature-background.png` beside this file when there is one (cover-fitted; record its
-provenance in art/README.md), and otherwise a gradient between two roles of the dark scheme.
+**The colours are the icon's own**, `GROUND` and `MARK_INK` from `mark.py`, so the listing and the
+launcher icon cannot disagree. The ground is `feature-background.png` beside this file when there is
+one (cover-fitted; record its provenance in art/README.md), and otherwise a gradient from `GROUND`
+a little towards `MARK_INK`.
 
     python3 art/make-feature-graphic.py
 """
 
-import re
 import sys
 from pathlib import Path
 
@@ -60,43 +57,21 @@ FONT_BOLD = FONT_DIR / "NotoSans-Bold.ttf"
 FONT_REG = FONT_DIR / "NotoSans-Regular.ttf"
 
 
-def color_kt():
-    """The generated `theme/Color.kt`, found rather than spelled out so a namespace rename cannot break it."""
-    found = sorted((ART.parent / "app/src/main/java").rglob("theme/Color.kt"))
-    if not found:
-        raise SystemExit("no app/src/main/java/**/theme/Color.kt — run scripts/gen_scheme.py first")
-    return found[0]
+def _mix(a, b, t):
+    return tuple(round(x + (y - x) * t) for x, y in zip(a, b))
 
 
-def scheme(*roles):
-    """Colour roles read out of `theme/Color.kt`'s dark scheme, as (r, g, b)."""
-    path = color_kt()
-    body = path.read_text().split("darkColorScheme(", 1)[-1]
-    out = []
-    for role in roles:
-        found = re.search(rf"\b{role} = Color\(0x[0-9A-Fa-f]{{2}}([0-9A-Fa-f]{{6}})\)", body)
-        if not found:
-            raise SystemExit(f"{path}: no `{role}` in the dark scheme — has it been renamed?")
-        h = found.group(1)
-        out.append(tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)))
-    return out
-
-
-GROUND_TOP, NIGHT, INK = scheme("primaryContainer", "background", "onSurface")
+GROUND_TOP, INK = mark.GROUND, mark.MARK_INK
+NIGHT = _mix(GROUND_TOP, INK, 0.12)
 
 
 def _step(t):
-    """INK mixed `t` of the way towards NIGHT, componentwise.
-
-    Two steps down from the wordmark towards the ground, so the three text weights read as one
-    family. Tinted rather than grey — a neutral grey on a coloured ground looks like a mistake — and
-    computed rather than pasted, for the reason in the module docstring.
-    """
-    return tuple(round(s + (g - s) * t) for s, g in zip(INK, NIGHT))
+    """INK mixed `t` of the way towards NIGHT: the text's lighter weights, tinted rather than grey."""
+    return _mix(INK, NIGHT, t)
 
 
-TAGLINE_INK = _step(0.16)
-SUBTLE = _step(0.34)
+TAGLINE_INK = _step(0.25)
+SUBTLE = _step(0.45)
 
 
 def ground(size):
@@ -119,7 +94,7 @@ def ground(size):
     for y in range(small.height):
         for x in range(small.width):
             t = (x / small.width + y / small.height) / 2
-            px[x, y] = tuple(round(a + (b - a) * t) for a, b in zip(GROUND_TOP, NIGHT))
+            px[x, y] = _mix(GROUND_TOP, NIGHT, t)
     return small.resize((w, h), Image.BICUBIC)
 
 
