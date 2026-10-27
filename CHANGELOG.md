@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0](https://github.com/maksforge/kozica/compare/v0.9.0...v0.10.0) (2026-10-27)
+
+
+### Features
+
+* replace the placeholder mark with a Tatra chamois on its crag ([1194c37](https://github.com/maksforge/kozica/commit/1194c377359252b9360cccdd37fec0a6622e13fb))
+
+
+### Bug Fixes
+
+* leave the context alone on Android 13+, where the platform already follows the app's language ([38b2290](https://github.com/maksforge/kozica/commit/38b2290e641689df1b9807292738bb13a6ee85d4))
+* show the recording notification and a new hike's name in the app's language, not the phone's, below Android 13 ([e8d8819](https://github.com/maksforge/kozica/commit/e8d881988a17d4fcfa99e68d398b936962303a34))
+
 ## [0.9.0](https://github.com/maksforge/kozica/compare/v0.8.1...v0.9.0) (2026-10-27)
 
 
