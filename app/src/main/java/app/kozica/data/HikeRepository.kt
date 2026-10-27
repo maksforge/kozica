@@ -179,9 +179,7 @@ class HikeRepository(
 
     /** Deletes the Hike and its photos' rows, then their files (docs/phase-6.md § 4). */
     suspend fun delete(id: String) {
-        val photos = dao.photos(id)
-        dao.delete(id)
-        for (photo in photos) {
+        for (photo in dao.deleteWithPhotos(id)) {
             deleteMedia(photo.photoPath)
             deleteMedia(photo.thumbnailPath)
         }
