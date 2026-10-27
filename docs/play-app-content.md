@@ -143,10 +143,10 @@ forbids it. Answered 2026-10-20.
 **`dataSync`, for Play Asset Delivery's extraction service**, from phase 2b's checkpoint B
 ([`phase-2b.md`](phase-2b.md) § 2). Kozica starts no foreground service of its own; the library's
 service unpacks each Region's pack, and the relief's ([`phase-4.md`](phase-4.md) § 3), after the
-Play Store has downloaded it, right after the install ([`phase-2c.md`](phase-2c.md)). **Not yet declared in the
-Console**: the form appears only once a bundle declaring the permission reaches a track (internal
-app sharing does not count; checked 2026-10-20), so it is declared with the first release that
-carries the library, E's and F's, and this section gets that date. The answers to give:
+Play Store has downloaded it, right after the install ([`phase-2c.md`](phase-2c.md)). **Not asked by
+the Console**: on 2026-10-27, with 0.9.0 live on internal, the form listed only
+`FOREGROUND_SERVICE_LOCATION`, so nothing was declared for `dataSync`. If a later form lists it,
+the answers to give:
 
 - **What the user sees:** the maps and the relief that arrive with the app after it is installed
   being made ready to use offline, with the system's foreground-service notification while it runs.
@@ -156,9 +156,13 @@ carries the library, E's and F's, and this section gets that date. The answers t
 - **Type:** `dataSync`, which covers transferring to the device the data the app needs to work.
 
 **`location`, for recording a Hike**, from phase 6's checkpoint B ([`phase-6.md`](phase-6.md) § 2).
-**Not yet declared in the Console**: declared with the first release that carries it, in the same
-sitting as `dataSync`'s, with a short video of Record, the notification and Stop, and this section
-gets that date. The answers to give:
+**Declared 2026-10-27**, for 0.9.0 (versionCode 301). The Console's form appeared only once 301 was
+live on internal testing: the API upload was refused at commit ("You must let us know whether your
+app uses any Foreground Service permissions") while the form still listed nothing, so 301 went up
+through the Console and the form was answered after. It asks no free text: *Background location
+updates → Other*, with a video link (Record, the recording notification, Stop, recorded on the
+owner's phone and shared from Drive). It listed `FOREGROUND_SERVICE_LOCATION` only, not `dataSync`.
+What the form does not ask, kept for a reviewer's question:
 
 - **What the user sees:** after pressing Record, a notification that a hike is recording, with its
   time and distance and Pause and Stop, until the user stops it.
