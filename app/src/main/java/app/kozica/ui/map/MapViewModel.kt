@@ -17,6 +17,8 @@ import app.kozica.data.HikeEntity
 import app.kozica.data.HikePhotoEntity
 import app.kozica.data.MapCamera
 import app.kozica.data.SavedRoute
+import app.kozica.data.gpx.Gpx
+import app.kozica.data.gpx.hikeGpx
 import app.kozica.data.hikes.Climb
 import app.kozica.data.hikes.Height
 import app.kozica.data.hikes.Pin
@@ -62,7 +64,10 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * @param regions null until the first read of the phone's Regions.
@@ -125,6 +130,7 @@ data class HikeUiState(
     val track: Track,
     val along: List<Double>,
     val climb: Climb?,
+    val heights: List<Height?> = emptyList(),
     val profile: List<ProfilePoint> = emptyList(),
     val note: String? = null,
     val photos: List<HikePhoto> = emptyList(),
@@ -251,6 +257,7 @@ class MapViewModel(
     private val savePinRemoved: suspend (photoId: String) -> Unit = {},
     private val deleteStoredPhoto: suspend (photoId: String) -> Unit = {},
     private val photosLeftOut: MutableStateFlow<Int> = MutableStateFlow(0),
+    private val writeGpx: suspend (Gpx, LocalDate) -> File = { _, _ -> error("No GPX in this view model") },
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -537,6 +544,7 @@ class MapViewModel(
             track = track,
             along = track.along(),
             climb = shownClimb(stored, heights),
+            heights = heights,
             profile = profileOf(track, heights),
             note = hike.note,
             photos =
@@ -618,6 +626,18 @@ class MapViewModel(
 
     fun deletePhoto(photoId: String) {
         applicationScope.launch { deleteStoredPhoto(photoId) }
+    }
+
+    /** The shown Hike as a GPX file for the share sheet (docs/phase-6.md § 8), null when it could not be written. */
+    suspend fun exportHikeGpx(): File? {
+        val hike = state.value.hike ?: return null
+        val pinned = hike.photos.mapNotNull { photo -> photo.pin?.let { it to photo.caption } }
+        val gpx = hikeGpx(hike.name, hike.note, hike.track, hike.heights, pinned)
+        return try {
+            writeGpx(gpx, hike.startedAt.atZone(ZoneId.systemDefault()).toLocalDate())
+        } catch (_: IOException) {
+            null
+        }
     }
 
     fun deleteHike() {
@@ -737,6 +757,7 @@ class MapViewModel(
                         savePinRemoved = app.container.hikes::unpin,
                         deleteStoredPhoto = app.container.hikes::deletePhoto,
                         photosLeftOut = app.container.photosLeftOut,
+                        writeGpx = app.container.gpxFiles::write,
                     )
                 }
             }

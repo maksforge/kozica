@@ -250,6 +250,7 @@
     <string name="hike_trim_title">Przytnij początek i koniec śladu</string>
     <string name="hike_trim_body">Odcięta część śladu zostanie usunięta. Tego nie można cofnąć.</string>
     <string name="hike_delete">Usuń</string>
+    <string name="gpx_export">Eksportuj GPX</string>
     <string name="hike_delete_title">Usunąć wycieczkę?</string>
     <string name="hike_delete_body">Tego nie można cofnąć.</string>
     <plurals name="hike_delete_body_photos">

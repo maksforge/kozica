@@ -8,6 +8,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.kozica.MainApplication
 import app.kozica.data.SavedRoute
+import app.kozica.data.gpx.Gpx
+import app.kozica.data.gpx.routeGpx
+import app.kozica.data.routes.PlannedRoute
+import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.RouteTotals
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +26,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
 import java.text.Collator
+import java.time.LocalDate
 
 /** A saved Route with its totals, null until it is planned or where it cannot be. */
 data class RouteRow(
@@ -47,6 +54,8 @@ class RoutesViewModel(
     private val deleteRoute: suspend (id: String) -> Unit,
     private val routeToShow: MutableStateFlow<String?>,
     private val compute: CoroutineDispatcher = Dispatchers.Default,
+    private val planRoute: suspend (List<RoutePoint>) -> PlannedRoute? = { null },
+    private val writeGpx: suspend (Gpx, LocalDate) -> File = { _, _ -> error("No GPX in this view model") },
 ) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<RoutesUiState> =
@@ -80,6 +89,23 @@ class RoutesViewModel(
         viewModelScope.launch { deleteRoute(id) }
     }
 
+    /**
+     * [id] as a GPX file for the share sheet, planned again from today's network and dated today
+     * (docs/phase-6.md § 8); null when it has no complete way over the Trails or could not be written.
+     */
+    suspend fun exportGpx(id: String): File? {
+        val route =
+            state.value.routes
+                ?.firstOrNull { it.route.id == id }
+                ?.route ?: return null
+        val planned = withContext(compute) { planRoute(route.points) }?.takeIf { it.complete } ?: return null
+        return try {
+            writeGpx(routeGpx(route.name, planned, route.points), LocalDate.now())
+        } catch (_: IOException) {
+            null
+        }
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory =
             viewModelFactory {
@@ -91,6 +117,8 @@ class RoutesViewModel(
                         app.container.routes::rename,
                         app.container.routes::delete,
                         app.container.routeToShow,
+                        planRoute = app.container::planRoute,
+                        writeGpx = app.container.gpxFiles::write,
                     )
                 }
             }

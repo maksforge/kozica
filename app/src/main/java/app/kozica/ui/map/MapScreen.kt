@@ -47,6 +47,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -85,12 +86,14 @@ import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.WarningBanner
 import app.kozica.ui.common.osmDateLine
+import app.kozica.ui.common.shareGpx
 import app.kozica.ui.common.startActivitySafely
 import app.kozica.ui.hikes.HikeSheet
 import app.kozica.ui.hikes.PhotoViewer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdate
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -121,6 +124,7 @@ fun MapScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val activity = LocalActivity.current
     val colors = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
@@ -558,6 +562,7 @@ fun MapScreen(
                         pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
                     onOpenPhoto = { viewingPhoto = it },
+                    onExportGpx = { scope.launch { viewModel.exportHikeGpx()?.let(context::shareGpx) } },
                     modifier = Modifier.heightIn(max = sheetHeight),
                 )
             } else if (state.route.points.isNotEmpty()) {

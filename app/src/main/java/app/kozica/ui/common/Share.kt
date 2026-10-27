@@ -14,7 +14,7 @@ fun Context.shareBackupArchive(archive: File) {
     val send =
         Intent(Intent.ACTION_SEND).apply {
             type = ZIP_MIME
-            putExtra(Intent.EXTRA_STREAM, backupUri(archive))
+            putExtra(Intent.EXTRA_STREAM, sharedUri(archive))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     startActivity(Intent.createChooser(send, getString(R.string.backup_share)))
@@ -25,10 +25,20 @@ fun Context.sharePreservedCopy(copy: PreservedCopy) {
     val send =
         Intent(Intent.ACTION_SEND_MULTIPLE).apply {
             type = if (copy.kind == PreservedKind.WipeCopy) "application/octet-stream" else ZIP_MIME
-            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(copy.files.map(::backupUri)))
+            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(copy.files.map(::sharedUri)))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     startActivity(Intent.createChooser(send, getString(R.string.backup_share)))
 }
 
-private fun Context.backupUri(file: File) = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+fun Context.shareGpx(file: File) {
+    val send =
+        Intent(Intent.ACTION_SEND).apply {
+            type = "application/gpx+xml"
+            putExtra(Intent.EXTRA_STREAM, sharedUri(file))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    startActivity(Intent.createChooser(send, getString(R.string.gpx_export)))
+}
+
+private fun Context.sharedUri(file: File) = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
