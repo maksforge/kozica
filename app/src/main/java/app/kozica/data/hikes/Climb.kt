@@ -25,37 +25,74 @@ data class ProfilePoint(
     val breakBefore: Boolean,
 )
 
-/** GPS height jitters by metres from one fix to the next; this much in one direction is a climb (§ 5). */
-internal const val GPS_BAND_METRES = 10.0
+/** GPS height jitters by metres from one fix to the next; this much in one direction since the last turn is a climb (§ 5). */
+internal const val GPS_TURN_METRES = 10.0
 
 /**
  * Ascent and descent of [heights], one per point in walking order and null where nothing gave one.
- * Each run of one source is summed alone, the grid's by phase 5's dead band and GPS's by its wider
- * band, and never across a change of source: GPS is above the ellipsoid, the grid above the sea.
+ * Each run of one source is summed alone, the grid's by phase 5's dead band and GPS's by its
+ * hysteresis, and never across a change of source: GPS is above the ellipsoid, the grid above the sea.
  */
 fun climb(heights: List<Height?>): Climb {
     var ascent = 0.0
     var descent = 0.0
     for (run in runsOf(heights)) {
-        val band = if (run.first().source == HeightSource.GRID) DEAD_BAND_METRES else GPS_BAND_METRES
-        val (up, down) = climb(run.map { it.metres }, band)
+        val metres = run.map { it.metres }
+        val (up, down) = if (run.first().source == HeightSource.GRID) deadBand(metres) else turns(metres)
         ascent += up
         descent += down
     }
     return Climb(ascent, descent, fromGps = heights.any { it?.source == HeightSource.GPS })
 }
 
+/**
+ * Counts a leg once the height has moved [GPS_TURN_METRES] back from the extreme it reached, and
+ * then from that extreme. At the last point the open leg and what lies past its extreme count too,
+ * as the dead band's last point does.
+ */
+private fun turns(heights: List<Double>): Pair<Double, Double> {
+    var ascent = 0.0
+    var descent = 0.0
+    var turn = heights.first()
+    var extreme = turn
+    var direction = 0
+
+    fun count(
+        from: Double,
+        to: Double,
+    ) {
+        if (to > from) ascent += to - from else descent += from - to
+    }
+    for (height in heights.drop(1)) {
+        when {
+            direction == 0 && abs(height - turn) >= GPS_TURN_METRES -> {
+                direction = if (height > turn) 1 else -1
+                extreme = height
+            }
+
+            direction != 0 && (height - extreme) * direction > 0 -> extreme = height
+
+            direction != 0 && (extreme - height) * direction >= GPS_TURN_METRES -> {
+                count(turn, extreme)
+                turn = extreme
+                extreme = height
+                direction = -direction
+            }
+        }
+    }
+    count(turn, extreme)
+    count(extreme, heights.last())
+    return ascent to descent
+}
+
 /** What is left inside the band at the last point counts too, as `climb()` in `scripts/build-network.py` does. */
-private fun climb(
-    heights: List<Double>,
-    band: Double,
-): Pair<Double, Double> {
+private fun deadBand(heights: List<Double>): Pair<Double, Double> {
     var ascent = 0.0
     var descent = 0.0
     var reference = heights.first()
     for (i in 1 until heights.size) {
         val change = heights[i] - reference
-        if (abs(change) < band && i < heights.size - 1) continue
+        if (abs(change) < DEAD_BAND_METRES && i < heights.size - 1) continue
         if (change > 0) ascent += change else descent -= change
         reference = heights[i]
     }
