@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the 1024x500 Play feature graphic to art/play-feature-graphic.png.
+"""Render the 1024x500 Play feature graphics, one per listing language (`COPY`).
 
 Original art only: the mark comes from `mark.py`, the same declaration the launcher icon is
 generated from, so the two assets cannot drift into being different marks. Text is *rendered* with
@@ -29,13 +29,21 @@ from PIL import Image, ImageDraw, ImageFont
 
 import mark
 
-# The three strings this graphic is *about*. Edit them; everything else is layout.
-APP_NAME = "Kozica"
-TAGLINE = "Hiking trail map of the Polish mountains"
-FEATURES = "Private  ·  Offline  ·  No ads  ·  Free"
-
 ART = Path(__file__).parent
-OUT = ART / "play-feature-graphic.png"
+
+# The strings this graphic is *about*, one graphic per listing language. Edit them; everything else is
+# layout. Polish is translated from the English, per docs/translator-brief.md.
+APP_NAME = "Kozica"
+COPY = {
+    ART / "play-feature-graphic.png": (
+        "Hiking trail map of the Polish mountains",
+        "Private  ·  Offline  ·  No ads  ·  Free",
+    ),
+    ART / "play-feature-graphic-pl.png": (
+        "Mapa szlaków polskich gór",
+        "Prywatna  ·  Offline  ·  Bez reklam  ·  Darmowa",
+    ),
+}
 BACKGROUND = ART / "feature-background.png"
 W, H = 1024, 500
 S = 4  # supersample factor; everything below is in final pixels, scaled by S at draw time
@@ -119,7 +127,7 @@ def draw_mark(base, cx, cy, size):
     base.alpha_composite(layer)
 
 
-def main():
+def render(out_path, tagline_text, features_text):
     base = ground((W, H)).convert("RGBA").resize((W * S, H * S), Image.BICUBIC)
 
     mark_left = W - MARGIN - MARK_SIZE
@@ -132,28 +140,33 @@ def main():
 
     x = MARGIN * S
     d.text((x, 240 * S), APP_NAME, font=wordmark, fill=INK, anchor="ls")
-    d.text((x, 296 * S), TAGLINE, font=tagline, fill=TAGLINE_INK, anchor="ls")
-    d.text((x, 372 * S), FEATURES, font=features, fill=SUBTLE, anchor="ls")
+    d.text((x, 296 * S), tagline_text, font=tagline, fill=TAGLINE_INK, anchor="ls")
+    d.text((x, 372 * S), features_text, font=features, fill=SUBTLE, anchor="ls")
 
     out = base.resize((W, H), Image.LANCZOS).convert("RGB")  # RGB: Play rejects alpha
-    out.save(OUT, "PNG", optimize=True)
+    out.save(out_path, "PNG", optimize=True)
 
     # Measured, not assumed. Both of these have been wrong in a graphic generated from this file.
     widest = max(d.textlength(t, font=f) / S for t, f in
-                 ((APP_NAME, wordmark), (TAGLINE, tagline), (FEATURES, features)))
+                 ((APP_NAME, wordmark), (tagline_text, tagline), (features_text, features)))
     right = MARGIN + widest
     gap = mark_left - right
     clipped = right > W - MARGIN
     collides = gap < MIN_GAP
-    print(f"crop takes {CROP}px per side -> Play shows x {CROP}..{W - CROP}")
-    print(f"copy spans x {MARGIN}..{right:.0f}, mark x {mark_left}..{W - MARGIN}"
+    print(f"{out_path.name}: copy spans x {MARGIN}..{right:.0f}, mark x {mark_left}..{W - MARGIN}"
           f" — {'CLIPPED by the 16:9 crop' if clipped else 'inside the crop'}")
-    print(f"copy-to-mark gap {gap:.0f}px vs {MIN_GAP}px minimum — {'COLLIDES' if collides else 'ok'}")
-    print(f"{OUT}  {out.size[0]}x{out.size[1]}  {OUT.stat().st_size / 1024:.0f} KiB  mode={out.mode}")
+    print(f"  copy-to-mark gap {gap:.0f}px vs {MIN_GAP}px minimum — {'COLLIDES' if collides else 'ok'}")
+    print(f"  {out.size[0]}x{out.size[1]}  {out_path.stat().st_size / 1024:.0f} KiB  mode={out.mode}")
     if clipped or collides:
-        print("Shorten the copy or shrink MARK_SIZE; the file was written, but do not upload it.", file=sys.stderr)
+        print(f"Shorten {out_path.name}'s copy or shrink MARK_SIZE; it was written, but do not upload it.",
+              file=sys.stderr)
         return 1
     return 0
+
+
+def main():
+    print(f"crop takes {CROP}px per side -> Play shows x {CROP}..{W - CROP}")
+    return max(render(out, *copy) for out, copy in COPY.items())
 
 
 if __name__ == "__main__":
