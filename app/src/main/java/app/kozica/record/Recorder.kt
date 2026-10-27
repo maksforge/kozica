@@ -7,6 +7,7 @@ import app.kozica.R
 import app.kozica.data.HikeRepository
 import app.kozica.data.hikes.TrackPoint
 import app.kozica.data.routes.PlaceSearch
+import app.kozica.ui.settings.inAppLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,6 +79,7 @@ class Recorder(
         startedAt: Instant,
         first: TrackPoint?,
     ): String {
+        val context = context.inAppLanguage()
         val date =
             DateTimeFormatter
                 .ofLocalizedDate(FormatStyle.MEDIUM)

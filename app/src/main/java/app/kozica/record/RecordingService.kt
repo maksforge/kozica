@@ -30,6 +30,7 @@ import app.kozica.data.hikes.metres
 import app.kozica.data.routes.Router
 import app.kozica.data.schemaBlocksBackgroundWork
 import app.kozica.ui.map.distance
+import app.kozica.ui.settings.inAppLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -87,6 +88,8 @@ class RecordingService : Service() {
                 serially { resume(byMotion = true) }
             }
         }
+
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(newBase.inAppLanguage())
 
     override fun onCreate() {
         super.onCreate()
