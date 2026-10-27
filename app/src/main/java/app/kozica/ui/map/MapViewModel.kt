@@ -32,6 +32,7 @@ import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
 import app.kozica.record.Recording
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -470,7 +471,15 @@ class MapViewModel(
     ): HikeUiState? {
         val endedAt = hike.endedAt ?: return null
         val track = hike.track?.let(::decodeTrack) ?: return null
-        val heights = withContext(io) { heights(track) }
+        // A failed read draws no profile rather than ending the map's state with it.
+        val heights =
+            try {
+                withContext(io) { heights(track) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                track.flatten().map { null }
+            }
         val read = climb(heights)
         val stored =
             hike.ascentMetres?.let { ascent -> Climb(ascent, hike.descentMetres ?: 0.0, hike.ascentFromGps) }
