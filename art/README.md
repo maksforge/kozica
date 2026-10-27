@@ -6,8 +6,7 @@ the `VectorDrawable`s.
 
 | Asset | Source | State |
 | --- | --- | --- |
-| `mark.py`'s MARK and HOLE curves | your concept image → `trace-mark.py` | **placeholder — replace** |
-| `concept.png` | the image the mark was traced from — **commit it**, with its provenance below | — |
+| `mark.py`'s MARK and HOLE curves | anchor points in `draw-mark.py` → `mark.py`, in place | drawn — provenance below |
 | `drawable/ic_launcher_{background,foreground,monochrome}.xml`, `drawable/ic_notification.xml`, `mipmap-*`, `play-icon-512.png` | `mark.py` → `make-launcher-icon.py` | generated |
 | `play-feature-graphic.png` (1024×500) | `mark.py` + `theme/Color.kt` (+ `feature-background.png` if present) → `make-feature-graphic.py` | generated |
 | `play-screenshots/<n>_<scene>-<tag>.png` | `scripts/screenshots.py --build release --numbered` → `pad-screenshot.py` | — |
@@ -18,7 +17,8 @@ the `VectorDrawable`s.
 out of it. Both generators import it, so the launcher icon, the notification icon and the feature
 graphic cannot drift into being different marks.
 
-What ships today is a rounded triangle: deliberately generic, deliberately obviously a placeholder.
+What ships is the chamois on its crag, one hero horn and a short tail; `draw-mark.py` holds the
+anchors it is drawn from, and rewrites `mark.py`'s curves when one moves.
 
 - **Recolouring is two values in `mark.py` and a re-run**: `GROUND` (the icon's field) and
   `MARK_INK` (the mark on it). `make-launcher-icon.py` writes every drawable from them, the
@@ -91,5 +91,5 @@ it came from in the provenance table below, like the concept image.
 
 | File | Where it came from | Licence / terms |
 | --- | --- | --- |
-| `concept.png` | *(your drawing, or an image model and whose prompt)* | |
+| `mark.py` / `draw-mark.py` | drawn by hand as anchor points, round 3, from round-1 B, treatment b: one hero horn and a tail added to the owner's chosen round-1 drawing; no image traced | the repo's, all rights reserved |
 | `feature-background.png` | *(if used)* | |

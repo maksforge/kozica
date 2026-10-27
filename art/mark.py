@@ -1,21 +1,13 @@
-"""The placeholder mark: the single definition of this app's identity.
+"""The mark: the single definition of this app's identity.
 
-**Replace this file.** It draws a rounded triangle with a hole punched through it — deliberately
-generic, deliberately obviously a placeholder. Both generators import it (`make-launcher-icon.py`
-emits it as `VectorDrawable` path data, `make-feature-graphic.py` rasterises it with PIL), so
-whatever you put here cannot drift into being two different marks.
+A Tatra chamois in profile on a crag, its one horn hooked into a crook that stays open at launcher
+size. Both generators import it, so the launcher icon, the notification icon and the feature graphic
+cannot drift into being different marks. Edit the anchors in `draw-mark.py`, which rewrites MARK and
+HOLE here, never the path data by hand.
 
-The way to replace it: draw or generate a concept image, run `python3 art/trace-mark.py <image>`,
-and paste the curves it prints over MARK and HOLE below. Nothing else in the pipeline changes.
-**Commit the concept image beside this file** and record where it came from in `art/README.md`.
-
-**Use art you have the right to ship.** An icon traced from an emoji font, a stock icon or someone
-else's mark is a licence obligation at best and a rejected Play upload at worst. Art you generated
-from your own prompt, or drew, is clean.
-
-The geometry is two subpaths: the shape, and the hole punched out of it. Coordinates are in
-arbitrary units around an origin at the mark's centre; callers fit them to their own canvas with
-`fit()`. y grows downward, as it does in both SVG and PIL.
+Two subpaths: the silhouette (animal and crag as one contour) and the hole under the belly.
+Coordinates are in arbitrary units around the mark's centre; callers fit them to their canvas with
+`fit()`. y grows downward, as in SVG and PIL.
 """
 
 import re
@@ -51,20 +43,46 @@ class Subpath:
     hole: bool = False
 
 
-# A rounded triangle pointing right. One outer contour.
 MARK = (
-    "M-27.48,-73.6"
-        "C-39.92,-80.78 -50,-74.96 -50,-60.6C-50,-20.2 -50,20.2 -50,60.6"
-        "C-50,74.96 -39.92,80.78 -27.48,73.6C7.51,53.4 42.49,33.2 77.48,13"
-        "C89.92,5.82 89.92,-5.82 77.48,-13C42.49,-33.2 7.51,-53.4 -27.48,-73.6"
+    "M-65,-32"
+        "C-65,-32 -80,-38 -80,-38C-80,-38 -67,-50 -67,-50"
+        "C-67,-50 -63.83,-50.5 -56,-52C-48.17,-53.5 -31.67,-56.67 -20,-59"
+        "C-8.33,-61.33 6,-61.83 14,-66C22,-70.17 25,-79.17 28,-84"
+        "C31,-88.83 33.33,-90.83 32,-95C30.67,-99.17 20,-109 20,-109"
+        "C20,-109 41,-107 41,-107C41,-107 43.28,-109.17 43.82,-112"
+        "C44.37,-114.83 44.11,-120.09 44.27,-124C44.43,-127.91 44.79,-132.77 44.8,-135.43"
+        "C44.81,-138.1 44.81,-138.64 44.31,-139.98C43.82,-141.33 42.94,-142.57 41.84,-143.49"
+        "C40.74,-144.41 39.22,-145.21 37.71,-145.51C36.21,-145.81 34.37,-145.77 32.81,-145.28"
+        "C31.25,-144.79 29.55,-143.81 28.35,-142.55C27.15,-141.29 26.05,-139.58 25.59,-137.72"
+        "C25.13,-135.86 25.59,-131.39 25.59,-131.39C25.59,-131.39 22.91,-129.86 22.1,-131.04"
+        "C21.29,-132.22 20.52,-135.9 20.72,-138.45C20.93,-141.01 21.84,-144.06 23.33,-146.35"
+        "C24.82,-148.65 27.16,-150.9 29.67,-152.24C32.18,-153.58 35.43,-154.45 38.38,-154.41"
+        "C41.33,-154.38 44.7,-153.53 47.35,-152.03C50,-150.53 52.63,-147.99 54.28,-145.41"
+        "C55.92,-142.83 56.62,-140.13 57.2,-136.57C57.77,-133 57.57,-128.09 57.73,-124"
+        "C57.89,-119.91 57.97,-116.67 58.18,-112C58.39,-107.33 57.53,-100.5 59,-96"
+        "C60.47,-91.5 64.83,-88 67,-85C69.17,-82 72,-78 72,-78"
+        "C72,-78 69.5,-75.17 66,-73C62.5,-70.83 54.5,-68.83 51,-65"
+        "C47.5,-61.17 46.17,-55.17 45,-50C43.83,-44.83 44.67,-39.33 44,-34"
+        "C43.33,-28.67 42,-24 41,-18C40,-12 38.67,-4 38,2"
+        "C37.33,8 37,18 37,18C37,18 47,7 47,7"
+        "C47,7 57,36 57,36C57,36 51,46 51,46"
+        "C51,46 64,70 64,70C64,70 62,88 62,88"
+        "C62,88 -76,88 -76,88C-76,88 -70,64 -70,64"
+        "C-70,64 -78,54 -78,54C-78,54 -60,44 -60,44"
+        "C-60,44 -48,40 -48,40C-48,40 -52.67,27.33 -55,22"
+        "C-57.33,16.67 -60.17,13.67 -62,8C-63.83,2.33 -65.5,-5.33 -66,-12"
+        "C-66.5,-18.67 -65,-32 -65,-32"
         "Z"
 )
 
-# The hole punched through it.
 HOLE = (
-    "M20,0"
-        "C20,14.36 8.36,26 -6,26C-20.36,26 -32,14.36 -32,0"
-        "C-32,-14.36 -20.36,-26 -6,-26C8.36,-26 20,-14.36 20,0"
+    "M-32,-16"
+        "C-27.67,-18.67 -16,-17.5 -8,-20C0,-22.5 10.83,-32.67 16,-31"
+        "C21.17,-29.33 21.5,-18.17 23,-10C24.5,-1.83 25,18 25,18"
+        "C25,18 12,22 12,22C12,22 2,29 2,29"
+        "C2,29 -14,27 -14,27C-14,27 -26,35 -26,35"
+        "C-26,35 -37,40 -37,40C-37,40 -41.5,21.33 -41,14"
+        "C-40.5,6.67 -35.5,1 -34,-4C-32.5,-9 -36.33,-13.33 -32,-16"
         "Z"
 )
 
