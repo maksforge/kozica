@@ -7,9 +7,15 @@ import androidx.annotation.RequiresPermission
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import app.kozica.data.APP_DATABASE_FILE
 import app.kozica.data.AppPreferences
 import app.kozica.data.HikeRepository
+import app.kozica.data.PRESERVED_DIRECTORY
 import app.kozica.data.RouteRepository
+import app.kozica.data.backup.BackupExporter
+import app.kozica.data.backup.BackupExports
+import app.kozica.data.backup.BackupRestorer
+import app.kozica.data.backup.EXPORTS_DIRECTORY
 import app.kozica.data.buildAppDatabase
 import app.kozica.data.hikes.HikeHeights
 import app.kozica.data.location.positionFixes
@@ -35,6 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.File
 
 /**
  * `internal` rather than private: [MainApplication] holds the one [AppPreferences] over this store
@@ -77,6 +84,31 @@ class AppContainer(
     private val database by lazy { buildAppDatabase(appContext) }
 
     val media by lazy { MediaFiles(appContext) }
+
+    val filesDir: File get() = appContext.filesDir
+
+    val preservedDir: File get() = File(appContext.filesDir, PRESERVED_DIRECTORY)
+
+    private val backupExporter by lazy {
+        BackupExporter(
+            databaseFile = appContext.getDatabasePath(APP_DATABASE_FILE),
+            filesDir = appContext.filesDir,
+            scratchDir = File(appContext.cacheDir, "backup-scratch"),
+        )
+    }
+
+    val backupExports by lazy {
+        BackupExports(
+            backupExporter,
+            File(appContext.cacheDir, EXPORTS_DIRECTORY),
+            preferences,
+            appContext.contentResolver,
+        )
+    }
+
+    val backupRestorer by lazy {
+        BackupRestorer(appContext, appContext.filesDir, preservedDir, backupExporter, APP_DATABASE_FILE)
+    }
 
     val routes by lazy { RouteRepository(database.routeDao()) }
 

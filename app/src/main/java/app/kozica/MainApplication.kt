@@ -7,6 +7,8 @@ import app.kozica.data.AppPreferences
 import app.kozica.data.PRESERVED_DIRECTORY
 import app.kozica.data.SchemaGate
 import app.kozica.data.ThemeMode
+import app.kozica.data.backup.adoptRestoredDatabase
+import app.kozica.data.backup.adoptRestoredPreferences
 import app.kozica.data.destructiveMigrationAllowed
 import app.kozica.data.preserveBeforeWipe
 import app.kozica.data.readUserVersion
@@ -93,6 +95,10 @@ class MainApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Before the DataStore and the schema gate first read either file (docs/phase-6.md § 7).
+        adoptRestoredPreferences(filesDir)
+        adoptRestoredDatabase(filesDir, getDatabasePath(APP_DATABASE_FILE))
 
         preferences = AppPreferences(preferencesStore)
 

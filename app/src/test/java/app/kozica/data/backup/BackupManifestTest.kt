@@ -1,34 +1,53 @@
 package app.kozica.data.backup
 
+import app.kozica.media.MediaKind
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
-/**
- * The manifest is what makes "refuse politely" possible, so its round trip is worth pinning.
- *
- * The forward-compatibility case is the one that matters: a **newer** archive carries fields this
- * build has never heard of, and it still has to parse far enough for the schema check to reject it
- * with a sentence instead of an exception.
- */
 class BackupManifestTest {
     @Test
     fun `a manifest survives a round trip`() {
-        val manifest = BackupManifest(schemaVersion = 3, createdAt = 1_700_000_000_000, appVersion = "1.2.0")
-        val decoded = backupJson.decodeFromString<BackupManifest>(backupJson.encodeToString(manifest))
-        assertEquals(manifest, decoded)
+        val manifest =
+            BackupManifest(
+                scope = BackupScope.Everything,
+                schemaVersion = 3,
+                createdAtEpochMilli = 1_800_000_000_000,
+                mediaCounts = mapOf(MediaKind.Photo.name to 2),
+            )
+
+        assertEquals(manifest, decodeManifest(encodeManifest(manifest)))
     }
 
     @Test
-    fun `an archive from a newer build still parses, so it can be refused rather than crash`() {
-        val fromTheFuture =
-            """{"schemaVersion":99,"createdAt":1,"appVersion":"9.9.9","somethingNew":{"a":1}}"""
-        val decoded = backupJson.decodeFromString<BackupManifest>(fromTheFuture)
-        assertEquals(99, decoded.schemaVersion)
+    fun `the format is written even at its default`() {
+        val text =
+            encodeManifest(BackupManifest(scope = BackupScope.Records, schemaVersion = 3, createdAtEpochMilli = 1))
+
+        assertEquals(BACKUP_FORMAT_VERSION, Regex("\"format\": (\\d+)").find(text)!!.groupValues[1].toInt())
     }
 
     @Test
-    fun `a field added later has a default, so an old archive still reads`() {
-        val old = """{"schemaVersion":1,"createdAt":1}"""
-        assertEquals("", backupJson.decodeFromString<BackupManifest>(old).appVersion)
+    fun `a newer archive with unknown fields still parses, so it can be refused by its numbers`() {
+        val decoded =
+            decodeManifest(
+                """{"format":1,"scope":"Records","schemaVersion":99,"createdAtEpochMilli":1,"somethingNew":{"a":1}}""",
+            )
+
+        assertEquals(99, decoded!!.schemaVersion)
+    }
+
+    @Test
+    fun `an unknown scope, a missing field or not JSON at all is no manifest`() {
+        assertNull(decodeManifest("""{"scope":"Avatars","schemaVersion":3,"createdAtEpochMilli":1}"""))
+        assertNull(decodeManifest("""{"scope":"Records","createdAtEpochMilli":1}"""))
+        assertNull(decodeManifest("not json"))
+    }
+
+    @Test
+    fun `a kind the manifest does not count reads as zero`() {
+        val manifest = BackupManifest(scope = BackupScope.Records, schemaVersion = 3, createdAtEpochMilli = 1)
+
+        assertEquals(0, manifest.countFor(MediaKind.Photo))
     }
 }

@@ -48,6 +48,9 @@ class HikeRepository(
 
     fun observePhotos(id: String): Flow<List<HikePhotoEntity>> = dao.observePhotos(id)
 
+    /** Every photo when [since] is null, before any Everything export (docs/phase-6.md § 7). */
+    fun observePhotosAddedAfter(since: Instant?): Flow<Int> = dao.observePhotosAddedAfter(since ?: Instant.EPOCH)
+
     suspend fun rename(
         id: String,
         name: String,

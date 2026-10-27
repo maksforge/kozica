@@ -221,6 +221,7 @@ fun MainNavigation(
                             onBack = { backStack.removeLastOrNull() },
                             onOpenLicences = { backStack.add(Licences) },
                             onOpenSupport = { backStack.add(Support) },
+                            onOpenBackup = { backStack.add(Backup) },
                         )
                     }
                     entry<Backup> {

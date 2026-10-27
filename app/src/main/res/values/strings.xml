@@ -130,6 +130,8 @@
     <string name="settings_language_polish" translatable="false">Polski</string>
     <string name="settings_language_report">Something read wrong?</string>
     <string name="settings_language_report_hint">Tell me if a word looks wrong in your language. Opens your email app, with the language you are reading already filled in.</string>
+    <!-- A Settings section holding the backup row. -->
+    <string name="settings_data">Your data</string>
     <string name="settings_backup">Backup and restore</string>
     <string name="settings_about">About</string>
     <string name="settings_support">Help and feedback</string>
@@ -155,11 +157,90 @@
     <string name="support_rate_hint">Opens this app on Google Play. Rating is optional and unlocks nothing.</string>
     <string name="support_no_play">No Google Play or web browser on this phone to open.</string>
 
-    <!-- Backup -->
+    <!-- Backup and restore (docs/phase-6.md § 7). "Records" and "Everything" are the two export scopes. -->
+    <string name="backup_auto_title">Automatic backup</string>
+    <string name="backup_auto_never">No automatic backup has been recorded on this phone</string>
+    <!-- %1$s is a date and time. -->
+    <string name="backup_auto_recorded">Last automatic backup: %1$s</string>
+    <!-- %1$s is a date and time more than 14 days ago. -->
+    <string name="backup_auto_stale">Last automatic backup: %1$s, more than two weeks ago</string>
+    <!-- Small previews of photos that did not fit in Android's backup space; %d is never zero. -->
+    <plurals name="backup_auto_excluded">
+        <item quantity="one">%d photo preview didn\'t fit and was left out</item>
+        <item quantity="other">%d photo previews didn\'t fit and were left out</item>
+    </plurals>
+    <string name="backup_auto_photos">Automatic backup keeps your hikes, notes and Routes, not your photos. Export everything to keep the photos.</string>
+    <!-- Opens Android's own backup settings. -->
+    <string name="backup_auto_settings">Backup settings</string>
+    <string name="backup_export_title">Export</string>
     <string name="backup_explainer">Everything stays on this phone. A backup is a single file you keep wherever you like.</string>
-    <string name="backup_export_records">Export records</string>
-    <string name="backup_export_everything">Export everything</string>
+    <string name="backup_scope_records">Records</string>
+    <string name="backup_scope_everything">Everything</string>
+    <string name="backup_scope_records_help">Your hikes, notes, Routes and settings, with small previews of the photos. Small enough to email yourself.</string>
+    <string name="backup_scope_everything_help">Records and the full photos. The file can be large.</string>
+    <string name="backup_export_share">Export and share</string>
+    <!-- %1$s is the folder's name. -->
+    <string name="backup_export_folder">Save to %1$s</string>
+    <string name="backup_exporting">Exporting…</string>
+    <!-- The title of Android's share menu for a backup file. -->
+    <string name="backup_share">Share backup</string>
+    <string name="backup_export_failed">The backup couldn\'t be written. Check that the phone has free space.</string>
+    <string name="backup_folder_title">Export folder</string>
+    <string name="backup_folder_none">No folder chosen. A backup opens the share menu.</string>
+    <!-- %1$s is the folder's name. -->
+    <string name="backup_folder_chosen">Backups can be saved to %1$s.</string>
+    <string name="backup_folder_unavailable">Kozica can no longer write to the folder you chose. Choose it again, or forget it.</string>
+    <string name="backup_folder_choose">Choose folder</string>
+    <string name="backup_folder_change">Change folder</string>
+    <string name="backup_folder_forget">Forget folder</string>
+    <!-- %1$s is the saved file's name. -->
+    <string name="backup_folder_saved">Saved as %1$s</string>
+    <string name="backup_folder_refused">The folder didn\'t take the file, so it\'s in the share menu instead.</string>
+    <string name="backup_folder_not_remembered">Kozica couldn\'t keep access to that folder.</string>
+    <string name="backup_folder_no_picker">This phone has no folder picker.</string>
+    <string name="backup_restore_title">Restore</string>
+    <string name="backup_restore_help">Restoring replaces your hikes, notes, Routes and settings with the backup\'s. Photos already on the phone stay. What you have now is saved first, under Saved copies.</string>
     <string name="backup_restore">Restore from a file…</string>
+    <string name="backup_restore_confirm_title">Restore this backup?</string>
+    <!-- %1$s is "Records" or "Everything", %2$s the date and time the backup was made. -->
+    <string name="backup_restore_confirm_body">%1$s backup from %2$s. It replaces your hikes, notes, Routes and settings. What you have now is saved first.</string>
+    <string name="backup_restore_confirm">Restore</string>
+    <string name="backup_restoring">Restoring…</string>
+    <string name="backup_refused_title">Not restored</string>
+    <string name="backup_refused_not_a_backup">This file isn\'t a Kozica backup. Nothing on the phone was changed.</string>
+    <!-- %1$d is the backup's data version, %2$d the newest this version of the app reads. -->
+    <string name="backup_refused_newer">This backup was made by a newer version of Kozica (data version %1$d; this one reads up to %2$d). Update the app and try again. Nothing on the phone was changed.</string>
+    <string name="backup_refused_too_large">This file is too large to restore. Nothing on the phone was changed.</string>
+    <string name="backup_refused_unreadable">The data in this backup couldn\'t be opened. Nothing on the phone was changed.</string>
+    <string name="backup_restored_title">Restored</string>
+    <!-- %1$s is "Records" or "Everything", %2$s the date and time the backup was made. -->
+    <string name="backup_restored_scope">%1$s backup from %2$s.</string>
+    <!-- Photos and their previews written from the backup. -->
+    <plurals name="backup_restored_images">
+        <item quantity="one">%d image restored.</item>
+        <item quantity="other">%d images restored.</item>
+    </plurals>
+    <!-- Images the backup did not carry, left where they were; %d is never zero. -->
+    <plurals name="backup_restored_kept">
+        <item quantity="one">%d image already on the phone was kept.</item>
+        <item quantity="other">%d images already on the phone were kept.</item>
+    </plurals>
+    <string name="backup_restored_snapshot">What you had before is saved under Saved copies.</string>
+    <string name="backup_restored_close_help">Kozica closes to finish. Open it again to see the restored data.</string>
+    <string name="backup_restored_close">Close Kozica</string>
+    <!-- Copies of the app's data kept on the phone, from before a restore or from an older version. -->
+    <string name="preserved_title">Saved copies</string>
+    <string name="preserved_empty">No saved copies.</string>
+    <string name="preserved_help">Kozica saves a copy before every restore, so a restore can be undone, and never deletes one by itself.</string>
+    <string name="preserved_kind_snapshot">Before a restore</string>
+    <string name="preserved_kind_wipe">From an older version of the app</string>
+    <string name="preserved_not_restorable">Kozica can\'t load this one back. Share it to keep it.</string>
+    <string name="preserved_restore">Restore</string>
+    <string name="preserved_share">Share</string>
+    <string name="preserved_delete">Delete</string>
+    <string name="preserved_delete_title">Delete this copy?</string>
+    <!-- %1$s is the copy's file name. -->
+    <string name="preserved_delete_body">%1$s will be deleted. This can\'t be undone.</string>
 
     <!-- Licences -->
     <string name="licences_map_data">The map data of this version</string>
@@ -275,4 +356,11 @@
         <item quantity="one">%d photo couldn\'t be added: the file isn\'t an image Kozica can read</item>
         <item quantity="other">%d photos couldn\'t be added: the files aren\'t images Kozica can read</item>
     </plurals>
+    <!-- The Hikes tab's banner while photos were added after the last "Export everything"; %d is never zero. -->
+    <plurals name="hikes_photos_not_backed_up">
+        <item quantity="one">%d photo isn\'t in any backup</item>
+        <item quantity="other">%d photos aren\'t in any backup</item>
+    </plurals>
+    <!-- The banner's button: exports everything, photos included. -->
+    <string name="hikes_backup_export">Export</string>
 </resources>
