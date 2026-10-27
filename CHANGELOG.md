@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.9.0](https://github.com/maksforge/kozica/compare/v0.8.1...v0.9.0) (2026-10-27)
+
+
+### Features
+
+* add photos and a note to a Hike, from the camera while recording or picked afterwards, pinned to its Track ([6580447](https://github.com/maksforge/kozica/commit/65804472a4f2f14349c8caa80b4a9460fce93917))
+* add the Hikes tab, with each Hike's Track, totals, ascent, profile, rename, trim and delete ([c41f6c2](https://github.com/maksforge/kozica/commit/c41f6c2bf25c0ddbb1202acb50ec37ce3eea7e11))
+* draw the map's compass in the app's colours, with an N at its north tip ([a6cfd2d](https://github.com/maksforge/kozica/commit/a6cfd2da97c6b308ed53efcb1f945f54ca656eae))
+* export a Hike or a saved Route as GPX through the share sheet ([007cc64](https://github.com/maksforge/kozica/commit/007cc644f84e917fe029c3ee647c3c5e1e66221c))
+* port binky's backup, with the Backup row back in Settings and a banner for photos no export has covered ([0e00ae4](https://github.com/maksforge/kozica/commit/0e00ae452dff06eb721f25e6c2a0942177330fd3))
+* record a hike: a location foreground service, pause and auto-resume, schema 3 ([b4845d4](https://github.com/maksforge/kozica/commit/b4845d402143ad949498c3f93c0d3ecb7eb8ed4f))
+* say how many photos couldn't be added, and word unpinning a photo as Remove from map ([b4a67d8](https://github.com/maksforge/kozica/commit/b4a67d876bd2b3b653acfb05bda5791ad56c7898))
+* translate the Hikes tab and a Hike's sheet into Polish ([3bc2303](https://github.com/maksforge/kozica/commit/3bc2303d66062e319d15fc4e701469cb816c1152))
+
+
+### Bug Fixes
+
+* centre the compass needle on its disc and line the disc up under Settings ([85be826](https://github.com/maksforge/kozica/commit/85be826eb59c655b99d673f322a2d3c7f476ebd9))
+* count GPS ascent from the last turn, as phase 6 § 5 says ([7a80c6d](https://github.com/maksforge/kozica/commit/7a80c6d0e686a19ff122c7411d6f5476a5b9a3d7))
+* delete a Hike and its photos' rows in one transaction, so a photo written meanwhile leaves no files behind ([48a3bf1](https://github.com/maksforge/kozica/commit/48a3bf145b7447bcc61f4f9c703704272ab68896))
+* derive the compass rim from its size and set the N from its measured cap ([90a19a6](https://github.com/maksforge/kozica/commit/90a19a602853e1d180416c37bfb9b3740a3ee957))
+* discard a hike that recorded no point ([735eaaf](https://github.com/maksforge/kozica/commit/735eaaf707b24a42f58f795fc57f5245497471d8))
+* don't ask to stop again when the app returns from recents ([999779d](https://github.com/maksforge/kozica/commit/999779d77b1b4f174b65e177cb8d3644709359a4))
+* draw a Hike's sheet without its profile when the heights can't be read ([5df4c9e](https://github.com/maksforge/kozica/commit/5df4c9e844e023c1056e74b5d9ffc021c4ae5caa))
+* draw the compass as a bezel compass, the owner's pick of three designs ([a1445e0](https://github.com/maksforge/kozica/commit/a1445e083205f85c72847d528c3b2c42aae9ad8e))
+* finish a Hike once, reading its points in the transaction that deletes them ([4257630](https://github.com/maksforge/kozica/commit/4257630ba7f2b3ae73c1ffffea93a4b9de8650bb))
+* give a late-reported pick its grant back after its share was taken as cancelled ([63a80d6](https://github.com/maksforge/kozica/commit/63a80d65acab60c56886006c1d63eefff5569cd4))
+* give the compass needle a centre hub ([d520502](https://github.com/maksforge/kozica/commit/d520502b4786282dfba6b7868ec01b5620187789))
+* grant every app that takes a share read access first, since MIUI's share sheet drops the intent's grant ([2816d13](https://github.com/maksforge/kozica/commit/2816d13f97f692091b30261b5414eb81603244ae))
+* harden backup and restore against interruption, quota, concurrency and a running recording ([e3d329e](https://github.com/maksforge/kozica/commit/e3d329ec15ed98c597df78835e677b0add6db34d))
+* hide a Hike's ascent and descent when none is stored and no height could be read ([b9908d9](https://github.com/maksforge/kozica/commit/b9908d9e56911be4d0355ac0c217bb5e28cfb2de))
+* keep a Hike's end when Trim's handle is left there, whatever the slider's float rounding ([b2729e0](https://github.com/maksforge/kozica/commit/b2729e0c03f23f6144c6cb1c40c7cb2c342505ac))
+* keep an emoji whole when a GPX file name is cut to length ([fa1fbb5](https://github.com/maksforge/kozica/commit/fa1fbb5ffdd0238cdc0803a51d98909cb03fff4d))
+* keep picked photos across a process death, and keep the viewer open on the next photo after a delete ([fe7eff4](https://github.com/maksforge/kozica/commit/fe7eff4366d0e036c0d839dcba873cf61c077c3a))
+* keep the map's compass below the banners under the search row ([1c09169](https://github.com/maksforge/kozica/commit/1c091699147f40890efd39d867b426f432d29dbf))
+* keep the map's compass below the Safety and Settings buttons ([82d27e4](https://github.com/maksforge/kozica/commit/82d27e4a649845d454ea8e70a64afa08809fbcde))
+* keep the notification's Stop confirmation across a recreated activity ([c6232d2](https://github.com/maksforge/kozica/commit/c6232d286e8f5b0c317b4d68a626fc1a01e9826d))
+* keep the notification's time counting while paused, as the bar's does ([3d054b4](https://github.com/maksforge/kozica/commit/3d054b47458330e8a9054c84798b0ed76c038bd9))
+* let a restore repair images already on the phone, count what it wrote, and hold the backup lock through the folder hand-off ([54eb1da](https://github.com/maksforge/kozica/commit/54eb1daa7308374da5aefc5ce2ba047f2f6bfe05))
+* name finishing a lost recording without pointing at a place in Polish ([4f2e7e1](https://github.com/maksforge/kozica/commit/4f2e7e1bacdda92b4e0e0eb25c6416c2e6d4b538))
+* read a Hike's ascent off Stop's and Trim's paths, and leave it unread when the read fails ([e47a2e3](https://github.com/maksforge/kozica/commit/e47a2e334f43fb0a7f567b6b003552e98b7faae2))
+* revoke a cancelled share's grants when the app is back, instead of sweeping at launch ([799bfce](https://github.com/maksforge/kozica/commit/799bfce702598eb4ce373040fb47591542046c75))
+* run a GPX export in its view model, one at a time, and say when it fails ([f0ab70f](https://github.com/maksforge/kozica/commit/f0ab70ffa288860ae4ad0c400902b2f678120fa6))
+* run each recording handler whole under one lock, and resume only an open Hike ([c571f29](https://github.com/maksforge/kozica/commit/c571f299159dadd5bcd444117226612017728b41))
+* span the compass disc with the needle and set the N inside its north half ([4fe14e8](https://github.com/maksforge/kozica/commit/4fe14e86958cf0afb6b56c0e40ce8cfc3f6d079e))
+* sweep share grants only on the user's own launch, not when a share target restarts the process ([24bd01b](https://github.com/maksforge/kozica/commit/24bd01b3b45cc6fa42a6cec31a78fa828517f143))
+* take back a share's read grants from every app but the pick, and from all before the files go ([3f2b779](https://github.com/maksforge/kozica/commit/3f2b779e91ef85cd571d78ebdb150feded5fcad7))
+
 ## [0.8.1](https://github.com/maksforge/kozica/compare/v0.8.0...v0.8.1) (2026-10-26)
 
 
