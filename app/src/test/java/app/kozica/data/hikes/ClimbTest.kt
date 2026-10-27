@@ -42,6 +42,28 @@ class ClimbTest {
     }
 
     @Test
+    fun `GPS counts each leg from the turn, where the grid's dead band counts from its last reference`() {
+        val rolling = doubleArrayOf(600.0, 606.0, 612.0, 615.0, 609.0, 603.0, 609.0, 615.0, 618.0)
+
+        val fromGps = climb(gps(*rolling))
+        assertEquals(30.0, fromGps.ascent, 1e-9)
+        assertEquals(12.0, fromGps.descent, 1e-9)
+
+        val fromGrid = climb(grid(*rolling))
+        assertEquals(27.0, fromGrid.ascent, 1e-9)
+        assertEquals(9.0, fromGrid.descent, 1e-9)
+    }
+
+    @Test
+    fun `at the last GPS point the open leg and what lies past its turn count, as the grid's last point does`() {
+        val climb = climb(gps(600.0, 615.0, 608.0))
+
+        assertEquals(15.0, climb.ascent, 1e-9)
+        assertEquals(7.0, climb.descent, 1e-9)
+        assertEquals(6.0, climb(gps(600.0, 606.0)).ascent, 1e-9)
+    }
+
+    @Test
     fun `no climb is counted across a change of source, GPS being metres above the grid`() {
         val heights = grid(1_000.0, 1_050.0, 1_100.0) + gps(1_140.0, 1_141.0, 1_140.0) + grid(1_100.0, 1_120.0)
 
