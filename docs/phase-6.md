@@ -353,9 +353,13 @@ Each photo is written by `MediaFiles` as `photos/<uuid>.jpg` with its thumbnail.
 map open the photo, and the details show a strip; each photo can be captioned, removed from the Hike
 or deleted. A missing file is a placeholder.
 
-**"Remove from hike" takes the photo's pin off** the Track and the map, and the photo stays in the
-strip; "Delete photo" deletes it and its files (decided with the owner on 2026-10-27). A photo
-always belongs to a Hike, so no third state is needed, and no column.
+**"Remove from map" takes the photo's pin off** the Track and the map, and the photo stays in the
+strip; "Delete photo" deletes it and its files (decided with the owner on 2026-10-27; first worded
+"Remove from hike", which reads as taking the photo out). A photo always belongs to a Hike, so no
+third state is needed, and no column.
+
+**A file that is not an image Kozica can read**, taken or picked, is left out and counted in a
+banner over the tab bar until dismissed, so a pick of ten that lands nine says so on any tab.
 
 **The camera's pin is read from the stored Track**, as the last point at or before the moment the
 button was pressed, rather than held in memory: the camera app in front is when a low-memory kill
@@ -363,8 +367,8 @@ takes the process, and the press time travels in saved state to the new one.
 
 **One note per Hike**, free text in the details, editable any time.
 
-**Copy:** "Take photo", "Add photos", "Caption", "Note", "Add a note", "Remove from hike", "Delete
-photo".
+**Copy:** "Take photo", "Add photos", "Caption", "Note", "Add a note", "Remove from map", "Delete
+photo", "%d photos couldn't be added: the files aren't images Kozica can read" (plural), "OK".
 
 ## 7. Backup, ported from binky
 
@@ -501,7 +505,7 @@ host.
 | R4 | Process death mid-recording: the next launch offers resume or finish, and no point is lost | `adb root; adb shell kill -9 $(pidof <pkg>)` (emulator) during a recording; the pulled database |**Partly read on the API 33 emulator**, 2026-10-26: a recording with 4 fixes, then the kill. The next launch offered 'A hike didn't finish recording'; Resume started a new stretch and the bar carried the distance on (3.8 → 3.9 km); after Stop the Hike's row was there. No point counts were pulled, so "no point is lost" is *(owed)*. Not yet read on a phone |
 | R5 | Schema 2 to 3 on the test phone: the previous release-shaped build with a saved Route, this one over the top | `assembleDebug -PreleaseShapedDebug` both times; `dumpsys dbinfo` |**Pass**, 2026-10-26, test phone: the release-shaped build of 6cec096 (schema 2) showed a saved Route, 48.9609, 19.9825 – 48.9241, 20.0074, 26.9 km. The release-shaped build of 1c09169 (schema 3) went over the top with no schema screen. It showed the same Route, which is what shows `MIGRATION_2_3` kept the rows; `hikes` answered a query (`dumpsys dbinfo`), so schema 3 is live. A release-shaped build has `isDebuggable = false`, so no destructive fallback |
 | R6 | A Hike's ascent beside the planned Route over the same Trails | the Hikes tab and the Routes tab, same Trails | **Read on a recorded line, 2026-10-27**, test phone, debug build with the Regions, the network and the relief hand-pushed: the `route-hike` seed plans Kuźnice → Kasprowy Wierch and records its planned line as a Hike. Planned 969 m, the Hike 975 m from the grid, 6.5 km both; the network sums each edge's climb apart and the Hike one run, so the 6 m. The same build read 1,040 m for the `hikes` seed's Kasprowy line, as the host read it with `build-network.py`'s sampler (1,039.6 m). A walked Hike beside its Route is *(owed: the walk)* |
-| R10 | Photos picked afterwards, pinned by their time taken (§ 6) | three JPEGs pushed to `/sdcard/DCIM/`, picked with "Add photos"; the pulled database | **Pass**, 2026-10-27, test phone (API 30, the system file chooser standing in for the Photo Picker): one dated 09:53:15 with no offset was pinned on the Track point at 07:53:15Z; one dated 10:20:00 with `OffsetTimeOriginal` +02:00 fell in a pause and was pinned at the last point before it; one with no date was added unpinned; two 0-byte PNGs picked with them were left out. Caption, "Remove from hike", the note and "Delete photo" (row and both files) read in the app; a photo with its files removed by hand drew the placeholder in the strip and the viewer |
+| R10 | Photos picked afterwards, pinned by their time taken (§ 6) | three JPEGs pushed to `/sdcard/DCIM/`, picked with "Add photos"; the pulled database | **Pass**, 2026-10-27, test phone (API 30, the system file chooser standing in for the Photo Picker): one dated 09:53:15 with no offset was pinned on the Track point at 07:53:15Z; one dated 10:20:00 with `OffsetTimeOriginal` +02:00 fell in a pause and was pinned at the last point before it; one with no date was added unpinned; two 0-byte PNGs picked with them were left out, and a second pick of all five raised the banner over the tab bar, "Nie udało się dodać 2 zdjęć…", which OK dismissed. Caption, "Remove from map" (then worded "Remove from hike"), the note and "Delete photo" (row and both files) read in the app; a photo with its files removed by hand drew the placeholder in the strip and the viewer |
 | R11 | The camera during a recording pins at the last fix when pressed (§ 6) | API 33 emulator, `adb emu geo fix`; the pulled database | **Pass**, 2026-10-27: seven fixes, then Take photo, then a fix while the camera was open. The photo was pinned at the last fix before the press, not the one during the camera; its time was the camera's own; `cache/camera/` was empty after. After Stop the photo was in the Hike's strip |
 | R7 | Auto Backup with photos past the budget: the database still in the backup | `adb shell bmgr backupnow`; the marker file | |
 | R8 | A GPX export opened in another app, with its photos as waypoints | the share sheet to Mapy.cz or Files | |

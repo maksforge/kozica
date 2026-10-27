@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -29,6 +30,7 @@ import java.time.Instant
  *   records.
  * @param unfinished a Hike whose recording was lost with its process, offered to resume or finish
  *   while nothing records and until one of the two is chosen.
+ * @param photosLeftOut how many photos, taken or picked, could not be added, shown until dismissed.
  */
 data class RecordingUiState(
     val loaded: Boolean = false,
@@ -36,6 +38,7 @@ data class RecordingUiState(
     val unfinished: HikeEntity? = null,
     val autoResume: Boolean = true,
     val notificationsAsked: Boolean = false,
+    val photosLeftOut: Int = 0,
 )
 
 /** The recording bar's and its dialogs', which every tab shares (docs/phase-6.md § 2). */
@@ -47,6 +50,7 @@ class RecordingViewModel(
     private val applicationScope: CoroutineScope,
     private val savePhoto: suspend (hikeId: String, shot: Uri, pressedAt: Instant) -> Unit = { _, _, _ -> },
     private val deleteShot: (shot: Uri) -> Unit = {},
+    private val photosLeftOut: MutableStateFlow<Int> = MutableStateFlow(0),
 ) : ViewModel() {
     private val answered = MutableStateFlow<String?>(null)
 
@@ -56,14 +60,15 @@ class RecordingViewModel(
             unfinished,
             answered,
             preferences.autoResume,
-            preferences.notificationsAsked,
-        ) { recording, unfinished, answered, autoResume, asked ->
+            combine(preferences.notificationsAsked, photosLeftOut, ::Pair),
+        ) { recording, unfinished, answered, autoResume, (asked, leftOut) ->
             RecordingUiState(
                 loaded = true,
                 recording = recording,
                 unfinished = unfinished.takeIf { recording == null && it?.id != answered },
                 autoResume = autoResume,
                 notificationsAsked = asked,
+                photosLeftOut = leftOut,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecordingUiState())
 
@@ -97,7 +102,7 @@ class RecordingViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-                // A shot that does not decode is left out, as a picked one is.
+                photosLeftOut.update { it + 1 }
             } finally {
                 deleteShot(shot)
             }
@@ -105,6 +110,10 @@ class RecordingViewModel(
     }
 
     fun discard(shot: Uri) = deleteShot(shot)
+
+    fun dismissPhotosLeftOut() {
+        photosLeftOut.value = 0
+    }
 
     private fun answer(hikeId: String): Boolean = answered.getAndUpdate { hikeId } != hikeId
 
@@ -126,6 +135,7 @@ class RecordingViewModel(
                         container.applicationScope,
                         { hikeId, shot, pressedAt -> container.hikes.addPhoto(hikeId, shot, pressedAt) },
                         { shot -> app.contentResolver.delete(shot, null, null) },
+                        container.photosLeftOut,
                     )
                 }
             }
