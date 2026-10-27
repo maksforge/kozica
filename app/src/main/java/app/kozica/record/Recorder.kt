@@ -7,10 +7,12 @@ import app.kozica.R
 import app.kozica.data.HikeRepository
 import app.kozica.data.hikes.TrackPoint
 import app.kozica.data.routes.PlaceSearch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
@@ -36,6 +38,7 @@ class Recorder(
     private val context: Context,
     private val hikes: HikeRepository,
     private val places: () -> PlaceSearch?,
+    private val applicationScope: CoroutineScope,
 ) {
     private val current = MutableStateFlow<Recording?>(null)
 
@@ -56,8 +59,9 @@ class Recorder(
     fun stop() = RecordingService.send(context, RecordingService.ACTION_STOP)
 
     /**
-     * Ends [hikeId] at its last point and names it, or discards it if it kept no point, then reads
-     * its ascent; Stop's ending, and a lost recording's.
+     * Ends [hikeId] at its last point and names it, or discards it if it kept no point; Stop's ending,
+     * and a lost recording's. Its ascent is read after, on [applicationScope], so the ending does not
+     * wait on the relief.
      */
     suspend fun finish(
         hikeId: String,
@@ -65,8 +69,8 @@ class Recorder(
     ) {
         withContext(Dispatchers.IO) {
             hikes.finish(hikeId, now) { hike, first -> nameFor(hike.startedAt, first) }
-            hikes.fillClimbs()
         }
+        applicationScope.launch { hikes.fillClimb(hikeId) }
     }
 
     /** The date, and the nearest named place to where the Hike began, by phase 5's naming rule. */

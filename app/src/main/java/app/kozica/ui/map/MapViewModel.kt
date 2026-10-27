@@ -507,7 +507,7 @@ class MapViewModel(
         val hike = state.value.hike ?: return
         val kept = hike.kept ?: return
         hikeKeep.value = null
-        viewModelScope.launch { trimHike(hike.id, kept.first, kept.last) }
+        applicationScope.launch { trimHike(hike.id, kept.first, kept.last) }
     }
 
     fun renameHike(name: String) {

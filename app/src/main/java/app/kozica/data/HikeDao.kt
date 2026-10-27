@@ -36,7 +36,7 @@ interface HikeDao {
 
     @Query(
         "UPDATE hikes SET ascentMetres = :ascent, descentMetres = :descent, ascentFromGps = :fromGps " +
-            "WHERE id = :id",
+            "WHERE id = :id AND ascentMetres IS NULL",
     )
     suspend fun setClimb(
         id: String,
@@ -57,8 +57,8 @@ interface HikeDao {
         track: ByteArray,
         metres: Double,
         movingSeconds: Long,
-        ascent: Double,
-        descent: Double,
+        ascent: Double?,
+        descent: Double?,
         fromGps: Boolean,
     )
 
@@ -172,8 +172,8 @@ class HikeTrim(
     val track: ByteArray,
     val metres: Double,
     val movingSeconds: Long,
-    val ascent: Double,
-    val descent: Double,
+    val ascent: Double?,
+    val descent: Double?,
     val fromGps: Boolean,
 )
 

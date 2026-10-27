@@ -9,6 +9,8 @@ import android.location.altitude.AltitudeConverter
 import android.os.Build
 import androidx.annotation.RequiresApi
 import app.kozica.data.regions.RegionOutline
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 
@@ -23,23 +25,20 @@ class HikeHeights(
 ) {
     private var opened: Pair<File, ReliefHeights>? = null
 
-    /** One per point of [track] in order. Blocks while it reads tiles, so not on the main thread. */
-    suspend fun of(track: Track): List<Height?> {
-        val grid = grid()
-        val seaLevel = seaLevel(context)
-        return track.flatten().map { point ->
-            val fromGrid =
-                grid
-                    ?.takeIf {
-                        outline.contains(
-                            point.latitude,
-                            point.longitude,
-                        )
-                    }?.height(point.latitude, point.longitude)
-            fromGrid?.let { Height(it, HeightSource.GRID) }
-                ?: point.altitude?.let { Height(seaLevel(point, it), HeightSource.GPS) }
+    /** One per point of [track] in order, read on the IO dispatcher. */
+    suspend fun of(track: Track): List<Height?> =
+        withContext(Dispatchers.IO) {
+            val grid = grid()
+            val seaLevel = seaLevel(context)
+            track.flatten().map { point ->
+                val fromGrid =
+                    grid
+                        ?.takeIf { outline.contains(point.latitude, point.longitude) }
+                        ?.height(point.latitude, point.longitude)
+                fromGrid?.let { Height(it, HeightSource.GRID) }
+                    ?: point.altitude?.let { Height(seaLevel(point, it), HeightSource.GPS) }
+            }
         }
-    }
 
     @Synchronized
     private fun cached(file: File): ReliefHeights =
@@ -89,10 +88,16 @@ private fun tilesOf(archive: PmTilesArchive): (Int, Int) -> IntArray? =
                     inPremultiplied = false
                 }
             BitmapFactory.decodeByteArray(webp, 0, webp.size, options)?.let { bitmap ->
-                IntArray(RELIEF_TILE * RELIEF_TILE).also {
-                    bitmap.getPixels(it, 0, RELIEF_TILE, 0, 0, RELIEF_TILE, RELIEF_TILE)
-                    bitmap.recycle()
-                }
+                val pixels =
+                    if (bitmap.width == RELIEF_TILE && bitmap.height == RELIEF_TILE) {
+                        IntArray(RELIEF_TILE * RELIEF_TILE).also {
+                            bitmap.getPixels(it, 0, RELIEF_TILE, 0, 0, RELIEF_TILE, RELIEF_TILE)
+                        }
+                    } else {
+                        null
+                    }
+                bitmap.recycle()
+                pixels
             }
         }
     }
