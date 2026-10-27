@@ -37,6 +37,7 @@ fun Context.shareGpx(file: File) = share(listOf(file), "application/gpx+xml", R.
  * finds no provider. Granting every app that takes the share up front, as ourselves, survives that;
  * [ShareChosenReceiver] takes it back from all but the pick, [revokeUnpickedShare] from all of them
  * after a cancel, and [revokeShares] from the pick at the next share or export from its directory.
+ * A pick reported only after that cancel gets its grant back.
  */
 private fun Context.share(
     files: List<File>,
@@ -64,9 +65,10 @@ private fun Context.share(
         for (uri in uris) grantUriPermission(taker, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     val open = OpenShare(UUID.randomUUID().toString(), takers, uris)
-    openShare = open
+    shares.opened(open)
     val onChosen =
         Intent(this, ShareChosenReceiver::class.java)
+            .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
             .putExtra(EXTRA_SHARE, open.id)
             .putStringArrayListExtra(EXTRA_TAKERS, ArrayList(takers))
             .putParcelableArrayListExtra(EXTRA_URIS, ArrayList<Uri>(uris))
@@ -81,16 +83,14 @@ private class OpenShare(
     val uris: List<Uri>,
 )
 
-/** The sheet last opened, until [ShareChosenReceiver] hears which app was picked from it. Main thread only. */
-private var openShare: OpenShare? = null
+private val shares = ShareBook<OpenShare> { it.id }
 
 /**
- * For the screen that opened the sheet, once it is back: a sheet still open here was closed without a
- * pick, since the sheet reports a pick as it starts the picked app, long before the user returns.
+ * For the screen that opened the sheet, once it is back: a sheet with no pick heard is taken as closed
+ * without one. A trampoline target that hands off to a service and finishes can beat its own pick here.
  */
 fun Context.revokeUnpickedShare() {
-    val open = openShare ?: return
-    openShare = null
+    val open = shares.returned() ?: return
     revoke(open.takers, open.uris)
 }
 
@@ -115,11 +115,11 @@ class ShareChosenReceiver : BroadcastReceiver() {
         val picked =
             IntentCompat.getParcelableExtra(intent, Intent.EXTRA_CHOSEN_COMPONENT, ComponentName::class.java)
                 ?: return
-        if (openShare?.id == intent.getStringExtra(EXTRA_SHARE)) openShare = null
-        context.revoke(
-            intent.getStringArrayListExtra(EXTRA_TAKERS).orEmpty().filter { it != picked.packageName },
-            IntentCompat.getParcelableArrayListExtra(intent, EXTRA_URIS, Uri::class.java).orEmpty(),
-        )
+        val uris = IntentCompat.getParcelableArrayListExtra(intent, EXTRA_URIS, Uri::class.java).orEmpty()
+        if (shares.picked(intent.getStringExtra(EXTRA_SHARE))) {
+            for (uri in uris) context.grantUriPermission(picked.packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.revoke(intent.getStringArrayListExtra(EXTRA_TAKERS).orEmpty().filter { it != picked.packageName }, uris)
     }
 }
 

@@ -444,10 +444,11 @@ ADR-0008 stands, because the share is the user's. Every app that takes the share
 access to the file before the sheet opens: MIUI 12.5's share sheet starts the picked app as the
 system, and the platform refuses the grant the intent carries (R8). The sheet's chosen-app callback
 takes that access back from every app but the pick, and a return to the app with no callback heard
-is a cancel, which takes it from all. The pick keeps it until the next export or share from the same
-directory, or a reboot. There is no sweep at start: on MIUI the task outlives a killed process, so a
-launch rarely starts afresh, and a share target reopening the file after the ROM killed the app
-starts the process too.
+is a cancel, which takes it from all; a pick heard after that, from a target that hands off to a
+service and finishes before the callback lands, gets its grant back, for the latest share only. The
+pick keeps it until the next export or share from the same directory, or a reboot. There is no sweep
+at start: on MIUI the task outlives a killed process, so a launch rarely starts afresh, and a share
+target reopening the file after the ROM killed the app starts the process too.
 
 **Copy:** "Export GPX".
 
