@@ -15,6 +15,7 @@ import app.kozica.R
 import app.kozica.data.PreservedCopy
 import app.kozica.data.PreservedKind
 import java.io.File
+import java.util.UUID
 
 private const val ZIP_MIME = "application/zip"
 
@@ -34,7 +35,8 @@ fun Context.shareGpx(file: File) = share(listOf(file), "application/gpx+xml", R.
  * MIUI 12.5's share sheet starts the picked app as the system rather than as us, and the platform
  * refuses a grant made that way ("use startActivityAsCaller() instead"), so the app opens the file and
  * finds no provider. Granting every app that takes the share up front, as ourselves, survives that;
- * [ShareChosenReceiver] takes it back from all but the pick, and [revokeShares] from the pick too.
+ * [ShareChosenReceiver] takes it back from all but the pick, [revokeUnpickedShare] from all of them
+ * after a cancel, and [revokeShares] from the pick at the next share or export from its directory.
  */
 private fun Context.share(
     files: List<File>,
@@ -57,16 +59,39 @@ private fun Context.share(
             .queryIntentActivities(send, PackageManager.MATCH_DEFAULT_ONLY)
             .map { it.activityInfo.packageName }
             .distinct()
+    uris.map { it.pathSegments.first() }.distinct().forEach { revokeShares(it) }
     for (taker in takers) {
         for (uri in uris) grantUriPermission(taker, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
+    val open = OpenShare(UUID.randomUUID().toString(), takers, uris)
+    openShare = open
     val onChosen =
         Intent(this, ShareChosenReceiver::class.java)
+            .putExtra(EXTRA_SHARE, open.id)
             .putStringArrayListExtra(EXTRA_TAKERS, ArrayList(takers))
             .putParcelableArrayListExtra(EXTRA_URIS, ArrayList<Uri>(uris))
     val chosen =
         PendingIntentCompat.getBroadcast(this, 0, onChosen, PendingIntent.FLAG_UPDATE_CURRENT, true)
     startActivity(Intent.createChooser(send, getString(title), chosen?.intentSender))
+}
+
+private class OpenShare(
+    val id: String,
+    val takers: List<String>,
+    val uris: List<Uri>,
+)
+
+/** The sheet last opened, until [ShareChosenReceiver] hears which app was picked from it. Main thread only. */
+private var openShare: OpenShare? = null
+
+/**
+ * For the screen that opened the sheet, once it is back: a sheet still open here was closed without a
+ * pick, since the sheet reports a pick as it starts the picked app, long before the user returns.
+ */
+fun Context.revokeUnpickedShare() {
+    val open = openShare ?: return
+    openShare = null
+    revoke(open.takers, open.uris)
 }
 
 /** Every app's read access to what was shared from one of file_paths.xml's directories, by its [root] name. */
@@ -90,14 +115,24 @@ class ShareChosenReceiver : BroadcastReceiver() {
         val picked =
             IntentCompat.getParcelableExtra(intent, Intent.EXTRA_CHOSEN_COMPONENT, ComponentName::class.java)
                 ?: return
-        val uris = IntentCompat.getParcelableArrayListExtra(intent, EXTRA_URIS, Uri::class.java).orEmpty()
-        for (taker in intent.getStringArrayListExtra(EXTRA_TAKERS).orEmpty()) {
-            if (taker == picked.packageName) continue
-            for (uri in uris) context.revokeUriPermission(taker, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        if (openShare?.id == intent.getStringExtra(EXTRA_SHARE)) openShare = null
+        context.revoke(
+            intent.getStringArrayListExtra(EXTRA_TAKERS).orEmpty().filter { it != picked.packageName },
+            IntentCompat.getParcelableArrayListExtra(intent, EXTRA_URIS, Uri::class.java).orEmpty(),
+        )
     }
 }
 
+private fun Context.revoke(
+    takers: List<String>,
+    uris: List<Uri>,
+) {
+    for (taker in takers) {
+        for (uri in uris) revokeUriPermission(taker, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+}
+
+private const val EXTRA_SHARE = "app.kozica.extra.SHARE_ID"
 private const val EXTRA_TAKERS = "app.kozica.extra.SHARE_TAKERS"
 private const val EXTRA_URIS = "app.kozica.extra.SHARE_URIS"
 
