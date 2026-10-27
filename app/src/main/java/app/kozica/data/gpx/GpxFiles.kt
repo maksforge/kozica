@@ -11,10 +11,12 @@ const val GPX_DIRECTORY = "gpx"
 
 /**
  * Writes a GPX into [dir] in the cache, on its way to the share sheet (docs/phase-6.md § 8). Each write
- * clears the last, whose share is long over by the time the user exports again.
+ * clears the last, whose share is long over by the time the user exports again, and [revokeShares]
+ * first takes back every app's read access to it.
  */
 class GpxFiles(
     private val dir: File,
+    private val revokeShares: () -> Unit,
 ) {
     private val lock = Mutex()
 
@@ -24,6 +26,7 @@ class GpxFiles(
     ): File =
         lock.withLock {
             withContext(Dispatchers.IO) {
+                revokeShares()
                 dir.deleteRecursively()
                 dir.mkdirs()
                 File(dir, gpxFileName(gpx.name, date)).also { file -> file.bufferedWriter().use { gpx.write(it) } }

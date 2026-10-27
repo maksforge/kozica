@@ -442,7 +442,9 @@ Route and its date: the day a Hike started, and for a Route the day of the expor
 planned again from that day's network. Nothing leaves the phone unless the user picks where it goes;
 ADR-0008 stands, because the share is the user's. Every app that takes the share is granted read
 access to the file before the sheet opens: MIUI 12.5's share sheet starts the picked app as the
-system, and the platform refuses the grant the intent carries (R8).
+system, and the platform refuses the grant the intent carries (R8). The sheet's chosen-app callback
+takes that access back from every app but the pick; the pick loses it when the directory is next
+cleared or the app next starts.
 
 **Copy:** "Export GPX".
 

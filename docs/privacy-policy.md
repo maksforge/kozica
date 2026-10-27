@@ -28,8 +28,13 @@ share it or save it to a folder you choose yourself; the app sends it nowhere.
 
 **GPX files.** A hike or a saved route can be exported as a GPX file, for another map app or a
 watch. A hike's file holds its track with the times you walked it, its name, its note, and where
-its photos were taken, with their captions but not the photos. The file leaves the phone only
-through the app you pick to share it with.
+its photos were taken, with their captions but not the photos.
+
+**Sharing a file.** Some phones' share screens only hand a file over if every app that can receive
+one may read it before you choose, so the app allows that when you share a backup or a GPX file.
+Once you pick an app, the others lose that access. The one you picked keeps it at most until the app
+or the phone next restarts, and so do all of them if you close the share screen without picking.
+The app itself sends the file nowhere.
 
 ## What the app can access, and why
 

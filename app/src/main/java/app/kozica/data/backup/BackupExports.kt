@@ -40,6 +40,7 @@ class BackupExports(
     private val preferences: AppPreferences,
     private val contentResolver: ContentResolver,
     private val lock: Mutex,
+    private val revokeShares: () -> Unit,
 ) {
     suspend fun export(
         scope: BackupScope,
@@ -49,7 +50,10 @@ class BackupExports(
         return lock.withLock {
             val archive =
                 try {
-                    withContext(Dispatchers.IO) { exportsDir.deleteRecursively() }
+                    withContext(Dispatchers.IO) {
+                        revokeShares()
+                        exportsDir.deleteRecursively()
+                    }
                     exporter.exportTo(File(exportsDir, exportFileName(scope, now)), scope, now)
                 } catch (e: IOException) {
                     return ExportResult.Failed
