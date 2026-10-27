@@ -159,6 +159,14 @@ interface HikeDao {
     suspend fun delete(id: String)
 
     /**
+     * Deletes the Hike, its photos' rows with it, and returns those rows for their files, in one
+     * transaction: a photo written meanwhile then fails its foreign key rather than losing its row
+     * to the cascade with its files left behind.
+     */
+    @Transaction
+    suspend fun deleteWithPhotos(id: String): List<HikePhotoEntity> = photos(id).also { delete(id) }
+
+    /**
      * Reads, encodes and deletes the rows of a Hike still open in one transaction, so no point is
      * ever in neither and an ended Hike's Track is never encoded again from what is left. A Hike that
      * stored no point is deleted instead (docs/phase-6.md § 2).
