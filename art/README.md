@@ -8,7 +8,7 @@ the `VectorDrawable`s.
 | --- | --- | --- |
 | `mark.py`'s MARK and HOLE curves | anchor points in `draw-mark.py` → `mark.py`, in place | drawn — provenance below |
 | `drawable/ic_launcher_{background,foreground,monochrome}.xml`, `drawable/ic_notification.xml`, `mipmap-*`, `play-icon-512.png` | `mark.py` → `make-launcher-icon.py` | generated |
-| `play-feature-graphic.png` (1024×500) | `mark.py` + `theme/Color.kt` (+ `feature-background.png` if present) → `make-feature-graphic.py` | generated |
+| `play-feature-graphic.png` (1024×500) | `mark.py` (+ `feature-background.png` if present) → `make-feature-graphic.py` | generated |
 | `play-screenshots/<n>_<scene>-<tag>.png` | `scripts/screenshots.py --build release --numbered` → `pad-screenshot.py` | — |
 
 ## The mark
@@ -25,12 +25,9 @@ anchors it is drawn from, and rewrites `mark.py`'s curves when one moves.
   background included — it used to be hand-written, and a second copy of a colour in a file nobody
   regenerates is the drift the first app built from this template found the first time its palette
   moved.
-- Take the colours from the app's generated scheme (`scripts/gen_scheme.py`) rather than picking
-  them for the icon, so the identity and the app agree. **Judge the ground at 44dp on a real home
-  screen, light and dark**: a dark tone of a warm hue is brown, and a gradient's middle is the same
-  brown at launcher size. A flat mid-tone role (`surfaceVariant`) under `primary` is what survived.
-- The feature graphic **reads its colours out of `theme/Color.kt`**, so a regenerated palette
-  reaches the listing by re-running the script. Pasted inks stay the old hue on a ground that moved.
+- The two colours are the icon's own, cream and crimson, chosen by the owner outside the app's
+  scheme. **Judge a change at 44dp on a real home screen, light and dark.**
+- The feature graphic takes the same two from `mark.py`, so the listing and the icon agree.
 - **The hole must be a real hole in the path**, not a shape painted in the background colour. A
   themed launcher (API 33+) tints the whole monochrome layer one flat colour, and a painted hole
   simply vanishes.

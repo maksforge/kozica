@@ -13,19 +13,11 @@ Coordinates are in arbitrary units around the mark's centre; callers fit them to
 import re
 from dataclasses import dataclass
 
-# The icon's two colours — take both from the app's generated scheme (`scripts/gen_scheme.py`) rather
-# than picking them for the icon, so the identity and the app agree. They are the *only* copy:
-# make-launcher-icon.py writes ic_launcher_background.xml from GROUND, so recolouring the identity is
-# an edit here and a re-run, never a second value somewhere else to keep in step. (It used to be
-# two — this file and a hand-written background drawable — and an app built from the template found
-# them disagreeing the first time its palette moved.)
-#
-# ⚠ **A dark tone of a warm hue is brown.** The first app built from this template tried its
-# `primary` darkened for contrast as the ground and it read as mud; then a gradient, whose middle is
-# the same mud at 44dp. What survived was a flat mid-tone role (`surfaceVariant`) under a light-ish
-# ink (`primary`). Judge the ground at launcher size on a real home screen, light and dark.
-GROUND = (0x4D, 0x46, 0x39)  # the icon's flat field — the dark scheme's `surfaceVariant`
-MARK_INK = (0xFF, 0xB7, 0x77)  # the mark on that field — the dark scheme's `primary`
+# The icon's own two colours, deliberately outside the app's scheme (the one exception to
+# CLAUDE.md's colour rule besides the map's Trail colours). make-launcher-icon.py writes
+# ic_launcher_background.xml from GROUND, so these are the only copy.
+GROUND = (0xFF, 0xF1, 0xD6)
+MARK_INK = (0x8E, 0x1B, 0x2C)
 
 
 @dataclass(frozen=True)
