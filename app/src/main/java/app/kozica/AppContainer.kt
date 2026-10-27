@@ -94,7 +94,7 @@ class AppContainer(
 
     val hikes by lazy { HikeRepository(database.hikeDao(), hikeHeights::of, { media.delete(it) }) }
 
-    val recorder by lazy { Recorder(appContext, hikes, ::places) }
+    val recorder by lazy { Recorder(appContext, hikes, ::places, applicationScope) }
 
     /** A saved Route the Routes tab asked the map to show, until the map takes it. */
     val routeToShow = MutableStateFlow<String?>(null)

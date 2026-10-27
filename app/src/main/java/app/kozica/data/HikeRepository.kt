@@ -1,5 +1,6 @@
 package app.kozica.data
 
+import app.kozica.data.hikes.Climb
 import app.kozica.data.hikes.Height
 import app.kozica.data.hikes.Track
 import app.kozica.data.hikes.TrackPoint
@@ -9,6 +10,7 @@ import app.kozica.data.hikes.encodeTrack
 import app.kozica.data.hikes.metres
 import app.kozica.data.hikes.movingSeconds
 import app.kozica.data.hikes.trim
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -44,19 +46,31 @@ class HikeRepository(
         name: String,
     ) = dao.rename(id, name)
 
-    /** Reads the height grid for every ended Hike that has not had it read, the one just stopped included. */
+    /** Reads the height grid for every ended Hike that has not had it read. */
     suspend fun fillClimbs() {
-        for (id in dao.withoutClimb()) {
-            val track = dao.get(id)?.track?.let(::decodeTrack) ?: continue
-            val climb = climb(heights(track))
-            dao.setClimb(id, climb.ascent, climb.descent, climb.fromGps)
-        }
+        for (id in dao.withoutClimb()) fillClimb(id)
     }
+
+    /** Reads [id]'s height grid unless it has been read; a read that fails leaves it unread, to be tried again. */
+    suspend fun fillClimb(id: String) {
+        val hike = dao.get(id)?.takeIf { it.endedAt != null && it.ascentMetres == null } ?: return
+        val climb = hike.track?.let(::decodeTrack)?.let { climbOf(it) } ?: return
+        dao.setClimb(id, climb.ascent, climb.descent, climb.fromGps)
+    }
+
+    private suspend fun climbOf(track: Track): Climb? =
+        try {
+            climb(heights(track))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
 
     /**
      * Keeps the points [first] to [last] of the Track in order and deletes the rest for good; the
      * totals are computed again, and the start or end moves to the first or last point kept where
-     * that end was cut (docs/phase-6.md § 4).
+     * that end was cut (docs/phase-6.md § 4). A height read that fails leaves the ascent unread.
      */
     suspend fun trim(
         id: String,
@@ -70,7 +84,7 @@ class HikeRepository(
         val track = whole.trim(first, last)
         val points = track.flatten()
         if (points.isEmpty()) return
-        val climb = climb(heights(track))
+        val climb = climbOf(track)
         dao.trim(
             id,
             HikeTrim(
@@ -79,9 +93,9 @@ class HikeRepository(
                 track = encodeTrack(track),
                 metres = track.metres(),
                 movingSeconds = track.movingSeconds(),
-                ascent = climb.ascent,
-                descent = climb.descent,
-                fromGps = climb.fromGps,
+                ascent = climb?.ascent,
+                descent = climb?.descent,
+                fromGps = climb?.fromGps == true,
             ),
         )
     }

@@ -88,6 +88,31 @@ class HikeRepositoryTest {
         }
 
     @Test
+    fun aHeightReadThatFailsLeavesTheAscentUnreadForTheNextFill() =
+        runTest {
+            val id = recorded()
+            val failing = HikeRepository(database.hikeDao(), heights = { error("not a 512 px tile") })
+
+            failing.fillClimb(id)
+            failing.trim(id, first = 3, last = 19)
+
+            assertNull(hikes.get(id)!!.ascentMetres)
+            hikes.fillClimbs()
+            assertEquals(160.0, hikes.get(id)!!.ascentMetres!!, 1e-9)
+        }
+
+    @Test
+    fun aFillThatFinishesAfterATrimDoesNotPutBackTheUntrimmedAscent() =
+        runTest {
+            val id = recorded()
+
+            hikes.trim(id, first = 3, last = 19)
+            database.hikeDao().setClimb(id, ascent = 190.0, descent = 0.0, fromGps = false)
+
+            assertEquals(160.0, hikes.get(id)!!.ascentMetres!!, 1e-9)
+        }
+
+    @Test
     fun aTrimKeepsItsSpanRecomputesTheTotalsAndUnpinsThePhotosOutsideIt() =
         runTest {
             val id = recorded()
