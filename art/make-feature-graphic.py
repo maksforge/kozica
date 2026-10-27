@@ -11,7 +11,7 @@ glyph outlines as art.
 does not look like a bug: the graphic is correct in every local preview and in the Console's own
 uploader, and wrong only on the surface most people see it on. The app this template came from met
 it on a live listing, and the first app built from the template reproduced it almost exactly. So the
-layout is declared against the *cropped* frame — see CROP — and main() measures what it produced and
+layout is declared against the *cropped* frame — see CROP — and render() measures what it produced and
 exits non-zero rather than trusting that the constants still hold.
 
 **The colours are the icon's own**, `GROUND` and `MARK_INK` from `mark.py`, so the listing and the
@@ -58,7 +58,7 @@ MARGIN = CROP + VISIBLE_MARGIN  # 108px from the canvas edge to any content, bot
 
 MARK_SIZE = 190
 MARK_CY = 215
-MIN_GAP = 24  # the copy must clear the mark by this much; main() checks it
+MIN_GAP = 24  # the copy must clear the mark by this much; render() checks it
 
 FONT_DIR = Path("/usr/share/fonts/truetype/noto")
 FONT_BOLD = FONT_DIR / "NotoSans-Bold.ttf"
