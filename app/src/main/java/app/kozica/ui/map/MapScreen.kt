@@ -85,6 +85,7 @@ import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.WarningBanner
 import app.kozica.ui.common.osmDateLine
 import app.kozica.ui.common.startActivitySafely
+import app.kozica.ui.hikes.HikeSheet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
@@ -189,6 +190,8 @@ fun MapScreen(
     var dotActivated by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf<Style?>(null) }
     var regions by remember { mutableStateOf<CameraBounds?>(null) }
+    // A fit before the first camera is placed would be undone by placing it.
+    var placed by remember { mutableStateOf(false) }
     // The zoom that shows every Region depends on the view's size, so it is taken again on a resize.
     var mapSize by remember { mutableStateOf(0 to 0) }
     DisposableEffect(mapView) {
@@ -236,6 +239,7 @@ fun MapScreen(
         }
         val start = shown ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
+        placed = true
         map.addOnCameraMoveStartedListener { reason ->
             positionOutside = false
             if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) centreWanted = false
@@ -297,20 +301,21 @@ fun MapScreen(
         state.fix?.let(component::forceLocationUpdate)
     }
 
-    LaunchedEffect(loaded, state.track) {
+    val drawnTrack = state.drawnTrack
+    LaunchedEffect(loaded, drawnTrack) {
         val style = loaded ?: return@LaunchedEffect
-        (style.getSource(HIKE_TRACK_SOURCE) as? GeoJsonSource)?.setGeoJson(trackGeoJson(state.track))
+        (style.getSource(HIKE_TRACK_SOURCE) as? GeoJsonSource)?.setGeoJson(trackGeoJson(drawnTrack))
     }
 
     val fade = remember(state.style) { state.style?.let(::fadeOf) }
-    LaunchedEffect(loaded, state.route) {
+    LaunchedEffect(loaded, state.route, state.faded) {
         val style = loaded ?: return@LaunchedEffect
         (
             style.getSource(
                 ROUTE_SOURCE,
             ) as? GeoJsonSource
         )?.setGeoJson(routeGeoJson(state.route.points, state.route.planned))
-        val opacity = if (state.route.planned != null) fade?.opacity ?: 1f else 1f
+        val opacity = if (state.faded) fade?.opacity ?: 1f else 1f
         for (id in fade?.layers.orEmpty()) {
             when (val layer = style.getLayer(id)) {
                 is LineLayer -> layer.setProperties(PropertyFactory.lineOpacity(opacity))
@@ -331,9 +336,11 @@ fun MapScreen(
     // Each return to the map brings a new MapLibreMap, and these two would otherwise move the camera
     // away from where the user left it; so each Route is fitted to, and each place centred on, once.
     var fitted by rememberSaveable { mutableStateOf<Int?>(null) }
-    LaunchedEffect(map, planned) {
+    // After the Regions' bounds are set, since setting them ends a fit already under way.
+    LaunchedEffect(map, planned, regions, placed) {
         if (planned == null) fitted = null
         val map = map ?: return@LaunchedEffect
+        if (regions == null || !placed) return@LaunchedEffect
         val line = planned?.line?.takeIf { it.size >= 2 } ?: return@LaunchedEffect
         val route = planned.hashCode()
         if (route == fitted) return@LaunchedEffect
@@ -347,6 +354,27 @@ fun MapScreen(
             CameraUpdateFactory.newLatLngBounds(bounds, sidePadding, topPadding, sidePadding, bottomPadding),
         )
     }
+
+    val hike = state.hike
+    var fittedHike by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(map, hike?.id, hike?.track, regions, placed) {
+        if (hike == null) fittedHike = null
+        val map = map ?: return@LaunchedEffect
+        if (regions == null || !placed) return@LaunchedEffect
+        val points = hike?.track?.flatten()?.takeIf { it.size >= 2 } ?: return@LaunchedEffect
+        if (hike.id == fittedHike) return@LaunchedEffect
+        fittedHike = hike.id
+        val bounds =
+            LatLngBounds
+                .Builder()
+                .includes(points.map { LatLng(it.latitude, it.longitude) })
+                .build()
+        // A jump, not an animation: the sheet opening beside it resizes the map and ended the animation.
+        map.moveCamera(
+            CameraUpdateFactory.newLatLngBounds(bounds, sidePadding, topPadding, sidePadding, bottomPadding),
+        )
+    }
+    BackHandler(enabled = hike != null) { if (hike?.keep != null) viewModel.cancelTrim() else viewModel.closeHike() }
 
     val offered = state.search.offered
     var centred by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -451,31 +479,44 @@ fun MapScreen(
                     )
                     if (positionOutside) WarningBanner(title = stringResource(R.string.map_position_outside))
                 }
+                // The credit takes a row of its own: a long translation reaches across the whole width.
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(Spacing.tight),
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.tight),
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(Spacing.tight),
                 ) {
-                    FilledTonalIconButton(onClick = showPosition) {
-                        Icon(
-                            painterResource(R.drawable.ic_my_location),
-                            contentDescription = stringResource(R.string.map_position_show),
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        if (state.recording == null) {
+                            FilledTonalButton(onClick = onRecord) {
+                                Icon(painterResource(R.drawable.ic_record), contentDescription = null)
+                                Spacer(Modifier.width(Spacing.tight))
+                                Text(stringResource(R.string.record_hike))
+                            }
+                        }
+                        Spacer(Modifier.weight(1f))
+                        FilledTonalIconButton(onClick = showPosition) {
+                            Icon(
+                                painterResource(R.drawable.ic_my_location),
+                                contentDescription = stringResource(R.string.map_position_show),
+                            )
+                        }
                     }
                     OsmCredit(state.osmDate, relief = state.reliefShown)
                 }
-                if (state.recording == null) {
-                    FilledTonalButton(
-                        onClick = onRecord,
-                        modifier = Modifier.align(Alignment.BottomStart).padding(Spacing.tight),
-                    ) {
-                        Icon(painterResource(R.drawable.ic_record), contentDescription = null)
-                        Spacer(Modifier.width(Spacing.tight))
-                        Text(stringResource(R.string.record_hike))
-                    }
-                }
             }
-            if (state.route.points.isNotEmpty()) {
+            if (hike != null) {
+                HikeSheet(
+                    hike = hike,
+                    onClose = viewModel::closeHike,
+                    onRename = viewModel::renameHike,
+                    onStartTrim = viewModel::startTrim,
+                    onTrimChange = viewModel::trimTo,
+                    onCancelTrim = viewModel::cancelTrim,
+                    onTrim = viewModel::trim,
+                    onDelete = viewModel::deleteHike,
+                    modifier = Modifier.heightIn(max = sheetHeight),
+                )
+            } else if (state.route.points.isNotEmpty()) {
                 RouteSheet(
                     route = state.route,
                     onRemove = viewModel::removePoint,

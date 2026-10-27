@@ -71,4 +71,34 @@ class TrackTest {
             )
         assertEquals(10, walk.movingSeconds())
     }
+
+    @Test
+    fun `a trim keeps the points between its two, in the stretches they were in, and drops a stretch left empty`() {
+        val three =
+            listOf(
+                List(3) { TrackPoint(it * 5_000L, 49.0 + it * 0.0001, 20.0, null) },
+                List(2) { TrackPoint(600_000 + it * 5_000L, 49.1 + it * 0.0001, 20.0, null) },
+                List(3) { TrackPoint(1_200_000 + it * 5_000L, 49.2 + it * 0.0001, 20.0, null) },
+            )
+
+        val kept = three.trim(1, 5)
+
+        assertEquals(listOf(three[0].drop(1), three[1], three[2].take(1)), kept)
+        assertEquals(listOf(three[2].take(2)), three.trim(5, 6))
+    }
+
+    @Test
+    fun `along adds up each stretch, standing still across a pause`() {
+        val apart =
+            listOf(
+                listOf(TrackPoint(0, 49.0, 20.0, null), TrackPoint(5_000, 49.0001, 20.0, null)),
+                listOf(TrackPoint(600_000, 49.1, 20.0, null), TrackPoint(605_000, 49.1001, 20.0, null)),
+            )
+
+        val along = apart.along()
+
+        assertEquals(4, along.size)
+        assertEquals(along[1], along[2], 0.0)
+        assertEquals(apart.metres(), along.last(), 1e-9)
+    }
 }

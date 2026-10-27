@@ -230,4 +230,28 @@
     <string name="record_auto_resume_hint">Resumes by itself when the phone senses you walking. It can sometimes resume while you\'re sitting still.</string>
     <!-- A Hike's default name: its date, then the nearest named place to where it started. -->
     <string name="hike_name" translatable="false">%1$s · %2$s</string>
+
+    <!-- The Hikes tab and a Hike's sheet on the map (docs/phase-6.md § 4–5). -->
+    <string name="hikes_title">Hikes</string>
+    <string name="hikes_empty">No hikes yet. Press Record on the map to record one.</string>
+    <string name="hike_distance">Distance</string>
+    <!-- The time spent walking, leaving out pauses and rests. -->
+    <string name="hike_moving_time">Moving time</string>
+    <!-- From Record to Stop, pauses and rests included. -->
+    <string name="hike_total_time">Total time</string>
+    <!-- Under the ascent and descent when part of them came from the phone's GPS rather than the height map. -->
+    <string name="hike_from_gps">Partly from GPS height, less precise</string>
+    <string name="hike_close">Close hike</string>
+    <string name="hike_trim">Trim</string>
+    <string name="hike_trim_title">Trim the start and end of the track</string>
+    <string name="hike_trim_body">The cut part of the track is deleted. This can\'t be undone.</string>
+    <string name="hike_delete">Delete</string>
+    <string name="hike_delete_title">Delete hike?</string>
+    <!-- The body of the delete confirmation for a hike with no photos. -->
+    <string name="hike_delete_body">This can\'t be undone.</string>
+    <!-- %d is how many photos are deleted with the hike, never zero. -->
+    <plurals name="hike_delete_body_photos">
+        <item quantity="one">Delete this hike and its %d photo? This can\'t be undone.</item>
+        <item quantity="other">Delete this hike and its %d photos? This can\'t be undone.</item>
+    </plurals>
 </resources>
