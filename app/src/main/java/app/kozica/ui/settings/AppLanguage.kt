@@ -2,6 +2,7 @@ package app.kozica.ui.settings
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.os.LocaleList
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
@@ -81,9 +82,11 @@ fun setAppLanguage(language: AppLanguage?) {
 /**
  * This context in the app's chosen language. Below Android 13 AppCompat applies that language to
  * activities only, so a service's notification or the application context's strings would otherwise
- * come out in the phone's language.
+ * come out in the phone's language. From 13 the platform applies it to every context and follows a
+ * change, which a pinned configuration would stop.
  */
 fun Context.inAppLanguage(): Context {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return this
     val locales = AppCompatDelegate.getApplicationLocales()
     if (locales.isEmpty) return this
     val configuration =
