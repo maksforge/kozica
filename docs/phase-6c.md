@@ -2,9 +2,10 @@
 
 Sequence lives in [`PLAN.md`](PLAN.md); the live worklist lives in [`DOD.md`](DOD.md). This phase
 relies on ADR-0007 (every Region's pack is rebuilt and delivered again), ADR-0008 (nothing new reaches
-the network: the Trail index ships in the app like the name index) and ADR-0010 (the router, which
-gains one constraint: stay on this Trail). [`CONTEXT.md`](../CONTEXT.md) gains **Section**, and
-**Trail** gains the rule for its name. Planned with the owner on 2026-10-27.
+the network: the Trail index ships in the app like the name index) and ADR-0010 (the Trail network,
+which gains a third base file and an edge cut wherever the Trails on a way change; the router itself
+is unchanged). [`CONTEXT.md`](../CONTEXT.md) gains **Long-distance Trail** and **Section**, and
+**Trail** gains the rule for its title. Planned with the owner on 2026-10-27.
 
 **What closing this phase means.** Today a Trail on the map is a coloured line that does nothing when
 tapped, and the search knows places but not Trails. After this phase the user taps the red line above
@@ -12,8 +13,8 @@ Kuźnice, sees that whole Trail picked out from Zakopane to Kasprowy Wierch with
 faded, reads its name, length, climb each way and profile on a sheet, and with one button turns it
 into a Route or a GPX file; typing "Główny Szlak Beskidzki" into search finds it too. The difference
 a device can be asked about: on the test phone, a tap on each of the four strands where four Trails
-share a path selects the Trail it was on, by way of a chooser, and the highlight draws within the
-frame budget phase 4 measured.
+share a way selects the Trail it was on, by way of a chooser, and the highlight draws within phase
+4's frame gate.
 
 `PLAN.md`'s paragraph still holds; it named the change to the data and nothing more.
 
@@ -23,19 +24,26 @@ frame budget phase 4 measured.
 
 - **The tiles know a Trail's colour, symbol, `ref`, its place among the Trails sharing a way
   (`index`, `count`), and nothing that names it** (`scripts/map/KozicaProfile.java`, `trails`
-  layer). One feature is written per Trail per way. Two pieces of the same Trail are therefore
-  indistinguishable from two Trails of the same colour: the map cannot pick out "all of this one"
-  until a relation id is in every feature. That one attribute is the whole of the map-data change.
+  layer, from zoom 10). One feature is written per Trail per way. Two pieces of the same Trail are
+  therefore indistinguishable from two Trails of the same colour: the map cannot pick out "all of
+  this one" until a relation id is in every feature. That one attribute is the whole of the tiles'
+  change.
 - **Fading the rest of the map already exists.** Layers the style marks `kozica:fade`
-  (`scripts/map/gen_style.py`) are faded by `MapStyle.kt` while a Route is shown (phase 5 § 4). A
-  selected Trail reuses that, so there is one way the map steps back, not two.
-- **The network keeps each edge's first way id, and the build already lists every Trail's ways**
-  (`map-data/archives/<id>.ways`, phase 5 § 2). What it does not keep is which Trails an edge
-  belongs to. The Route along a Trail and the Trail's length, climb and profile all need that
-  mapping, so it is written at build time, once, beside the network.
+  (`scripts/map/gen_style.py`) are faded by `MapStyle.kt` while a Route or a Hike is shown
+  (`MapViewModel.faded`, phase 5 § 4, phase 6 § 6). A selected Trail reuses that, so there is one way
+  the map steps back, not two.
+- **The build lists the Trails' ways, but not per Trail.** `KozicaProfile` gathers every hiking
+  relation's ways into one flat set and writes it sorted to `map-data/archives/<id>.ways` (phase 5
+  § 2), and the network keeps each edge's first way id. Nothing records which Trails a way belongs
+  to. And `chains()` in `scripts/build-network.py` joins pieces through every node where exactly two
+  meet, so where one Trail ends at such a node and another carries on, that end falls inside an
+  edge. The sheet's length, climb and profile, the Route along a Trail and the highlight below zoom
+  10 all need a Trail's edges exactly, so B makes the profile write the membership and cuts the
+  edges where it changes (§ 2).
 - **The name index is SQLite with FTS4 over folded names** (phase 5 § 2, `PlaceIndex.kt`). Trails
   join it as a kind of their own rather than as a second index, so search stays one query and one
-  fold rule.
+  fold rule. `PlaceIndex.nearest` already names a point by the place nearest it, by phase 5's rule,
+  for the demanding stretches.
 - **A tap on the map today only opens a Hike's photo**; a long press plans a Route. The Trail tap
   takes the plain tap where it lands on no photo, and the long press is untouched.
 - **Phase 6 exports a saved Route as GPX** through the share sheet, with the share-grant fix MIUI
@@ -44,11 +52,11 @@ frame budget phase 4 measured.
 ## What is in, and what is deliberately not
 
 **In:** a relation id on every Trail feature and a Trail index built from a freshly pinned extract;
-tapping a Trail to select it, with a chooser where several share the path; the selected Trail
+tapping a Trail to select it, with a chooser where several share the way; the selected Trail
 highlighted whole with the rest faded; a sheet with the Trail's title, colour and symbol, length,
 ascent and descent each way, elevation profile, "Plan a Route along it" (the whole Trail, either
-direction) and "Export GPX"; Trails found by name in the existing search; a long-distance Trail's
-sections selectable one at a time, with the long Trail named and shown whole on request.
+direction) and "Export GPX"; Trails found by name in the existing search; a Long-distance Trail's
+Sections selectable one at a time, with the Long-distance Trail named and shown whole on request.
 
 **Not in, and each with a reason rather than a phase:**
 
@@ -59,15 +67,15 @@ sections selectable one at a time, with the long Trail named and shown whole on 
   with each other and with the symbols already drawn every few hundred metres; the sheet carries the
   name instead.
 - **Storing a Trail as anything of the user's.** A selection is not saved; the Route it makes is, as a
-  Route. No schema change.
+  Route: its points, via points included, like any other. No schema change.
 - **Unmarked Paths in the tap.** A Path is never named or selected as if it were a Trail
   (`CONTEXT.md`).
 
 **The tempting one: names in the tiles.** Writing each Trail's name into every feature looks free,
 since the sheet needs the name. It is not: a name is repeated on every way of the Trail in every tile
 at every zoom, and four Trails on one way carry four names. The tiles get one integer, the relation
-id; the names, `from`/`to`, parent and length live once each in the Trail index, which the sheet and
-the search both read.
+id; the names, `from`/`to`, the Long-distance Trail and the length live once each in the Trail index,
+which the sheet and the search both read.
 
 ---
 
@@ -76,16 +84,17 @@ the search both read.
 | | Checkpoint | Merges | Depends on |
 | --- | --- | --- | --- |
 | **A** | **The gate** — do the Regions' Trail relations carry enough to title them? | `chore:` the tally script; the verdict is a reading | — |
-| **B** | The data: relation ids in the tiles, the Trail index, edge-to-Trail mapping, a fresh extract | `feat:` (the map data refreshes) | A |
+| **B** | The data: relation ids in the tiles, membership from the profile, edges cut where the Trails change, the Trail index, `trails.edges`, the fresh pin | `feat:` (the map data refreshes) | A |
 | **C** | Tap, chooser, highlight, the sheet's facts and profile | `feat:` | B |
 | **D** | Trails in search | `feat:` | C |
 | **E** | Plan a Route along it, and Export GPX | `feat:` | C |
 
-**A comes first** because the sheet's title rule (§ 2) is only sound if the data has the tags it
-reads; if most relations have none, the title falls back to places, and the place lookup is built in
-B rather than discovered in C. **B is one checkpoint** although it touches the profile, the network
-build and the index, because each half alone ships nothing and they move the same pin. **D and E
-need only C** and can land in either order.
+**A comes first** because the title rule (§ 2) is only sound if the data has the tags it reads; if
+most relations have neither a name nor `from`/`to`, the place fallback becomes the main path and
+search needs the ends' places in the index, which is built in B (§ 1, verdict 2) rather than
+discovered in C. **B is one checkpoint** although it touches the profile, the network build and the
+index, because each half alone ships nothing and they move the same pin. **D and E need only C** and
+can land in either order.
 
 ---
 
@@ -93,24 +102,34 @@ need only C** and can land in either order.
 
 ### The question, in the form that can be measured
 
-Of the `route=hiking` relations whose ways fall in the nine Regions, from the freshly pinned extract:
-what share has a `name` (or `name:pl`), what share has `from` and `to` but no name, and what share
-has neither? And how many are members of a parent (`type=superroute`, or a `route=hiking` relation
-whose members are relations)?
+Of the `route=hiking` relations with a way in any of the nine Regions, each counted once across the
+union (the cuts overlap, so a relation in two Regions is one relation): what share has a `name` (or
+`name:pl`), what share has `from` and `to` but no name, and what share has neither? And how many
+Long-distance Trails (`type=superroute`, or a `route=hiking` relation whose members are relations)
+have Sections among them, and how many of those carry a name?
 
 ### The apparatus
 
-`scripts/map/trail-tally.py`, reading the merged cut the build already makes, printing the four
-counts per Region and twenty sample titles from each rule, so the reading is the printout.
+A candidate pin, written to `scripts/osm-data.pin` locally and never committed in A, and
+`build-map-data.py` run over it for the merged cuts. `scripts/map/trail-tally.py` reads the nine
+merged cuts, counts each relation once by its id, and prints the counts over the union, the same
+counts per Region for the record, and twenty sample titles from each rule, so the reading is the
+printout. The pin commit lands with B (§ 2): committed in A, it would be one of `map-archives.py`'s
+inputs, and the next release would rebuild and re-deliver every pack before B's `trail` attribute
+exists, two re-deliveries for one change.
 
 ### The verdicts, decided now rather than argued about later
 
-1. **Name or `from`/`to` on 80 % or more** → § 2's rule as written; the place fallback covers the
-   rest.
-2. **Under 80 %** → the place fallback becomes the main path, and B builds the ends' lookup
-   (nearest named peak, pass or Hut within 500 m of each end, by phase 5's rule) before C.
-3. **Parents found are fewer than a handful, or none carry a name** → § 2's section rule ships, and
-   the "Show the whole long Trail" action is dropped rather than built for no data.
+Each is read on the counts over the union; no verdict reads one Region alone.
+
+1. **A name or `from`/`to` on 80 % or more** → § 2's rule as written. The rest are titled by the
+   place fallback on the phone, and search cannot find them (Known gaps).
+2. **Under 80 %** → the place fallback is the main path, and search would miss most Trails. B then
+   also writes each such Trail's two end places into the FTS table under its id, by phase 5's naming
+   rule (the nearest named peak, pass or Hut within 500 m, then any place) ported to the build and
+   tested against `PlaceIndex.nearest` on one fixture, as the fold is.
+3. **Fewer than five named Long-distance Trails** → the Section rule (§ 2) ships, and the "Show the
+   whole *name*" action is dropped rather than built for no data.
 
 ### The verdict, taken *(date)*
 
@@ -119,93 +138,187 @@ counts per Region and twenty sample titles from each rule, so the reading is the
 ## 2. The data
 
 - **`KozicaProfile.java` writes `trail` (the relation id) on every `trails` feature**, alongside
-  colour, symbol and `index`. A section of a parent writes its own id; the parent lives only in the
+  colour, symbol and `index`. A Section writes its own id; the Long-distance Trail lives only in the
   index.
-- **The extract is re-pinned** (`scripts/osm-data.pin`) when B's data is built, so the one
-  re-delivery of every pack also brings the newest OSM. The ODbL release attachment follows by
-  itself (`publish-play.yml`).
-- **`trails` table in `places.sqlite`**: one row per Trail with its id, title, `name`, `name:pl`,
-  `ref`, colour, symbol, `from`, `to`, parent id and parent name, length, ascent and descent each way,
-  and its bounding box; its folded names go in the same FTS table as places, with kind `trail`.
-- **`trails.edges`** beside `trails.network`: for each Trail, its edges in walking order. Length,
-  climb and the profile are read from the network's heights along those edges, as a Route's are, so
-  a Trail and the Route made from it agree to the metre.
-- **The title rule:** `name:pl` or `name` if present; else "*colour* Trail: *from* – *to*" from the
-  tags; else the same with the nearest named place at each end (§ 1, verdict 2). A section of a
-  parent shows its own title, and the parent's name above it.
+- **The profile writes the membership**, since it already decides what a Trail is: `<id>.ways`
+  becomes `<id>.trails`, one line per `route=hiking` relation with its id and its member ways in
+  member order with their roles, and one per Long-distance Trail with its id, its name and its member
+  relations (`preprocessOsmRelation` sees `type=superroute` too). `build-network.py` reads the wanted
+  ways from it, as it reads `<id>.ways` today, and the mapping with them, so the rule for a Trail
+  stays written once.
+- **Edges are cut where the Trails on a way change.** `chains()` joins two pieces only where both
+  walk alike; "alike" gains "carry the same Trails", so every way of an edge belongs to the same
+  Trails and a Trail's end is always an edge's end. The network gains those cuts and nothing else:
+  its format is unchanged, and its bytes change with the new pin anyway. ADR-0010 and phase 5 § 2
+  are amended to say so.
+- **The extract is re-pinned** (`scripts/osm-data.pin`) in B's commit, so the one re-delivery of
+  every pack also brings the newest OSM. B may take a newer pin than A's candidate; the tally is not
+  taken again for it.
+- **`trails` table in `places.sqlite`**: one row per Trail with its id, `name`, `name:pl`, `ref`,
+  colour, symbol, `from`, `to`, its Long-distance Trail's id and name, the positions of its walk's
+  two ends, its length, ascent and descent each way, and its bounding box. No title column: the
+  title is composed on the phone (below). Its folded `name` and `name:pl` go in the same FTS table as
+  places, with kind `trail`; a Trail with neither has nothing to be found by (Known gaps; § 1,
+  verdict 2). The climbs are the relief's heights, so `RELIEF-DATA-LICENCE.txt` names
+  `places.sqlite` beside `trails.network`.
+- **`trails.edges`**, a third base file beside `trails.network`: for each Trail, its walk (below) as
+  edges in order, each with its direction, and where the walk breaks. Length, climb and the profile
+  are summed from the network's edges along it, as a Route's are, so a Trail and the Route made from
+  it agree to the metre. It is an ODbL derivative and ships, records and publishes like the other
+  two, so it joins every list that names them: `BASE_FILES` in `build-map-data.py` and
+  `map-archives.py` (so the reuse and `--check-determinism` cover it), the `-PmapPacks` check in
+  `settings.gradle.kts`, the `gh release upload` in `publish-play.yml`, `MAP-DATA-LICENCE.txt`,
+  `NetworkSource.kt` in both variants (the debug half reading a copy hand-pushed to
+  `files/network/`), and `docs/RELEASING.md`'s account of what a release attaches.
+- **A Trail's walk** is built from its edges as a graph, not from its members' order, which OSM does
+  not keep reliably; the members' order only picks which end comes first, the one nearer the first
+  member way. Members with role `alternative`, `excursion` or `approach` are the Trail's, in its
+  tiles and so tapped and highlighted with it, but off its walk, so not in its length, profile, Route
+  or GPX; where `forward` and `backward` members split the line in two, the walk takes the `forward`
+  strand. What is left takes one of four shapes. **A line** is walked from its first end to its
+  other. **A loop**, with no end, starts and finishes at the node where the first member way starts,
+  and goes round once the way that member runs. **Gaps**, the edges falling in more than one piece,
+  are walked piece by piece, each entered at the end nearest the one just left, and each break is
+  recorded: the length and climb are the pieces' sum, and the profile breaks at each gap. **A branch
+  with no role**, a node where three of the Trail's own edges meet, is walked along the longest path
+  between two of the Trail's ends, and the rest is treated as an `alternative`. The build logs how
+  many Trails took each shape.
+- **The title is composed on the phone**, in the app's language, from the row's parts: `name:pl` or
+  `name` if present; else "*colour* Trail: *from* – *to*" from the tags; else the same with the
+  place `PlaceIndex.nearest` names at each end (phase 5's rule); else the colour alone, "*colour*
+  Trail". The colour is one of the five as an adjective, or, for `other` (any colour outside the
+  five, or none, which phase 2 draws grey), "marked": every Trail is marked, so the word claims
+  nothing the signpost might contradict. A Section shows its own title, and its Long-distance
+  Trail's name above it. The build writes no composed string, so no title can reach the phone in the
+  wrong language.
 
 ## 3. On the map
 
 - **A tap** queries the `trails` layer in a finger-sized box around the point. One Trail id →
   selected. Several → a chooser listing each with its colour chip, symbol and title. None → the tap
-  does what it does today.
-- **The selected Trail** is drawn by a highlight layer filtered on its id, over the faded map
-  (`kozica:fade`), across every Region whose tiles it crosses. A long Trail's "Show the whole *name*"
-  highlights every section with that parent.
-- **The camera** stays where it is after a tap; "Show whole Trail" on the sheet fits its bounding box.
-  A Trail picked from search fits it straight away.
-- **Leaving:** closing the sheet, back, or a tap on empty map clears the selection and the fade. A
-  Route being shown and a Trail selected never coexist: selecting one clears the other.
-- **The sheet:** title (parent name above it for a section), colour and symbol, length, ascent and
-  descent each way, the elevation profile (the Route sheet's chart), and two buttons: "Plan a Route
-  along it" and "Export GPX".
+  does what it does today. A Hike's photo under the finger still wins the tap.
+- **The selected Trail** is drawn over the faded map (`kozica:fade`). From zoom 10, by a highlight
+  layer over the `trails` layer filtered on its id, so it sits on its own strand at its offset,
+  across every Region whose tiles it crosses. Below zoom 10, where the `trails` layer has no features
+  (`setMinZoom(10)`), by a line drawn from the network's geometry along its `trails.edges`, as the
+  drawn Route is: no strands are drawn there for it to sit beside, and a 500 km Trail fitted whole
+  still shows. A Long-distance Trail's "Show the whole *name*" highlights every Section that names
+  it, the same two ways.
+- **The camera** stays where it is after a tap; "Show whole Trail" on the sheet fits its bounding
+  box, at whatever zoom the box needs. A Trail picked from search fits it straight away.
+- **What else may be on the map** (decided with the owner on 2026-10-27). **A Route being planned**
+  is set aside when a Trail is selected, by tap or from search: its points are kept, the map and the
+  sheet show the Trail, and closing the Trail brings the Route back as it was; "Plan a Route along
+  it" replaces the Route set aside. **A shown Hike** gives way to a Trail tapped off its photos: the
+  Trail replaces the Hike's view, as opening another Hike would, and the saved Hike is untouched.
+  **During a recording** the Trail is selected on top and the recording bar stays; nothing stops or
+  pauses, and closing the Trail leaves the recording as it was.
+- **Leaving:** closing the sheet, back, or a tap on empty map clears the selection and the fade, and
+  brings back a Route set aside.
+- **The sheet:** title (the Long-distance Trail's name above it for a Section), colour and symbol,
+  length, ascent and descent each way, the elevation profile (the Route sheet's chart), and two
+  buttons: "Plan a Route along it" and "Export GPX".
 
 **Copy:** "Trails here", "Show whole Trail", "Show the whole %1$s", "Plan a Route along it", "Export
-GPX", "%1$s Trail: %2$s – %3$s" (colour name, ends), and the five colour names as adjectives for a
-Trail.
+GPX", "%1$s Trail: %2$s – %3$s" (colour adjective, ends), "%1$s Trail" (the colour alone), and the
+five colour names and "marked" as adjectives for a Trail.
 
 ## 4. Search
 
 Trails appear in the existing search results with their colour chip and symbol, ranked with places by
-the same folded match; a long Trail matches by its own name and its sections by theirs. Picking one
-selects it and fits the camera (§ 3).
+the same folded match; a Long-distance Trail matches by its own name and its Sections by theirs. A
+Trail's row shows its title, the name that matched underneath where it differs, and then "Trail" and
+its length where a place shows its kind and its Region, since a Trail lies in no one Region; a
+Section's adds the Long-distance Trail it belongs to. The field's hint becomes "Search places and
+Trails".
+
+Picking a Trail selects it and fits the camera (§ 3); it is not offered as a Route point. Mid-plan,
+the Route's points are kept and the Route comes back when the Trail is closed (§ 3, decided with the
+owner on 2026-10-27). Picking a place does what it does today: the map centres there and offers it
+as a point.
+
+**Copy:** "Search places and Trails", "Trail" (the kind), "Section of %1$s"; the length as the Routes
+tab writes one.
 
 ## 5. A Route along it, and GPX
 
-- **"Plan a Route along it"** asks the router (ADR-0010) for a Route from the Trail's first edge to
-  its last, **restricted to the Trail's own edges** (`trails.edges`), so it cannot take a shortcut
-  over another Trail. The result opens in the ordinary Route sheet, where it can be reversed, edited
-  and saved under the Trail's title by default.
-- **"Export GPX"** writes the Trail's line with the network's heights through phase 6's writer and
-  share path, named after its title, with the OSM `<copyright>` and `<link>` the Route export
-  carries.
+- **"Plan a Route along it"** makes an ordinary Route that stays on the Trail by its via points
+  (decided with the owner on 2026-10-27); ADR-0010's router plans it unchanged. Its start and end are
+  the walk's two ends, and a via point goes at each of the Trail's junctions where the router, left
+  to itself, would take a shortcut over another Trail. The phone finds them along the walk: from the
+  last point placed, the next goes at the farthest junction to which a leg, planned either way,
+  keeps to the Trail's own edges. That junction is found by doubling the span along the walk and
+  then bisecting back, since a leg that keeps to the Trail as far as one junction keeps to it as far
+  as every junction before. A gap in the walk gets a point on each side, and its leg is whatever the
+  router finds between them. A loop's Route is a round trip, its start picked again as its end
+  (phase 5 § 4), held open by at least one via point.
+- **The points are the Route's like any other**: shown and numbered on the map, movable and
+  removable in the sheet, saved as a Route's points are and planned again on open (phase 5 § 5). The
+  ordinary router follows the Trail on every re-plan because the points hold it there, reversed too,
+  since each leg was checked both ways; only a one-way stretch, which no Route walks against, leaves
+  the Trail when reversed. The Route opens in the ordinary Route sheet, saved under the Trail's title
+  by default.
+- **"Export GPX"** writes the Trail's walk with the network's heights through phase 6's writer and
+  share path, one track segment per piece where the walk has gaps, named after its title, with the
+  OSM `<copyright>` and `<link>` the Route export carries.
 
 ---
 
 ## Tests
 
-- **The title rule**, each branch: name, `name:pl` over `name`, `from`/`to`, place fallback, section
-  with parent. Fails towards a blank or a wrong-language title.
-- **`trails.edges` order**: a Trail's edges join end to end, and its length equals the sum of their
-  lengths. Fails towards a profile that jumps.
-- **The restricted router**: on a fixture where another Trail is a shortcut, the Route along the
-  Trail stays on the Trail. Fails towards a Route that leaves it.
+- **The title rule**, each branch, composed on the phone in English and in Polish: name, `name:pl`
+  over `name`, `from`/`to`, the place fallback, the colour alone, `other` as "marked", a Section
+  with its Long-distance Trail. Fails towards a blank or a wrong-language title.
+- **The walk**, on a fixture with each shape: a line, a loop, a gap, an `alternative` branch, a
+  branch with no role, and members out of order. Consecutive edges join end to end except at a
+  recorded gap, a loop returns to its start once, branches are off the walk, and the length equals
+  the sum of the walk's edges. Fails towards a profile that jumps.
+- **The cut where the Trails change**: on a fixture where one Trail ends at a node where only two
+  ways meet and another Trail carries on, that node is an edge's end. Fails towards a Trail whose end
+  lies inside an edge.
+- **The via points**: on a fixture where another Trail is a shortcut, the Route along the Trail stays
+  on it both ways, and again when only its stored points are planned anew, as a saved Route is on
+  open. Fails towards a Route that leaves the Trail once reopened.
 - **Folding**: Trail names fold by the one rule places use (`ł`, accents), in the build and on the
   phone.
 
 ## Documents this phase amends
 
-- **ADR-0010**: an amendment for the restricted search (a Route along one Trail).
-- **`CONTEXT.md`**: **Section** (one relation of a long-distance Trail), and the title rule under
-  **Trail**.
+- **ADR-0010**: an amendment: the network's edges are also cut where the Trails on a way change, and
+  `trails.edges` is a third base file beside the network and the name index, shipped, recorded and
+  attached as they are. The router is unchanged; a Route along a Trail is an ordinary Route that its
+  via points hold on the Trail.
+- **`docs/phase-5.md` § 2**: `<id>.ways` becomes `<id>.trails`, and the edge cut gains the Trails on
+  a way.
+- **`docs/RELEASING.md`**: the release attaches `trails.edges` with the other base files.
+- **`CONTEXT.md`**: **Long-distance Trail** (a Trail made of Sections, each its own relation: OSM's
+  `type=superroute`, or a `route=hiking` relation whose members are relations; Polish UI *szlak
+  długodystansowy*; not "parent", "long Trail" or "superroute") and **Section** (one relation of a
+  Long-distance Trail; Polish UI *odcinek*), and the title rule under **Trail**.
 - **`docs/store-listing.md`**: the full description gains tapping and finding Trails by name, in
   both languages, and the release notes say so.
 - **`docs/phase-2.md` § 3**: the `trails` layer's attributes gain `trail`.
 
 ## Known gaps, deliberately
 
-- **A Trail's title is OSM's, not the signposts'.** Where a relation is untagged and no place is
-  near an end, the title is the colour alone. Fixing it is an OSM edit, which reaches the app with
-  the next data pin.
+- **A Trail's title is OSM's, not the signposts'.** Where a relation has no name, no `from`/`to` and
+  no place near an end, the title is the colour alone, "Red Trail" or "Marked Trail", and search
+  cannot find it, having no name to fold (unless § 1's verdict 2 indexes its ends). Fixing it is an
+  OSM edit, which reaches the app with the next data pin.
+- **A Trail's walk is the build's reading of a relation OSM may map loosely.** A branch with no role
+  is walked by the longest path, which may not be the signposted one.
 - **A Trail crossing out of every Region is cut where the data stops.** Its length and Route are
   those of the part Kozica has.
 
 ## Readings
 
+`PLAN.md` rule 3. The test phone (`mnbm7hw8ivdqzx9l`) unless named; its keyguard cleared and every
+debug broadcast sent as phase 5's readings send them.
+
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate's tally per Region | `python3 scripts/map/trail-tally.py` | *(owed)* |
+| R1 | The gate's tally over the union and per Region | `build-map-data.py` over A's uncommitted candidate pin, then `python3 scripts/map/trail-tally.py` | *(owed)* |
 | R2 | Four strands at one point: each tap's chooser lists all four, and each pick highlights the right one | test phone, debug build with the Regions hand-pushed; screencaps | *(owed)* |
-| R3 | The highlight and fade draw within phase 4's frame budget | `ui/map/FrameLog.kt`, `scripts/map/frame-stats.py` | *(owed)* |
-| R4 | A Route along a Trail matches the Trail's length and climb | the sheet against the Route sheet | *(owed)* |
-| R5 | The update size Play reports for the re-delivered packs | Play Console, the release's size | *(owed)* |
+| R3 | The highlight and fade against phase 4's gate: the pan at zoom 11 and 13 with the red Trail from Kuźnice to Kasprowy Wierch selected, against the same pan with nothing selected taken straight before it. Pass: p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's | phase 4's R1 apparatus and pan, all nine Regions and the relief hand-pushed; `CameraReceiver` to a point on that Trail at each zoom, then for the selected run `input tap` at the screen's centre and the chooser's red row if one opens; `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py` | *(owed)* |
+| R4 | A Route along a Trail matches the Trail: Kuźnice – Kasprowy Wierch and Główny Szlak Beskidzki, each way, and again planned anew from its stored points. Pass: length to the metre and ascent and descent equal to the Trail's row, and Główny Szlak Beskidzki's Route made within 2 s | `RouteReceiver` gains `--el trail <id>` and `--ez reversed true`: it makes the Route by the button's code, logs the Trail's row and the time taken beside its `route:` line, then plans the stored points again and logs that `route:` line too; `adb logcat -d -s KozicaRoute` | *(owed)* |
+| R5 | The update size Play reports for the re-delivered packs, and the three base files' sizes beside the last release's two | Play Console, the release's size; the release's attachments | *(owed)* |
