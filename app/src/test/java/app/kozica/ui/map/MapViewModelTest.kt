@@ -355,6 +355,31 @@ class MapViewModelTest {
             assertFalse(settled(viewModel) { it.route.points.isEmpty() }.route.naming)
         }
 
+    @Test
+    fun `a photo's caption, unpin and delete reach the store`() =
+        runTest {
+            val stored = mutableListOf<String>()
+            val viewModel =
+                MapViewModel(
+                    regions = flowOf(emptyList()),
+                    preferences = AppPreferences(MemoryPreferences()),
+                    readAsset = { "" },
+                    applicationScope = CoroutineScope(Dispatchers.Unconfined),
+                    positions = { MutableSharedFlow<Location>() },
+                    fetch = {},
+                    confirmFetch = { false },
+                    saveCaption = { id, caption -> stored += "caption $id $caption" },
+                    savePinRemoved = { stored += "unpin $it" },
+                    deleteStoredPhoto = { stored += "delete $it" },
+                )
+
+            viewModel.setCaption("p", "Hala")
+            viewModel.unpinPhoto("p")
+            viewModel.deletePhoto("p")
+
+            assertEquals(listOf("caption p Hala", "unpin p", "delete p"), stored)
+        }
+
     private suspend fun settled(
         viewModel: MapViewModel,
         until: (MapUiState) -> Boolean,

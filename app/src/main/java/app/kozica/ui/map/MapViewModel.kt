@@ -2,6 +2,7 @@ package app.kozica.ui.map
 
 import android.annotation.SuppressLint
 import android.location.Location
+import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
@@ -13,10 +14,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.kozica.MainApplication
 import app.kozica.data.AppPreferences
 import app.kozica.data.HikeEntity
+import app.kozica.data.HikePhotoEntity
 import app.kozica.data.MapCamera
 import app.kozica.data.SavedRoute
 import app.kozica.data.hikes.Climb
 import app.kozica.data.hikes.Height
+import app.kozica.data.hikes.Pin
 import app.kozica.data.hikes.ProfilePoint
 import app.kozica.data.hikes.Track
 import app.kozica.data.hikes.along
@@ -110,6 +113,7 @@ data class MapUiState(
  * @param along metres along the Track to each of its points, in order.
  * @param climb null when no ascent is stored and no height could be read, so none is shown.
  * @param keep the metres Trim keeps, null while not trimming.
+ * @param photos in the order they were taken (docs/phase-6.md § 6).
  */
 data class HikeUiState(
     val id: String,
@@ -122,9 +126,12 @@ data class HikeUiState(
     val along: List<Double>,
     val climb: Climb?,
     val profile: List<ProfilePoint> = emptyList(),
-    val photoCount: Int = 0,
+    val note: String? = null,
+    val photos: List<HikePhoto> = emptyList(),
     val keep: ClosedFloatingPointRange<Double>? = null,
 ) {
+    val photoCount: Int get() = photos.size
+
     /** The points [keep] holds, by their index among the Track's points in order; null when fewer than two. */
     val kept: IntRange?
         get() {
@@ -144,6 +151,15 @@ data class HikeUiState(
     /** The Track, or while trimming the part that stays. */
     val drawn: Track get() = if (keep == null) track else kept?.let { track.trim(it.first, it.last) }.orEmpty()
 }
+
+/** A photo of a Hike, its paths resolved; [pin] is null for one with no place on the Track. */
+data class HikePhoto(
+    val id: String,
+    val photo: File,
+    val thumbnail: File,
+    val caption: String?,
+    val pin: Pin?,
+)
 
 /** The stored ascent, else one read from [heights] when at least one height came back. */
 internal fun shownClimb(
@@ -207,11 +223,17 @@ class MapViewModel(
     private val observeTrack: (hikeId: String) -> Flow<Track> = { flowOf(emptyList()) },
     private val hikeToShow: MutableStateFlow<String?> = MutableStateFlow(null),
     private val observeHike: (id: String) -> Flow<HikeEntity?> = { flowOf(null) },
-    private val observePhotoCount: (id: String) -> Flow<Int> = { flowOf(0) },
+    private val observePhotos: (id: String) -> Flow<List<HikePhotoEntity>> = { flowOf(emptyList()) },
+    private val resolveMedia: (relativePath: String) -> File = ::File,
     private val heights: suspend (Track) -> List<Height?> = { track -> track.flatten().map { null } },
     private val renameHike: suspend (id: String, name: String) -> Unit = { _, _ -> },
     private val trimHike: suspend (id: String, first: Int, last: Int) -> Unit = { _, _, _ -> },
     private val deleteHike: suspend (id: String) -> Unit = {},
+    private val saveNote: suspend (id: String, note: String) -> Unit = { _, _ -> },
+    private val savePhoto: suspend (hikeId: String, source: Uri) -> Unit = { _, _ -> },
+    private val saveCaption: suspend (photoId: String, caption: String) -> Unit = { _, _ -> },
+    private val savePinRemoved: suspend (photoId: String) -> Unit = {},
+    private val deleteStoredPhoto: suspend (photoId: String) -> Unit = {},
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -275,7 +297,7 @@ class MapViewModel(
                 if (id == null) {
                     flowOf(null)
                 } else {
-                    combine(observeHike(id), observePhotoCount(id), ::Pair).mapLatest { (hike, photos) ->
+                    combine(observeHike(id), observePhotos(id), ::Pair).mapLatest { (hike, photos) ->
                         hike?.let { hikeState(it, photos) }
                     }
                 }
@@ -464,6 +486,7 @@ class MapViewModel(
         routeGeneration++
         route.value = RouteUiState()
         hikeKeep.value = null
+        readHeights = null
         shownHike.value = id
     }
 
@@ -472,21 +495,19 @@ class MapViewModel(
         hikeKeep.value = null
     }
 
+    // The last Track's heights, so a note or a photo does not read the relief again.
+    private var readHeights: Pair<ByteArray, List<Height?>>? = null
+
     private suspend fun hikeState(
         hike: HikeEntity,
-        photos: Int,
+        photos: List<HikePhotoEntity>,
     ): HikeUiState? {
         val endedAt = hike.endedAt ?: return null
-        val track = hike.track?.let(::decodeTrack) ?: return null
-        // A failed read draws no profile rather than ending the map's state with it.
+        val bytes = hike.track ?: return null
+        val track = decodeTrack(bytes)
         val heights =
-            try {
-                withContext(io) { heights(track) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                track.flatten().map { null }
-            }
+            readHeights?.takeIf { it.first.contentEquals(bytes) }?.second
+                ?: heightsOf(track).also { readHeights = bytes to it }
         val stored =
             hike.ascentMetres?.let { ascent -> Climb(ascent, hike.descentMetres ?: 0.0, hike.ascentFromGps) }
         return HikeUiState(
@@ -500,9 +521,29 @@ class MapViewModel(
             along = track.along(),
             climb = shownClimb(stored, heights),
             profile = profileOf(track, heights),
-            photoCount = photos,
+            note = hike.note,
+            photos =
+                photos.map {
+                    HikePhoto(
+                        id = it.id,
+                        photo = resolveMedia(it.photoPath),
+                        thumbnail = resolveMedia(it.thumbnailPath),
+                        caption = it.caption,
+                        pin = if (it.latitude != null && it.longitude != null) Pin(it.latitude, it.longitude) else null,
+                    )
+                },
         )
     }
+
+    // A failed read draws no profile rather than ending the map's state with it.
+    private suspend fun heightsOf(track: Track): List<Height?> =
+        try {
+            withContext(io) { heights(track) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            track.flatten().map { null }
+        }
 
     /** Trim's handles start at the two ends, keeping everything. */
     fun startTrim() {
@@ -528,6 +569,43 @@ class MapViewModel(
     fun renameHike(name: String) {
         val id = shownHike.value ?: return
         viewModelScope.launch { renameHike(id, name) }
+    }
+
+    fun setNote(note: String) {
+        val id = shownHike.value ?: return
+        applicationScope.launch { saveNote(id, note) }
+    }
+
+    /** One at a time, past the screen's life, each appearing in the strip as it is written. */
+    fun addPhotos(sources: List<Uri>) {
+        val id = shownHike.value ?: return
+        if (sources.isEmpty()) return
+        applicationScope.launch {
+            for (source in sources) {
+                try {
+                    savePhoto(id, source)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // A picked file that does not decode as an image is left out; the rest go on.
+                }
+            }
+        }
+    }
+
+    fun setCaption(
+        photoId: String,
+        caption: String,
+    ) {
+        applicationScope.launch { saveCaption(photoId, caption) }
+    }
+
+    fun unpinPhoto(photoId: String) {
+        applicationScope.launch { savePinRemoved(photoId) }
+    }
+
+    fun deletePhoto(photoId: String) {
+        applicationScope.launch { deleteStoredPhoto(photoId) }
     }
 
     fun deleteHike() {
@@ -635,11 +713,17 @@ class MapViewModel(
                         observeTrack = app.container.hikes::observeTrack,
                         hikeToShow = app.container.hikeToShow,
                         observeHike = app.container.hikes::observe,
-                        observePhotoCount = app.container.hikes::observePhotoCount,
+                        observePhotos = app.container.hikes::observePhotos,
+                        resolveMedia = app.container.media::resolve,
                         heights = app.container.hikeHeights::of,
                         renameHike = app.container.hikes::rename,
                         trimHike = app.container.hikes::trim,
                         deleteHike = app.container.hikes::delete,
+                        saveNote = app.container.hikes::setNote,
+                        savePhoto = { id, source -> app.container.hikes.addPhoto(id, source) },
+                        saveCaption = app.container.hikes::setCaption,
+                        savePinRemoved = app.container.hikes::unpin,
+                        deleteStoredPhoto = app.container.hikes::deletePhoto,
                     )
                 }
             }

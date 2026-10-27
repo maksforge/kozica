@@ -13,9 +13,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.UUID
@@ -117,6 +119,13 @@ data class PersistedMedia(
     val capturedAt: Instant?,
 )
 
+/** A photo and its thumbnail, as [MediaFiles.persistPhoto] wrote them. */
+data class PersistedPhoto(
+    val path: String,
+    val thumbnailPath: String,
+    val capturedAt: Instant?,
+)
+
 /**
  * The single path for persisting images (house rule). Every write goes through [persist], which
  * downsamples and re-encodes per kind — bypassing it puts full-resolution bitmaps in memory and
@@ -186,6 +195,23 @@ class MediaFiles(
             PersistedMedia(path = relativePath, capturedAt = tags.capturedAt)
         }
 
+    /**
+     * [source] as a [MediaKind.Photo] and its [MediaKind.Thumbnail], the thumbnail cut from the
+     * written photo rather than decoded again from a full-size source. Neither file stays if either
+     * fails.
+     */
+    suspend fun persistPhoto(source: Uri): PersistedPhoto {
+        val photo = persist(source, MediaKind.Photo)
+        val thumbnail =
+            try {
+                persist(Uri.fromFile(resolve(photo.path)), MediaKind.Thumbnail)
+            } catch (e: Exception) {
+                delete(photo.path)
+                throw e
+            }
+        return PersistedPhoto(photo.path, thumbnail.path, photo.capturedAt)
+    }
+
     /** Absolute location of a stored relative path. The file may legitimately be missing. */
     fun resolve(relativePath: String): File = File(root, relativePath)
 
@@ -211,7 +237,14 @@ class MediaFiles(
                         ExifInterface.TAG_ORIENTATION,
                         ExifInterface.ORIENTATION_NORMAL,
                     ),
-                capturedAt = exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)?.let(::parseExifDateTime),
+                capturedAt =
+                    exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)?.let {
+                        exifInstant(
+                            it,
+                            exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL),
+                            ZoneId.systemDefault(),
+                        )
+                    },
             )
         }
 
@@ -261,20 +294,35 @@ private data class SourceTags(
 )
 
 /**
- * EXIF writes a date as `yyyy:MM:dd HH:mm:ss` **with no time zone at all**, so it has to be read
- * against one. The phone's own zone is the honest guess: someone photographing something is in
- * the zone their phone is set to, and the alternative — assuming UTC — is silently wrong by up to
- * half a day for everyone who is not in London.
+ * EXIF writes a date as `yyyy:MM:dd HH:mm:ss` with no time zone; since EXIF 2.31 a camera may add
+ * the offset beside it (`+02:00`). Without one it is read against [zone], the phone's: someone
+ * photographing something is in the zone their phone is set to, where assuming UTC is silently
+ * wrong by up to half a day for everyone who is not in London.
  *
- * Anything unparseable is null rather than an exception. A malformed date is a reason to fall back
- * to `createdAt`, never a reason to refuse the photo.
+ * Anything unparseable is null rather than an exception, and an unparseable offset falls back to
+ * [zone]: a malformed date is a reason to leave the photo undated, never to refuse it.
  */
-private fun parseExifDateTime(value: String): Instant? =
-    try {
-        LocalDateTime.parse(value, EXIF_DATE_TIME).atZone(ZoneId.systemDefault()).toInstant()
-    } catch (e: DateTimeParseException) {
-        null
-    }
+internal fun exifInstant(
+    dateTime: String,
+    offset: String?,
+    zone: ZoneId,
+): Instant? {
+    val local =
+        try {
+            LocalDateTime.parse(dateTime.trim(), EXIF_DATE_TIME)
+        } catch (_: DateTimeParseException) {
+            return null
+        }
+    val at =
+        offset?.let {
+            try {
+                ZoneOffset.of(it.trim())
+            } catch (_: DateTimeException) {
+                null
+            }
+        } ?: zone
+    return local.atZone(at).toInstant()
+}
 
 private val EXIF_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 

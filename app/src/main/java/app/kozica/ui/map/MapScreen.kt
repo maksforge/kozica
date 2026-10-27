@@ -16,6 +16,7 @@ import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,6 +87,7 @@ import app.kozica.ui.common.WarningBanner
 import app.kozica.ui.common.osmDateLine
 import app.kozica.ui.common.startActivitySafely
 import app.kozica.ui.hikes.HikeSheet
+import app.kozica.ui.hikes.PhotoViewer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
@@ -225,6 +227,11 @@ fun MapScreen(
         map.uiSettings.setCompassImage(CompassDrawable(colors, density))
     }
     val focus = LocalFocusManager.current
+    var viewingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    val pickPhotos =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS_PICKED)) {
+            viewModel.addPhotos(it)
+        }
 
     LaunchedEffect(map) {
         val map = map ?: return@LaunchedEffect
@@ -235,7 +242,12 @@ fun MapScreen(
         map.addOnMapClickListener {
             viewModel.dismissOffer()
             focus.clearFocus()
-            false
+            val photo =
+                map
+                    .queryRenderedFeatures(map.projection.toScreenLocation(it), HIKE_PHOTOS_LAYER)
+                    .firstNotNullOfOrNull { feature -> feature.getStringProperty("id") }
+            photo?.let { id -> viewingPhoto = id }
+            photo != null
         }
         val start = shown ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
@@ -305,6 +317,12 @@ fun MapScreen(
     LaunchedEffect(loaded, drawnTrack) {
         val style = loaded ?: return@LaunchedEffect
         (style.getSource(HIKE_TRACK_SOURCE) as? GeoJsonSource)?.setGeoJson(trackGeoJson(drawnTrack))
+    }
+
+    val photos = state.hike?.photos.orEmpty()
+    LaunchedEffect(loaded, photos) {
+        val style = loaded ?: return@LaunchedEffect
+        (style.getSource(HIKE_PHOTOS_SOURCE) as? GeoJsonSource)?.setGeoJson(photoPinsGeoJson(photos))
     }
 
     val fade = remember(state.style) { state.style?.let(::fadeOf) }
@@ -401,6 +419,20 @@ fun MapScreen(
         // The camera cannot leave the Regions, so it would stop short on a shaded spot with the dot off-screen.
         positionOutside = regions?.contains(fix.latitude, fix.longitude) == false
         if (!positionOutside) map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(fix.latitude, fix.longitude)))
+    }
+
+    val viewing = viewingPhoto?.let { id -> photos.indexOfFirst { it.id == id } }?.takeIf { it >= 0 }
+    if (viewing != null && hike != null) {
+        PhotoViewer(
+            photos = photos,
+            initialIndex = viewing,
+            hikeName = hike.name,
+            onShown = { viewingPhoto = it },
+            onSetCaption = viewModel::setCaption,
+            onUnpin = viewModel::unpinPhoto,
+            onDelete = viewModel::deletePhoto,
+            onClose = { viewingPhoto = null },
+        )
     }
 
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -514,6 +546,11 @@ fun MapScreen(
                     onCancelTrim = viewModel::cancelTrim,
                     onTrim = viewModel::trim,
                     onDelete = viewModel::deleteHike,
+                    onSetNote = viewModel::setNote,
+                    onAddPhotos = {
+                        pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    onOpenPhoto = { viewingPhoto = it },
                     modifier = Modifier.heightIn(max = sheetHeight),
                 )
             } else if (state.route.points.isNotEmpty()) {
@@ -776,6 +813,9 @@ private val CameraSaver =
 
 /** Close enough that the Trails around a picked place are drawn. */
 private const val OFFERED_ZOOM = 13.0
+
+// Bounds how long one pick takes to write, each photo decoded and encoded twice; not the picker's own limit.
+private const val MAX_PHOTOS_PICKED = 50
 
 private const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 

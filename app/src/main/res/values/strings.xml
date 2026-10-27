@@ -22,6 +22,7 @@
     <!-- Common actions -->
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
 
     <!-- "Maps" are the Regions, which arrive from Play after the install. %1$d of %2$d have arrived. "Play" is the Google Play Store app. -->
     <string name="map_downloading">Downloading maps — %1$d of %2$d</string>
@@ -254,4 +255,18 @@
         <item quantity="one">Delete this hike and its %d photo? This can\'t be undone.</item>
         <item quantity="other">Delete this hike and its %d photos? This can\'t be undone.</item>
     </plurals>
+
+    <!-- A Hike's photos and its note (docs/phase-6.md § 6). -->
+    <!-- The recording bar's camera button. -->
+    <string name="hike_take_photo">Take photo</string>
+    <string name="hike_add_photos">Add photos</string>
+    <!-- One free-text note per hike: its label, and the button when the hike has none. -->
+    <string name="hike_note">Note</string>
+    <string name="hike_add_note">Add a note</string>
+    <!-- A short text under one photo. -->
+    <string name="photo_caption">Caption</string>
+    <!-- Takes the photo's pin off the hike's track and map; the photo itself stays in the hike. -->
+    <string name="photo_remove">Remove from hike</string>
+    <string name="photo_delete">Delete photo</string>
+    <string name="photo_close">Close photo</string>
 </resources>

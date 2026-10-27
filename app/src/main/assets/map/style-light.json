@@ -24,6 +24,13 @@
     "features": []
    }
   },
+  "hike-photos": {
+   "type": "geojson",
+   "data": {
+    "type": "FeatureCollection",
+    "features": []
+   }
+  },
   "regions": {
    "type": "geojson",
    "data": "asset://map/regions.geojson"
@@ -1872,6 +1879,17 @@
      17,
      10.0
     ]
+   }
+  },
+  {
+   "id": "hike-photos",
+   "type": "circle",
+   "source": "hike-photos",
+   "paint": {
+    "circle-color": "#5e6c76",
+    "circle-radius": 9,
+    "circle-stroke-color": "#ffffff",
+    "circle-stroke-width": 3
    }
   }
  ]

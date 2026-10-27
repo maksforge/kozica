@@ -17,7 +17,7 @@ Kozica has no account, no sign-in and no server. **The app has no permission to 
 so it cannot send anything anywhere.
 
 What it keeps (your settings, including where you left the map; the routes you save, each a name
-and the points you chose; and the hikes you record) is stored **only in the app's private storage on your own phone**, and is
+and the points you chose; and the hikes you record, with their notes and photos) is stored **only in the app's private storage on your own phone**, and is
 readable only by the app.
 
 There is no analytics, no crash reporting, no advertising, and no third-party SDK that phones home.
@@ -35,6 +35,11 @@ There is no analytics, no crash reporting, no advertising, and no third-party SD
   for as long as you keep the hike. It is never sent anywhere by the app. While a hike records, a
   notification says so, and the app reads your location with the screen off until you stop it.
   Recording asks for notifications once, for that notification; you can say no and still record.
+- **Photos you add to a hike**, only the ones you take with your camera app from the recording bar
+  or pick yourself with Android's photo picker, which shows the app nothing else. Neither needs a
+  permission. The app keeps its own smaller copy in its private storage, **with the photo's location
+  and all its other metadata removed**. It reads only when the photo was taken, before removing it, to
+  place the photo on the hike's track.
 
 ## When you write to the developer
 

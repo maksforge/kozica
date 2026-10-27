@@ -276,6 +276,10 @@ def style(dark: bool) -> dict:
         {"id": "hike-track", "type": "line", "source": "hike-track",
          "layout": {"line-join": "round", "line-cap": "round"},
          "paint": {"line-color": c["hike_track"], "line-width": trail_width(3.0)}},
+        # The shown Hike's pinned photos (docs/phase-6.md § 6), tapped to open; above its Track.
+        {"id": "hike-photos", "type": "circle", "source": "hike-photos",
+         "paint": {"circle-color": c["hike_track"], "circle-radius": 9, "circle-stroke-color": c["route_casing"],
+                   "circle-stroke-width": 3}},
     ]
     return {
         "version": 8,
@@ -283,6 +287,7 @@ def style(dark: bool) -> dict:
                      "kozica:bounds": json.loads(REGIONS.read_text())["bbox"]},
         "sources": {"route": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "hike-track": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
+                    "hike-photos": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "regions": {"type": "geojson", "data": "asset://map/regions.geojson"}},
         "glyphs": "asset://map/glyphs/{fontstack}/{range}.pbf",
         "sprite": f"asset://map/sprite-{'dark' if dark else 'light'}",

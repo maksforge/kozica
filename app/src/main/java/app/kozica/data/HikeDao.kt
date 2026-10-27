@@ -92,14 +92,36 @@ interface HikeDao {
         unpinOutside(id, trim.startedAt, trim.endedAt)
     }
 
-    @Query("SELECT COUNT(*) FROM hike_photos WHERE hikeId = :hikeId")
-    fun observePhotoCount(hikeId: String): Flow<Int>
+    @Query("UPDATE hikes SET note = :note WHERE id = :id")
+    suspend fun setNote(
+        id: String,
+        note: String?,
+    )
+
+    /** In the order they were taken, the undated after them in the order they were added. */
+    @Query("SELECT * FROM hike_photos WHERE hikeId = :hikeId ORDER BY takenAt IS NULL, takenAt, addedAt")
+    fun observePhotos(hikeId: String): Flow<List<HikePhotoEntity>>
 
     @Insert
     suspend fun insertPhoto(photo: HikePhotoEntity)
 
     @Query("SELECT * FROM hike_photos WHERE hikeId = :hikeId")
     suspend fun photos(hikeId: String): List<HikePhotoEntity>
+
+    @Query("SELECT * FROM hike_photos WHERE id = :id")
+    suspend fun photo(id: String): HikePhotoEntity?
+
+    @Query("UPDATE hike_photos SET caption = :caption WHERE id = :id")
+    suspend fun setCaption(
+        id: String,
+        caption: String?,
+    )
+
+    @Query("UPDATE hike_photos SET latitude = NULL, longitude = NULL WHERE id = :id")
+    suspend fun unpin(id: String)
+
+    @Query("DELETE FROM hike_photos WHERE id = :id")
+    suspend fun deletePhoto(id: String)
 
     /** The Hike with no end, if a recording was lost with its process (docs/phase-6.md § 2). */
     @Query("SELECT * FROM hikes WHERE endedAt IS NULL ORDER BY startedAt DESC LIMIT 1")

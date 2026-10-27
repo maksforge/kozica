@@ -1,5 +1,6 @@
 package app.kozica.ui.record
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -11,6 +12,7 @@ import app.kozica.data.AppPreferences
 import app.kozica.data.HikeEntity
 import app.kozica.record.Recorder
 import app.kozica.record.Recording
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,8 @@ class RecordingViewModel(
     private val preferences: AppPreferences,
     private val finish: suspend (hikeId: String, now: Instant) -> Unit,
     private val applicationScope: CoroutineScope,
+    private val savePhoto: suspend (hikeId: String, shot: Uri, pressedAt: Instant) -> Unit = { _, _, _ -> },
+    private val deleteShot: (shot: Uri) -> Unit = {},
 ) : ViewModel() {
     private val answered = MutableStateFlow<String?>(null)
 
@@ -81,6 +85,27 @@ class RecordingViewModel(
         applicationScope.launch { finish(hikeId, Instant.now()) }
     }
 
+    /** The camera's shot, written to [hikeId]'s photos past the screen's life; the camera's own file then goes. */
+    fun addPhoto(
+        hikeId: String,
+        shot: Uri,
+        pressedAt: Instant,
+    ) {
+        applicationScope.launch {
+            try {
+                savePhoto(hikeId, shot, pressedAt)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // A shot that does not decode is left out, as a picked one is.
+            } finally {
+                deleteShot(shot)
+            }
+        }
+    }
+
+    fun discard(shot: Uri) = deleteShot(shot)
+
     private fun answer(hikeId: String): Boolean = answered.getAndUpdate { hikeId } != hikeId
 
     fun notificationsAsked() {
@@ -99,6 +124,8 @@ class RecordingViewModel(
                         app.preferences,
                         container.recorder::finish,
                         container.applicationScope,
+                        { hikeId, shot, pressedAt -> container.hikes.addPhoto(hikeId, shot, pressedAt) },
+                        { shot -> app.contentResolver.delete(shot, null, null) },
                     )
                 }
             }

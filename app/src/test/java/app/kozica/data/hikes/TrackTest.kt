@@ -101,4 +101,38 @@ class TrackTest {
         assertEquals(along[1], along[2], 0.0)
         assertEquals(apart.metres(), along.last(), 1e-9)
     }
+
+    private val walk: Track =
+        listOf(
+            listOf(TrackPoint(0, 49.0, 20.0, null), TrackPoint(10_000, 49.001, 20.002, null)),
+            listOf(TrackPoint(600_000, 49.1, 20.1, null), TrackPoint(605_000, 49.1001, 20.1, null)),
+        )
+
+    @Test
+    fun `a photo taken inside a stretch is pinned where the Track was at that moment`() {
+        assertEquals(Pin(49.00025, 20.0005), walk.pinAt(2_500))
+        assertEquals(Pin(49.001, 20.002), walk.pinAt(10_000))
+        assertEquals(Pin(49.1, 20.1), walk.pinAt(600_000))
+    }
+
+    @Test
+    fun `a photo taken in a pause is pinned at the last point before it, not across the break`() {
+        assertEquals(Pin(49.001, 20.002), walk.pinAt(300_000))
+        assertEquals(Pin(49.001, 20.002), walk.pinAt(599_999))
+    }
+
+    @Test
+    fun `a photo taken before the Track or after it has no pin`() {
+        assertNull(walk.pinAt(-1))
+        assertNull(walk.pinAt(605_001))
+        assertNull(emptyList<List<TrackPoint>>().pinAt(0))
+    }
+
+    @Test
+    fun `the camera pins at the last fix when its button was pressed`() {
+        assertEquals(Pin(49.0, 20.0), walk.lastFixAt(9_999))
+        assertEquals(Pin(49.001, 20.002), walk.lastFixAt(300_000))
+        assertEquals(Pin(49.1001, 20.1), walk.lastFixAt(700_000))
+        assertNull(walk.lastFixAt(-1))
+    }
 }

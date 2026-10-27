@@ -1,5 +1,7 @@
 package app.kozica.data
 
+import android.database.sqlite.SQLiteConstraintException
+import android.net.Uri
 import app.kozica.data.hikes.Climb
 import app.kozica.data.hikes.Height
 import app.kozica.data.hikes.Track
@@ -7,9 +9,12 @@ import app.kozica.data.hikes.TrackPoint
 import app.kozica.data.hikes.climb
 import app.kozica.data.hikes.decodeTrack
 import app.kozica.data.hikes.encodeTrack
+import app.kozica.data.hikes.lastFixAt
 import app.kozica.data.hikes.metres
 import app.kozica.data.hikes.movingSeconds
+import app.kozica.data.hikes.pinAt
 import app.kozica.data.hikes.trim
+import app.kozica.media.PersistedPhoto
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,11 +23,13 @@ import java.time.Instant
 /**
  * @param heights each point's height by docs/phase-6.md § 5's rule, one per point of the Track in order.
  * @param deleteMedia deletes a file by its relative path, as `MediaFiles.delete` does.
+ * @param persistPhoto writes a photo and its thumbnail, as `MediaFiles.persistPhoto` does.
  */
 class HikeRepository(
     private val dao: HikeDao,
     private val heights: suspend (Track) -> List<Height?> = { track -> track.flatten().map { null } },
     private val deleteMedia: (relativePath: String) -> Unit = {},
+    private val persistPhoto: suspend (source: Uri) -> PersistedPhoto = { error("No media in this repository") },
 ) {
     /** Starts a Hike with a placeholder name; Stop names it (docs/phase-6.md § 2). */
     suspend fun start(
@@ -39,12 +46,82 @@ class HikeRepository(
 
     fun observe(id: String): Flow<HikeEntity?> = dao.observe(id)
 
-    fun observePhotoCount(id: String): Flow<Int> = dao.observePhotoCount(id)
+    fun observePhotos(id: String): Flow<List<HikePhotoEntity>> = dao.observePhotos(id)
 
     suspend fun rename(
         id: String,
         name: String,
     ) = dao.rename(id, name)
+
+    /** A blank note is no note. */
+    suspend fun setNote(
+        id: String,
+        note: String,
+    ) = dao.setNote(id, note.trim().ifEmpty { null })
+
+    /**
+     * Writes [source] as one of [hikeId]'s photos, files before the row, pinned by docs/phase-6.md
+     * § 6's rule: a photo from the camera at the last fix when its button was [pressedAt], one picked
+     * afterwards at the Track's position when it was taken. A Hike gone before its row is written
+     * takes the files with it.
+     */
+    suspend fun addPhoto(
+        hikeId: String,
+        source: Uri,
+        pressedAt: Instant? = null,
+        now: Instant = Instant.now(),
+    ) {
+        if (dao.get(hikeId) == null) return
+        val media = persistPhoto(source)
+        val forget = {
+            deleteMedia(media.path)
+            deleteMedia(media.thumbnailPath)
+        }
+        val track = dao.get(hikeId)?.let { trackOf(it) } ?: return forget()
+        val pin =
+            if (pressedAt != null) {
+                track.lastFixAt(pressedAt.toEpochMilli())
+            } else {
+                media.capturedAt?.let { track.pinAt(it.toEpochMilli()) }
+            }
+        val photo =
+            HikePhotoEntity(
+                hikeId = hikeId,
+                photoPath = media.path,
+                thumbnailPath = media.thumbnailPath,
+                addedAt = now,
+                takenAt = media.capturedAt ?: pressedAt,
+                latitude = pin?.latitude,
+                longitude = pin?.longitude,
+                caption = null,
+            )
+        try {
+            dao.insertPhoto(photo)
+        } catch (_: SQLiteConstraintException) {
+            // The foreign key: the Hike was deleted between the read above and this write.
+            forget()
+        }
+    }
+
+    private suspend fun trackOf(hike: HikeEntity): Track =
+        if (hike.endedAt == null) track(hike.id) else hike.track?.let(::decodeTrack).orEmpty()
+
+    /** A blank caption is no caption. */
+    suspend fun setCaption(
+        photoId: String,
+        caption: String,
+    ) = dao.setCaption(photoId, caption.trim().ifEmpty { null })
+
+    /** "Remove from hike": the photo stays in the Hike's strip, off its Track and map (decided with the owner on 2026-10-27). */
+    suspend fun unpin(photoId: String) = dao.unpin(photoId)
+
+    /** The row, then its files. */
+    suspend fun deletePhoto(photoId: String) {
+        val photo = dao.photo(photoId) ?: return
+        dao.deletePhoto(photoId)
+        deleteMedia(photo.photoPath)
+        deleteMedia(photo.thumbnailPath)
+    }
 
     /** Reads the height grid for every ended Hike that has not had it read. */
     suspend fun fillClimbs() {

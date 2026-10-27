@@ -1,5 +1,6 @@
 package app.kozica.data
 
+import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -7,6 +8,7 @@ import app.kozica.data.hikes.Height
 import app.kozica.data.hikes.HeightSource
 import app.kozica.data.hikes.TrackPoint
 import app.kozica.data.hikes.decodeTrack
+import app.kozica.media.PersistedPhoto
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -25,6 +27,9 @@ class HikeRepositoryTest {
     private lateinit var database: AppDatabase
     private lateinit var hikes: HikeRepository
     private val deleted = mutableListOf<String>()
+    private var capturedAt: Instant? = null
+    private var whilePersisting: suspend () -> Unit = {}
+    private var persisted = 0
 
     private val start = Instant.parse("2026-09-12T06:30:00Z")
 
@@ -43,6 +48,11 @@ class HikeRepositoryTest {
                     track.flatten().mapIndexed { i, _ -> Height(1_000.0 + i * 10, HeightSource.GRID) }
                 },
                 deleteMedia = { deleted += it },
+                persistPhoto = {
+                    whilePersisting()
+                    persisted++
+                    PersistedPhoto("photos/$persisted.jpg", "thumbnails/$persisted.jpg", capturedAt)
+                },
             )
     }
 
@@ -50,7 +60,12 @@ class HikeRepositoryTest {
     fun close() = database.close()
 
     /** Ten fixes a minute apart, a pause, ten more; Record a minute before the first fix. */
-    private suspend fun recorded(): String {
+    private suspend fun recorded(): String =
+        recording().also {
+            hikes.finish(it, start.plusSeconds(3_600)) { _, _ -> "Kasprowy" }
+        }
+
+    private suspend fun recording(): String {
         val id = "hike"
         hikes.start(id, start)
         for (stretch in 0..1) {
@@ -68,7 +83,6 @@ class HikeRepositoryTest {
                 )
             }
         }
-        hikes.finish(id, start.plusSeconds(3_600)) { _, _ -> "Kasprowy" }
         return id
     }
 
@@ -149,6 +163,78 @@ class HikeRepositoryTest {
             assertNull(hikes.get(id))
             assertEquals(emptyList<HikePhotoEntity>(), database.hikeDao().photos(id))
             assertEquals(listOf("photos/p.jpg", "thumbnails/p.jpg"), deleted)
+        }
+
+    @Test
+    fun aPickedPhotoIsPinnedWhereTheTrackWasWhenItWasTaken() =
+        runTest {
+            val id = recorded()
+            val shot = Uri.parse("content://picker/1")
+
+            capturedAt = minute(5)
+            hikes.addPhoto(id, shot)
+            capturedAt = minute(20)
+            hikes.addPhoto(id, shot)
+            capturedAt = null
+            hikes.addPhoto(id, shot)
+
+            val photos = hikes.observePhotos(id).first()
+            assertEquals(listOf(minute(5), minute(20), null), photos.map { it.takenAt })
+            assertEquals(49.204, photos[0].latitude!!, 1e-9)
+            assertEquals(49.209, photos[1].latitude!!, 1e-9)
+            assertNull(photos[2].latitude)
+            assertEquals("thumbnails/1.jpg", photos[0].thumbnailPath)
+        }
+
+    @Test
+    fun theCameraPinsAtTheLastFixWhenItsButtonWasPressed() =
+        runTest {
+            val id = recording()
+
+            hikes.addPhoto(id, Uri.parse("content://camera/1"), pressedAt = minute(5).plusSeconds(50))
+
+            val photo = hikes.observePhotos(id).first().single()
+            assertEquals(49.204, photo.latitude!!, 1e-9)
+            assertEquals(minute(5).plusSeconds(50), photo.takenAt)
+        }
+
+    @Test
+    fun aHikeDeletedWhileItsPhotoIsWrittenTakesTheFilesWithIt() =
+        runTest {
+            val id = recorded()
+            whilePersisting = { hikes.delete(id) }
+
+            hikes.addPhoto(id, Uri.parse("content://picker/1"))
+
+            assertEquals(listOf("photos/1.jpg", "thumbnails/1.jpg"), deleted)
+        }
+
+    @Test
+    fun aPhotoIsCaptionedUnpinnedAndDeletedWithItsFiles() =
+        runTest {
+            val id = recorded()
+            capturedAt = minute(5)
+            hikes.addPhoto(id, Uri.parse("content://picker/1"))
+            val added = hikes.observePhotos(id).first().single()
+
+            hikes.setCaption(added.id, "  Hala Gąsienicowa ")
+            hikes.unpin(added.id)
+            val changed = hikes.observePhotos(id).first().single()
+            assertEquals("Hala Gąsienicowa", changed.caption)
+            assertNull(changed.latitude)
+            hikes.setCaption(added.id, " ")
+            assertNull(
+                hikes
+                    .observePhotos(id)
+                    .first()
+                    .single()
+                    .caption,
+            )
+
+            hikes.deletePhoto(added.id)
+
+            assertEquals(emptyList<HikePhotoEntity>(), hikes.observePhotos(id).first())
+            assertEquals(listOf("photos/1.jpg", "thumbnails/1.jpg"), deleted)
         }
 
     private fun photo(

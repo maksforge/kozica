@@ -3,7 +3,7 @@
     Two directories, both narrow.
 
     camera/ is shared with the camera app we hand a Uri to: a staging area holding the just-taken
-    shot. MediaFiles re-encodes the picture into filesDir/images and the original is dropped, so
+    shot. MediaFiles re-encodes the picture into filesDir/photos and the original is dropped, so
     nothing durable is exposed.
 
     exports/ holds a manual backup zip on its way to the share sheet (ADR-0005). Cache, deliberately:

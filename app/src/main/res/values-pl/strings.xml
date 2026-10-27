@@ -10,6 +10,7 @@
 <resources>
     <string name="action_back">Wstecz</string>
     <string name="action_cancel">Anuluj</string>
+    <string name="action_save">Zapisz</string>
 
     <string name="map_downloading">Pobieranie map — %1$d z %2$d</string>
     <string name="map_updating">Trwa aktualizacja danych mapy.</string>
@@ -182,4 +183,12 @@
         <item quantity="many">Usunąć tę wycieczkę i jej %d zdjęć? Tego nie można cofnąć.</item>
         <item quantity="other">Usunąć tę wycieczkę i jej %d zdjęcia? Tego nie można cofnąć.</item>
     </plurals>
+    <string name="hike_take_photo">Zrób zdjęcie</string>
+    <string name="hike_add_photos">Dodaj zdjęcia</string>
+    <string name="hike_note">Notatka</string>
+    <string name="hike_add_note">Dodaj notatkę</string>
+    <string name="photo_caption">Podpis</string>
+    <string name="photo_remove">Usuń z wycieczki</string>
+    <string name="photo_delete">Usuń zdjęcie</string>
+    <string name="photo_close">Zamknij zdjęcie</string>
 </resources>
