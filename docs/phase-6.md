@@ -382,9 +382,10 @@ changes. ADR-0005 is amended at E to record it.
 - **The full photos travel on a phone-to-phone transfer** (`FLAG_DEVICE_TO_DEVICE_TRANSFER`, API
   28+; binky's ADR-0005 says 30, wrongly), where there is no quota and no cloud.
 - **A marker file outside the database** records the last automatic backup and how many thumbnails
-  were left out. It is never in the backup set and is cleared at restore. Backup settings shows three
-  states: when the last one ran, that it is stale past 14 days, or that none has been recorded on this
-  phone, with a button into the system's backup settings.
+  were left out. It is never in the backup set and is cleared at restore. Backup settings shows four
+  states: when the last one ran, that it is stale past 14 days, that the last attempt was over quota
+  and not saved (`onQuotaExceeded`), or that none has been recorded on this phone, with a button into
+  the system's backup settings.
 - **Backup settings says in words** that automatic backup keeps Hikes, notes and Routes but not the
   photos.
 - **Export through the share sheet, with a remembered folder** (a persisted tree grant, checked on
@@ -411,9 +412,10 @@ an Export button. The app knows this: it records when it last exported Everythin
   whose `addedAt` is after the last Everything export's start, kept in the preferences, so it needs no
   column and schema 3 stays frozen. Its Export runs an Everything export at once, to the remembered
   folder if one is granted and otherwise to the share sheet, without opening the Backup screen. The
-  time is written before the archive, so the preferences inside it carry it and restoring that
-  archive raises no banner; the share sheet never says whether the file went anywhere, so the file
-  existing is what counts.
+  time is written once the archive is whole, so an export that never finished leaves the banner up;
+  the preferences inside the archive predate it, so restoring an Everything archive raises the time
+  to its manifest's `createdAt` at the next start. The share sheet never says whether the file went
+  anywhere, so the file existing is what counts.
 
 **The preferences joining the backup carry the map's last centre**, which the privacy policy says
 stays on the phone. With Hikes in the database, the backup already carries far more location than
@@ -455,7 +457,8 @@ because the share is the user's.
   time at all.
 - **Auto Backup admission** (E): the database and preferences always in, thumbnails newest first up
   to the budget and never over. Fails towards the whole backup being silently dropped.
-- **The marker** (E): never in the backup set, cleared at restore, stale past 14 days.
+- **The marker** (E): never in the backup set, cleared at restore, stale past 14 days, over quota
+  until a backup goes through.
 - **GPX writer** (F): well-formed with names that need escaping, a `<trkseg>` per stretch, the OSM
   attribution in a Route's and none in a Hike's.
 
@@ -521,6 +524,6 @@ host.
 | R10 | Photos picked afterwards, pinned by their time taken (§ 6) | three JPEGs pushed to `/sdcard/DCIM/`, picked with "Add photos"; the pulled database | **Pass**, 2026-10-27, test phone (API 30, the system file chooser standing in for the Photo Picker): one dated 09:53:15 with no offset was pinned on the Track point at 07:53:15Z; one dated 10:20:00 with `OffsetTimeOriginal` +02:00 fell in a pause and was pinned at the last point before it; one with no date was added unpinned; two 0-byte PNGs picked with them were left out, and a second pick of all five raised the banner over the tab bar, "Nie udało się dodać 2 zdjęć…", which OK dismissed. Caption, "Remove from map" (then worded "Remove from hike"), the note and "Delete photo" (row and both files) read in the app; a photo with its files removed by hand drew the placeholder in the strip and the viewer |
 | R11 | The camera during a recording pins at the last fix when pressed (§ 6) | API 33 emulator, `adb emu geo fix`; the pulled database | **Pass**, 2026-10-27: seven fixes, then Take photo, then a fix while the camera was open. The photo was pinned at the last fix before the press, not the one during the camera; its time was the camera's own; `cache/camera/` was empty after. After Stop the photo was in the Hike's strip |
 | R7 | Auto Backup with photos past the budget: the database still in the backup | `adb shell bmgr backupnow`; the marker file | **Pass**, 2026-10-27, test phone (API 30), debug build, on the local transport (`bmgr enable true`, `bmgr transport com.android.localtransport/.LocalTransport`; the phone has no Google account), with 30 random 1 MiB files pushed into `files/thumbnails/` beside the 2 real thumbnails: `bmgr backupnow` reported Success at 20,017,152 bytes. `file_backup_helper` listed `f/autobackup/kozica.db`, `f/datastore/app_preferences.preferences_pb` and 21 thumbnails, and no photo, `preserved/` or marker; the marker read `excludedThumbnails=11` and `autobackup/` was gone after. `bmgr restore 1` then cleared the marker and dropped the staged copy beside the live database. Afterwards the files were removed, the local transport's copy wiped (`bmgr wipe`), and the GMS transport and `bmgr enable false` restored. A Google Drive backup is not read |
-| R12 | An export and a restore round trip in the app | the debug build on the test phone; `unzip -l` on the pulled archive | **Pass**, 2026-10-27, test phone, debug build, the "Kasprowy test" Hike (3 photo rows, 2 with files): the banner read "3 zdjęcia nie są w żadnej kopii zapasowej"; a folder made in the picker was remembered; the banner's Eksportuj saved `kozica-everything-…zip` there (manifest, database, preferences, 2 photos, 2 thumbnails) and the banner went. The Hike was deleted with its photos, then restored from the file through the picker: the terminal screen read "Przywrócono 4 obrazy", and after Zamknij Kozicę and a relaunch the Hike and all four files were back, with a before-restore snapshot under Zapisane kopie. The first try raised the banner again after the restore, which is why the export time is now written before the archive; a second round trip did not. Restoring a snapshot from Zapisane kopie kept the 2 photos ("Zachowano 2 obrazy"), and Delete asked first. The system file picker took no taps on its items on MIUI 12.5 and was driven with the keyboard |
+| R12 | An export and a restore round trip in the app | the debug build on the test phone; `unzip -l` on the pulled archive | **Pass**, 2026-10-27, test phone, debug build, the "Kasprowy test" Hike (3 photo rows, 2 with files): the banner read "3 zdjęcia nie są w żadnej kopii zapasowej"; a folder made in the picker was remembered; the banner's Eksportuj saved `kozica-everything-…zip` there (manifest, database, preferences, 2 photos, 2 thumbnails) and the banner went. The Hike was deleted with its photos, then restored from the file through the picker: the terminal screen read "Przywrócono 4 obrazy", and after Zamknij Kozicę and a relaunch the Hike and all four files were back, with a before-restore snapshot under Zapisane kopie. The first try raised the banner again after the restore, because the archive's preferences predate the export; a restore now raises the time to the manifest's. Rechecked after review: the banner's export saved the archive and cleared the banner and `cache/exports`, and restoring that archive (its preferences' time older than the photos) raised no banner after the relaunch. Restoring a snapshot from Zapisane kopie kept the 2 photos ("Zachowano 2 obrazy"), and Delete asked first. The system file picker took no taps on its items on MIUI 12.5 and was driven with the keyboard |
 | R8 | A GPX export opened in another app, with its photos as waypoints | the share sheet to Mapy.cz or Files | |
 | R9 | Each row of § 2's table, with the API level: on the owner's phone (API 36) approximate only, its upgrade kept, denied for good, notifications denied (does it record, what the bar says) and the notification swiped away (the service runs on); on the test phone (API 30) denied and location off; and on both, the `location` service starting with no `SecurityException` | `adb shell pm revoke`/`grant`, `cmd location set-location-enabled`, a screencap per state; `adb logcat -d \| grep SecurityException`; `adb shell dumpsys activity services` |**Partly read**, 2026-10-26. API 33 emulator, no screencaps: approximate only led to the precise-location screen; the next Record made the upgrade ask; notifications denied still recorded, with the bar's line. Owner's phone (API 36): location switched off mid-recording showed 'Location is off — nothing is being recorded' in the notification, and switching it back on brought back the distance; two screenshots at 20:13 of the recording bar and the notification, none of the location-off state. *Owed:* on the owner's phone approximate only, its upgrade kept, denied for good, notifications denied and the notification swiped away; on the test phone denied and location off; on both, the `location` service starting with no `SecurityException` |

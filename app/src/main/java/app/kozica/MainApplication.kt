@@ -8,6 +8,7 @@ import app.kozica.data.PRESERVED_DIRECTORY
 import app.kozica.data.SchemaGate
 import app.kozica.data.ThemeMode
 import app.kozica.data.backup.adoptRestoredDatabase
+import app.kozica.data.backup.adoptRestoredEverythingExport
 import app.kozica.data.backup.adoptRestoredPreferences
 import app.kozica.data.destructiveMigrationAllowed
 import app.kozica.data.preserveBeforeWipe
@@ -101,6 +102,7 @@ class MainApplication : Application() {
         adoptRestoredDatabase(filesDir, getDatabasePath(APP_DATABASE_FILE))
 
         preferences = AppPreferences(preferencesStore)
+        adoptRestoredEverythingExport(filesDir)?.let { runBlocking { preferences.raiseLastEverythingExport(it) } }
 
         // A blocking read, deliberately and exactly once. Everything else about DataStore is a Flow,
         // but this value has to be known before the first window is created — a Flow collected in a

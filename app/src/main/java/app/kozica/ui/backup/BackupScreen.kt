@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -81,9 +82,13 @@ fun BackupScreen(
         }
     }
 
+    val restoring = state.working == BackupWork.Restoring
+    // Leaving would clear the ViewModel mid-swap, and the terminal screen would never come.
+    BackHandler(enabled = restoring) {}
+
     DetailScaffold(
         title = stringResource(R.string.settings_backup),
-        onBack = onBack.takeIf { state.restored == null },
+        onBack = onBack.takeIf { state.restored == null && !restoring },
         modifier = modifier,
     ) { contentModifier ->
         val restored = state.restored
@@ -122,9 +127,10 @@ fun BackupScreen(
             ) {
                 Text(stringResource(R.string.backup_restore))
             }
-            if (state.working == BackupWork.Restoring) Working(R.string.backup_restoring)
+            if (restoring) Working(R.string.backup_restoring)
             SavedCopies(
                 copies = state.preserved,
+                enabled = state.working == null,
                 onRestore = { viewModel.inspect(RestoreSource.Snapshot(it.file)) },
                 onShare = { context.sharePreservedCopy(it) },
                 onDelete = viewModel::requestDelete,
@@ -190,13 +196,19 @@ private fun AutomaticBackup(
     val line =
         when (status) {
             AutoBackupStatus.NeverRecorded -> stringResource(R.string.backup_auto_never)
+            AutoBackupStatus.OverQuota -> stringResource(R.string.backup_auto_over_quota)
             is AutoBackupStatus.Recorded ->
                 stringResource(
                     if (status.stale) R.string.backup_auto_stale else R.string.backup_auto_recorded,
                     dateTime(status.at),
                 )
         }
-    Text(line, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = Spacing.base))
+    Text(
+        line,
+        style = MaterialTheme.typography.titleMedium,
+        color = if (status == AutoBackupStatus.OverQuota) MaterialTheme.colorScheme.error else Color.Unspecified,
+        modifier = Modifier.padding(horizontal = Spacing.base),
+    )
     val excluded = (status as? AutoBackupStatus.Recorded)?.excludedThumbnails ?: 0
     if (excluded > 0) {
         Text(
@@ -300,6 +312,7 @@ private fun ExportFolder(
 @Composable
 private fun SavedCopies(
     copies: List<PreservedCopy>,
+    enabled: Boolean,
     onRestore: (PreservedCopy) -> Unit,
     onShare: (PreservedCopy) -> Unit,
     onDelete: (PreservedCopy) -> Unit,
@@ -327,10 +340,14 @@ private fun SavedCopies(
             }
             Row {
                 if (copy.kind.restorable) {
-                    TextButton(onClick = { onRestore(copy) }) { Text(stringResource(R.string.preserved_restore)) }
+                    TextButton(onClick = { onRestore(copy) }, enabled = enabled) {
+                        Text(stringResource(R.string.preserved_restore))
+                    }
                 }
                 TextButton(onClick = { onShare(copy) }) { Text(stringResource(R.string.preserved_share)) }
-                TextButton(onClick = { onDelete(copy) }) { Text(stringResource(R.string.preserved_delete)) }
+                TextButton(onClick = { onDelete(copy) }, enabled = enabled) {
+                    Text(stringResource(R.string.preserved_delete))
+                }
             }
         }
     }
@@ -369,6 +386,14 @@ private fun RestoreFinished(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = Spacing.tight),
         )
+        if (!restored.mediaComplete) {
+            Text(
+                stringResource(R.string.backup_restored_media_incomplete),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = Spacing.tight),
+            )
+        }
         val kept = restored.merge.kept.size
         if (kept > 0) {
             Text(
@@ -456,4 +481,5 @@ private fun RestoreRefusal.message(): String =
             )
         RestoreRefusal.TooLarge -> stringResource(R.string.backup_refused_too_large)
         RestoreRefusal.Unreadable -> stringResource(R.string.backup_refused_unreadable)
+        RestoreRefusal.RecordingUnderway -> stringResource(R.string.backup_refused_recording)
     }
