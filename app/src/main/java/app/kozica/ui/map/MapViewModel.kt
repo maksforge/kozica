@@ -127,8 +127,12 @@ data class HikeUiState(
     val kept: IntRange?
         get() {
             val keep = keep ?: return null
-            val first = along.indexOfFirst { it >= keep.start }
-            val last = along.indexOfLast { it <= keep.endInclusive }
+            val total = along.lastOrNull() ?: return null
+            // The slider hands back floats, so a handle left at an end can land a float step inside it.
+            val slack = Math.ulp(total.toFloat()).toDouble()
+            val atEnd = keep.endInclusive >= total - slack
+            val first = if (keep.start <= slack) 0 else along.indexOfFirst { it >= keep.start }
+            val last = if (atEnd) along.lastIndex else along.indexOfLast { it <= keep.endInclusive }
             return (first..last).takeIf { first >= 0 && last > first }
         }
 
