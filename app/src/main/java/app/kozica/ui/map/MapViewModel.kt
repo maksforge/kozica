@@ -108,6 +108,7 @@ data class MapUiState(
  * A Hike shown on the map, its sheet's whole content.
  *
  * @param along metres along the Track to each of its points, in order.
+ * @param climb null when no ascent is stored and no height could be read, so none is shown.
  * @param keep the metres Trim keeps, null while not trimming.
  */
 data class HikeUiState(
@@ -119,7 +120,7 @@ data class HikeUiState(
     val movingSeconds: Long,
     val track: Track,
     val along: List<Double>,
-    val climb: Climb,
+    val climb: Climb?,
     val profile: List<ProfilePoint> = emptyList(),
     val photoCount: Int = 0,
     val keep: ClosedFloatingPointRange<Double>? = null,
@@ -143,6 +144,12 @@ data class HikeUiState(
     /** The Track, or while trimming the part that stays. */
     val drawn: Track get() = if (keep == null) track else kept?.let { track.trim(it.first, it.last) }.orEmpty()
 }
+
+/** The stored ascent, else one read from [heights] when at least one height came back. */
+internal fun shownClimb(
+    stored: Climb?,
+    heights: List<Height?>,
+): Climb? = stored ?: heights.takeIf { read -> read.any { it != null } }?.let(::climb)
 
 /**
  * @param available null until the name index has been looked for, false in a build without one.
@@ -480,7 +487,6 @@ class MapViewModel(
             } catch (_: Exception) {
                 track.flatten().map { null }
             }
-        val read = climb(heights)
         val stored =
             hike.ascentMetres?.let { ascent -> Climb(ascent, hike.descentMetres ?: 0.0, hike.ascentFromGps) }
         return HikeUiState(
@@ -492,7 +498,7 @@ class MapViewModel(
             movingSeconds = hike.movingSeconds,
             track = track,
             along = track.along(),
-            climb = stored ?: read,
+            climb = shownClimb(stored, heights),
             profile = profileOf(track, heights),
             photoCount = photos,
         )

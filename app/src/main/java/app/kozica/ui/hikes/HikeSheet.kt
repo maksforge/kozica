@@ -183,15 +183,17 @@ private fun Totals(
     locale: Locale,
 ) {
     val climb = hike.climb
-    val fromGps = climb.fromGps
+    val fromGps = climb?.fromGps == true
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.tight),
         modifier = Modifier.padding(top = Spacing.tight),
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Total(stringResource(R.string.hike_distance), length(hike.metres, locale))
-            Total(stringResource(R.string.route_ascent), climbMetres(climb.ascent, fromGps, locale))
-            Total(stringResource(R.string.route_descent), climbMetres(climb.descent, fromGps, locale))
+            if (climb != null) {
+                Total(stringResource(R.string.route_ascent), climbMetres(climb.ascent, fromGps, locale))
+                Total(stringResource(R.string.route_descent), climbMetres(climb.descent, fromGps, locale))
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.block), modifier = Modifier.fillMaxWidth()) {
             Total(stringResource(R.string.hike_moving_time), hike.movingSeconds.seconds.short(locale))

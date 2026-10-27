@@ -1,8 +1,11 @@
 package app.kozica.ui.map
 
 import app.kozica.data.hikes.Climb
+import app.kozica.data.hikes.Height
+import app.kozica.data.hikes.HeightSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.Instant
 
@@ -46,5 +49,16 @@ class HikeUiStateTest {
     @Test
     fun `a handle moved off an end still cuts at the point before it`() {
         assertEquals(0..2, keeping(0.0..slider(4_000.0)).kept)
+    }
+
+    @Test
+    fun `with no ascent stored and no height read the sheet shows no climb, not 0 m`() {
+        val stored = Climb(120.0, 80.0, fromGps = false)
+        val read = listOf(Height(1_000.0, HeightSource.GRID), null, Height(1_030.0, HeightSource.GRID))
+
+        assertNull(shownClimb(stored = null, heights = listOf(null, null)))
+        assertNull(shownClimb(stored = null, heights = emptyList()))
+        assertEquals(30.0, shownClimb(stored = null, heights = read)!!.ascent, 1e-9)
+        assertEquals(stored, shownClimb(stored, heights = listOf(null, null)))
     }
 }
