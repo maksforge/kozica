@@ -62,3 +62,31 @@ system — for a feature the platform already provides.
   the format.
 - Media is merged rather than replaced on restore: filenames are UUIDs, so a collision means the same
   file, and keeping files the archive does not mention costs disk where deleting them costs photos.
+
+## Amendment — 2026-10-27: binky's design, ported at phase 6's checkpoint E
+
+Photos made backup matter ([`phase-6.md`](../phase-6.md) § 7), so Kozica takes the design binky
+grew from this ADR (`maksforge/binky-app`, its ADR-0005), with two changes.
+
+- **The agent's file set is a pure function over files.** The database, checkpointed, and the
+  preferences always; then thumbnails newest first up to 20 MiB in all, under the ~25 MB quota with
+  room to spare, since an over-quota dataset is rejected whole. Photos never, except on a
+  phone-to-phone transfer (`FLAG_DEVICE_TO_DEVICE_TRANSFER`, API 28 and up, not 30 as binky says),
+  which has no quota. The preferences join the backup, so the map's last centre does too.
+- **A marker file outside the database** records the last automatic backup and how many thumbnails
+  it left out. It is never in the backup set and is cleared at restore. Backup settings shows it in
+  three states, stale past 14 days, and says in words that the photos are not in it.
+- **Two export scopes**, Records (database, preferences, thumbnails) and Everything (and the
+  photos), each with a manifest that is the authority on what the archive holds. Binky's third scope
+  separates media Kozica does not have. An export goes to the share sheet or to a remembered folder
+  (a persisted tree grant, checked on every read), falling back to the share sheet.
+- **Restore stages, migrates on the copy and swaps.** A Records export of the current state goes to
+  `preserved/` first and is listed under Saved copies with Restore, Share and Delete, which is how a
+  bad restore is undone. A newer schema is refused, and only entries of a known shape are extracted:
+  an allowlist rather than a zip-slip check. The copy is opened with the destructive fallback pinned
+  off, and checked as a SQLite file first, because Room's default handler deletes a corrupt file and
+  would swap an empty one in. The restored preferences wait for the next process start, where the
+  live DataStore cannot write over them.
+- **Left out:** binky's recurring export reminder and its exclusion notification, which are
+  scheduled work or a notification outside a recording ([ADR-0003](0003-two-scheduling-mechanisms.md)'s
+  amendments). The Hikes tab's banner says the same inside the app.

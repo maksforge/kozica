@@ -250,16 +250,16 @@ Plan a hike: search for a peak, a hut, a pass or a village, or press and hold on
 Zaplanuj wycieczkę: wyszukaj szczyt, schronisko, przełęcz lub wieś albo przytrzymaj palec na mapie, a Kozica wyznaczy trasę wyłącznie znakowanymi szlakami, z długością, podejściami i zejściami, czasem dojścia do każdego punktu, profilem wysokości i ostrzeżeniem na każdym wymagającym odcinku. Zapisuj trasy – znajdziesz je w karcie Trasy. Mapa nie wychodzi poza góry, które obejmuje, po oddaleniu pokazuje nazwy regionów, a przycisk pozycji powie ci, gdy jesteś poza nimi. Wszystko bez internetu.
 ```
 
-### 0.9.0 — record a hike and look back at it
+### 0.9.0 — record a hike, its photos, and back it all up
 
-**English** — 477/500:
-
-```
-Record a hike: press Record on the map and Kozica keeps your track with the screen off and the phone in a pocket, with the distance and time in a bar under the tabs and in a notification with Pause and Stop. Pausing turns GPS off to save battery, and walking on resumes the recording by itself, which you can switch off in Settings. A recording cut short is offered back the next time you open the app. Each hike waits in the Hikes tab with its ascent and profile. All offline.
-```
-
-**Polish** — 499/500:
+**English** — 483/500:
 
 ```
-Nagraj wycieczkę: naciśnij Nagraj wycieczkę na mapie, a Kozica zapisze twój ślad przy wygaszonym ekranie i telefonie w kieszeni, z dystansem i czasem na pasku pod kartami i w powiadomieniu z przyciskami Wstrzymaj i Zakończ. Wstrzymanie wyłącza GPS, by oszczędzać baterię, a gdy ruszysz, nagrywanie wznowi się samo – możesz to wyłączyć w Ustawieniach. Przerwane nagrywanie wróci przy następnym otwarciu aplikacji. Wycieczki czekają w karcie Wycieczki z podejściami i profilem. Wszystko bez internetu.
+Record a hike: press Record on the map and Kozica keeps your track with the screen off and the phone in a pocket, with Pause and Stop in the notification. Each hike waits in the Hikes tab with its distance, times, ascent and profile. Add photos from the camera while you walk, or pick them afterwards, pinned where they were taken, and a note. Back everything up to a single file in Settings, photos included, keep it in a folder you choose, and restore it on any phone. All offline.
+```
+
+**Polish** — 486/500:
+
+```
+Nagraj wycieczkę: naciśnij Nagraj wycieczkę na mapie, a Kozica zapisze twój ślad przy wygaszonym ekranie i telefonie w kieszeni, z przyciskami Wstrzymaj i Zakończ w powiadomieniu. Wycieczki czekają w karcie Wycieczki z dystansem, czasami, podejściami i profilem. Dodaj zdjęcia aparatem w drodze albo wybierz je potem – trafią tam, gdzie je zrobiono – i notatkę. W Ustawieniach zapiszesz wszystko w jednym pliku, ze zdjęciami, i przywrócisz na dowolnym telefonie. Wszystko bez internetu.
 ```
