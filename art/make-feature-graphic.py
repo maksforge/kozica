@@ -61,13 +61,13 @@ def _mix(a, b, t):
     return tuple(round(x + (y - x) * t) for x, y in zip(a, b))
 
 
-GROUND_TOP, INK = mark.GROUND, mark.MARK_INK
-NIGHT = _mix(GROUND_TOP, INK, 0.12)
+GROUND, INK = mark.GROUND, mark.MARK_INK
+GROUND_FAR = _mix(GROUND, INK, 0.12)
 
 
 def _step(t):
-    """INK mixed `t` of the way towards NIGHT: the text's lighter weights, tinted rather than grey."""
-    return _mix(INK, NIGHT, t)
+    """INK mixed `t` of the way towards GROUND_FAR: the text's lighter weights, tinted rather than grey."""
+    return _mix(INK, GROUND_FAR, t)
 
 
 TAGLINE_INK = _step(0.25)
@@ -94,7 +94,7 @@ def ground(size):
     for y in range(small.height):
         for x in range(small.width):
             t = (x / small.width + y / small.height) / 2
-            px[x, y] = _mix(GROUND_TOP, NIGHT, t)
+            px[x, y] = _mix(GROUND, GROUND_FAR, t)
     return small.resize((w, h), Image.BICUBIC)
 
 
