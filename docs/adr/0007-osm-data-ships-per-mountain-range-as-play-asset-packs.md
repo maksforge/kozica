@@ -266,3 +266,11 @@ Read 2026-10-26 for Czechia: its 261001 extract brought by `pyosmium-up-to-date 
 107,334,911 the same, none different or on one side only), and brought to 4943 it matched 261018,
 the extract 0.7.0 built the same pin from. Which day Geofabrik still keeps changes the download, not
 the archives.
+
+## Amendment — 2026-10-27: the Console asks nothing for `dataSync`
+
+The Consequences' "an answer in the Play Console's foreground-service declaration" for
+`FOREGROUND_SERVICE_DATA_SYNC` does not hold: with 0.9.0 (versionCode 301) live on internal testing,
+the Console's foreground-service form listed only `FOREGROUND_SERVICE_LOCATION`, and nothing was
+asked or declared for `dataSync`. The allowlist row stands. The answers to give if a later form lists
+it stay in [`play-app-content.md`](../play-app-content.md).

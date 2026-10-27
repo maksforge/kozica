@@ -84,16 +84,10 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       moves each build to them.
 - [x] **Decide the `applicationId` deliberately.** `io.github.srednimax.kozica`, fixed by the Play
       entry.
-- [x] **Take checkpoint E, phase 2b's since phase 2 split.** Its deadline, before any release
-      carries a map pack or the asset-delivery library, passed with 0.3.0, which carried both, and
-      what was read then stands: the library in `main/` declares exactly its four permissions (R4),
-      the data build runs in `publish-play.yml` (R9, run 39462967609), Play delivered all nine packs
-      from the internal track (R7), and the release page's archives match them (R8). The
-      Console's foreground-service form, once 0.9.0 was live on internal (2026-10-27), listed only
-      `FOREGROUND_SERVICE_LOCATION`, so `dataSync` needed no declaration
-      ([`play-app-content.md`](play-app-content.md)). The update size Play reports for a one-pin refresh is not part of
-      this gate: only the closed track can read it, on the first pin-only release after the door
-      ([`phase-2b.md`](phase-2b.md) § 6).
+- [x] **Take checkpoint E, phase 2b's since phase 2 split.** Passed with 0.3.0 (R4, R7, R8, R9);
+      the Console asked no foreground-service declaration for `dataSync` (2026-10-27). The one-pin
+      update size waits for the closed track ([`phase-2b.md`](phase-2b.md) § 6,
+      [`play-app-content.md`](play-app-content.md)).
 - [x] **Take phase 1's phone readings before phase 2 builds on MapLibre.** Taken 2026-10-19: R1
       verdict 1, R8 verdict 3 (undecided until E), R9 after fixing a crash, R10's screen
       ([`phase-1.md`](phase-1.md) § 1).
