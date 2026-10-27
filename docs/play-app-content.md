@@ -161,8 +161,7 @@ live on internal testing: the API upload was refused at commit ("You must let us
 app uses any Foreground Service permissions") while the form still listed nothing, so 301 went up
 through the Console and the form was answered after. It asks no free text: *Background location
 updates → Other*, with a video link (Record, the recording notification, Stop, recorded on the
-owner's phone and shared from Drive). It listed `FOREGROUND_SERVICE_LOCATION` only, not `dataSync`.
-What the form does not ask, kept for a reviewer's question:
+owner's phone and shared from Drive). What the form does not ask, kept for a reviewer's question:
 
 - **What the user sees:** after pressing Record, a notification that a hike is recording, with its
   time and distance and Pause and Stop, until the user stops it.
