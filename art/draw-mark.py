@@ -1,10 +1,8 @@
 """The mark's drawing tool: anchor points -> cubic path data, written over MARK and HOLE in
-`mark.py` beside this file. (x, y, kind): kind 'c' = sharp corner, 's' = smooth (Catmull-Rom
-tangent). Move an anchor, run this, then the two generators.
+`mark.py` beside this file. Move an anchor, run this, then the two generators.
 """
 import math
 import re
-import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -26,50 +24,104 @@ def stroke(center, widths):
     return left, right[::-1]
 
 
-def horn(base, rise, radius, sweep_deg, w_base, w_tip, n_rise=3, n_arc=7):
-    """Centreline: straight up from `base` for `rise`, then an arc of `radius` hooking backward
-    (toward -x) and down through `sweep_deg`. Width eases from w_base to w_tip."""
+def horn_centre(base, shaft, tilt, r, sweep, n=12):
+    """A horn's centreline: a straight shaft rising from `base`, then an arc hooking backward.
+
+    `tilt` leans the whole horn forward in degrees; `sweep` is how far round the hook goes.
+    """
     bx, by = base
-    pts = [(bx, by - rise * i / n_rise) for i in range(n_rise + 1)]
-    top = (bx, by - rise)
-    cx, cy = bx - radius, top[1]
-    for i in range(1, n_arc + 1):
-        a = math.radians(sweep_deg) * i / n_arc
-        pts.append((cx + radius * math.cos(a), cy - radius * math.sin(a)))
-    total = len(pts)
-    widths = []
-    for i in range(total):
-        t = i / (total - 1)
-        widths.append(w_base + (w_tip - w_base) * (t ** 1.25))
-    return pts, widths
+    arc = math.radians(sweep) * r
+    total = shaft + arc
+    pts = []
+    for i in range(n + 1):
+        s = total * i / n
+        if s <= shaft:
+            x, y = 0, -s
+        else:
+            a = (s - shaft) / r
+            x, y = -r + r * math.cos(a), -shaft - r * math.sin(a)
+        t = math.radians(tilt)
+        pts.append((bx + x * math.cos(t) - y * math.sin(t), by + x * math.sin(t) + y * math.cos(t)))
+    return pts
 
 
-HORN_C, HORN_W = horn(base=(51, -100), rise=36, radius=14, sweep_deg=200, w_base=15, w_tip=3.5)
-HL, HR = stroke(HORN_C, HORN_W)
+def taper(n, w0, w1):
+    return [w0 + (w1 - w0) * (i / n) ** 0.75 for i in range(n + 1)]
+
+
+NEAR_C = horn_centre((52, -98), 45, 8, 12.5, 185)
+NEAR_W = taper(12, 16, 1.2)
+FAR_C = horn_centre((39, -103), 18, -12, 9.5, 190)
+FAR_W = taper(12, 13, 1.2)
+
+NL, NR = stroke(NEAR_C, NEAR_W)
+FL, FR = stroke(FAR_C, FAR_W)
+
+
+def crossing(a, b):
+    """Where polyline `a` first crosses polyline `b`: (point, index into a, index into b)."""
+    for i in range(len(a) - 1):
+        (x1, y1), (x2, y2) = a[i], a[i + 1]
+        for j in range(len(b) - 1):
+            (x3, y3), (x4, y4) = b[j], b[j + 1]
+            den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+            if abs(den) < 1e-9:
+                continue
+            s = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den
+            u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den
+            if 0 <= s <= 1 and 0 <= u <= 1:
+                return (x1 + s * (x2 - x1), y1 + s * (y2 - y1)), i, j
+    raise ValueError("the horns do not cross")
+
+
+def extended(edge, at_end):
+    """`edge` continued 12 units past its base, so two shafts' edges meet below their bases."""
+    (x1, y1), (x2, y2) = (edge[-2], edge[-1]) if at_end else (edge[1], edge[0])
+    L = math.hypot(x2 - x1, y2 - y1)
+    beyond = (x2 + (x2 - x1) / L * 12, y2 + (y2 - y1) / L * 12)
+    return edge + [beyond] if at_end else [beyond] + edge
+
+
+FRX, NLX = extended(FR, at_end=True), extended(NL, at_end=False)
+NOTCH, FR_END, NL_START = crossing(FRX, NLX)
+
+
+FAR = (
+    [(x, y, 's') for x, y in FL[1:-1]]
+    + [(FL[-1][0], FL[-1][1], 'c')]
+    + [(x, y, 's') for x, y in FRX[:FR_END + 1]]
+)
+NEAR = (
+    [(x, y, 's') for x, y in NLX[NL_START + 1:-1]]
+    + [(NL[-1][0], NL[-1][1], 'c')]
+    + [(x, y, 's') for x, y in NR[:-1]]
+)
+
 
 OUTER = [
-    (-65, -32, 'c'),   # tail root, underside
-    (-80, -38, 'c'),   # tail tip
-    (-67, -50, 'c'),   # tail root, top
+    (-66, -30, 's'),
+    (-69, -40, 's'),
+    (-80, -42, 'c'),   # tail tip
+    (-68, -49, 'c'),   # tail root
     (-56, -52, 's'),   # rump top
     (-20, -59, 's'),   # back
     (14, -66, 's'),    # withers
     (28, -84, 's'),    # neck
-    (32, -95, "s"),    # poll
-    (20, -109, "c"),   # ear tip
-    (41, -107, 'c'),   # notch between ear and horn
-] + [(x, y, 's') for x, y in HL[1:-1]] + [
-    (HL[-1][0], HL[-1][1], 'c'),
-] + [(x, y, 's') for x, y in HR[:-1]] + [
-    (59, -96, 's'),    # forehead
-    (67, -85, 's'),    # nose bridge
-    (72, -78, "c"),    # nose tip
-    (66, -73, "s"),    # chin
+    (33, -96, 's'),    # poll
+    (19, -108, 'c'),   # ear tip
+    (32, -106, 's'),   # ear front
+] + FAR + [
+    (NOTCH[0], NOTCH[1], 'c'),
+] + NEAR + [
+    (60, -96, 's'),    # forehead
+    (68, -85, 's'),    # nose bridge
+    (72, -78, 'c'),    # nose tip
+    (66, -73, 's'),    # chin
     (51, -65, 's'),    # throat
     (45, -50, 's'),
     (44, -34, 's'),    # chest
-    (41, -18, "s"),    # front leg front
-    (38, 2, "s"),
+    (41, -18, 's'),    # front leg front
+    (38, 2, 's'),
     (37, 18, 'c'),     # front hoof front
     (47, 7, 'c'),      # summit tip
     (57, 36, 'c'),
@@ -143,28 +195,29 @@ def area(points):
     return s / 2
 
 
-def as_literal(d, indent="    "):
-    """Path data as the wrapped Python string literal mark.py carries: one 'C' pair per line."""
-    m = re.match(r"(M[^C]*)(.*)Z$", d)
-    head, body = m.group(1), m.group(2)
-    segs = re.findall(r"C[^C]*", body)
-    lines = [f'{indent}"{head}"']
+def source_literal(d, indent="    "):
+    """Path data as the wrapped parenthesised string literal mark.py keeps it in."""
+    head, rest = d[:d.index("C")], d[d.index("C"):-1]
+    segs = re.findall(r"C[^C]*", rest)
+    lines = [f'"{head}"']
     for i in range(0, len(segs), 2):
-        lines.append(f'{indent}    "{"".join(segs[i:i + 2])}"')
-    lines.append(f'{indent}    "Z"')
+        lines.append(f'{indent}"{"".join(segs[i:i + 2])}"')
+    lines.append(f'{indent}"Z"')
     return "\n".join(lines)
 
 
-def write_mark(out, template):
-    src = template.read_text()
-    src = re.sub(r"MARK = \(\n.*?\n\)", lambda _: "MARK = (\n" + as_literal(path_data(OUTER)) + "\n)", src, count=1, flags=re.S)
-    src = re.sub(r"HOLE = \(\n.*?\n\)", lambda _: "HOLE = (\n" + as_literal(path_data(HOLE)) + "\n)", src, count=1, flags=re.S)
-    out.write_text(src)
+def write_mark(path):
+    text = path.read_text()
+    for name, pts in (("MARK", OUTER), ("HOLE", HOLE)):
+        text, n = re.subn(
+            rf"^{name} = \(\n.*?\n\)", f"{name} = (\n    {source_literal(path_data(pts))}\n)",
+            text, count=1, flags=re.S | re.M,
+        )
+        assert n == 1, name
+    path.write_text(text)
 
 
 if __name__ == "__main__":
-    print("outer area", round(area(OUTER)), "hole area", round(area(HOLE)))
-    out = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "mark.py"
-    template = Path(sys.argv[2]) if len(sys.argv) > 2 else out
-    write_mark(out, template)
-    print("wrote", out)
+    print("outer area", area(OUTER), "hole area", area(HOLE))
+    write_mark(HERE / "mark.py")
+    print("written mark.py")

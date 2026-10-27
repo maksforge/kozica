@@ -17,7 +17,7 @@ the `VectorDrawable`s.
 out of it. Both generators import it, so the launcher icon, the notification icon and the feature
 graphic cannot drift into being different marks.
 
-What ships is the chamois on its crag, one hero horn and a short tail; `draw-mark.py` holds the
+What ships is the chamois on its crag, both horns hooked back and a short tail; `draw-mark.py` holds the
 anchors it is drawn from, and rewrites `mark.py`'s curves when one moves.
 
 - **Recolouring is two values in `mark.py` and a re-run**: `GROUND` (the icon's field) and
@@ -93,5 +93,5 @@ it came from in the provenance table below.
 
 | File | Where it came from | Licence / terms |
 | --- | --- | --- |
-| `mark.py` / `draw-mark.py` | drawn by hand as anchor points, round 3, from round-1 B, treatment b: one hero horn and a tail added to the owner's chosen round-1 drawing; no image traced | the repo's, all rights reserved |
+| `mark.py` / `draw-mark.py` | drawn by hand as anchor points, round 3, from round-1 B, treatment a: both horns and a tail added to the owner's chosen round-1 drawing; no image traced | the repo's, all rights reserved |
 | `feature-background.png` | *(if used)* | |
