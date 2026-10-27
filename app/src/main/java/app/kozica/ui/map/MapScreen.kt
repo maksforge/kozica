@@ -47,7 +47,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -93,7 +92,6 @@ import app.kozica.ui.hikes.PhotoViewer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdate
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -124,11 +122,17 @@ fun MapScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val gpx by viewModel.gpx.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     val colors = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
     LaunchedEffect(dark) { viewModel.darkTheme(dark) }
+    LaunchedEffect(gpx.file) {
+        gpx.file?.let { file ->
+            context.shareGpx(file)
+            viewModel.gpxShared()
+        }
+    }
     // Saved state rather than the ViewModel's, so the camera also survives process death.
     var shown by rememberSaveable(stateSaver = CameraSaver) { mutableStateOf<MapCamera?>(null) }
     val mapView = rememberMapView(onStop = viewModel::storeCamera)
@@ -562,7 +566,9 @@ fun MapScreen(
                         pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
                     onOpenPhoto = { viewingPhoto = it },
-                    onExportGpx = { scope.launch { viewModel.exportHikeGpx()?.let(context::shareGpx) } },
+                    gpx = gpx,
+                    onExportGpx = viewModel::exportHikeGpx,
+                    onDismissGpxFailure = viewModel::dismissGpxFailure,
                     modifier = Modifier.heightIn(max = sheetHeight),
                 )
             } else if (state.route.points.isNotEmpty()) {

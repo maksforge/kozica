@@ -20,10 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,11 +37,11 @@ import app.kozica.R
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
 import app.kozica.ui.common.DetailScaffold
+import app.kozica.ui.common.GpxFailureNotice
 import app.kozica.ui.common.shareGpx
 import app.kozica.ui.map.RouteNameDialog
 import app.kozica.ui.map.length
 import app.kozica.ui.map.walkingTime
-import kotlinx.coroutines.launch
 
 /** The Routes tab (docs/phase-5.md § 5): saved Routes by name; one opens on the map. */
 @Composable
@@ -56,7 +56,14 @@ fun RoutesScreen(
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     val rows = state.routes
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val gpx by viewModel.gpx.collectAsStateWithLifecycle()
+
+    LaunchedEffect(gpx.file) {
+        gpx.file?.let { file ->
+            context.shareGpx(file)
+            viewModel.gpxShared()
+        }
+    }
 
     DetailScaffold(title = stringResource(R.string.routes_title), onBack = null, modifier = modifier) { content ->
         when {
@@ -70,23 +77,27 @@ fun RoutesScreen(
                     )
                 }
             else ->
-                LazyColumn(content.fillMaxSize()) {
-                    items(rows, key = { it.route.id }) { row ->
-                        RouteRowItem(
-                            row = row,
-                            onShow = {
-                                viewModel.show(row.route.id)
-                                onShow()
-                            },
-                            onRename = {
-                                renaming = row.route.id
-                                draft = row.route.name
-                            },
-                            onDelete = { deleting = row.route.id },
-                            onExportGpx = {
-                                scope.launch { viewModel.exportGpx(row.route.id)?.let(context::shareGpx) }
-                            },
-                        )
+                Column(content.fillMaxSize()) {
+                    gpx.failure?.let {
+                        GpxFailureNotice(it, viewModel::dismissGpxFailure, Modifier.padding(horizontal = Spacing.base))
+                    }
+                    LazyColumn(Modifier.fillMaxSize()) {
+                        items(rows, key = { it.route.id }) { row ->
+                            RouteRowItem(
+                                row = row,
+                                onShow = {
+                                    viewModel.show(row.route.id)
+                                    onShow()
+                                },
+                                onRename = {
+                                    renaming = row.route.id
+                                    draft = row.route.name
+                                },
+                                onDelete = { deleting = row.route.id },
+                                exportingGpx = gpx.running,
+                                onExportGpx = { viewModel.exportGpx(row.route.id) },
+                            )
+                        }
                     }
                 }
         }
@@ -128,6 +139,7 @@ private fun RouteRowItem(
     onShow: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
+    exportingGpx: Boolean,
     onExportGpx: () -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -164,7 +176,7 @@ private fun RouteRowItem(
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.gpx_export)) },
-                    enabled = row.metres != null,
+                    enabled = row.metres != null && !exportingGpx,
                     onClick = {
                         menu = false
                         onExportGpx()

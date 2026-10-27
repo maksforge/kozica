@@ -1,6 +1,8 @@
 package app.kozica.data.gpx
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDate
@@ -14,13 +16,17 @@ const val GPX_DIRECTORY = "gpx"
 class GpxFiles(
     private val dir: File,
 ) {
+    private val lock = Mutex()
+
     suspend fun write(
         gpx: Gpx,
         date: LocalDate,
     ): File =
-        withContext(Dispatchers.IO) {
-            dir.deleteRecursively()
-            dir.mkdirs()
-            File(dir, gpxFileName(gpx.name, date)).also { file -> file.bufferedWriter().use { gpx.write(it) } }
+        lock.withLock {
+            withContext(Dispatchers.IO) {
+                dir.deleteRecursively()
+                dir.mkdirs()
+                File(dir, gpxFileName(gpx.name, date)).also { file -> file.bufferedWriter().use { gpx.write(it) } }
+            }
         }
 }

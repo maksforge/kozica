@@ -37,6 +37,8 @@ import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
 import app.kozica.record.Recording
+import app.kozica.ui.common.GpxExport
+import app.kozica.ui.common.GpxExports
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +66,6 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -628,17 +629,21 @@ class MapViewModel(
         applicationScope.launch { deleteStoredPhoto(photoId) }
     }
 
-    /** The shown Hike as a GPX file for the share sheet (docs/phase-6.md § 8), null when it could not be written. */
-    suspend fun exportHikeGpx(): File? {
-        val hike = state.value.hike ?: return null
+    private val gpxExports = GpxExports(viewModelScope, writeGpx)
+    val gpx: StateFlow<GpxExport> = gpxExports.state
+
+    /** The shown Hike as a GPX file for the share sheet (docs/phase-6.md § 8). */
+    fun exportHikeGpx() {
+        val hike = state.value.hike ?: return
         val pinned = hike.photos.mapNotNull { photo -> photo.pin?.let { it to photo.caption } }
-        val gpx = hikeGpx(hike.name, hike.note, hike.track, hike.heights, pinned)
-        return try {
-            writeGpx(gpx, hike.startedAt.atZone(ZoneId.systemDefault()).toLocalDate())
-        } catch (_: IOException) {
-            null
+        gpxExports.start(hike.startedAt.atZone(ZoneId.systemDefault()).toLocalDate()) {
+            hikeGpx(hike.name, hike.note, hike.track, hike.heights, pinned)
         }
     }
+
+    fun gpxShared() = gpxExports.shared()
+
+    fun dismissGpxFailure() = gpxExports.dismiss()
 
     fun deleteHike() {
         val id = shownHike.value ?: return

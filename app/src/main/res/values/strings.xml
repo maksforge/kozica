@@ -334,6 +334,9 @@
     <string name="hike_delete">Delete</string>
     <!-- On a hike and on a saved route. GPX is the file format other map apps and watches import, kept as is. -->
     <string name="gpx_export">Export GPX</string>
+    <!-- After "Export GPX" on a saved route, when it can no longer be planned over the Trails as they are now. -->
+    <string name="gpx_export_no_way">This route has no way over the Trails right now, so there is no GPX to export.</string>
+    <string name="gpx_export_failed">The GPX file couldn\'t be written. Check that the phone has free space.</string>
     <string name="hike_delete_title">Delete hike?</string>
     <!-- The body of the delete confirmation for a hike with no photos. -->
     <string name="hike_delete_body">This can\'t be undone.</string>
