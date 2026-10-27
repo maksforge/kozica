@@ -228,9 +228,15 @@ fun MapScreen(
     }
     val focus = LocalFocusManager.current
     var viewingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    // Saved rather than read from the ViewModel: the picker in front is when a low-memory kill comes.
+    var pickingFor by rememberSaveable { mutableStateOf<String?>(null) }
     val pickPhotos =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS_PICKED)) {
-            viewModel.addPhotos(it)
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS_PICKED),
+        ) { picked ->
+            val hikeId = pickingFor ?: return@rememberLauncherForActivityResult
+            pickingFor = null
+            viewModel.addPhotos(hikeId, picked)
         }
 
     LaunchedEffect(map) {
@@ -548,6 +554,7 @@ fun MapScreen(
                     onDelete = viewModel::deleteHike,
                     onSetNote = viewModel::setNote,
                     onAddPhotos = {
+                        pickingFor = hike.id
                         pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
                     onOpenPhoto = { viewingPhoto = it },
