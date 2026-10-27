@@ -15,11 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.kozica.data.PRESERVED_DIRECTORY
-import app.kozica.data.backup.EXPORTS_DIRECTORY
-import app.kozica.data.gpx.GPX_DIRECTORY
 import app.kozica.theme.AppTheme
-import app.kozica.ui.common.revokeShares
+import app.kozica.ui.common.revokeUnpickedShare
 import app.kozica.ui.wipe.SchemaMismatchScreen
 
 /**
@@ -44,6 +41,11 @@ class MainActivity : AppCompatActivity() {
         outState.putBoolean(STOP_ASKED, stopAsked)
     }
 
+    override fun onResume() {
+        super.onResume()
+        revokeUnpickedShare()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Recents relaunches a task with the intent that created it, so a Stop from the notification
@@ -53,12 +55,6 @@ class MainActivity : AppCompatActivity() {
             ?: (intent?.action == ACTION_CONFIRM_STOP && !fromRecents)
 
         val app = application as MainApplication
-
-        // Only on the user's own launch: a share target reopening our file after the ROM killed us
-        // starts the process too, and on MIUI this grant is the only one it has.
-        if (savedInstanceState == null) {
-            listOf(EXPORTS_DIRECTORY, GPX_DIRECTORY, PRESERVED_DIRECTORY).forEach { revokeShares(it) }
-        }
 
         // Edge-to-edge, and **not** `enableEdgeToEdge()`. Every path in androidx.activity's version
         // of that call — `EdgeToEdgeApi35` included — reaches `Window.setStatusBarColor` and
