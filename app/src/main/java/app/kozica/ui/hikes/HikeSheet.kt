@@ -43,6 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.kozica.R
 import app.kozica.theme.Spacing
+import app.kozica.ui.common.GpxExport
+import app.kozica.ui.common.GpxFailureNotice
 import app.kozica.ui.map.HikeUiState
 import app.kozica.ui.map.Profile
 import app.kozica.ui.map.RouteNameDialog
@@ -68,7 +70,9 @@ internal fun HikeSheet(
     onSetNote: (String) -> Unit,
     onAddPhotos: () -> Unit,
     onOpenPhoto: (id: String) -> Unit,
+    gpx: GpxExport,
     onExportGpx: () -> Unit,
+    onDismissGpxFailure: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -133,7 +137,9 @@ internal fun HikeSheet(
                         renaming = true
                     }) { Text(stringResource(R.string.routes_rename)) }
                     TextButton(onClick = onStartTrim) { Text(stringResource(R.string.hike_trim)) }
-                    TextButton(onClick = onExportGpx) { Text(stringResource(R.string.gpx_export)) }
+                    TextButton(onClick = onExportGpx, enabled = !gpx.running) {
+                        Text(stringResource(R.string.gpx_export))
+                    }
                     TextButton(onClick = { deleting = true }) { Text(stringResource(R.string.hike_delete)) }
                 } else {
                     TextButton(onClick = onCancelTrim) { Text(stringResource(R.string.action_cancel)) }
@@ -142,6 +148,7 @@ internal fun HikeSheet(
                     }
                 }
             }
+            gpx.failure?.let { GpxFailureNotice(it, onDismissGpxFailure) }
         }
     }
 

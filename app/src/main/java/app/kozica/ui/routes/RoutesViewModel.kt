@@ -13,6 +13,8 @@ import app.kozica.data.gpx.routeGpx
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.RouteTotals
+import app.kozica.ui.common.GpxExport
+import app.kozica.ui.common.GpxExports
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,7 +29,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 import java.text.Collator
 import java.time.LocalDate
 
@@ -89,22 +90,25 @@ class RoutesViewModel(
         viewModelScope.launch { deleteRoute(id) }
     }
 
-    /**
-     * [id] as a GPX file for the share sheet, planned again from today's network and dated today
-     * (docs/phase-6.md § 8); null when it has no complete way over the Trails or could not be written.
-     */
-    suspend fun exportGpx(id: String): File? {
+    private val gpxExports = GpxExports(viewModelScope, writeGpx)
+    val gpx: StateFlow<GpxExport> = gpxExports.state
+
+    /** [id] as a GPX file for the share sheet, planned again from today's network and dated today (docs/phase-6.md § 8). */
+    fun exportGpx(id: String) {
         val route =
             state.value.routes
                 ?.firstOrNull { it.route.id == id }
-                ?.route ?: return null
-        val planned = withContext(compute) { planRoute(route.points) }?.takeIf { it.complete } ?: return null
-        return try {
-            writeGpx(routeGpx(route.name, planned, route.points), LocalDate.now())
-        } catch (_: IOException) {
-            null
+                ?.route ?: return
+        gpxExports.start(LocalDate.now()) {
+            withContext(compute) { planRoute(route.points) }
+                ?.takeIf { it.complete }
+                ?.let { routeGpx(route.name, it, route.points) }
         }
     }
+
+    fun gpxShared() = gpxExports.shared()
+
+    fun dismissGpxFailure() = gpxExports.dismiss()
 
     companion object {
         val Factory: ViewModelProvider.Factory =
