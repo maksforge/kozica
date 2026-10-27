@@ -125,7 +125,8 @@ Each is read on the counts over the union; no verdict reads one Region alone.
 1. **A name or `from`/`to` on 80 % or more** → § 2's rule as written. The rest are titled by the
    place fallback on the phone, and search cannot find them (Known gaps).
 2. **Under 80 %** → the place fallback is the main path, and search would miss most Trails. B then
-   also writes each such Trail's two end places into the FTS table under its id, by phase 5's naming
+   also writes each such Trail's two end places into `trail_names` (§ 2) under the Trail's id, so a
+   row matched by one shows that place as the name that matched, by phase 5's naming
    rule (the nearest named peak, pass or Hut within 500 m, then any place) ported to the build and
    tested against `PlaceIndex.nearest` on one fixture, as the fold is.
 3. **Fewer than five named Long-distance Trails** → the Section rule (§ 2) ships, and the "Show the
@@ -145,7 +146,11 @@ Each is read on the counts over the union; no verdict reads one Region alone.
   member order with their roles, and one per Long-distance Trail with its id, its name and its member
   relations (`preprocessOsmRelation` sees `type=superroute` too). `build-network.py` reads the wanted
   ways from it, as it reads `<id>.ways` today, and the mapping with them, so the rule for a Trail
-  stays written once.
+  stays written once. The profile runs once per Region, so a relation crossing a boundary is in two
+  or more files, each with only the members its cut holds: `build-network.py` merges the lines by
+  relation id before any walk is built, the union of their members, with the member order and roles
+  of the line holding the most members and the others' extra members after it. A Long-distance
+  Trail's lines merge the same way.
 - **Edges are cut where the Trails on a way change.** `chains()` joins two pieces only where both
   walk alike; "alike" gains "carry the same Trails", so every way of an edge belongs to the same
   Trails and a Trail's end is always an edge's end. The network gains those cuts and nothing else:
@@ -157,14 +162,23 @@ Each is read on the counts over the union; no verdict reads one Region alone.
 - **`trails` table in `places.sqlite`**: one row per Trail with its id, `name`, `name:pl`, `ref`,
   colour, symbol, `from`, `to`, its Long-distance Trail's id and name, the positions of its walk's
   two ends, its length, ascent and descent each way, and its bounding box. No title column: the
-  title is composed on the phone (below). Its folded `name` and `name:pl` go in the same FTS table as
-  places, with kind `trail`; a Trail with neither has nothing to be found by (Known gaps; § 1,
-  verdict 2). The climbs are the relief's heights, so `RELIEF-DATA-LICENCE.txt` names
+  title is composed on the phone (below). The climbs are the relief's heights, so `RELIEF-DATA-LICENCE.txt` names
   `places.sqlite` beside `trails.network`.
+- **`trail_names`**, an FTS4 table of its own beside `place_names`, with the same columns and the
+  one fold: `place_names.place` is a `places.id` and the search joins `places` on it, so a Trail's
+  rows there would point at a place or drop out of the join. It takes each Trail's folded `name` and
+  `name:pl`, under the Trail's id; a Trail with neither has nothing to be found by (Known gaps; § 1,
+  verdict 2). `PlaceIndex.search` runs one query over both, a `UNION ALL` of the places joined to
+  `place_names` and the Trails joined to `trail_names`, ordered by the same two keys: the match at
+  the name's start first, then the distance from the map's centre, for a place to its point and for
+  a Trail to its bounding box, nought when the centre lies inside it. A result is then a place or a
+  Trail, one sealed type, and the list stays one list.
 - **`trails.edges`**, a third base file beside `trails.network`: for each Trail, its walk (below) as
   edges in order, each with its direction, and where the walk breaks. Length, climb and the profile
-  are summed from the network's edges along it, as a Route's are, so a Trail and the Route made from
-  it agree to the metre. It is an ODbL derivative and ships, records and publishes like the other
+  are summed from the network's edges along it, as a Route's are, so a gapless Trail and the Route
+  made from it agree to the metre. A gapped one cannot: its length and climb are its pieces' sum,
+  and its Route adds a router leg across each gap (§ 5), so the sheet's numbers say "with gaps" and
+  the Route is longer by those legs. It is an ODbL derivative and ships, records and publishes like the other
   two, so it joins every list that names them: `BASE_FILES` in `build-map-data.py` and
   `map-archives.py` (so the reuse and `--check-determinism` cover it), the `-PmapPacks` check in
   `settings.gradle.kts`, the `gh release upload` in `publish-play.yml`, `MAP-DATA-LICENCE.txt`,
@@ -209,7 +223,8 @@ Each is read on the counts over the union; no verdict reads one Region alone.
 - **What else may be on the map** (decided with the owner on 2026-10-27). **A Route being planned**
   is set aside when a Trail is selected, by tap or from search: its points are kept, the map and the
   sheet show the Trail, and closing the Trail brings the Route back as it was; "Plan a Route along
-  it" replaces the Route set aside. **A shown Hike** gives way to a Trail tapped off its photos: the
+  it" replaces the Route set aside, unsaved changes and all, while a saved Route stays in the Routes
+  tab. **A shown Hike** gives way to a Trail tapped off its photos: the
   Trail replaces the Hike's view, as opening another Hike would, and the saved Hike is untouched.
   **During a recording** the Trail is selected on top and the recording bar stays; nothing stops or
   pauses, and closing the Trail leaves the recording as it was.
@@ -220,13 +235,14 @@ Each is read on the counts over the union; no verdict reads one Region alone.
   buttons: "Plan a Route along it" and "Export GPX".
 
 **Copy:** "Trails here", "Show whole Trail", "Show the whole %1$s", "Plan a Route along it", "Export
-GPX", "%1$s Trail: %2$s – %3$s" (colour adjective, ends), "%1$s Trail" (the colour alone), and the
-five colour names and "marked" as adjectives for a Trail.
+GPX", "%1$s Trail: %2$s – %3$s" (colour adjective, ends), "%1$s Trail" (the colour alone), "with
+gaps" (beside a gapped Trail's length), and the five colour names and "marked" as adjectives for a
+Trail.
 
 ## 4. Search
 
 Trails appear in the existing search results with their colour chip and symbol, ranked with places by
-the same folded match; a Long-distance Trail matches by its own name and its Sections by theirs. A
+the same folded match and, within it, by the distance to their bounding box (§ 2); a Long-distance Trail matches by its own name and its Sections by theirs. A
 Trail's row shows its title, the name that matched underneath where it differs, and then "Trail" and
 its length where a place shows its kind and its Region, since a Trail lies in no one Region; a
 Section's adds the Long-distance Trail it belongs to. The field's hint becomes "Search places and
@@ -320,5 +336,5 @@ debug broadcast sent as phase 5's readings send them.
 | R1 | The gate's tally over the union and per Region | `build-map-data.py` over A's uncommitted candidate pin, then `python3 scripts/map/trail-tally.py` | *(owed)* |
 | R2 | Four strands at one point: each tap's chooser lists all four, and each pick highlights the right one | test phone, debug build with the Regions hand-pushed; screencaps | *(owed)* |
 | R3 | The highlight and fade against phase 4's gate: the pan at zoom 11 and 13 with the red Trail from Kuźnice to Kasprowy Wierch selected, against the same pan with nothing selected taken straight before it. Pass: p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's | phase 4's R1 apparatus and pan, all nine Regions and the relief hand-pushed; `CameraReceiver` to a point on that Trail at each zoom, then for the selected run `input tap` at the screen's centre and the chooser's red row if one opens; `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py` | *(owed)* |
-| R4 | A Route along a Trail matches the Trail: Kuźnice – Kasprowy Wierch and Główny Szlak Beskidzki, each way, and again planned anew from its stored points. Pass: length to the metre and ascent and descent equal to the Trail's row, and Główny Szlak Beskidzki's Route made within 2 s | `RouteReceiver` gains `--el trail <id>` and `--ez reversed true`: it makes the Route by the button's code, logs the Trail's row and the time taken beside its `route:` line, then plans the stored points again and logs that `route:` line too; `adb logcat -d -s KozicaRoute` | *(owed)* |
+| R4 | A Route along a Trail matches the Trail: Kuźnice – Kasprowy Wierch and Główny Szlak Beskidzki, each way, and again planned anew from its stored points. Pass: length to the metre and ascent and descent equal to the Trail's row plus the legs across its gaps, if any (none for a gapless walk), and Główny Szlak Beskidzki's Route made within 2 s | `RouteReceiver` gains `--el trail <id>` and `--ez reversed true`: it makes the Route by the button's code, logs the Trail's row, its number of gaps with each gap leg's length, ascent and descent, and the time taken beside its `route:` line, then plans the stored points again and logs that `route:` line too; `adb logcat -d -s KozicaRoute` | *(owed)* |
 | R5 | The update size Play reports for the re-delivered packs, and the three base files' sizes beside the last release's two | Play Console, the release's size; the release's attachments | *(owed)* |
