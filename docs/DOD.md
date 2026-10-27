@@ -37,10 +37,8 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       before the door because a tester's install keeps them: from phase 5 on, deleting one loses a
       tester's data ([`phase-3.md`](phase-3.md) § *The door to closed testing*).
 - [x] **Decide `minSdk` deliberately.** Kept at 26 ([`phase-0.md`](phase-0.md) § 0).
-- [ ] **Replace the placeholder mark.** `art/mark.py`, then `python3 art/make-launcher-icon.py` and
-      `make-feature-graphic.py`. Commit the concept image and record its provenance in
-      `art/README.md` — where the art came from is the thing most likely to block a first upload, and
-      it is discovered late.
+- [x] **Replace the placeholder mark.** The chamois on its crag, drawn as anchor points in
+      `art/draw-mark.py`, no image traced; provenance in `art/README.md`.
 - [x] **Drop the dormant `items` table.** Phase 5's `MIGRATION_1_2` replaced it with saved Routes
       ([`phase-5.md`](phase-5.md) § 5).
 - [x] **Rewrite `scripts/edge-to-edge.py`'s SCENES** against your screens. Home and Settings; each

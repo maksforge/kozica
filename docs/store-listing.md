@@ -277,3 +277,17 @@ The hike recording notification and the names of new hikes now follow the langua
 ```
 Powiadomienie o nagrywaniu wycieczki i nazwy nowych wycieczek są teraz w języku wybranym w ustawieniach Kozicy także na Androidzie 12 i starszym, a nie w języku telefonu.
 ```
+
+### 0.10.0 — Kozica's own icon
+
+**English** — 228/500:
+
+```
+Kozica has its own icon: a Tatra chamois on a crag. The hike recording notification and the names of new hikes now follow the language you chose in Kozica's settings on Android 12 and older too, instead of your phone's language.
+```
+
+**Polish** — 222/500:
+
+```
+Kozica ma własną ikonę: kozicę tatrzańską na skale. Powiadomienie o nagrywaniu wycieczki i nazwy nowych wycieczek są teraz w języku wybranym w ustawieniach Kozicy także na Androidzie 12 i starszym, a nie w języku telefonu.
+```
