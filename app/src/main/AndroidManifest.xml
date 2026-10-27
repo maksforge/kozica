@@ -112,6 +112,10 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
+        <receiver
+            android:name=".ui.common.ShareChosenReceiver"
+            android:exported="false" />
+
         <!--
             The camera app writes the photo it takes into a file we own, and hands back a Uri for
             it. A file:// Uri has been illegal to pass across apps since Android 7, so this provider

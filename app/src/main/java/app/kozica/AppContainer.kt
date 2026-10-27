@@ -37,6 +37,7 @@ import app.kozica.data.routes.openPlaces
 import app.kozica.data.routes.placesFile
 import app.kozica.media.MediaFiles
 import app.kozica.record.Recorder
+import app.kozica.ui.common.revokeShares
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -109,7 +110,7 @@ class AppContainer(
             preferences,
             appContext.contentResolver,
             backupLock,
-        )
+        ) { appContext.revokeShares(EXPORTS_DIRECTORY) }
     }
 
     val backupRestorer by lazy {
@@ -118,7 +119,9 @@ class AppContainer(
 
     val routes by lazy { RouteRepository(database.routeDao()) }
 
-    val gpxFiles by lazy { GpxFiles(File(appContext.cacheDir, GPX_DIRECTORY)) }
+    val gpxFiles by lazy {
+        GpxFiles(File(appContext.cacheDir, GPX_DIRECTORY)) { appContext.revokeShares(GPX_DIRECTORY) }
+    }
 
     val hikeHeights by lazy {
         HikeHeights(

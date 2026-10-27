@@ -7,14 +7,17 @@ import app.kozica.data.AppPreferences
 import app.kozica.data.PRESERVED_DIRECTORY
 import app.kozica.data.SchemaGate
 import app.kozica.data.ThemeMode
+import app.kozica.data.backup.EXPORTS_DIRECTORY
 import app.kozica.data.backup.adoptRestoredDatabase
 import app.kozica.data.backup.adoptRestoredEverythingExport
 import app.kozica.data.backup.adoptRestoredPreferences
 import app.kozica.data.destructiveMigrationAllowed
+import app.kozica.data.gpx.GPX_DIRECTORY
 import app.kozica.data.preserveBeforeWipe
 import app.kozica.data.readUserVersion
 import app.kozica.data.schemaGateDecision
 import app.kozica.theme.applyThemeMode
+import app.kozica.ui.common.revokeShares
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -115,6 +118,9 @@ class MainApplication : Application() {
         // without ACCESS_NETWORK_STATE (ADR-0008).
         MapLibre.getInstance(this)
         MapLibre.setConnected(false)
+
+        // A share's read grants last until a reboot otherwise; any share still being read is long over.
+        listOf(EXPORTS_DIRECTORY, GPX_DIRECTORY, PRESERVED_DIRECTORY).forEach { revokeShares(it) }
 
         val databaseFile = getDatabasePath(APP_DATABASE_FILE)
         val onDisk = readUserVersion(databaseFile)
