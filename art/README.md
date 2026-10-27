@@ -54,15 +54,17 @@ with Noto Sans on that basis and ships no glyph outlines.
 ## Replacing the mark
 
 ```bash
-# 1. Draw or generate a concept image, and put it beside this file.
-python3 art/trace-mark.py concept.png   # prints cubic path data
-#    Set CROP and the concept's two tones at the top of trace-mark.py first — they describe the
-#    *image being traced*, not the app. Paste MARK and HOLE into art/mark.py, with your colours.
+# 1. Move the anchors in draw-mark.py, then let it rewrite MARK and HOLE in mark.py.
+python3 art/draw-mark.py
 
 # 2. Regenerate everything that derives from it.
 python3 art/make-launcher-icon.py       # icons, mipmaps, the 512² Play asset
 python3 art/make-feature-graphic.py     # the 1024×500 listing graphic
 ```
+
+A mark that starts as an image rather than anchors can still come from `trace-mark.py concept.png`,
+which prints MARK and HOLE to paste into `mark.py`; delete `draw-mark.py` then, or its next run
+overwrites the trace.
 
 `make-launcher-icon.py` prints a **safe-radius check** and will tell you when the art is clipped by
 a circular launcher mask. It is a real constraint rather than a formality: a launcher may mask the
@@ -85,7 +87,7 @@ against the cropped frame, prints the spans it measured, and **exits 1** when th
 runs into the mark — shorten the tagline rather than moving the margin.
 
 A photographic ground is `art/feature-background.png` (cover-fitted, never stretched). Record where
-it came from in the provenance table below, like the concept image.
+it came from in the provenance table below.
 
 ## Provenance
 
