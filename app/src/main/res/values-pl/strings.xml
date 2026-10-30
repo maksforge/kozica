@@ -66,6 +66,11 @@
     <string name="following_not_found">Nie udało się jeszcze znaleźć cię na trasie</string>
     <string name="following_needs_precise">Prowadzenie wymaga dokładnej lokalizacji</string>
     <string name="following_location_settings">Ustawienia lokalizacji</string>
+    <string name="following_left">Jesteś poza trasą · %1$s od niej</string>
+    <string name="following_back">Powrót na trasę</string>
+    <string name="following_back_leg">Powrót na trasę: %1$s · %2$s</string>
+    <string name="following_back_off_trail">Powrót na trasę od najbliższego szlaku, %1$s stąd</string>
+    <string name="following_back_no_way">Brak przejścia szlakami z powrotem na trasę</string>
     <string name="route_time_signposts">wg drogowskazów %1$s</string>
     <plurals name="pace_yours">
         <item quantity="one">Twoje tempo: %1$s× czasu z drogowskazów, z %2$d wycieczki</item>

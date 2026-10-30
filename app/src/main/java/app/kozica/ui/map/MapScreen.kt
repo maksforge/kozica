@@ -408,6 +408,12 @@ fun MapScreen(
         }
     }
 
+    val back = (state.route.following?.back as? LegBack.Found)?.planned?.takeUnless { routeAside }
+    LaunchedEffect(loaded, back) {
+        val style = loaded ?: return@LaunchedEffect
+        (style.getSource(ROUTE_BACK_SOURCE) as? GeoJsonSource)?.setGeoJson(routeGeoJson(emptyList(), back))
+    }
+
     val highlighted = state.trail.highlighted
     LaunchedEffect(loaded, highlighted) {
         val style = loaded ?: return@LaunchedEffect
@@ -645,6 +651,20 @@ fun MapScreen(
                         },
                     )
                     if (positionOutside) WarningBanner(title = stringResource(R.string.map_position_outside))
+                    state.route.following
+                        ?.leaving
+                        ?.takeIf { it.shown }
+                        ?.let { leaving ->
+                            WarningBanner(
+                                title =
+                                    stringResource(
+                                        R.string.following_left,
+                                        distance(leaving.metres, LocalConfiguration.current.locales[0]),
+                                    ),
+                                actionLabel = stringResource(R.string.following_back),
+                                onAct = { viewModel.backToRoute(state.fix?.toFollowFix()) },
+                            )
+                        }
                 }
                 // The credit takes a row of its own: a long translation reaches across the whole width.
                 Column(

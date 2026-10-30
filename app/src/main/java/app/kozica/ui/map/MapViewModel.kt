@@ -36,6 +36,7 @@ import app.kozica.data.regions.RegionState
 import app.kozica.data.routes.DemandingStretch
 import app.kozica.data.routes.FollowFix
 import app.kozica.data.routes.FollowedLine
+import app.kozica.data.routes.Leaving
 import app.kozica.data.routes.Left
 import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceSearch
@@ -44,6 +45,7 @@ import app.kozica.data.routes.Progress
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.SearchResult
 import app.kozica.data.routes.TrailDetail
+import app.kozica.data.routes.after
 import app.kozica.data.routes.boxAway
 import app.kozica.record.Recording
 import app.kozica.ui.common.GpxExport
@@ -234,11 +236,27 @@ data class RouteUiState(
     val followingNote: FollowingNote? = null,
 )
 
-/** docs/phase-6b.md § 3: what is left from [progress], which is null until the first fix that counts. */
+/**
+ * docs/phase-6b.md § 3: what is left from [progress], which is null until the first fix that counts;
+ * § 4: whether the user is leaving the Route, and the leg back to it once asked for.
+ */
 data class FollowingUiState(
     val progress: Progress? = null,
     val left: Left,
+    val leaving: Leaving? = null,
+    val back: LegBack? = null,
 )
+
+/** The leg back to the Route, planned by the router as it is and never part of the Route. */
+sealed interface LegBack {
+    data object Planning : LegBack
+
+    data class Found(
+        val planned: PlannedRoute,
+    ) : LegBack
+
+    data object NoWay : LegBack
+}
 
 /** What the sheet says about following, until the next change: why it ended, or that "Find me" found nothing. */
 enum class FollowingNote { ENDED, ROUTE_CHANGED, NOT_FOUND }
@@ -348,6 +366,8 @@ class MapViewModel(
     private var planning: Job? = null
 
     private var followed: FollowedLine? = null
+
+    private var planningBack: Job? = null
 
     // Changes whenever the map's Route is replaced, so a Save that returns late lands only on its own.
     private var routeGeneration = 0
@@ -585,7 +605,7 @@ class MapViewModel(
         dismissOffer()
         closeHike()
         routeGeneration++
-        followed = null
+        unfollow()
         route.update { RouteUiState(savedId = saved.id, name = saved.name) }
         changePoints { saved.points }
     }
@@ -613,7 +633,7 @@ class MapViewModel(
         dismissOffer()
         planning?.cancel()
         routeGeneration++
-        followed = null
+        unfollow()
         route.value = RouteUiState()
         hikeKeep.value = null
         readHeights = null
@@ -891,8 +911,13 @@ class MapViewModel(
     }
 
     fun stopFollowing() {
-        followed = null
+        unfollow()
         route.update { it.copy(following = null) }
+    }
+
+    private fun unfollow() {
+        followed = null
+        planningBack?.cancel()
     }
 
     fun dismissFollowingNote() {
@@ -902,7 +927,38 @@ class MapViewModel(
     /** Each fix while the map is on screen; one that does not count moves nothing (docs/phase-6b.md § 3). */
     fun followFix(fix: FollowFix) {
         val line = followed ?: return
-        line.follow(route.value.following?.progress, fix)?.let { moveTo(line, it, fix) }
+        val current = route.value.following ?: return
+        val leaving = current.leaving.after(fix, line.distance(fix))
+        if (leaving != current.leaving) {
+            if (leaving == null) planningBack?.cancel()
+            route.update { state ->
+                state.copy(
+                    following =
+                        state.following?.let { it.copy(leaving = leaving, back = it.back.takeIf { leaving != null }) },
+                )
+            }
+        }
+        line.follow(current.progress, fix)?.let { moveTo(line, it, fix) }
+    }
+
+    /** "Back to the Route": a leg from [fix] to where § 4's rule rejoins the line, planned again on each ask. */
+    fun backToRoute(fix: FollowFix?) {
+        val line = followed ?: return
+        val following = route.value.following ?: return
+        if (fix == null) return
+        val rejoin = line.rejoin(following.progress, fix)
+        planningBack?.cancel()
+        route.update { state -> state.copy(following = state.following?.copy(back = LegBack.Planning)) }
+        planningBack =
+            viewModelScope.launch {
+                val planned =
+                    withContext(compute) { planRoute(listOf(RoutePoint(fix.latitude, fix.longitude), rejoin)) }
+                val back = planned?.takeIf { it.complete }?.let(LegBack::Found) ?: LegBack.NoWay
+                route.update { state ->
+                    val now = state.following?.takeIf { it.back == LegBack.Planning } ?: return@update state
+                    state.copy(following = now.copy(back = back))
+                }
+            }
     }
 
     /** "Find me on the Route", from the latest fix, if any; says so when it finds nothing. */
@@ -923,18 +979,21 @@ class MapViewModel(
     ) {
         val current = route.value.following ?: return
         if (fix.counts && line.ended(progress, fix)) {
-            followed = null
+            unfollow()
             route.update { it.copy(following = null, followingNote = FollowingNote.ENDED) }
         } else if (progress != current.progress) {
-            route.update {
-                it.copy(following = current.copy(progress = progress, left = line.left(progress)), followingNote = null)
+            route.update { state ->
+                state.copy(
+                    following = state.following?.copy(progress = progress, left = line.left(progress)),
+                    followingNote = null,
+                )
             }
         }
     }
 
     private fun changePoints(change: (List<RoutePoint>) -> List<RoutePoint>) {
         val stopped = route.value.following != null
-        followed = null
+        unfollow()
         route.update { it.copy(following = null, followingNote = if (stopped) FollowingNote.ROUTE_CHANGED else null) }
         val points =
             route

@@ -82,6 +82,7 @@ def palette(dark: bool) -> dict[str, str]:
         "route_casing": tone(N, pick(100, 10)),
         "route_number": tone(N, pick(100, 10)),
         "hike_track": tone(T, pick(45, 70)),
+        "route_back": tone(T, pick(40, 80)),
     }
 
 
@@ -284,6 +285,19 @@ def style(dark: bool) -> dict:
          "layout": text_layout(13, **{"text-field": ["get", "number"], "text-allow-overlap": True,
                                       "text-ignore-placement": True}),
          "paint": {"text-color": c["route_number"]}},
+        # The leg back to a followed Route (docs/phase-6b.md § 4), dashed so it never reads as the Route
+        # or a Track.
+        {"id": "route-back-casing", "type": "line", "source": "route-back",
+         "filter": ["==", ["get", "approach"], "trail"],
+         "layout": {"line-join": "round"},
+         "paint": {"line-color": c["route_casing"], "line-width": trail_width(5.0)}},
+        {"id": "route-back", "type": "line", "source": "route-back", "filter": ["==", ["get", "approach"], "trail"],
+         "layout": {"line-join": "round"},
+         "paint": {"line-color": c["route_back"], "line-width": trail_width(2.0),
+                   "line-dasharray": ["literal", [2, 1]]}},
+        {"id": "route-back-off-trail", "type": "line", "source": "route-back",
+         "filter": ["==", ["get", "approach"], "off"],
+         "paint": {"line-color": c["route_back"], "line-width": trail_width(), "line-dasharray": ["literal", [1, 1.5]]}},
         # The Hike being recorded (docs/phase-6.md § 2), each stretch its own line, above the Route.
         {"id": "hike-track-casing", "type": "line", "source": "hike-track",
          "layout": {"line-join": "round", "line-cap": "round"},
@@ -301,6 +315,7 @@ def style(dark: bool) -> dict:
         "metadata": {"kozica:faded-opacity": FADED_OPACITY,
                      "kozica:bounds": json.loads(REGIONS.read_text())["bbox"]},
         "sources": {"route": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
+                    "route-back": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "trail-walk": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "hike-track": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "hike-photos": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},

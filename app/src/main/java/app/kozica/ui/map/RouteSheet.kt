@@ -278,6 +278,43 @@ private fun Following(
             ),
             style = MaterialTheme.typography.titleMedium,
         )
+        following.back?.let { LegBackLines(it, pace, locale) }
+    }
+}
+
+/** docs/phase-6b.md § 4: the leg back, its length and time at the Pace, and how far its start is from the Trails. */
+@Composable
+private fun LegBackLines(
+    back: LegBack,
+    pace: Pace?,
+    locale: Locale,
+) {
+    when (back) {
+        LegBack.Planning -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(vertical = Spacing.tight))
+        LegBack.NoWay ->
+            Text(
+                stringResource(R.string.following_back_no_way),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+        is LegBack.Found -> {
+            Text(
+                stringResource(
+                    R.string.following_back_leg,
+                    distance(back.planned.metres, locale),
+                    walkingTime(pace.minutes(back.planned.seconds), locale),
+                ),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+            back.planned.offTrailMetres(0)?.takeIf { it > OFF_TRAIL_SHOWN_METRES }?.let {
+                Text(
+                    stringResource(R.string.following_back_off_trail, distance(it, locale)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

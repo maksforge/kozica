@@ -12,6 +12,7 @@ internal const val FIX_WORST_ACCURACY_METRES = 50.0
 internal const val FIX_OLDEST_MILLIS = 30_000L
 internal const val WINDOW_METRES_PER_SECOND = 6000.0 / 3600
 internal const val WINDOW_LEAST_METRES = 200.0
+internal const val LEAVING_MILLIS = 30_000L
 
 /** A position fix as Following reads it; [ageMillis] is how old it was when it arrived, [atMillis] its own time. */
 data class FollowFix(
@@ -46,6 +47,28 @@ data class Left(
     val toNext: Ahead,
     val toEnd: Ahead,
 )
+
+/**
+ * docs/phase-6b.md § 4: the counting fixes beyond their leaving distance since [sinceMillis], the
+ * latest [metres] from the line; once [shown], only a counting fix back within the distance clears it.
+ */
+data class Leaving(
+    val sinceMillis: Long,
+    val lastMillis: Long,
+    val metres: Double,
+    val shown: Boolean,
+)
+
+/** Leaving after [fix], [metres] from the line: a fix that does not count changes nothing, and a gap over [LEAVING_MILLIS] restarts the count. */
+fun Leaving?.after(
+    fix: FollowFix,
+    metres: Double,
+): Leaving? {
+    if (!fix.counts) return this
+    if (metres <= fix.leavingMetres) return null
+    val since = if (this == null || fix.atMillis - lastMillis > LEAVING_MILLIS) fix.atMillis else sinceMillis
+    return Leaving(since, fix.atMillis, metres, shown = this?.shown == true || fix.atMillis - since >= LEAVING_MILLIS)
+}
 
 /** A complete Route's line, which Progress moves along (docs/phase-6b.md § 3). */
 class FollowedLine(
@@ -99,10 +122,38 @@ class FollowedLine(
     ): Progress? {
         if (!fix.counts) return progress
         val from = progress?.metres ?: 0.0
-        val elapsed = progress?.let { (fix.atMillis - it.atMillis).coerceAtLeast(0) / 1000.0 } ?: Double.MAX_VALUE
-        val window = max(WINDOW_LEAST_METRES, elapsed * WINDOW_METRES_PER_SECOND)
-        val matched = firstPass(fix, from, from + window) ?: return progress
+        val matched = firstPass(fix, from, from + window(progress, fix), fix.leavingMetres) ?: return progress
         return Progress(max(from, matched), fix.atMillis)
+    }
+
+    /**
+     * Where the leg back from [fix] rejoins the line (docs/phase-6b.md § 4): the nearest point inside
+     * the window ahead of [progress], or an earlier pass no more than the leaving distance farther.
+     */
+    fun rejoin(
+        progress: Progress?,
+        fix: FollowFix,
+    ): RoutePoint {
+        val from = progress?.metres ?: 0.0
+        val to = from + window(progress, fix)
+        val nearest = nearestOnLine(fix, from, to).second
+        return pointAt(firstPass(fix, from, to, nearest + fix.leavingMetres) ?: from)
+    }
+
+    private fun window(
+        progress: Progress?,
+        fix: FollowFix,
+    ): Double {
+        val elapsed = progress?.let { (fix.atMillis - it.atMillis).coerceAtLeast(0) / 1000.0 } ?: Double.MAX_VALUE
+        return max(WINDOW_LEAST_METRES, elapsed * WINDOW_METRES_PER_SECOND)
+    }
+
+    private fun pointAt(at: Double): RoutePoint {
+        val k = line.indexOfFirst { it.metres >= at }.let { if (it < 0) line.lastIndex else it.coerceAtLeast(1) }
+        val a = line[k - 1]
+        val b = line[k]
+        val t = if (b.metres == a.metres) 1.0 else ((at - a.metres) / (b.metres - a.metres)).coerceIn(0.0, 1.0)
+        return RoutePoint(a.latitude + (b.latitude - a.latitude) * t, a.longitude + (b.longitude - a.longitude) * t)
     }
 
     /**
@@ -115,7 +166,7 @@ class FollowedLine(
     ): Progress? {
         if (!fix.counts) return null
         val from = progress?.metres ?: 0.0
-        val matched = firstPass(fix, from, metres) ?: return null
+        val matched = firstPass(fix, from, metres, fix.leavingMetres) ?: return null
         return Progress(max(from, matched), fix.atMillis)
     }
 
@@ -177,11 +228,12 @@ class FollowedLine(
         return atVertex[k - 1] + (atVertex[k] - atVertex[k - 1]) * t
     }
 
-    /** The nearest point of the first pass of the line within the fix's leaving distance, between [from] and [to] metres. */
+    /** The nearest point of the first pass of the line within [within] metres of [fix], between [from] and [to] metres. */
     private fun firstPass(
         fix: FollowFix,
         from: Double,
         to: Double,
+        within: Double,
     ): Double? {
         var best: Pair<Double, Double>? = null
         for (k in 1 until line.size) {
@@ -192,7 +244,7 @@ class FollowedLine(
                 continue
             }
             val (at, distance) = nearestOnSegment(fix, a, b, from, to)
-            if (distance <= fix.leavingMetres) {
+            if (distance <= within) {
                 if (best == null || distance < best.second) best = at to distance
             } else if (best != null) {
                 return best.first
