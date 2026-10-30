@@ -214,7 +214,9 @@ the owner on 2026-10-26 in [`phase-6.md`](phase-6.md), which split off 6b and 6c
 
 Following a Route while walking, and walking times from the user's own pace. Moved here from phase 5
 with the owner on 2026-10-25, and out of phase 6 on 2026-10-26: a pace is learned from recorded
-hikes, so it comes after them, and following leans on phase 6's location service.
+hikes, so it comes after them. Planned with the owner on 2026-10-30 in [`phase-6b.md`](phase-6b.md):
+following is on screen only, with no service of its own, and the pace is one factor from the Hikes,
+never under 0.75× the signposts'.
 
 ## Phase 6c — Named Trails
 
