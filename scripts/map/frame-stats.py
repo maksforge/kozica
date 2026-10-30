@@ -17,7 +17,7 @@ import statistics
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--idle", type=float, default=500.0)
+parser.add_argument("--idle", type=float)
 parser.add_argument("--slow", type=float, default=100.0)
 args = parser.parse_args()
 
@@ -39,14 +39,18 @@ def report(intervals, prefix):
 
 
 if not any(kind.startswith("camera") for _, kind in events):
-    intervals = [b - a for a, b in zip(frames, frames[1:]) if b - a <= args.idle]
-    gaps = sorted((b - a for a, b in zip(frames, frames[1:]) if b - a > args.idle), reverse=True)
+    idle = 500.0 if args.idle is None else args.idle
+    intervals = [b - a for a, b in zip(frames, frames[1:]) if b - a <= idle]
+    gaps = sorted((b - a for a, b in zip(frames, frames[1:]) if b - a > idle), reverse=True)
     report(intervals, f"rest gaps {len(gaps)}, longest {gaps[0] if gaps else 0:.0f} ms;")
     print()
     sys.exit()
 
+if args.idle is not None:
+    sys.exit("frame-stats: --idle applies only to a log without camera lines; this one has them")
+
 moves = 0
-moving = settling = in_motion = False
+moving = settling = False
 last = None
 intervals = []
 rest_frames = 0
@@ -55,20 +59,19 @@ for t, kind in events:
         if not moving:
             moves += 1
             last = t
-        moving = in_motion = True
+        moving = True
         settling = False
     elif kind == "camera=idle":
         settling = moving
     elif kind == "map=idle":
         if settling:
-            moving = settling = in_motion = False
+            moving = settling = False
     else:
-        if in_motion and last is not None:
+        if moving:
             intervals.append(t - last)
         elif last is not None:
             rest_frames += 1
         last = t
-        in_motion = moving
 
 report(intervals, f"camera moves {moves};")
 print(f"  longest {max(intervals):.0f} ms; at rest {rest_frames} frames")
