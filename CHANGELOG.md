@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.11.0](https://github.com/maksforge/kozica/compare/v0.10.0...v0.11.0) (2026-10-30)
+
+
+### Features
+
+* find Trails by name in search, and select one from its result ([602806d](https://github.com/maksforge/kozica/commit/602806d702c9805e0d96503782c6b31348cffb60))
+* plan a Route along a Trail, and export a Trail as GPX ([2a7a5fc](https://github.com/maksforge/kozica/commit/2a7a5fc9db23f919ad98d07da67b71f91e1dffb5))
+* put each Trail's id in the tiles and build the Trail index and walks, at a fresh pin ([db7cbb1](https://github.com/maksforge/kozica/commit/db7cbb141fdc9163dfd2550191533faa34aa2ffd))
+* tap a Trail to see all of it, with a chooser where Trails share a way ([713064f](https://github.com/maksforge/kozica/commit/713064f29a23e4b8b12f325da35e2c75a9697ff8))
+
+
+### Bug Fixes
+
+* close a selected Trail when a place is picked, and pick a Long-distance Trail's Section by search's distance ([6fe7ef2](https://github.com/maksforge/kozica/commit/6fe7ef2854d5e5535231e0075396d27f3deb307c))
+* compare the two builds' membership files in --check-determinism ([ecfe079](https://github.com/maksforge/kozica/commit/ecfe0794eee42b9d9ae1d77cb9d563364390e0e1))
+* hold a Route along a Trail on the walk's own edges in order, and let its search be cancelled and seen ([71e86a7](https://github.com/maksforge/kozica/commit/71e86a7df2b4c786b60c5b5948acc9f7dc7f1b64))
+* join a gapped walk's stretches by least gap, and keep backward on a walk with no forward strand ([4ae74f6](https://github.com/maksforge/kozica/commit/4ae74f6f4398c17d827a005ec34a431d3f904494))
+* keep the Trail fit counter, the chooser's back and a late Long-distance load in step with the selection ([14b2677](https://github.com/maksforge/kozica/commit/14b267720af0deede811088623368480b1ebd626))
+* read the Trails search matches nearest the centre first, before the limit ([8e0e961](https://github.com/maksforge/kozica/commit/8e0e961b8f4d35d76ba1bc701e984368aed5cd8e))
+* turn a Route along a Trail's planning off when a tap on several Trails or none stops it ([c2a42fd](https://github.com/maksforge/kozica/commit/c2a42fd2b84abe0f461127d3962dbc5a3a51af05))
+* walk a branched Trail by its longest path that takes no edge twice, not its longest shortest one ([49c5a38](https://github.com/maksforge/kozica/commit/49c5a38e5397c7cbaac4c53f87733cb90d42f4a9))
+
+
+### Performance Improvements
+
+* read the profile's membership without a lock once it is built ([8c50cb6](https://github.com/maksforge/kozica/commit/8c50cb6f47a63279fddb491682a36f7f0111e810))
+
 ## [0.10.0](https://github.com/maksforge/kozica/compare/v0.9.0...v0.10.0) (2026-10-27)
 
 
