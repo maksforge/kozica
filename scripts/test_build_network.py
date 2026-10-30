@@ -248,6 +248,19 @@ class WalkTest(unittest.TestCase):
         self.assertEqual(walk.shape, "gaps")
         self.assertEqual(legs, [(1, 3, False), (5, 6, True)])
 
+    def test_a_loop_between_two_ends_is_walked_round_its_long_side(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3, 4]), 3: grid_way([2, 12, 13, 14, 4]), 4: grid_way([4, 5])}
+        walk, edges, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (2, ""), (3, ""), (4, "")])}, 7)
+        self.assertEqual(walk.shape, "branch")
+        self.assertEqual(legs, [(1, 2, False), (2, 4, False), (4, 5, False)])
+        self.assertEqual([len(edges[s.edge].points) for s in walk.steps], [2, 5, 2])
+
+    def test_a_loop_on_the_way_is_walked_round_and_left_where_it_was_entered(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3]), 3: grid_way([2, 12, 13]), 4: grid_way([13, 2])}
+        walk, _, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (3, ""), (4, ""), (2, "")])}, 7)
+        self.assertEqual((legs[0][0], legs[-1][1], len(legs)), (1, 3, 4))
+        self.assert_joined(legs)
+
     def test_gaps_are_joined_in_the_order_that_leaves_the_least_gap(self):
         ways = {1: grid_way([4, 5]), 2: grid_way([1, 2]), 3: grid_way([7, 8, 9])}
         walk, _, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (2, ""), (3, "")])}, 7)
