@@ -58,7 +58,8 @@ TRAIL_KEYS = ("name", "name:pl", "ref", "from", "to", *ENDS_KEYS)
 COLOUR_CODE = re.compile(r"^\[[^\]]{1,3}\]\s*")
 DASH = re.compile(r"\s+[-–—]\s+")
 LONGEST_END = 40
-OFF_WALK = {"alternative", "excursion", "approach", "branch", "backward"}
+TIED_GAPS = 1.0
+OFF_WALK = {"alternative", "excursion", "approach", "branch"}
 UNDECOMPOSED = str.maketrans({"ł": "l", "đ": "d", "ð": "d", "ø": "o", "ß": "ss", "æ": "ae", "œ": "oe", "ı": "i"})
 
 
@@ -646,11 +647,13 @@ def write_network(edges: list[Edge], target: Path) -> tuple[int, int, int]:
 
 
 def memberships_of(trails: dict[int, TrailLine]) -> dict[int, frozenset]:
-    """Each way's Trails, each with whether the way is on that Trail's walk."""
+    """Each way's Trails, each with whether the way is on that Trail's walk: `backward` is off it only where
+    the Trail has a `forward` strand to walk instead."""
     found: dict[int, set] = {}
     for number, line in trails.items():
+        off = OFF_WALK | {"backward"} if any(role == "forward" for _, role in line.members) else OFF_WALK
         for way, role in line.members:
-            found.setdefault(way, set()).add((number, role not in OFF_WALK))
+            found.setdefault(way, set()).add((number, role not in off))
     return {way: frozenset(pairs) for way, pairs in found.items()}
 
 
@@ -679,7 +682,8 @@ def trail_edges(edges: list[Edge]) -> dict[tuple[int, bool], list[int]]:
 def walk_of(number: int, line: TrailLine, edges: list[Edge], ways: dict, by_trail: dict) -> Walk | None:
     """docs/phase-6c.md § 2's walk: the Trail's edges as a graph, the members' order only picking which end
     comes first; a loop goes round once from the edge holding the first way, the way that way runs; a
-    branch takes the longest path between two ends; stretches apart are joined nearest end first."""
+    branch takes the longest path between two ends; stretches apart are joined in the order and directions
+    that leave the least gap."""
     own = by_trail.get((number, True)) or by_trail.get((number, False))
     if not own:
         return None
@@ -693,12 +697,10 @@ def walk_of(number: int, line: TrailLine, edges: list[Edge], ways: dict, by_trai
     def end(i: int) -> int:
         return edges[i].points[-1][0]
 
+    ends_at = {ref: (lat, lon) for i in own for ref, lat, lon in (edges[i].points[0], edges[i].points[-1])}
+
     def where(vertex: int) -> tuple[float, float]:
-        for i in own:
-            for ref, lat, lon in (edges[i].points[0], edges[i].points[-1]):
-                if ref == vertex:
-                    return lat, lon
-        raise KeyError(vertex)
+        return ends_at[vertex]
 
     at: dict[int, list[int]] = {}
     for i in own:
@@ -787,31 +789,34 @@ def walk_of(number: int, line: TrailLine, edges: list[Edge], ways: dict, by_trai
     def is_loop(steps: list[Step]) -> bool:
         return first_vertex(steps) == last_vertex(steps)
 
-    lead = stretches[0]
-    if not is_loop(lead):
-        position = along(lead, first_edge)
-        total = sum(edges[s.edge].length for s in lead)
-        if position is None:
-            first_point = where(start(first_edge))
-            nearer_last = distance(*first_point, *where(last_vertex(lead))) < distance(*first_point, *where(first_vertex(lead)))
-            if nearer_last:
-                lead = turned(lead)
-        elif position > total / 2:
-            lead = turned(lead)
-    walked = list(lead)
-    left = stretches[1:]
-    while left:
-        here = where(last_vertex(walked))
-        best = None
-        for k, candidate in enumerate(left):
-            for steps in (candidate, turned(candidate)) if not is_loop(candidate) else (candidate,):
-                gap = distance(*here, *where(first_vertex(steps)))
-                if best is None or gap < best[0]:
-                    best = (gap, k, steps)
-        _, k, steps = best
-        left.pop(k)
-        walked.append(Step(steps[0].edge, steps[0].reversed, True))
-        walked.extend(steps[1:])
+    def directions(steps: list[Step]) -> list[list[Step]]:
+        return [steps] if is_loop(steps) else [steps, turned(steps)]
+
+    def joined(lead: list[Step], left: list[list[Step]]) -> tuple[float, list[Step]]:
+        walked, gaps = list(lead), 0.0
+        while left:
+            here = where(last_vertex(walked))
+            best = None
+            for k, candidate in enumerate(left):
+                for steps in directions(candidate):
+                    gap = distance(*here, *where(first_vertex(steps)))
+                    if best is None or gap < best[0]:
+                        best = (gap, k, steps)
+            gap, k, steps = best
+            gaps += gap
+            left = left[:k] + left[k + 1:]
+            walked.append(Step(steps[0].edge, steps[0].reversed, True))
+            walked.extend(steps[1:])
+        return gaps, walked
+
+    def from_first_way(walked: list[Step]) -> float:
+        position = along(walked, first_edge)
+        return position if position is not None else distance(*where(start(first_edge)), *where(first_vertex(walked)))
+
+    options = [joined(lead, stretches[:k] + stretches[k + 1:])
+               for k, stretch in enumerate(stretches) for lead in directions(stretch)]
+    least = min(gaps for gaps, _ in options)
+    walked = min((walked for gaps, walked in options if gaps <= least + TIED_GAPS), key=from_first_way)
     shape = "gaps" if len(stretches) > 1 else "branch" if "branch" in shapes else "loop" if "loop" in shapes else "line"
     return Walk(walked, shape)
 
