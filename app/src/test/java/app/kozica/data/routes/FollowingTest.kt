@@ -22,24 +22,24 @@ class FollowingTest {
     private fun leg(seconds: Double) = Leg(snap, snap, emptyList(), seconds, 0)
 
     /** Up a 1 km valley and back down it, the turn being a via point; 600 m climbed and descended at a steady grade. */
-    private val outAndBack =
-        FollowedLine(
-            PlannedRoute(
-                legs = listOf(leg(1800.0), leg(1500.0)),
-                line =
-                    (0..20).map { i ->
-                        val metres = i * 100.0
-                        val height = 1000.0 + 600 * (if (metres <= 1000) metres else 2000 - metres) / 1000
-                        RouteSample(at(metres, turn = 1000.0), 20.0, metres, height, Approach.TRAIL)
-                    },
-                ascent = 600.0,
-                descent = 600.0,
-                seconds = 3300.0,
-                secondsToPoint = listOf(0.0, 1800.0, 3300.0),
-                demanding = emptyList(),
-                metresToPoint = listOf(0.0, 1000.0, 2000.0),
-            ),
+    private val outAndBackRoute =
+        PlannedRoute(
+            legs = listOf(leg(1800.0), leg(1500.0)),
+            line =
+                (0..20).map { i ->
+                    val metres = i * 100.0
+                    val height = 1000.0 + 600 * (if (metres <= 1000) metres else 2000 - metres) / 1000
+                    RouteSample(at(metres, turn = 1000.0), 20.0, metres, height, Approach.TRAIL)
+                },
+            ascent = 600.0,
+            descent = 600.0,
+            seconds = 3300.0,
+            secondsToPoint = listOf(0.0, 1800.0, 3300.0),
+            demanding = emptyList(),
+            metresToPoint = listOf(0.0, 1000.0, 2000.0),
         )
+
+    private val outAndBack = FollowedLine(outAndBackRoute)
 
     private fun fix(
         alongTheWay: Double,
@@ -118,6 +118,44 @@ class FollowingTest {
         assertTrue(lefts.zipWithNext().all { (a, b) -> b <= a })
         assertTrue(pace.minutes(partway.seconds) * 60 >= partway.seconds * 1.2)
         assertEquals(600.0 * (1000 - 437) / 1000, partway.ascent, 6.0)
+    }
+
+    @Test
+    fun `from the start the climb left is the sheet's Ascent, though the line's own differs`() {
+        val sheet = 610.0
+        val line = FollowedLine(outAndBackRoute.copy(ascent = sheet))
+
+        assertEquals(sheet, line.left(Progress(0.0, 0)).toEnd.ascent, 1e-9)
+    }
+
+    @Test
+    fun `over bumps inside the dead band and up a climb neither the time nor the climb left rises`() {
+        val bumpy =
+            FollowedLine(
+                PlannedRoute(
+                    legs = listOf(leg(700.0), leg(600.0)),
+                    line =
+                        (0..40).map { i ->
+                            val metres = i * 25.0
+                            val height =
+                                1000.0 + 0.6 * (metres - 500).coerceAtLeast(0.0) +
+                                    if (i % 2 == 1 && i < 20) 4.9 else 0.0
+                            RouteSample(at(metres), 20.0, metres, height, Approach.TRAIL)
+                        },
+                    ascent = 300.0,
+                    descent = 0.0,
+                    seconds = 1300.0,
+                    secondsToPoint = listOf(0.0, 700.0, 1300.0),
+                    demanding = emptyList(),
+                    metresToPoint = listOf(0.0, 500.0, 1000.0),
+                ),
+            )
+
+        val lefts = (0..1000).map { bumpy.left(Progress(it.toDouble(), 0)).toEnd }
+
+        assertTrue(lefts.zipWithNext().all { (a, b) -> b.seconds <= a.seconds && b.ascent <= a.ascent })
+        assertEquals(300.0, lefts.first().ascent, 1e-9)
+        assertEquals(1300.0, lefts.first().seconds, 1e-9)
     }
 
     @Test
