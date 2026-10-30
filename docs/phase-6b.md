@@ -336,9 +336,20 @@ Copy:
 - **`PLAN.md`**: this file, linked from phase 6b's paragraph.
 - **The store listing** (`docs/store-listing.md`): following a Route and times from your own pace,
   once E closes.
-- **No permission, no stored key of a new kind, no network**: the privacy policy and
-  `play-app-content.md` are unchanged. Following uses the location the map already asks for, while
-  the app is on screen.
+- **The privacy policy** (`docs/privacy-policy.md`), decided with the owner on 2026-10-30: following
+  keeps where the user is on a Route, so the policy says so, in E, the checkpoint that starts keeping
+  it, and not before. A bullet after the recording's, under *What the app can access, and why*:
+
+  > **Your location while you follow a Route**, only once you tap Follow and allow precise location.
+  > While the app is on screen it reads your location to show how far along the Route you are. So
+  > that it can pick up where you were if Android closes it, the app keeps the Route you follow and
+  > how far along it you are in its settings on the phone, until you stop, reach the end, or 24 hours
+  > pass. It is never sent anywhere by the app, and goes into Android's backup below with the rest
+  > of the app's data.
+
+- **`play-app-content.md`**: `ACCESS_FINE_LOCATION`'s row gains following a Route, whose Route and
+  Progress are kept in the app's settings on the phone until following ends, in E with the policy.
+  Data safety stays "no data collected": nothing leaves the device. No new permission, no network.
 
 ## Known gaps, deliberately
 
