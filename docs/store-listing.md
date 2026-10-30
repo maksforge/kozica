@@ -333,3 +333,17 @@ While you follow a Route, Kozica now says when you've left it: after 30 seconds 
 ```
 Podczas prowadzenia Kozica mówi teraz, gdy jesteś poza trasą: po 30 sekundach dalej niż 40 m od niej baner pokazuje, jak daleko jesteś. Dotknij Powrót na trasę, a mapa narysuje drogę szlakami z powrotem, z jej długością i czasem przejścia; z dala od szlaków poda, jak daleko jest najbliższy szlak. Sama trasa zostaje taka, jak ją zaplanowano.
 ```
+
+### 0.13.1 — a bigger icon
+
+**English** — 185/500:
+
+```
+The app's icon is a little bigger: the chamois fills more of its frame, its long horn is a touch shorter and the crag beneath it a touch narrower. The notification icon changes with it.
+```
+
+**Polish** — 187/500:
+
+```
+Ikona aplikacji jest nieco większa: kozica wypełnia więcej swojej ramki, jej dłuższy róg jest odrobinę krótszy, a skała pod nią odrobinę węższa. Ikona powiadomień zmienia się razem z nią.
+```
