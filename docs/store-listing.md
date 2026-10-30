@@ -314,8 +314,8 @@ Dotknij szlaku na mapie, by zobaczyć go w całości, z nazwą, długością, po
 Follow a Route on the map: tap Follow, and the map keeps you in view and shows what is left to the next point and to the end. Walking times can now be your own: once you have recorded 3 hikes of 3 km and an hour or more, Kozica learns your pace from them and times every Route by it, with the signposts' time beside each total. Your times are never shorter than three quarters of the signposts'.
 ```
 
-**Polish** — 401/500:
+**Polish** — 410/500:
 
 ```
-Idź trasą z prowadzeniem: dotknij Prowadź, a mapa pokaże, gdzie jesteś, i ile zostało do następnego punktu i do końca. Czasy przejścia mogą być teraz Twoje: gdy zapiszesz 3 wycieczki na co najmniej 3 km i godzinę, Kozica pozna z nich Twoje tempo i według niego policzy czas każdej trasy, z czasem z drogowskazów obok każdej sumy. Twoje czasy nigdy nie są krótsze niż trzy czwarte czasu z drogowskazów.
+Idź trasą z prowadzeniem: dotknij Prowadź, a mapa będzie podążać za tobą i pokaże, ile zostało do następnego punktu i do końca. Czasy przejścia mogą być teraz twoje: gdy zapiszesz 3 wycieczki na co najmniej 3 km i godzinę, Kozica pozna z nich twoje tempo i według niego policzy czas każdej trasy, z czasem z drogowskazów obok każdej sumy. Twoje czasy nigdy nie są krótsze niż trzy czwarte czasu z drogowskazów.
 ```
