@@ -8,10 +8,13 @@ is unchanged). [`CONTEXT.md`](../CONTEXT.md) gains **Long-distance Trail** and *
 **Trail** gains the rule for its title. Planned with the owner on 2026-10-27.
 
 **What closing this phase means.** Today a Trail on the map is a coloured line that does nothing when
-tapped, and the search knows places but not Trails. After this phase the user taps the red line above
-Kuźnice, sees that whole Trail picked out from Zakopane to Kasprowy Wierch with the rest of the map
-faded, reads its name, length, climb each way and profile on a sheet, and with one button turns it
-into a Route or a GPX file; typing "Główny Szlak Beskidzki" into search finds it too. The difference
+tapped, and the search knows places but not Trails. After this phase the user taps the green line
+above Kuźnice and sees the Trail under the finger picked out with the rest of the map faded. In the
+data that is a Section, Kuźnice – Myślenickie Turnie, of the Long-distance Trail from Zakopane's
+Bulwary Słowackiego to Kasprowy Wierch (§ 1, verdict 3): the sheet names the Long-distance Trail above
+the Section's title and shows it whole on request, reads the Section's length, climb each way and
+profile, and with one button turns the Section into a Route or a GPX file. Typing "Główny Szlak
+Beskidzki", one Trail with no Sections, into search finds it whole. The difference
 a device can be asked about: on the test phone, a tap on each of the four strands where four Trails
 share a way selects the Trail it was on, by way of a chooser, and the highlight draws within phase
 4's frame gate.
@@ -146,20 +149,40 @@ side (`Biely Váh - Kriváň`, `Rázc. pri Žabom potoku - Rysy`). Read only as 
 gate would have titled the Polish half of a range by its signposts' places and the Slovak half by
 the nearest peak. The owner widened the rule rather than take verdict 2 for a tagging habit: the
 ends are read from those four tags too, in that order, by the shape check in § 2. `destinations`,
-which KČT also writes (79 more Trails), was left out: it lists what the signposts point to, often
-one place, not the Trail's two ends.
+which KČT also writes, was left out: it lists what the signposts point to, not the Trail's two ends.
+116 of the 295 below carry it, and 44 of those name a single place.
 
 **Widened, the union reads 89.0 %**: 2,119 named, 10 `from`/`to`, 228 `description`, 2
 `osmc:name`, 13 `note:cs`, 24 `note`, 295 with none, and every Region at 83.3 % or more (Tatry
-97.4 %, Beskid Niski the lowest). The 295 are 94 KČT Trails with no ends written anywhere, local and
-unofficial ones (`lwn`, notes such as "szlak dziki, operator nie znany"), and 29 KST Trails without
-a `description`; they take the place fallback. The shape check turned away both notes that were
-prose and nothing else. 449 KČT names lead with the colour's letter, `[Ž] A - B`; the build strips
-it (§ 2).
+97.4 %, Beskid Niski the lowest). The 295 take the place fallback. 171 are KČT's
+(`operator=cz:KČT`): 113 of them carry `destinations`, and 55 carry no ends in any tag. 32 are
+KST's, 25 of them without a `description`. The other 92 are 9 PTTK Trails and 83 local and
+unofficial ones, with a town, a club, a park or no `operator` at all, 58 of them `lwn` (notes such
+as "szlak dziki, operator nie znany").
+
+The shape check misreads a few values either way. It turned away the two prose notes holding a
+spaced dash, each by the 40-character limit, but also five values that are ends in other
+punctuation: a dash spaced on one side or neither (`[Z] Kočičí hrad- Police nad Metují`,
+`[Z] Náchod -Dobrošov- Běloves`, `Košariská-Tvrdošín`) and places parted by `;`
+(`Oravské Veselé - Pilsko, št. hr;Mútne - Pilsko, 1557m.n.m`, `Větrník; Česká Čermná; Nad
+Bělovsí`). Of the 267 values it read, one is prose, `okružná trasa Mestský úrad - u Šustkov - … -
+Mestský úrad`, which titles the loop "okružná trasa Mestský úrad – Mestský úrad", and two ends
+carry more than a place: `Dudová 2:10h` and `Volovec (- Pyšné sedlo)`. These are the rule's known
+misses (Known gaps); the Tests' fixtures pin the rule as written, not these values. 449 names lead
+with KČT's colour letter, `[Ž] A - B`; the build strips it (§ 2).
 
 **Verdict 3 does not apply**: 70 Long-distance Trails have Sections in the Regions (57 `route=hiking`
 relations of relations, 13 `type=superroute`), 66 of them named, with 306 Sections. "Show the whole
-*name*" is built.
+*name*" is built. Most of the 70 are not long-distance, though: 53 are `rwn` or `lwn` relations, a
+regional Trail split at its junctions into Sections, which is how PTTK's Tatry Trails are mapped.
+r1593233, the green `Bulwary Słowackiego - Kasprowy Wierch (stacja kolejki)`, holds four Sections,
+among them `Kuźnice - Myślenickie Turnie` and `Myślenickie Turnie - Kasprowy Wierch`; r1593481, the
+blue `Kuźnice - Schronisko PTTK przy Morskim Oku`, holds eleven; and 137 of the Tatry's 311 Trails
+are Sections. By § 2's Section rule a tap there selects one Section, not the Trail a walker would
+name, and the whole Trail is its Long-distance Trail, shown on request. The verdict holds without
+them: 16 of the 66 named are `nwn` or `iwn` (E3, Via Slovakia, the Tatranská magistrála), over the
+five it asks for. The relations sitting in more than one place in that hierarchy are open for B
+(§ 2).
 
 ## 2. The data
 
@@ -189,19 +212,31 @@ relations of relations, 13 `type=superroute`), 66 of them named, with 306 Sectio
   two ends, its length, ascent and descent each way, and its bounding box. No title column: the
   title is composed on the phone (below). The climbs are the relief's heights, so `RELIEF-DATA-LICENCE.txt` names
   `places.sqlite` beside `trails.network`.
+- **Open for B: relations that sit in more than one place in the hierarchy.** The row holds one
+  Long-distance Trail, but over A's cuts 16 relations are both a Trail and a Long-distance Trail,
+  with ways of their own and Trails among their members (r1020537 `Gubałówka - Ciemniak`, one way
+  and eight Sections; r4649443 `Via Mariae M02`, three ways and ten); two Long-distance Trails hold
+  another (r1175707, E3, holds its Czech part, r83249; r11154539, `Via Mariae (combined)`, holds
+  r4649443); and one Section, r5120297, belongs to two (r4005823 and r5012450). B settles, before
+  the table's columns are fixed, which parent a Section's row names, whether a relation that is
+  both is a row, a parent or both, and what "Show the whole *name*" highlights for a nest. **Open
+  for the owner** beside it: since a tap selects a Section (§ 1, verdict 3), "Plan a Route along it"
+  and "Export GPX" act on that Section, so a PTTK Tatry Trail as a walker names it, Zakopane to
+  Kasprowy Wierch, is shown whole but never planned or exported whole.
 - **The row's `from` and `to` are the ends a mapper wrote, in whichever country's convention**
   (§ 1's verdict): the `from` and `to` tags, else the first of `description`, `osmc:name`,
   `note:cs` and `note` holding place names between spaced dashes, `A - B` or `A - B - C`, whose
   first and last places are the ends. A value counts only when every place is 1 to 40 characters
-  with no `;`, which is what keeps a mapper's prose in a note out. A leading colour code, KČT's
+  with no `;`, which keeps most of a mapper's prose in a note out (§ 1 names what it misreads). A
+  leading colour code, KČT's
   `[Ž] ` (one to three characters in brackets), is stripped from these values and from `name` and
   `name:pl`, since the sheet shows the colour already. `scripts/map/trail-tally.py` holds the rule
   as A read it; B writes it into `build-network.py`, tested, and the tally is not kept in step.
 - **`trail_names`**, an FTS4 table of its own beside `place_names`, with the same columns and the
   one fold: `place_names.place` is a `places.id` and the search joins `places` on it, so a Trail's
   rows there would point at a place or drop out of the join. It takes each Trail's folded `name` and
-  `name:pl`, under the Trail's id; a Trail with neither has nothing to be found by (Known gaps; § 1,
-  verdict 2). `PlaceIndex.search` runs one query over both, a `UNION ALL` of the places joined to
+  `name:pl`, under the Trail's id; a Trail with neither has nothing to be found by (Known gaps).
+  `PlaceIndex.search` runs one query over both, a `UNION ALL` of the places joined to
   `place_names` and the Trails joined to `trail_names`, ordered by the same two keys: the match at
   the name's start first, then the distance from the map's centre, for a place to its point and for
   a Trail to its bounding box, nought when the centre lies inside it. A result is then a place or a
@@ -356,8 +391,11 @@ tab writes one.
 
 - **A Trail's title is OSM's, not the signposts'.** Where a relation has no name, no ends written in
   a convention § 2 reads and no place near an end, the title is the colour alone, "Red Trail" or
-  "Marked Trail". Search finds a Trail by its name alone, so the 11 % with none (§ 1) are not found,
-  nor is a Trail by the places at its ends; the places themselves are. A convention not yet read,
+  "Marked Trail". The shape check that reads the written ends misreads a few values either way
+  (§ 1). Search finds a Trail by its `name` or `name:pl` alone, so the 572 Trails with neither, 21 %
+  of 2,691 (§ 1), are not found: the 277 titled by `from`/`to` or by written ends as well as the 295
+  titled by nothing. Nor is a Trail found by the places at its ends; the places themselves are. A
+  convention not yet read,
   such as KČT's `destinations`, is a change to § 2's list; a Trail with no ends anywhere is an OSM
   edit. Either reaches the app with the next data pin.
 - **A Trail's walk is the build's reading of a relation OSM may map loosely.** A branch with no role
@@ -374,6 +412,6 @@ debug broadcast sent as phase 5's readings send them.
 | --- | --- | --- | --- |
 | R1 | The gate's tally over the union and per Region | `build-map-data.py` over A's uncommitted candidate pin, then `python3 scripts/map/trail-tally.py` | **Verdict 1**, 2026-10-30, pin `poland 4952`, `slovakia 4952`, `czech-republic 4953`: 89.0 % of 2,691 titled by the rule as § 2 widened it (79.1 % as first written), every Region at 83.3 % or more; 66 of 70 Long-distance Trails named (§ 1) |
 | R2 | Four strands at one point: each tap's chooser lists all four, and each pick highlights the right one | test phone, debug build with the Regions hand-pushed; screencaps | *(owed)* |
-| R3 | The highlight and fade against phase 4's gate: the pan at zoom 11 and 13 with the red Trail from Kuźnice to Kasprowy Wierch selected, against the same pan with nothing selected taken straight before it. Pass: p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's | phase 4's R1 apparatus and pan, all nine Regions and the relief hand-pushed; `CameraReceiver` to a point on that Trail at each zoom, then for the selected run `input tap` at the screen's centre and the chooser's red row if one opens; `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py` | *(owed)* |
-| R4 | A Route along a Trail matches the Trail: Kuźnice – Kasprowy Wierch and Główny Szlak Beskidzki, each way, and again planned anew from its stored points. Pass: length to the metre and ascent and descent equal to the Trail's row plus the legs across its gaps, if any (none for a gapless walk), and Główny Szlak Beskidzki's Route made within 2 s | `RouteReceiver` gains `--el trail <id>` and `--ez reversed true`: it makes the Route by the button's code, logs the Trail's row, its number of gaps with each gap leg's length, ascent and descent, and the time taken beside its `route:` line, then plans the stored points again and logs that `route:` line too; `adb logcat -d -s KozicaRoute` | *(owed)* |
+| R3 | The highlight and fade against phase 4's gate: the pan at zoom 11 and 13 with the green Section `Kuźnice - Myślenickie Turnie` (r1593232) selected, against the same pan with nothing selected taken straight before it. Pass: p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's | phase 4's R1 apparatus and pan, all nine Regions and the relief hand-pushed; `CameraReceiver` to a point on that Trail at each zoom, then for the selected run `input tap` at the screen's centre and the chooser's green row if one opens; `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py` | *(owed)* |
+| R4 | A Route along a Trail matches the Trail: the Section `Kuźnice - Myślenickie Turnie` (r1593232) and Główny Szlak Beskidzki (r545421, one Trail with no Sections), each way, and again planned anew from its stored points. Pass: length to the metre and ascent and descent equal to the Trail's row plus the legs across its gaps, if any (none for a gapless walk), and Główny Szlak Beskidzki's Route made within 2 s | `RouteReceiver` gains `--el trail <id>` and `--ez reversed true`: it makes the Route by the button's code, logs the Trail's row, its number of gaps with each gap leg's length, ascent and descent, and the time taken beside its `route:` line, then plans the stored points again and logs that `route:` line too; `adb logcat -d -s KozicaRoute` | *(owed)* |
 | R5 | The update size Play reports for the re-delivered packs, and the three base files' sizes beside the last release's two | Play Console, the release's size; the release's attachments | *(owed)* |
