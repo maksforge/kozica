@@ -113,6 +113,15 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       did, the gap is the apparatus, not the code. Only then suspect the code — B's archives (pin
       4952), the network and walks loaded at start, something rendering continuously — and bisect
       with that same apparatus, before the next release.
+      **Rerun 2026-10-30** at 6c9374d, phase 4's R1 command exactly but with the full relief pack
+      (257 MB; the Tatry cut is no longer on the PC). Relief off, the baseline: p95 21.5 ms at zoom 11
+      and 19.4 ms at zoom 13, phase 4's numbers within 2 ms. Relief on: 23.4 and **257.6 ms**. So the
+      zoom-13 slowdown is the full relief pack, not this phase's code; the relief gate (ADR-0009,
+      phase 4's R1) was read on a 13.7 MB cut and has not been read on the pack that ships. Separate
+      from it, every run now logs 22–38 frames over 100 ms and **no rest between swipes**, relief on
+      or off, where phase 4 saw none and nine: something renders between the swipes, or the frame
+      log counts differently. Next: R1 with the shipped relief against a build before phase 5, to
+      learn whether the relief itself is slow at zoom 13; and the frame log over an idle minute.
 
 ## Standing checks that never close
 
