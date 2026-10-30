@@ -34,9 +34,13 @@ import app.kozica.data.hikes.trim
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
 import app.kozica.data.routes.DemandingStretch
+import app.kozica.data.routes.FollowFix
+import app.kozica.data.routes.FollowedLine
+import app.kozica.data.routes.Left
 import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
+import app.kozica.data.routes.Progress
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.SearchResult
 import app.kozica.data.routes.TrailDetail
@@ -226,7 +230,18 @@ data class RouteUiState(
     val name: String? = null,
     val naming: Boolean = false,
     val suggestedName: String? = null,
+    val following: FollowingUiState? = null,
+    val followingNote: FollowingNote? = null,
 )
+
+/** docs/phase-6b.md § 3: what is left from [progress], which is null until the first fix that counts. */
+data class FollowingUiState(
+    val progress: Progress? = null,
+    val left: Left,
+)
+
+/** Why following ended by itself, said on the sheet until the next change. */
+enum class FollowingNote { ENDED, ROUTE_CHANGED }
 
 /**
  * @param shown the selected Trail, which sets a planned Route aside until it is closed.
@@ -331,6 +346,8 @@ class MapViewModel(
     private var searching: Job? = null
 
     private var planning: Job? = null
+
+    private var followed: FollowedLine? = null
 
     // Changes whenever the map's Route is replaced, so a Save that returns late lands only on its own.
     private var routeGeneration = 0
@@ -568,6 +585,7 @@ class MapViewModel(
         dismissOffer()
         closeHike()
         routeGeneration++
+        followed = null
         route.update { RouteUiState(savedId = saved.id, name = saved.name) }
         changePoints { saved.points }
     }
@@ -595,6 +613,7 @@ class MapViewModel(
         dismissOffer()
         planning?.cancel()
         routeGeneration++
+        followed = null
         route.value = RouteUiState()
         hikeKeep.value = null
         readHeights = null
@@ -863,7 +882,49 @@ class MapViewModel(
         }
     }
 
+    /** Follow on a complete Route's sheet; Progress waits for the first fix that counts. */
+    fun follow() {
+        val current = route.value
+        val planned = current.planned?.takeIf { it.complete && !current.planning } ?: return
+        val line = FollowedLine(planned).also { followed = it }
+        route.update { it.copy(following = FollowingUiState(left = line.left(Progress(0.0, 0))), followingNote = null) }
+    }
+
+    fun stopFollowing() {
+        followed = null
+        route.update { it.copy(following = null) }
+    }
+
+    fun dismissFollowingNote() {
+        route.update { it.copy(followingNote = null) }
+    }
+
+    /** Each fix while the map is on screen; one that does not count moves nothing (docs/phase-6b.md § 3). */
+    fun followFix(fix: FollowFix) = moveAlong(fix) { line, progress -> line.follow(progress, fix) }
+
+    /** "Find me on the Route", from the latest fix. */
+    fun findMeOnRoute(fix: FollowFix) = moveAlong(fix) { line, progress -> line.findMe(progress, fix) }
+
+    private fun moveAlong(
+        fix: FollowFix,
+        match: (FollowedLine, Progress?) -> Progress?,
+    ) {
+        val line = followed ?: return
+        val current = route.value.following ?: return
+        val progress = match(line, current.progress) ?: return
+        if (line.ended(progress, fix)) {
+            followed = null
+            route.update { it.copy(following = null, followingNote = FollowingNote.ENDED) }
+        } else if (progress != current.progress) {
+            route.update { it.copy(following = current.copy(progress = progress, left = line.left(progress))) }
+        }
+    }
+
     private fun changePoints(change: (List<RoutePoint>) -> List<RoutePoint>) {
+        if (route.value.following != null) {
+            followed = null
+            route.update { it.copy(following = null, followingNote = FollowingNote.ROUTE_CHANGED) }
+        }
         val points =
             route
                 .updateAndGet {

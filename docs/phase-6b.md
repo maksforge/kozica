@@ -41,6 +41,19 @@ reverse):
   export restored into the debug build, and a Track over 5 % longer than the network's line goes to
   the owner, though B's merge does not wait on R2 (*Readings*).
 
+
+**Settled in C** (by the agent, 2026-10-30, building it; each is the owner's to reverse):
+
+- **C was built before A**, on the owner's word: the numbers A can move are constants in one place,
+  `data/routes/Following.kt` (`LEAVING_METRES`, `FIX_WORST_ACCURACY_METRES`, `FIX_OLDEST_MILLIS`,
+  `WINDOW_METRES_PER_SECOND`, `WINDOW_LEAST_METRES`), so a verdict changes them and nothing else.
+- The screen hands each fix to the ViewModel while following, so with the app off screen nothing is
+  matched, as § 3 has it. A fix's age is read against `elapsedRealtimeNanos`, the clock it carries.
+- Before the first fix that counts, the sheet shows what is left from the start. The time left is
+  the router's at each point and between two points the leg's time spread by the rule over the line
+  walked, so standing at the start it is the sheet's own total.
+- A replay faster than walking stalls Progress by design: the window is 6 km/h since the last match,
+  so R3's fixes keep their own times, and a jump ahead is "Find me on the Route"'s.
 ---
 
 ## 0. What this phase inherits

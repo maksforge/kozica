@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -82,6 +83,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.kozica.R
 import app.kozica.data.MapCamera
+import app.kozica.data.routes.FollowFix
 import app.kozica.theme.LocalDarkTheme
 import app.kozica.theme.Spacing
 import app.kozica.ui.appViewModelExtras
@@ -153,6 +155,10 @@ fun MapScreen(
     var preciseRefused by rememberSaveable { mutableStateOf(false) }
     var askingForPrecise by remember { mutableStateOf(false) }
     var centreWanted by remember { mutableStateOf(false) }
+    // docs/phase-6b.md § 3: while following, each fix recentres the map until the user pans it.
+    var tracking by remember { mutableStateOf(false) }
+    var followWanted by remember { mutableStateOf(false) }
+    var needsPrecise by rememberSaveable { mutableStateOf(false) }
     var positionOutside by remember { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
         viewModel.locationRead(context.readLocation())
@@ -181,6 +187,10 @@ fun MapScreen(
             viewModel.locationRead(read)
             if (read.grant == LocationGrant.NONE) denied = true
             if (askingForPrecise && read.grant == LocationGrant.APPROXIMATE) preciseRefused = true
+            if (followWanted && read.grant != LocationGrant.PRECISE) {
+                followWanted = false
+                if (read.grant == LocationGrant.APPROXIMATE) needsPrecise = true
+            }
             askingForPrecise = false
         }
     val showPosition: () -> Unit = {
@@ -195,7 +205,31 @@ fun MapScreen(
                     context.startActivitySafely(context.appSettings())
                 }
             !read.on -> context.startActivitySafely(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-            else -> centreWanted = true
+            else -> {
+                centreWanted = true
+                if (state.route.following != null) tracking = true
+            }
+        }
+    }
+    // docs/phase-6b.md § 3's table: the Record asks, and following starts once precise location is granted.
+    val follow: () -> Unit = {
+        val read = state.location
+        when {
+            read == null -> Unit
+            read.grant == LocationGrant.PRECISE -> {
+                viewModel.follow()
+                tracking = true
+            }
+            read.grant == LocationGrant.NONE && (!denied || activity.mayAskAgain()) -> {
+                followWanted = true
+                ask.launch(LOCATION_PERMISSIONS)
+            }
+            read.grant == LocationGrant.APPROXIMATE && !preciseRefused -> {
+                followWanted = true
+                askingForPrecise = true
+                ask.launch(LOCATION_PERMISSIONS)
+            }
+            else -> needsPrecise = true
         }
     }
     val approximateOnly = state.location?.grant == LocationGrant.APPROXIMATE
@@ -275,7 +309,10 @@ fun MapScreen(
         placed = true
         map.addOnCameraMoveStartedListener { reason ->
             positionOutside = false
-            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) centreWanted = false
+            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
+                centreWanted = false
+                tracking = false
+            }
         }
         map.addOnCameraIdleListener {
             map.cameraPosition.toMapCamera()?.let { camera ->
@@ -472,6 +509,36 @@ fun MapScreen(
         val fix = state.fix ?: return@LaunchedEffect
         if (regions?.contains(fix.latitude, fix.longitude) != false) positionOutside = false
     }
+    LaunchedEffect(followWanted, state.location) {
+        if (!followWanted || state.location?.grant != LocationGrant.PRECISE) return@LaunchedEffect
+        followWanted = false
+        viewModel.follow()
+        tracking = true
+    }
+    val following = state.route.following != null
+    LaunchedEffect(following, state.fix) {
+        if (following) state.fix?.let { viewModel.followFix(it.toFollowFix()) }
+    }
+    LaunchedEffect(map, following, tracking, state.fix) {
+        val map = map ?: return@LaunchedEffect
+        val fix = state.fix ?: return@LaunchedEffect
+        if (following && tracking) map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(fix.latitude, fix.longitude)))
+    }
+    if (needsPrecise) {
+        AlertDialog(
+            onDismissRequest = { needsPrecise = false },
+            text = { Text(stringResource(R.string.following_needs_precise)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    needsPrecise = false
+                    context.startActivitySafely(context.appSettings())
+                }) { Text(stringResource(R.string.map_location_settings)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { needsPrecise = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
     LaunchedEffect(map, centreWanted, state.fix) {
         val map = map ?: return@LaunchedEffect
         val fix = state.fix ?: return@LaunchedEffect
@@ -651,6 +718,10 @@ fun MapScreen(
                     onReverse = viewModel::reverse,
                     onShowSaveDialog = viewModel::showSaveDialog,
                     onSave = viewModel::save,
+                    onFollow = follow,
+                    onStopFollowing = viewModel::stopFollowing,
+                    onFindMe = { state.fix?.let { viewModel.findMeOnRoute(it.toFollowFix()) } },
+                    onDismissNote = viewModel::dismissFollowingNote,
                     modifier = Modifier.heightIn(max = sheetHeight),
                 )
             }
@@ -953,3 +1024,13 @@ private fun MapCamera.toCameraUpdate(): CameraUpdate =
     )
 
 private fun CameraPosition.toMapCamera(): MapCamera? = target?.let { MapCamera(it.latitude, it.longitude, zoom) }
+
+/** How old the fix was on arrival, against the clock it was stamped by. */
+private fun Location.toFollowFix() =
+    FollowFix(
+        latitude = latitude,
+        longitude = longitude,
+        accuracyMetres = if (hasAccuracy()) accuracy.toDouble() else Double.MAX_VALUE,
+        ageMillis = (SystemClock.elapsedRealtimeNanos() - elapsedRealtimeNanos) / 1_000_000,
+        atMillis = elapsedRealtimeNanos / 1_000_000,
+    )
