@@ -2252,125 +2252,6 @@
    }
   },
   {
-   "id": "route-back-casing",
-   "type": "line",
-   "source": "route-back",
-   "filter": [
-    "==",
-    [
-     "get",
-     "approach"
-    ],
-    "trail"
-   ],
-   "layout": {
-    "line-join": "round"
-   },
-   "paint": {
-    "line-color": "#1e1b16",
-    "line-width": [
-     "interpolate",
-     [
-      "linear"
-     ],
-     [
-      "zoom"
-     ],
-     10,
-     7.0,
-     13,
-     8.0,
-     15,
-     9.5,
-     17,
-     12.0
-    ]
-   }
-  },
-  {
-   "id": "route-back",
-   "type": "line",
-   "source": "route-back",
-   "filter": [
-    "==",
-    [
-     "get",
-     "approach"
-    ],
-    "trail"
-   ],
-   "layout": {
-    "line-join": "round"
-   },
-   "paint": {
-    "line-color": "#bac9d4",
-    "line-width": [
-     "interpolate",
-     [
-      "linear"
-     ],
-     [
-      "zoom"
-     ],
-     10,
-     4.0,
-     13,
-     5.0,
-     15,
-     6.5,
-     17,
-     9.0
-    ],
-    "line-dasharray": [
-     "literal",
-     [
-      2,
-      1
-     ]
-    ]
-   }
-  },
-  {
-   "id": "route-back-off-trail",
-   "type": "line",
-   "source": "route-back",
-   "filter": [
-    "==",
-    [
-     "get",
-     "approach"
-    ],
-    "off"
-   ],
-   "paint": {
-    "line-color": "#bac9d4",
-    "line-width": [
-     "interpolate",
-     [
-      "linear"
-     ],
-     [
-      "zoom"
-     ],
-     10,
-     2.0,
-     13,
-     3.0,
-     15,
-     4.5,
-     17,
-     7.0
-    ],
-    "line-dasharray": [
-     "literal",
-     [
-      1,
-      1.5
-     ]
-    ]
-   }
-  },
-  {
    "id": "hike-track-casing",
    "type": "line",
    "source": "hike-track",
@@ -2425,6 +2306,125 @@
      7.5,
      17,
      10.0
+    ]
+   }
+  },
+  {
+   "id": "route-back-casing",
+   "type": "line",
+   "source": "route-back",
+   "filter": [
+    "==",
+    [
+     "get",
+     "approach"
+    ],
+    "trail"
+   ],
+   "layout": {
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#1e1b16",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     7.0,
+     13,
+     8.0,
+     15,
+     9.5,
+     17,
+     12.0
+    ]
+   }
+  },
+  {
+   "id": "route-back",
+   "type": "line",
+   "source": "route-back",
+   "filter": [
+    "==",
+    [
+     "get",
+     "approach"
+    ],
+    "trail"
+   ],
+   "layout": {
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#e9e1d8",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     4.0,
+     13,
+     5.0,
+     15,
+     6.5,
+     17,
+     9.0
+    ],
+    "line-dasharray": [
+     "literal",
+     [
+      2,
+      1
+     ]
+    ]
+   }
+  },
+  {
+   "id": "route-back-off-trail",
+   "type": "line",
+   "source": "route-back",
+   "filter": [
+    "==",
+    [
+     "get",
+     "approach"
+    ],
+    "off"
+   ],
+   "paint": {
+    "line-color": "#e9e1d8",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     2.0,
+     13,
+     3.0,
+     15,
+     4.5,
+     17,
+     7.0
+    ],
+    "line-dasharray": [
+     "literal",
+     [
+      1,
+      1.5
+     ]
     ]
    }
   },
