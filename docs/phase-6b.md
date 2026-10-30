@@ -298,8 +298,7 @@ the way up rather than skipping the summit on the way down. It is planned by the
 and drawn apart from the Route, timed by the Pace. The saved Route is not changed. The leg goes when
 the user is back on the Route, or when it is planned again. Off the Trails the router starts from
 the nearest Trail, as phase 5's ends do, and the leg says how far that is. Replanning the rest of
-the Route instead is out: it could drop a via point,
-a Hut the user meant to reach.
+the Route instead is out: it could drop a via point, a Hut the user meant to reach.
 
 Copy:
 
