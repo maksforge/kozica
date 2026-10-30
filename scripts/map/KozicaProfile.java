@@ -69,7 +69,7 @@ public class KozicaProfile implements Profile {
 
   private final Map<Long, long[]> wayEnds = new ConcurrentHashMap<>();
   private final Map<Long, Hiking> hiking = new ConcurrentHashMap<>();
-  private Membership membership;
+  private volatile Membership membership;
 
   public static void main(String[] args) throws IOException {
     var arguments = Arguments.fromArgs(args);
@@ -110,11 +110,18 @@ public class KozicaProfile implements Profile {
     return kind == null ? null : List.of(new Boundary(relation.id(), kind));
   }
 
-  private synchronized Membership membership() {
-    if (membership == null) {
-      membership = new Membership(Map.copyOf(hiking));
+  private Membership membership() {
+    var built = membership;
+    if (built == null) {
+      synchronized (this) {
+        built = membership;
+        if (built == null) {
+          built = new Membership(Map.copyOf(hiking));
+          membership = built;
+        }
+      }
     }
-    return membership;
+    return built;
   }
 
   /**
@@ -382,6 +389,9 @@ public class KozicaProfile implements Profile {
         .distinct()
         .sorted(TRAIL_ORDER)
         .toList();
+    if (relations.isEmpty()) {
+      return;
+    }
     var membership = membership();
     var trails = relations.stream()
         .flatMap(relation -> membership.ownersOf(relation.id()).stream())
