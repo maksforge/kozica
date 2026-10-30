@@ -292,6 +292,20 @@ Kozica has its own icon: a Tatra chamois on a crag. The hike recording notificat
 Kozica ma własną ikonę: kozicę tatrzańską na skale. Powiadomienie o nagrywaniu wycieczki i nazwy nowych wycieczek są teraz w języku wybranym w ustawieniach Kozicy także na Androidzie 12 i starszym, a nie w języku telefonu.
 ```
 
+### 0.12.0 — walking times from your own pace
+
+**English** — 269/500:
+
+```
+Walking times can now be your own. Once you have recorded 3 hikes of 3 km and an hour or more, Kozica learns your pace from them and times every Route by it, with the signposts' time beside each total. Your times are never shorter than three quarters of the signposts'.
+```
+
+**Polish** — 282/500:
+
+```
+Czasy przejścia mogą być teraz Twoje. Gdy zapiszesz 3 wycieczki na co najmniej 3 km i godzinę, Kozica pozna z nich Twoje tempo i według niego policzy czas każdej trasy, z czasem z drogowskazów obok każdej sumy. Twoje czasy nigdy nie są krótsze niż trzy czwarte czasu z drogowskazów.
+```
+
 ### 0.11.0 — tap and search Trails, and fresher map data
 
 **English** — 380/500:
