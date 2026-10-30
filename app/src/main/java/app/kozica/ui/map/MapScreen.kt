@@ -1025,12 +1025,12 @@ private fun MapCamera.toCameraUpdate(): CameraUpdate =
 
 private fun CameraPosition.toMapCamera(): MapCamera? = target?.let { MapCamera(it.latitude, it.longitude, zoom) }
 
-/** How old the fix was on arrival, against the clock it was stamped by. */
+/** Freshness by the arrival's clock, the window by the fix's own `time` (docs/phase-6b.md, Readings). */
 private fun Location.toFollowFix() =
     FollowFix(
         latitude = latitude,
         longitude = longitude,
         accuracyMetres = if (hasAccuracy()) accuracy.toDouble() else Double.MAX_VALUE,
         ageMillis = (SystemClock.elapsedRealtimeNanos() - elapsedRealtimeNanos) / 1_000_000,
-        atMillis = elapsedRealtimeNanos / 1_000_000,
+        atMillis = time,
     )
