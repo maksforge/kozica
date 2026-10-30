@@ -537,6 +537,24 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `a tap that offers several Trails stops a Route along the shown one and frees its button`() =
+        runTest {
+            val viewModel = routingViewModel(loadTrail = ::trailDetail, routeAlong = { awaitCancellation() })
+            viewModel.tapTrails(listOf(7))
+            settled(viewModel) { it.trail.shown?.id == 7L }
+            viewModel.planAlongTrail("Trail 7")
+            assertTrue(settled(viewModel) { true }.trail.planningRoute)
+
+            viewModel.tapTrails(listOf(7, 8))
+            settled(viewModel) { it.trail.choices.size == 2 }
+            viewModel.dismissTrailChoices()
+
+            val trail = settled(viewModel) { it.trail.choices.isEmpty() }.trail
+            assertEquals(7L, trail.shown?.id)
+            assertFalse(trail.planningRoute)
+        }
+
+    @Test
     fun `a fit asked for is never asked again by selecting or closing another Trail`() =
         runTest {
             val viewModel = routingViewModel(loadTrail = ::trailDetail)
