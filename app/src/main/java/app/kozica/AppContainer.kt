@@ -20,6 +20,8 @@ import app.kozica.data.buildAppDatabase
 import app.kozica.data.gpx.GPX_DIRECTORY
 import app.kozica.data.gpx.GpxFiles
 import app.kozica.data.hikes.HikeHeights
+import app.kozica.data.hikes.Pace
+import app.kozica.data.hikes.Paces
 import app.kozica.data.location.positionFixes
 import app.kozica.data.location.withPositionOverride
 import app.kozica.data.regions.RegionFiles
@@ -47,7 +49,10 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -144,6 +149,10 @@ class AppContainer(
     val hikes by lazy { HikeRepository(database.hikeDao(), hikeHeights::of, { media.delete(it) }, media::persistPhoto) }
 
     val recorder by lazy { Recorder(appContext, hikes, ::places, applicationScope) }
+
+    val pace: StateFlow<Pace?> by lazy {
+        Paces(hikes.observeEnded(), hikes::ruleSeconds).pace.stateIn(applicationScope, SharingStarted.Eagerly, null)
+    }
 
     /** A saved Route the Routes tab asked the map to show, until the map takes it. */
     val routeToShow = MutableStateFlow<String?>(null)

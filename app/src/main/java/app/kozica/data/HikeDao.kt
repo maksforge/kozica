@@ -19,7 +19,7 @@ interface HikeDao {
     fun observe(id: String): Flow<HikeEntity?>
 
     @Query(
-        "SELECT id, name, startedAt, endedAt, metres, ascentMetres, ascentFromGps FROM hikes " +
+        "SELECT id, name, startedAt, endedAt, metres, movingSeconds, ascentMetres, ascentFromGps FROM hikes " +
             "WHERE endedAt IS NOT NULL ORDER BY startedAt DESC",
     )
     fun observeEnded(): Flow<List<HikeSummary>>
@@ -195,6 +195,7 @@ data class HikeSummary(
     val startedAt: Instant,
     val endedAt: Instant?,
     val metres: Double,
+    val movingSeconds: Long,
     val ascentMetres: Double?,
     val ascentFromGps: Boolean,
 )

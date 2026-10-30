@@ -645,6 +645,7 @@ fun MapScreen(
             } else if (state.route.points.isNotEmpty()) {
                 RouteSheet(
                     route = state.route,
+                    pace = state.pace,
                     onRemove = viewModel::removePoint,
                     onMove = viewModel::movePoint,
                     onReverse = viewModel::reverse,
