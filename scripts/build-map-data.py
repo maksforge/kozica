@@ -301,15 +301,18 @@ def tile(source: Path, region: str, archive: Path) -> Path:
 
 
 def check_determinism(stamp: str, cuts: dict[str, list[Path]], sources: dict[str, Path], built: dict[str, Path]) -> None:
-    """Merges and tiles each Region a second time from the same cuts and compares bytes."""
+    """Merges and tiles each Region a second time from the same cuts and compares bytes, the archive's and the
+    membership file's."""
     for region, region_cuts in cuts.items():
         again = merge(stamp, region_cuts, WORK / "determinism" / f"{region}.osm.pbf")
         if again.read_bytes() != sources[region].read_bytes():
             fail(f"two merges of {region} differ")
         second = tile(again, region, WORK / "determinism" / f"{region}.pmtiles")
-        if second.read_bytes() != built[region].read_bytes():
-            fail(f"two builds of {region} differ: {built[region]} {second}")
-        print(f"deterministic: two builds of {region} are byte-identical")
+        for suffix in (".pmtiles", ".trails"):
+            one, two = built[region].with_suffix(suffix), second.with_suffix(suffix)
+            if two.read_bytes() != one.read_bytes():
+                fail(f"two builds of {one.name} differ: {one} {two}")
+            print(f"deterministic: two builds of {one.name} are byte-identical")
 
 
 def network(sources: dict[str, Path], target: Path) -> Path:
