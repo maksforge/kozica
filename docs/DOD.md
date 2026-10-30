@@ -103,25 +103,15 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       access granted, *then* that version's release notes in every locale on an ordinary branch (never
       on release-please's own, which it force-pushes), *then* the AAB and the listing go up together.
 
-- [ ] **Find what slowed the map's pan since phase 4's gate.** Phase 6c's R3 (2026-10-30) read the
-      Tatry pan at p95 24–26 ms at zoom 11 and 250–315 ms at zoom 13, with 24–38 frames over 100 ms
-      and no rest between swipes, on builds both before and after checkpoint C. Phase 4's R1
-      (2026-10-22) read 17.5–19.5 ms with none over 100 ms. R3's apparatus was not phase 4's in four
-      ways: the swipes at y 600–800, not 1100–1300; a warm-up pan before the baseline; the camera at
-      49.237, 19.978, not 49.23, 20.0; and the full relief pack hand-pushed, not the 13.7 MB Tatry
-      cut. So first rerun phase 4's R1 command exactly, on the current build: if it reads as phase 4
-      did, the gap is the apparatus, not the code. Only then suspect the code — B's archives (pin
-      4952), the network and walks loaded at start, something rendering continuously — and bisect
-      with that same apparatus, before the next release.
-      **Rerun 2026-10-30** at 6c9374d, phase 4's R1 command exactly but with the full relief pack
-      (257 MB; the Tatry cut is no longer on the PC). Relief off, the baseline: p95 21.5 ms at zoom 11
-      and 19.4 ms at zoom 13, phase 4's numbers within 2 ms. Relief on: 23.4 and **257.6 ms**. So the
-      zoom-13 slowdown is the full relief pack, not this phase's code; the relief gate (ADR-0009,
-      phase 4's R1) was read on a 13.7 MB cut and has not been read on the pack that ships. Separate
-      from it, every run now logs 22–38 frames over 100 ms and **no rest between swipes**, relief on
-      or off, where phase 4 saw none and nine: something renders between the swipes, or the frame
-      log counts differently. Next: R1 with the shipped relief against a build before phase 5, to
-      learn whether the relief itself is slow at zoom 13; and the frame log over an idle minute.
+- [ ] **Tell a pause from a stall in the frame log, before the next frame gate.** The zoom-13
+      "slowdown" phase 6c's R3 read was the measurement. Rerun 2026-10-30 at 6c9374d, phase 4's R1
+      command exactly with the full relief pack: each 1.2 s pause between swipes is now split by a
+      frame or two into gaps under 500 ms, so `frame-stats.py`'s default keeps them as frames, and
+      with the relief on fewer frames are drawn, so they pass 5 % of the sample and p95 lands on them
+      (249.5 ms). With `--idle 100` the pan reads 19.8 ms relief on, 18.7 ms off, as phase 4 did. Still
+      open: what draws a frame during a pause, where phase 4 saw clean rests; and making the script
+      tell a pause from a stall (e.g. by logging the swipes' times), since `--idle 100` makes "no
+      frame over 100 ms" true by construction.
 
 ## Standing checks that never close
 
