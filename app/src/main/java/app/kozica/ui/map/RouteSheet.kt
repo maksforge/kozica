@@ -59,6 +59,10 @@ internal fun RouteSheet(
     onReverse: () -> Unit,
     onShowSaveDialog: (Boolean) -> Unit,
     onSave: (name: String) -> Unit,
+    onFollow: () -> Unit,
+    onStopFollowing: () -> Unit,
+    onFindMe: () -> Unit,
+    onDismissNote: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -99,13 +103,37 @@ internal fun RouteSheet(
                 route.unavailable -> Text(stringResource(R.string.map_planning_missing))
                 route.points.size < 2 -> Unit
                 planned == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                route.following != null -> Following(route, route.following, pace, locale)
                 else -> {
                     Totals(planned, pace, locale)
                     PaceLine(pace, locale)
                 }
             }
-            if (route.points.size >= 2) {
+            route.followingNote?.let { note ->
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(
+                            when (note) {
+                                FollowingNote.ENDED -> R.string.following_ended
+                                FollowingNote.ROUTE_CHANGED -> R.string.following_route_changed
+                            },
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = onDismissNote) { Text(stringResource(R.string.action_ok)) }
+                }
+            }
+            if (route.following != null) {
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = onFindMe) { Text(stringResource(R.string.following_find_me)) }
+                    TextButton(onClick = onStopFollowing) { Text(stringResource(R.string.following_stop)) }
+                }
+            } else if (route.points.size >= 2) {
+                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    if (planned?.complete == true) {
+                        TextButton(onClick = onFollow) { Text(stringResource(R.string.following_follow)) }
+                    }
                     TextButton(onClick = onReverse) { Text(stringResource(R.string.route_reverse)) }
                     TextButton(onClick = {
                         draft = route.name ?: route.suggestedName
@@ -215,6 +243,40 @@ private fun Total(
         beside?.let {
             Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+/** docs/phase-6b.md § 3: what is left to the next point and to the end, from the user's Progress. */
+@Composable
+private fun Following(
+    route: RouteUiState,
+    following: FollowingUiState,
+    pace: Pace?,
+    locale: Locale,
+) {
+    val left = following.left
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.hair)) {
+        if (left.nextPoint < route.points.lastIndex) {
+            Text(
+                stringResource(
+                    R.string.following_next,
+                    route.points[left.nextPoint].name(),
+                    length(left.toNext.metres, locale),
+                    wholeMetres(left.toNext.ascent, locale),
+                    walkingTime(pace.minutes(left.toNext.seconds), locale),
+                ),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+        Text(
+            stringResource(
+                R.string.following_to_end,
+                length(left.toEnd.metres, locale),
+                wholeMetres(left.toEnd.ascent, locale),
+                walkingTime(pace.minutes(left.toEnd.seconds), locale),
+            ),
+            style = MaterialTheme.typography.titleMedium,
+        )
     }
 }
 

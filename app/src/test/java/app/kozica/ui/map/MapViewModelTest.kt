@@ -186,6 +186,23 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `changing the Route while following it stops following, and says why`() =
+        runTest {
+            val viewModel = routingViewModel()
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            settled(viewModel) { it.route.planned?.complete == true && !it.route.planning }
+
+            viewModel.follow()
+            assertNotNull(settled(viewModel) { it.route.following != null }.route.following)
+            viewModel.reverse()
+
+            val route = settled(viewModel) { it.route.followingNote != null }.route
+            assertNull(route.following)
+            assertEquals(FollowingNote.ROUTE_CHANGED, route.followingNote)
+        }
+
+    @Test
     fun `long-pressed points join in the order pressed, however long their names take`() =
         runTest {
             val viewModel = routingViewModel(places = { awaitCancellation() })
