@@ -398,4 +398,5 @@
     <!-- A Section's line in the search results; %1$s is its Long-distance Trail's name as OSM writes it. -->
     <string name="search_section_of">Section of %1$s</string>
     <string name="search_kind_long_distance">Long-distance Trail</string>
+    <string name="trail_plan_route">Plan a Route along it</string>
 </resources>

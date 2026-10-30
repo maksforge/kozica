@@ -8,6 +8,7 @@ import app.kozica.data.routes.Approach
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.RouteSample
+import app.kozica.data.routes.TrailPoint
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.w3c.dom.Document
@@ -87,6 +88,24 @@ class GpxTest {
         assertEquals(listOf("1012.5", "1987.0"), gpx.texts("ele"))
         assertEquals(listOf("49.2702000", "49.2321000"), gpx.all("wpt").map { it.getAttribute("lat") })
         assertEquals(listOf("Kuźnice"), gpx.all("wpt").flatMap { it.texts("name") })
+    }
+
+    @Test
+    fun `a Trail's GPX is its walk, a trkseg per stretch, with the OSM attribution`() {
+        val line =
+            listOf(
+                TrailPoint(49.27, 19.98, 0.0, 1010.0, breakBefore = false),
+                TrailPoint(49.26, 19.98, 1100.0, 1100.0, breakBefore = false),
+                TrailPoint(49.24, 19.98, 1100.0, 1500.0, breakBefore = true),
+                TrailPoint(49.23, 19.98, 2200.0, 1987.0, breakBefore = false),
+            )
+        val gpx = parse(trailGpx("Bulwary Słowackiego – Kasprowy Wierch", line))
+
+        assertEquals(listOf(2, 2), gpx.all("trkseg").map { it.getElementsByTagName("trkpt").length })
+        assertEquals(listOf("1010.0", "1100.0", "1500.0", "1987.0"), gpx.texts("ele"))
+        assertEquals("OpenStreetMap contributors", gpx.all("copyright").single().getAttribute("author"))
+        assertEquals(listOf("Bulwary Słowackiego – Kasprowy Wierch"), gpx.all("trk").flatMap { it.texts("name") })
+        assertEquals(0, gpx.all("wpt").size)
     }
 
     @Test
