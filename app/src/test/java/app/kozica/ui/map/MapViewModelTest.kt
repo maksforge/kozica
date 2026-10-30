@@ -21,9 +21,11 @@ import app.kozica.data.routes.TrailDetail
 import app.kozica.data.routes.TrailFacts
 import app.kozica.data.routes.TrailNetwork
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -47,6 +49,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -439,6 +443,53 @@ class MapViewModelTest {
             assertEquals(3, settled(viewModel) { it.trail.shown == null }.route.points.size)
         }
 
+    @Test
+    fun `a fit asked for is never asked again by selecting or closing another Trail`() =
+        runTest {
+            val viewModel = routingViewModel(loadTrail = ::trailDetail)
+            viewModel.tapTrails(listOf(7))
+            settled(viewModel) { it.trail.shown?.id == 7L }
+            viewModel.showWholeTrail()
+            settled(viewModel) { it.trail.fits == 1 }
+
+            viewModel.tapTrails(listOf(8))
+            assertEquals(1, settled(viewModel) { it.trail.shown?.id == 8L }.trail.fits)
+            viewModel.chooseTrail(trailDetail(9))
+            assertEquals(1, settled(viewModel) { it.trail.shown?.id == 9L }.trail.fits)
+            viewModel.closeTrail()
+            assertEquals(1, settled(viewModel) { it.trail.shown == null }.trail.fits)
+        }
+
+    @Test
+    fun `a Long-distance Trail that loads after its Section is closed or replaced is dropped`() =
+        runTest {
+            Executors.newSingleThreadExecutor().asCoroutineDispatcher().use { io ->
+                for (leave in listOf<(MapViewModel) -> Unit>({ it.closeTrail() }, { it.chooseTrail(trailDetail(8)) })) {
+                    val release = CountDownLatch(1)
+                    val viewModel =
+                        routingViewModel(
+                            io = io,
+                            loadTrail = { trailDetail(it, longDistanceId = 100) },
+                            sectionsOf = {
+                                release.await()
+                                listOf(7, 8, 9)
+                            },
+                        )
+                    viewModel.tapTrails(listOf(7))
+                    settled(viewModel) { it.trail.shown?.id == 7L }
+
+                    viewModel.showLongDistance()
+                    leave(viewModel)
+                    release.countDown()
+                    withContext(io) {}
+
+                    val trail = settled(viewModel) { it.trail.shown?.id != 7L }.trail
+                    assertEquals(listOfNotNull(trail.shown), trail.highlighted)
+                    assertEquals(0, trail.fits)
+                }
+            }
+        }
+
     private suspend fun settled(
         viewModel: MapViewModel,
         until: (MapUiState) -> Boolean,
@@ -477,6 +528,8 @@ private fun routingViewModel(
     saveRoute: suspend (String?, String, List<RoutePoint>) -> String = { _, _, _ -> "" },
     observeName: (String) -> Flow<String?> = { emptyFlow() },
     loadTrail: (Long) -> TrailDetail? = { null },
+    sectionsOf: (Long) -> List<Long> = { emptyList() },
+    io: CoroutineDispatcher = Dispatchers.Main,
 ) = MapViewModel(
     regions = flowOf(emptyList()),
     preferences = AppPreferences(MemoryPreferences()),
@@ -487,43 +540,46 @@ private fun routingViewModel(
     confirmFetch = { false },
     places = places,
     planRoute = planRoute,
-    io = Dispatchers.Main,
+    io = io,
     compute = Dispatchers.Main,
     routeToShow = routeToShow,
     loadRoute = loadRoute,
     saveRoute = saveRoute,
     observeName = observeName,
     loadTrail = loadTrail,
+    sectionsOf = sectionsOf,
 )
 
-private fun trailDetail(id: Long) =
-    TrailDetail(
-        TrailFacts(
-            id = id,
-            name = "Trail $id",
-            namePl = null,
-            ref = null,
-            colour = TrailColour.GREEN,
-            symbol = null,
-            from = null,
-            to = null,
-            longDistanceId = null,
-            longDistanceName = null,
-            startLatitude = 49.0,
-            startLongitude = 20.0,
-            endLatitude = 49.0,
-            endLongitude = 20.02,
-            metres = 1460.0,
-            ascent = 0.0,
-            descent = 0.0,
-            gaps = 0,
-            south = 49.0,
-            west = 20.0,
-            north = 49.0,
-            east = 20.02,
-        ),
-        line = emptyList(),
-    )
+private fun trailDetail(
+    id: Long,
+    longDistanceId: Long? = null,
+) = TrailDetail(
+    TrailFacts(
+        id = id,
+        name = "Trail $id",
+        namePl = null,
+        ref = null,
+        colour = TrailColour.GREEN,
+        symbol = null,
+        from = null,
+        to = null,
+        longDistanceId = longDistanceId,
+        longDistanceName = longDistanceId?.let { "Long-distance $it" },
+        startLatitude = 49.0,
+        startLongitude = 20.0,
+        endLatitude = 49.0,
+        endLongitude = 20.02,
+        metres = 1460.0,
+        ascent = 0.0,
+        descent = 0.0,
+        gaps = 0,
+        south = 49.0,
+        west = 20.0,
+        north = 49.0,
+        east = 20.02,
+    ),
+    line = emptyList(),
+)
 
 private fun mapViewModel(
     regions: Flow<List<Region>>,

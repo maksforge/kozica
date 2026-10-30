@@ -408,7 +408,8 @@ fun MapScreen(
         )
     }
 
-    var fittedTrail by rememberSaveable { mutableIntStateOf(0) }
+    // Not saved: a ViewModel rebuilt after process death counts its fits from 0 again.
+    var fittedTrail by remember { mutableIntStateOf(state.trail.fits) }
     LaunchedEffect(map, state.trail.fits, regions, placed) {
         val map = map ?: return@LaunchedEffect
         if (regions == null || !placed || state.trail.fits == fittedTrail) return@LaunchedEffect
@@ -427,9 +428,6 @@ fun MapScreen(
         map.animateCamera(
             CameraUpdateFactory.newLatLngBounds(bounds, sidePadding, topPadding, sidePadding, bottomPadding),
         )
-    }
-    BackHandler(enabled = state.trail.shown != null || state.trail.choices.isNotEmpty()) {
-        if (state.trail.choices.isNotEmpty()) viewModel.dismissTrailChoices() else viewModel.closeTrail()
     }
 
     val hike = state.hike
@@ -452,6 +450,10 @@ fun MapScreen(
         )
     }
     BackHandler(enabled = hike != null) { if (hike?.keep != null) viewModel.cancelTrim() else viewModel.closeHike() }
+    // After the Hike's, which a chooser opens over: the handler composed last wins.
+    BackHandler(enabled = state.trail.shown != null || state.trail.choices.isNotEmpty()) {
+        if (state.trail.choices.isNotEmpty()) viewModel.dismissTrailChoices() else viewModel.closeTrail()
+    }
 
     val offered = state.search.offered
     var centred by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -650,13 +652,17 @@ fun MapScreen(
     }
 }
 
-/** The Trail ids drawn under a finger's width around [at], from every Region's `trails` layer. */
+/** The Trail ids drawn under a finger's width around [at], from every Region's `trails` layer and, below zoom 10, the highlighted walk. */
 private fun MapLibreMap.trailsAt(
     at: LatLng,
     style: Style?,
     radius: Float,
 ): List<Long> {
-    val layers = style?.layers?.map { it.id }?.filter { it.startsWith("$TRAILS_LAYER-") } ?: return emptyList()
+    val layers =
+        style
+            ?.layers
+            ?.map { it.id }
+            ?.filter { it.startsWith("$TRAILS_LAYER-") || it == TRAIL_WALK_LAYER } ?: return emptyList()
     val point = projection.toScreenLocation(at)
     val box = RectF(point.x - radius, point.y - radius, point.x + radius, point.y + radius)
     return queryRenderedFeatures(box, *layers.toTypedArray())

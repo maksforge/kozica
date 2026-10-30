@@ -4,10 +4,15 @@ import app.kozica.data.routes.Approach
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.RouteSample
+import app.kozica.data.routes.TrailColour
+import app.kozica.data.routes.TrailDetail
+import app.kozica.data.routes.TrailFacts
+import app.kozica.data.routes.TrailPoint
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -35,6 +40,51 @@ class RouteLayerTest {
     @Test
     fun `points alone are numbered before a Route is planned`() {
         assertEquals(listOf("Point 1"), features(routeGeoJson(listOf(RoutePoint(49.0, 20.0)), null)))
+    }
+
+    @Test
+    fun `each stretch of a highlighted walk carries its Trail's id, for a tap below zoom 10`() {
+        val facts =
+            TrailFacts(
+                id = 7,
+                name = null,
+                namePl = null,
+                ref = null,
+                colour = TrailColour.RED,
+                symbol = null,
+                from = null,
+                to = null,
+                longDistanceId = null,
+                longDistanceName = null,
+                startLatitude = 49.0,
+                startLongitude = 20.0,
+                endLatitude = 49.0,
+                endLongitude = 20.003,
+                metres = 300.0,
+                ascent = 0.0,
+                descent = 0.0,
+                gaps = 1,
+                south = 49.0,
+                west = 20.0,
+                north = 49.0,
+                east = 20.003,
+            )
+        val line = (0..3).map { TrailPoint(49.0, 20.0 + it / 1000.0, it * 100.0, 0.0, breakBefore = it == 2) }
+        val ids =
+            Json
+                .parseToJsonElement(
+                    trailWalkGeoJson(listOf(TrailDetail(facts, line))),
+                ).jsonObject
+                .getValue("features")
+                .jsonArray
+                .map {
+                    it.jsonObject
+                        .getValue("properties")
+                        .jsonObject
+                        .getValue("trail")
+                        .jsonPrimitive.long
+                }
+        assertEquals(listOf(7L, 7L), ids)
     }
 
     private fun features(geoJson: String) =

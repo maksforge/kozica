@@ -1,6 +1,7 @@
 package app.kozica.ui.map
 
 import app.kozica.data.routes.TrailColour
+import app.kozica.data.routes.TrailDetail
 import app.kozica.data.routes.TrailFacts
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -67,6 +68,25 @@ class TrailTitleTest {
         val other = unnamed.copy(colour = TrailColour.OTHER)
         assertEquals("Marked Trail", trailTitle(other, null, null, english))
         assertEquals("Znakowany szlak", trailTitle(other, null, null, polish))
+    }
+
+    @Test
+    fun `a Section has its own title, with its Long-distance Trail above it`() {
+        val section =
+            unnamed.copy(
+                from = "Ustroń",
+                to = "Wołosate",
+                longDistanceId = 9,
+                longDistanceName = "Główny Szlak Beskidzki",
+            )
+        assertEquals(
+            TrailHeading(above = "Główny Szlak Beskidzki", title = "Red Trail: Ustroń – Wołosate"),
+            trailHeading(TrailDetail(section, line = emptyList()), english),
+        )
+        assertEquals(
+            TrailHeading(above = null, title = "Czerwony szlak"),
+            trailHeading(TrailDetail(unnamed, line = emptyList()), polish),
+        )
     }
 
     private fun words(

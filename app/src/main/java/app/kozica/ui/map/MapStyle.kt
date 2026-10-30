@@ -137,5 +137,8 @@ internal const val SELECTED_TRAIL_LAYERS = "trail-selected"
 internal const val HIKE_TRACK_SOURCE = "hike-track"
 internal const val HIKE_PHOTOS_SOURCE = "hike-photos"
 
+/** The layer drawing [TRAIL_WALK_SOURCE], which a tap is checked against below zoom 10. */
+internal const val TRAIL_WALK_LAYER = "trail-walk"
+
 /** The layer drawing [HIKE_PHOTOS_SOURCE], which a tap is checked against. */
 internal const val HIKE_PHOTOS_LAYER = "hike-photos"

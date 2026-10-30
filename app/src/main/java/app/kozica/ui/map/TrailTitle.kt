@@ -5,6 +5,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import app.kozica.R
 import app.kozica.data.routes.TrailColour
+import app.kozica.data.routes.TrailDetail
 import app.kozica.data.routes.TrailFacts
 
 /**
@@ -47,6 +48,20 @@ internal fun trailTitle(
         words.withEnds.format(colour, ends.first, ends.second)
     }
 }
+
+/** What names a Trail on its sheet and in the chooser: its [title], and a Section's Long-distance Trail [above] it. */
+internal data class TrailHeading(
+    val above: String?,
+    val title: String,
+)
+
+internal fun trailHeading(
+    trail: TrailDetail,
+    words: TrailWords,
+) = TrailHeading(
+    above = trail.facts.longDistanceName,
+    title = trailTitle(trail.facts, trail.nearestFrom, trail.nearestTo, words),
+)
 
 @Composable
 internal fun rememberTrailWords(): TrailWords {

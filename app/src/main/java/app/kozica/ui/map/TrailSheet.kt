@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.kozica.R
 import app.kozica.data.hikes.ProfilePoint
@@ -52,19 +53,11 @@ internal fun TrailSheet(
     SheetSurface(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.tight)) {
             TrailMark(facts.colour, facts.symbol)
-            Column(Modifier.weight(1f).padding(horizontal = Spacing.tight)) {
-                facts.longDistanceName?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Text(
-                    trailTitle(facts, trail.nearestFrom, trail.nearestTo, words),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
+            HeadingText(
+                trailHeading(trail, words),
+                MaterialTheme.typography.titleMedium,
+                Modifier.weight(1f).padding(horizontal = Spacing.tight),
+            )
             IconButton(onClick = onClose) {
                 Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.trail_close))
             }
@@ -104,6 +97,24 @@ internal fun TrailSheet(
     }
 }
 
+@Composable
+private fun HeadingText(
+    heading: TrailHeading,
+    titleStyle: TextStyle,
+    modifier: Modifier,
+) {
+    Column(modifier) {
+        heading.above?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(heading.title, style = titleStyle)
+    }
+}
+
 /** The Trails under a tap that found several, each by its mark and title (docs/phase-6c.md § 3). */
 @Composable
 internal fun TrailChooser(
@@ -130,19 +141,11 @@ internal fun TrailChooser(
                 modifier = Modifier.fillMaxWidth().clickable { onPick(choice) }.padding(vertical = Spacing.tight),
             ) {
                 TrailMark(choice.facts.colour, choice.facts.symbol)
-                Column(Modifier.padding(start = Spacing.tight)) {
-                    choice.facts.longDistanceName?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Text(
-                        trailTitle(choice.facts, choice.nearestFrom, choice.nearestTo, words),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+                HeadingText(
+                    trailHeading(choice, words),
+                    MaterialTheme.typography.bodyLarge,
+                    Modifier.padding(start = Spacing.tight),
+                )
             }
         }
     }

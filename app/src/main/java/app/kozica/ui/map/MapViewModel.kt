@@ -225,7 +225,7 @@ data class RouteUiState(
  * @param shown the selected Trail, which sets a planned Route aside until it is closed.
  * @param choices the Trails under a tap that found several, until one is picked.
  * @param whole every Section of [shown]'s Long-distance Trail, once asked for; shown with it.
- * @param fits counts the asks to fit the camera to the highlighted Trails.
+ * @param fits counts the asks to fit the camera to the highlighted Trails, across selections, so a new one never reads as an ask.
  */
 data class TrailUiState(
     val shown: TrailDetail? = null,
@@ -336,6 +336,8 @@ class MapViewModel(
     private val trail = MutableStateFlow(TrailUiState())
 
     private var tapping: Job? = null
+
+    private var loadingLongDistance: Job? = null
 
     private val hikeKeep = MutableStateFlow<ClosedFloatingPointRange<Double>?>(null)
 
@@ -547,6 +549,7 @@ class MapViewModel(
      */
     fun tapTrails(ids: List<Long>) {
         tapping?.cancel()
+        loadingLongDistance?.cancel()
         if (ids.isEmpty()) {
             closeTrail()
             return
@@ -570,26 +573,28 @@ class MapViewModel(
     private fun showTrail(picked: TrailDetail) {
         if (shownHike.value != null) closeHike()
         dismissOffer()
-        trail.value = TrailUiState(shown = picked)
+        loadingLongDistance?.cancel()
+        trail.update { TrailUiState(shown = picked, fits = it.fits) }
     }
 
     fun closeTrail() {
         tapping?.cancel()
-        trail.value = TrailUiState()
+        loadingLongDistance?.cancel()
+        trail.update { TrailUiState(fits = it.fits) }
     }
 
     fun showWholeTrail() = trail.update { it.copy(whole = emptyList(), fits = it.fits + 1) }
 
     /** Every Section of the selected one's Long-distance Trail, highlighted together. */
     fun showLongDistance() {
-        val longDistance =
-            trail.value.shown
-                ?.facts
-                ?.longDistanceId ?: return
-        viewModelScope.launch {
-            val sections = withContext(io) { sectionsOf(longDistance).mapNotNull(loadTrail) }
-            trail.update { it.copy(whole = sections, fits = it.fits + 1) }
-        }
+        val section = trail.value.shown ?: return
+        val longDistance = section.facts.longDistanceId ?: return
+        loadingLongDistance?.cancel()
+        loadingLongDistance =
+            viewModelScope.launch {
+                val sections = withContext(io) { sectionsOf(longDistance).mapNotNull(loadTrail) }
+                trail.update { if (it.shown?.id != section.id) it else it.copy(whole = sections, fits = it.fits + 1) }
+            }
     }
 
     fun closeHike() {
