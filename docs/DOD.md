@@ -104,14 +104,13 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       access granted, *then* that version's release notes in every locale on an ordinary branch (never
       on release-please's own, which it force-pushes), *then* the AAB and the listing go up together.
 
-- [x] **Tell a pause from a stall in the frame log, before the next frame gate.** The zoom-13
-      "slowdown" phase 6c's R3 read was `frame-stats.py` counting pauses between swipes as frames.
-      The debug frame log now also logs `camera=move`, `camera=idle` and `map=idle`, and the script
-      times only the frames from a move to the map's first idle after the camera's, so a gap at rest
-      is a pause and a long one in motion a stall, with no threshold to tune. What drew the frames
-      during a pause, where phase 4 saw clean rests, is mostly the position dot: with location
-      revoked the zoom-13 pan's rests drew 25 frames, against 159 with it. R3 reread this way: no
-      frame over 100 ms (2026-10-30, [`phase-6c.md`](phase-6c.md)).
+- [x] **Tell a pause from a stall in the frame log, before the next frame gate.** Done 2026-10-30;
+      the rule is `frame-stats.py`'s, R3's reread is in [`phase-6c.md`](phase-6c.md).
+- [ ] **Weigh the position dot's redraws at rest against real use.** With the dot shown the map
+      draws 3–4 frames about every 470 ms with nothing moving: the zoom-13 pan's rests drew 159
+      frames, 25 with location revoked (2026-10-30, test phone). Provisional until the closed test
+      shows what it costs a real hike's battery; if it matters, find which of the dot's animations
+      draws them before changing anything, and if it does not, drop this item.
 
 ## Standing checks that never close
 
