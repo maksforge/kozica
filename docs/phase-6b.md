@@ -152,7 +152,10 @@ Trail runs within 40 m, at junctions and on parallel paths, so it pushes the cou
 `scripts/track-offsets.py`, beside `track-gaps.py`: reads `gate.db` (each fix's time, position and
 accuracy) and GPX files (a Hike's export, with each point's time) against `trails.network`, and
 prints per file the hours, the fixes, the distance percentiles, and every firing with its start
-time, length, coordinates and, from `gate.db`, its accuracy. The Tracks come from the owner's phone:
+time, length, coordinates and, from `gate.db`, its accuracy. A firing is counted by § 4's rule as
+the banner will apply it: from `gate.db`, only the fixes that count (§ 3: none worse than 50 m), with
+the accuracy term; from both, 30 s across the fixes received, a gap of more than 30 s between two of
+them restarting the count rather than satisfying it. The Tracks come from the owner's phone:
 a `gate.db` from a walk on marked Trails with the gate recorder running, and a few Hikes walked on
 marked Trails exported from the Play build's share sheet; if there are neither, one recorded walk on
 marked Trails with the gate recorder beside it, ideally with forest or a gorge in it. The same Hikes
@@ -291,10 +294,11 @@ distance: a gap of more than 30 s between two of them (the screen off, a pocket)
 at the fix after it rather than satisfying it. Both numbers are A's to confirm and R5's to check, and
 are changed only by a reading.
 
-**"Back to the Route"** plans a leg over the Trails from the user's position to the point of the line
-the same rule picks from Progress (§ 3): the nearest within the forward window, or an earlier pass
-in it where that is no more than the leaving distance farther, so on an out-and-back the leg rejoins
-the way up rather than skipping the summit on the way down. It is planned by the router as it is,
+**"Back to the Route"** plans a leg over the Trails from the user's position to a point of the line
+chosen by its own rule, since a user who has left has no pass within the leaving distance: the
+nearest point of the line within the forward window ahead of Progress, or an earlier pass in the
+window where that is no more than the leaving distance farther, so on an out-and-back the leg
+rejoins the way up rather than skipping the summit on the way down. It is planned by the router as it is,
 and drawn apart from the Route, timed by the Pace. The saved Route is not changed. The leg goes when
 the user is back on the Route, or when it is planned again. Off the Trails the router starts from
 the nearest Trail, as phase 5's ends do, and the leg says how far that is. Replanning the rest of
@@ -384,8 +388,12 @@ calls it:
 its own `applicationId`. R2 restores the Play build's manual export (Backup, everything) into the
 debug build on the owner's phone: the restore checks the archive's format and schema version and
 nothing about the package (`BackupRestorer`), so a debug build at the same schema or a newer one
-takes it. R5 runs on that same debug build, so its times are the owner's Pace rather than the
-signposts'.
+takes it. Before the restore, the debug build needs by hand what Play's packs and base assets bring,
+since installed over adb it has none (*Layout* in `CLAUDE.md`): the relief hand-pushed to `files/relief/relief.pmtiles`
+(`RegionSource.kt`), without which `HikeHeights.of` falls back to GPS heights and no Hike counts;
+and for R5, the Regions to `files/regions/<id>.pmtiles` and the network and name index to
+`files/network/` (`NetworkSource.kt`). R5 runs on that same debug build, so its times are the
+owner's Pace rather than the signposts'.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
