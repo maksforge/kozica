@@ -110,13 +110,14 @@ class FollowingTest {
     }
 
     @Test
-    fun `partway along the time left only falls, and at a pace it is rounded up`() {
+    fun `partway along a leg the time left is the rule's rest of the way, and at a pace it is rounded up`() {
         val lefts = (0..20).map { outAndBack.left(Progress(it * 100.0 + 37, 0)).toEnd.seconds }
         val pace = Pace(1.2, hikes = 3, floored = false)
         val partway = outAndBack.left(Progress(437.0, 0)).toEnd
 
         assertTrue(lefts.zipWithNext().all { (a, b) -> b <= a })
-        assertTrue(pace.minutes(partway.seconds) * 60 >= partway.seconds * 1.2)
+        assertEquals(3300 - 1800 * 0.437, partway.seconds, 1e-6)
+        assertEquals(55, pace.minutes(partway.seconds))
         assertEquals(600.0 * (1000 - 437) / 1000, partway.ascent, 6.0)
     }
 
