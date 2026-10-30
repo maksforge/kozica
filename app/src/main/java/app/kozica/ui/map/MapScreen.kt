@@ -115,6 +115,7 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.time.Instant
+import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
 /** Home: the map, drawn by MapLibre from the Regions on the phone (docs/phase-2.md § 2). */
@@ -261,6 +262,7 @@ fun MapScreen(
     // MapLibre's compass shows once the map is turned, top-end by default: under the Safety and
     // Settings buttons and the banners below them unless it is moved below that whole overlay.
     var overlayHeight by remember { mutableIntStateOf(0) }
+    var mapHeight by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val compassRim = with(density) { CompassDrawable.RIM.roundToPx() }
     val compassEnd = with(density) { Spacing.tight.roundToPx() }
@@ -527,7 +529,7 @@ fun MapScreen(
         if (following) state.fix?.let { viewModel.followFix(it.toFollowFix()) }
     }
     // The top padding puts the user in the part of the map the search row and the banners leave open.
-    LaunchedEffect(map, following, keepInView, state.fix, overlayHeight) {
+    LaunchedEffect(map, following, keepInView, state.fix, overlayHeight, mapHeight) {
         val map = map ?: return@LaunchedEffect
         val fix = state.fix ?: return@LaunchedEffect
         if (!following || !keepInView) return@LaunchedEffect
@@ -537,7 +539,7 @@ fun MapScreen(
                     map.cameraPosition,
                 ).target(LatLng(fix.latitude, fix.longitude))
                 .bearing(0.0)
-                .padding(0.0, overlayHeight.toDouble(), 0.0, 0.0)
+                .padding(0.0, min(overlayHeight, mapHeight / 2).toDouble(), 0.0, 0.0)
         map.animateCamera(CameraUpdateFactory.newCameraPosition(northUp.build()))
     }
     LaunchedEffect(map, following) {
@@ -586,7 +588,7 @@ fun MapScreen(
         // A share of the height rather than a fixed one, so landscape and a large font still leave the map.
         val sheetHeight = maxHeight / 2
         Column(Modifier.fillMaxSize()) {
-            Box(Modifier.weight(1f).fillMaxWidth()) {
+            Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { mapHeight = it.height }) {
                 AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
                 // Above the position button, which search results reach down over.
                 Column(
