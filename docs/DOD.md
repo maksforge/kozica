@@ -109,9 +109,9 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       The debug frame log now also logs `camera=move`, `camera=idle` and `map=idle`, and the script
       times only the frames from a move to the map's first idle after the camera's, so a gap at rest
       is a pause and a long one in motion a stall, with no threshold to tune. What drew the frames
-      during a pause, where phase 4 saw clean rests, is the position dot: with location revoked the
-      zoom-13 pan's rests drew 25 frames, against 159 with it. R3 reread this way: no frame over
-      100 ms (2026-10-30, [`phase-6c.md`](phase-6c.md)).
+      during a pause, where phase 4 saw clean rests, is mostly the position dot: with location
+      revoked the zoom-13 pan's rests drew 25 frames, against 159 with it. R3 reread this way: no
+      frame over 100 ms (2026-10-30, [`phase-6c.md`](phase-6c.md)).
 
 ## Standing checks that never close
 
