@@ -158,7 +158,7 @@ class AppContainer(
                 it.state is RegionState.Ready
             },
             hikes::ruleSeconds,
-        ).pace.stateIn(applicationScope, SharingStarted.Eagerly, null)
+        ).pace.stateIn(applicationScope, SharingStarted.WhileSubscribed(5_000), null)
     }
 
     /** A saved Route the Routes tab asked the map to show, until the map takes it. */
