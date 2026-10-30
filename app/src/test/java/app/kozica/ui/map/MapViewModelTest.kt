@@ -16,6 +16,7 @@ import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.SearchResult
 import app.kozica.data.routes.TrailColour
 import app.kozica.data.routes.TrailDetail
 import app.kozica.data.routes.TrailFacts
@@ -233,7 +234,7 @@ class MapViewModelTest {
         runTest {
             val viewModel = routingViewModel()
             val place = Place(1, PlaceKind.PEAK, 49.0, 20.01, "tatry", "Kopa")
-            viewModel.pick(place)
+            viewModel.pick(SearchResult.AtPlace(place))
             viewModel.addOffered()
 
             val state = settled(viewModel) { it.route.points.isNotEmpty() }

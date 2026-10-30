@@ -87,6 +87,11 @@ class TrailTitleTest {
             TrailHeading(above = null, title = "Czerwony szlak"),
             trailHeading(TrailDetail(unnamed, line = emptyList()), polish),
         )
+        val sameName = section.copy(namePl = "Magistrala Tatrzańska", longDistanceName = "Magistrala Tatrzańska")
+        assertEquals(
+            TrailHeading(above = null, title = "Magistrala Tatrzańska"),
+            trailHeading(TrailDetail(sameName, line = emptyList()), polish),
+        )
     }
 
     private fun words(

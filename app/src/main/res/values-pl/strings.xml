@@ -35,7 +35,7 @@
     <string name="map_confirm">Potwierdź</string>
     <string name="map_download_failed">Pobieranie nie powiodło się</string>
 
-    <string name="map_search">Szukaj miejsc</string>
+    <string name="map_search">Szukaj miejsc i szlaków</string>
     <string name="map_search_clear">Wyczyść wyszukiwanie</string>
     <string name="map_planning_missing">Wyszukiwania i planowania nie ma w tej wersji</string>
     <string name="route_start">Start</string>
@@ -296,4 +296,7 @@
     <string name="trail_colour_other">Znakowany</string>
     <string name="trail_with_gaps">z przerwami</string>
     <string name="trail_other_way">W drugą stronę: %1$s w górę, %2$s w dół</string>
+    <string name="search_kind_trail">Szlak</string>
+    <string name="search_section_of">Odcinek: %1$s</string>
+    <string name="search_kind_long_distance">Szlak długodystansowy</string>
 </resources>
