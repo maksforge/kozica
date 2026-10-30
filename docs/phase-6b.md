@@ -58,6 +58,24 @@ reverse):
   they are the sheet's own totals and neither rises as Progress moves on.
 - A replay faster than walking stalls Progress by design: the window is 6 km/h since the last match,
   so R3's fixes keep their own times, and a jump ahead is "Find me on the Route"'s.
+
+**Settled in D** (by the agent, 2026-10-30, building it; each is the owner's to reverse):
+
+- `LEAVING_MILLIS` (30 s) is both the count and the gap that restarts it, beside C's constants. A
+  gap restarts the count, not a banner already shown: only a counting fix back within the distance
+  clears it.
+- Leaving counts from Follow, before any Progress, so Follow tapped away from the Route raises the
+  banner after 30 s. Its distance is to the nearest point of the whole line, at the latest counting fix.
+- The leg back's window is C's, from the last match to the fix it is planned from, so the longer the
+  user has been off, the farther ahead it may rejoin. Before any Progress it is the whole line.
+- "Back to the Route" stays on the banner and plans the leg again. A leg still planning when the user
+  is back is dropped. Where the router finds no way, the sheet says "No way back to the Route over
+  the Trails".
+- "From the nearest Trail" shows past 50 m, the Route sheet's threshold for its points.
+- The leg is dashed in the tertiary palette (the style's `route_back`), its sheet line in
+  `tertiary`, so it reads as neither the Route nor a Track; a selected Trail hides it with the Route.
+- Polish: "Jesteś poza trasą" needs no gender, and the action is the noun "Powrót na trasę" (the app
+  observes rather than advises).
 ---
 
 ## 0. What this phase inherits

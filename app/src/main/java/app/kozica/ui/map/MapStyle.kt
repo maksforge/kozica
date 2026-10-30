@@ -129,6 +129,7 @@ private fun pmtiles(
 private const val RELIEF_SOURCE = "relief"
 private const val CONTOURS_SOURCE = "contours"
 internal const val ROUTE_SOURCE = "route"
+internal const val ROUTE_BACK_SOURCE = "route-back"
 internal const val TRAIL_WALK_SOURCE = "trail-walk"
 
 /** The style's layers a tap is checked against, by the id they are expanded from, and those the selection draws. */

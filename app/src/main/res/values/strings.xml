@@ -99,6 +99,15 @@
     <string name="following_not_found">Can\'t find you on the Route yet</string>
     <string name="following_needs_precise">Following needs precise location</string>
     <string name="following_location_settings">Location settings</string>
+    <!-- The banner while following once the user has been off the Route for 30 s (docs/phase-6b.md § 4). %1$s is a distance, such as "120 m": how far they are from the Route's line. -->
+    <string name="following_left">You\'ve left the Route · %1$s from it</string>
+    <!-- The banner's action: plans a way over the Trails from the user back to the Route. A noun phrase, not an instruction. -->
+    <string name="following_back">Back to the Route</string>
+    <!-- The way back, under what is left. %1$s is a distance, such as "650 m"; %2$s a time, such as "15 min". -->
+    <string name="following_back_leg">Back to the Route: %1$s · %2$s</string>
+    <!-- Under the way back when the user is away from every Trail. %1$s is a distance, such as "80 m". -->
+    <string name="following_back_off_trail">Back to the Route from the nearest Trail, %1$s away</string>
+    <string name="following_back_no_way">No way back to the Route over the Trails</string>
     <!-- Beside a walking time worked out from the user's own pace: the time by the signposts' rule. %1$s is a time, such as "4 h 50 min". -->
     <string name="route_time_signposts">signposts %1$s</string>
     <!-- Under a Route's totals, where the user's own pace sets its times (docs/phase-6b.md § 2). %1$s is the factor, such as "0.85", against the time on the signposts; %2$d is how many recorded Hikes it comes from. -->

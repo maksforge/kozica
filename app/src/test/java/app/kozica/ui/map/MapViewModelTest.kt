@@ -292,6 +292,93 @@ class MapViewModelTest {
             assertNull(route.followingNote)
         }
 
+    /** A followed Route with Progress at its middle, and a fix [north] metres north of it at [atMillis]. */
+    private suspend fun followedMidway(viewModel: MapViewModel): (north: Double, atMillis: Long) -> FollowFix {
+        viewModel.addPoint(49.0, 20.0)
+        viewModel.addPoint(49.0, 20.02)
+        val line = settled(viewModel) { it.route.planned?.complete == true && !it.route.planning }.route.planned!!.line
+        viewModel.follow()
+        val midway = line[line.size / 2]
+        viewModel.followFix(FollowFix(midway.latitude, midway.longitude, 10.0, 0, 0))
+        settled(viewModel) { it.route.following?.progress != null }
+        return { north, at -> FollowFix(midway.latitude + north / 111_195.0, midway.longitude, 10.0, 0, at) }
+    }
+
+    @Test
+    fun `the banner shows after 30 s off the Route, and goes with the leg back at the first fix on it`() =
+        runTest {
+            val viewModel = routingViewModel()
+            val near = followedMidway(viewModel)
+
+            for (at in 5_000L..30_000L step 5_000) viewModel.followFix(near(150.0, at))
+            assertFalse(
+                settled(viewModel) { it.route.following?.leaving != null }
+                    .route.following!!
+                    .leaving!!
+                    .shown,
+            )
+            viewModel.followFix(near(150.0, 35_000))
+            assertTrue(
+                settled(viewModel) {
+                    it.route.following
+                        ?.leaving
+                        ?.shown == true
+                }.route.following!!.leaving!!.shown,
+            )
+
+            viewModel.backToRoute(near(150.0, 35_000))
+            val back = settled(viewModel) { it.route.following?.back is LegBack.Found }.route.following!!.back
+            assertTrue((back as LegBack.Found).planned.metres > 0)
+
+            viewModel.followFix(near(0.0, 40_000))
+            val following = settled(viewModel) { it.route.following?.leaving == null }.route.following!!
+            assertNull(following.back)
+        }
+
+    @Test
+    fun `a leg back still planning when the user is back on the Route never lands`() =
+        runTest {
+            val held = CompletableDeferred<Unit>()
+            var plans = 0
+            val viewModel =
+                routingViewModel(planRoute = {
+                    if (plans++ > 0) held.await()
+                    RoutePlanner(fixture).plan(it)
+                })
+            val near = followedMidway(viewModel)
+            for (at in 5_000L..35_000L step 5_000) viewModel.followFix(near(150.0, at))
+            viewModel.backToRoute(near(150.0, 35_000))
+            settled(viewModel) { it.route.following?.back == LegBack.Planning }
+
+            viewModel.followFix(near(0.0, 40_000))
+            held.complete(Unit)
+
+            assertNull(settled(viewModel) { it.route.following?.leaving == null }.route.following!!.back)
+            assertEquals(2, plans)
+        }
+
+    @Test
+    fun `asking again plans the leg again, and Stop takes it with following`() =
+        runTest {
+            var plans = 0
+            val viewModel =
+                routingViewModel(planRoute = {
+                    plans++
+                    RoutePlanner(fixture).plan(it)
+                })
+            val near = followedMidway(viewModel)
+            for (at in 5_000L..35_000L step 5_000) viewModel.followFix(near(150.0, at))
+            viewModel.backToRoute(near(150.0, 35_000))
+            settled(viewModel) { it.route.following?.back is LegBack.Found }
+
+            viewModel.followFix(near(200.0, 40_000))
+            viewModel.backToRoute(near(200.0, 40_000))
+            settled(viewModel) { it.route.following?.back is LegBack.Found && plans == 3 }
+            viewModel.stopFollowing()
+
+            assertNull(settled(viewModel) { it.route.following == null }.route.following)
+        }
+
     @Test
     fun `long-pressed points join in the order pressed, however long their names take`() =
         runTest {

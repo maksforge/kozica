@@ -4,6 +4,7 @@ import app.kozica.data.hikes.Pace
 import app.kozica.data.hikes.minutes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.PI
@@ -165,5 +166,90 @@ class FollowingTest {
 
         assertTrue(outAndBack.ended(nearEnd, fix(1995.0, 0)))
         assertFalse(outAndBack.ended(Progress(1000.0, 0), fix(1995.0, 0)))
+    }
+
+    private fun leavingOver(vararg fixes: FollowFix): Leaving? =
+        fixes.fold(null as Leaving?) { leaving, fix -> leaving.after(fix, outAndBack.distance(fix)) }
+
+    private fun offEvery5s(
+        from: Long,
+        to: Long,
+        east: Double = 60.0,
+        accuracy: Double = 10.0,
+    ) = (from..to step 5_000).map { fix(300.0, it, accuracy = accuracy, east = east) }.toTypedArray()
+
+    @Test
+    fun `leaving shows after 30 s of counting fixes beyond the distance, and not before`() {
+        val before = leavingOver(*offEvery5s(0, 25_000))
+        val after = leavingOver(*offEvery5s(0, 30_000))
+
+        assertFalse(before!!.shown)
+        assertTrue(after!!.shown)
+        assertEquals(60.0, after.metres, 1.0)
+    }
+
+    @Test
+    fun `the fix's own accuracy widens the leaving distance`() {
+        assertNull(leavingOver(*offEvery5s(0, 60_000, east = 45.0, accuracy = 48.0)))
+        assertTrue(leavingOver(*offEvery5s(0, 60_000, east = 45.0))!!.shown)
+    }
+
+    @Test
+    fun `a gap over 30 s restarts the count rather than satisfying it`() {
+        val gapped = offEvery5s(0, 10_000) + offEvery5s(45_000, 70_000)
+
+        assertFalse(leavingOver(*gapped)!!.shown)
+        assertTrue(leavingOver(*gapped, fix(300.0, 75_000, east = 60.0))!!.shown)
+    }
+
+    @Test
+    fun `once shown, leaving clears only at a counting fix back within the distance`() {
+        val shown = leavingOver(*offEvery5s(0, 30_000))!!
+        val back = fix(300.0, 35_000)
+
+        assertEquals(shown, shown.after(back.copy(ageMillis = 31_000), 0.0))
+        assertEquals(shown, shown.after(back.copy(accuracyMetres = 60.0), 0.0))
+        assertTrue(shown.after(fix(300.0, 120_000, east = 60.0), 60.0)!!.shown)
+        assertNull(shown.after(back, outAndBack.distance(back)))
+    }
+
+    /** Up 1 km and back down a path [apart] metres east of the way up. */
+    private fun upAndDownApart(apart: Double) =
+        FollowedLine(
+            outAndBackRoute.copy(
+                line =
+                    outAndBackRoute.line.map {
+                        if (it.metres > 1000) it.copy(longitude = 20.0 + apart * degreesPerMetre / 0.656) else it
+                    },
+            ),
+        )
+
+    private fun assertNear(
+        latitude: Double,
+        longitude: Double,
+        point: RoutePoint,
+    ) = assertTrue(Router.metres(latitude, longitude, point.latitude, point.longitude) < 2.0)
+
+    @Test
+    fun `the leg back on an out-and-back rejoins the way up, never skipping ahead to the way down`() {
+        val line = upAndDownApart(30.0)
+        val off = fix(800.0, 600_000, east = 100.0)
+
+        assertNear(at(800.0), 20.0, line.rejoin(Progress(500.0, 0), off))
+    }
+
+    @Test
+    fun `a later pass much nearer than the leaving distance wins the rejoin`() {
+        val line = upAndDownApart(90.0)
+        val off = fix(800.0, 600_000, east = 150.0)
+
+        assertNear(at(800.0), 20.0 + 90.0 * degreesPerMetre / 0.656, line.rejoin(Progress(500.0, 0), off))
+    }
+
+    @Test
+    fun `the leg back rejoins within the window ahead of Progress`() {
+        val off = fix(800.0, 60_000, east = 100.0)
+
+        assertNear(at(WINDOW_LEAST_METRES), 20.0, outAndBack.rejoin(Progress(0.0, 0), off))
     }
 }
