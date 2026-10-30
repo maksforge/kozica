@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.13.0](https://github.com/maksforge/kozica/compare/v0.12.0...v0.13.0) (2026-10-30)
+
+
+### Features
+
+* say when you've left a followed Route, and plan a leg back to it ([1930933](https://github.com/maksforge/kozica/commit/1930933e6455c8d29abbc9aa6a186cacdbfa91d5))
+
+
+### Bug Fixes
+
+* cap the follow camera's top padding at half the map's height ([949ac38](https://github.com/maksforge/kozica/commit/949ac386ffd4c1065619514091ef5b781c9b93fd))
+* draw the leg back above the Track, in its own colour ([753f459](https://github.com/maksforge/kozica/commit/753f4596ec565c12b666f12b71a494fb6d8c607f))
+* keep the user below the search row and banners while following ([1fdf9ff](https://github.com/maksforge/kozica/commit/1fdf9ff35be42e8b9cf2d9f2d5c468b5f46fed0f))
+
 ## [0.12.0](https://github.com/maksforge/kozica/compare/v0.11.0...v0.12.0) (2026-10-30)
 
 
