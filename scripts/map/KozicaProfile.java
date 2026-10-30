@@ -13,12 +13,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.locationtech.jts.geom.LineString;
 
 /** The Region schema of docs/phase-2.md § 3: its layer table is the filter. */
@@ -45,27 +51,37 @@ public class KozicaProfile implements Profile {
       "viewpoint", 13, "parking", 13, "spring", 14, "stop", 14);
   private static final Map<String, Integer> PLACES = Map.of("town", 8, "village", 10, "hamlet", 12);
 
+  private static final Set<String> REGIONAL = Set.of("rwn", "lwn");
+  private static final Set<String> LONG_DISTANCE = Set.of("nwn", "iwn");
+  private static final Set<String> ROLES =
+      Set.of("forward", "backward", "alternative", "excursion", "approach", "branch");
+
   record Trail(long id, String colour, String symbol, String ref, long[] ways) implements OsmRelationInfo {}
 
   record Boundary(long id, String kind) implements OsmRelationInfo {}
+
+  record Member(boolean way, long ref, String role) {}
+
+  record Hiking(long id, String network, boolean marked, Trail marking, List<Member> members) {}
 
   private static final Comparator<Trail> TRAIL_ORDER =
       Comparator.comparingInt((Trail trail) -> colourRank(trail.colour())).thenComparingLong(Trail::id);
 
   private final Map<Long, long[]> wayEnds = new ConcurrentHashMap<>();
-  private final Set<Long> trailWays = ConcurrentHashMap.newKeySet();
+  private final Map<Long, Hiking> hiking = new ConcurrentHashMap<>();
+  private Membership membership;
 
   public static void main(String[] args) throws IOException {
     var arguments = Arguments.fromArgs(args);
     var profile = new KozicaProfile();
-    var trailWaysPath = arguments.file("trail_ways", "where to list every Trail's way ids, for the network", null);
+    var trailsPath = arguments.file("trails", "where to write every Trail's membership, for the network", null);
     Planetiler.create(arguments)
         .setProfile(profile)
         .addOsmSource("osm", arguments.inputFile("osm_path", "the Region's cut", Path.of("region.osm.pbf")))
         .overwriteOutput(Path.of("region.pmtiles"))
         .run();
-    if (trailWaysPath != null) {
-      Files.write(trailWaysPath, new TreeSet<>(profile.trailWays).stream().map(String::valueOf).toList());
+    if (trailsPath != null) {
+      Files.write(trailsPath, profile.membership().lines());
     }
   }
 
@@ -79,15 +95,180 @@ public class KozicaProfile implements Profile {
 
   @Override
   public List<OsmRelationInfo> preprocessOsmRelation(OsmElement.Relation relation) {
-    if (relation.hasTag("type", "route") && relation.hasTag("route", "hiking")) {
+    if (relation.hasTag("route", "hiking") && relation.hasTag("type", "route", "superroute")) {
       var trail = trailOf(relation);
-      for (var way : trail.ways()) {
-        trailWays.add(way);
-      }
-      return List.of(trail);
+      var members = relation.members().stream()
+          .filter(member -> member.type() != OsmElement.Type.NODE)
+          .map(member -> new Member(member.type() == OsmElement.Type.WAY, member.ref(),
+              ROLES.contains(member.role()) ? member.role() : ""))
+          .toList();
+      var marked = !relation.getString("osmc:symbol", "").isBlank() || !relation.getString("colour", "").isBlank();
+      hiking.put(relation.id(), new Hiking(relation.id(), relation.getString("network", ""), marked, trail, members));
+      return relation.hasTag("type", "route") ? List.of(trail) : null;
     }
     var kind = boundaryKind(relation);
     return kind == null ? null : List.of(new Boundary(relation.id(), kind));
+  }
+
+  private synchronized Membership membership() {
+    if (membership == null) {
+      membership = new Membership(Map.copyOf(hiking));
+    }
+    return membership;
+  }
+
+  /**
+   * Which relations are Trails, and which Trails each relation's ways belong to (docs/phase-6c.md § 2):
+   * a regional parent takes the members marked as it is as its pieces, a Long-distance Trail takes its
+   * members with a role, and its own ways belong to no Trail.
+   */
+  static final class Membership {
+    private final Map<Long, Hiking> hiking;
+    private final Map<Long, List<Long>> parents = new HashMap<>();
+    private final Map<Long, Set<Long>> owners = new HashMap<>();
+    private final Map<Long, Trail> markings = new HashMap<>();
+
+    Membership(Map<Long, Hiking> hiking) {
+      this.hiking = hiking;
+      for (var relation : new TreeMap<>(hiking).values()) {
+        for (var piece : piecesOf(relation)) {
+          parents.computeIfAbsent(piece.id(), id -> new ArrayList<>()).add(relation.id());
+        }
+      }
+      // Filled here, before the tiles are built, because processFeature reads them from many threads.
+      for (var id : hiking.keySet()) {
+        for (var trail : owners(id)) {
+          markings.computeIfAbsent(trail, this::markingFor);
+        }
+      }
+    }
+
+    private boolean longDistance(Hiking relation) {
+      return LONG_DISTANCE.contains(relation.network())
+          && relation.members().stream().anyMatch(member -> !member.way() && member.role().isEmpty());
+    }
+
+    private List<Hiking> memberRelations(Hiking relation) {
+      return relation.members().stream()
+          .filter(member -> !member.way() && hiking.containsKey(member.ref()))
+          .map(member -> hiking.get(member.ref()))
+          .toList();
+    }
+
+    private List<Hiking> piecesOf(Hiking relation) {
+      if (longDistance(relation)) {
+        return List.of();
+      }
+      if (LONG_DISTANCE.contains(relation.network())) {
+        var withRole = relation.members().stream()
+            .filter(member -> !member.way() && !member.role().isEmpty())
+            .map(Member::ref)
+            .collect(Collectors.toSet());
+        return memberRelations(relation).stream().filter(member -> withRole.contains(member.id())).toList();
+      }
+      if (!REGIONAL.contains(relation.network())) {
+        return List.of();
+      }
+      var marking = markingOf(relation);
+      return marking == null ? List.of()
+          : memberRelations(relation).stream().filter(member -> sameMarking(member.marking(), marking)).toList();
+    }
+
+    private Trail markingOf(Hiking relation) {
+      if (relation.marked()) {
+        return relation.marking();
+      }
+      var shared = memberRelations(relation).stream()
+          .map(Hiking::marking)
+          .map(marking -> List.of(marking.colour(), Objects.toString(marking.symbol(), "")))
+          .distinct()
+          .toList();
+      return shared.size() == 1 ? memberRelations(relation).get(0).marking() : null;
+    }
+
+    private static boolean sameMarking(Trail a, Trail b) {
+      return a.colour().equals(b.colour()) && Objects.equals(a.symbol(), b.symbol());
+    }
+
+    private boolean isTrail(Hiking relation) {
+      return !parents.containsKey(relation.id())
+          && !longDistance(relation)
+          && (relation.members().stream().anyMatch(Member::way) || !piecesOf(relation).isEmpty());
+    }
+
+    Set<Long> ownersOf(long id) {
+      return owners.getOrDefault(id, Set.of());
+    }
+
+    private Set<Long> owners(long id) {
+      var found = owners.get(id);
+      if (found == null) {
+        found = new TreeSet<>();
+        owners.put(id, found);
+        var relation = hiking.get(id);
+        if (relation != null && isTrail(relation)) {
+          found.add(id);
+        }
+        for (var parent : parents.getOrDefault(id, List.of())) {
+          found.addAll(owners(parent));
+        }
+      }
+      return found;
+    }
+
+    Trail trail(long id) {
+      return markings.get(id);
+    }
+
+    private Trail markingFor(long id) {
+      var relation = hiking.get(id);
+      var marking = markingOf(relation);
+      var own = relation.marking();
+      return marking == null ? own : new Trail(id, marking.colour(), marking.symbol(), own.ref(), own.ways());
+    }
+
+    private void members(Hiking relation, String role, Set<Long> seen, Map<Long, String> out) {
+      if (!seen.add(relation.id())) {
+        return;
+      }
+      var pieces = piecesOf(relation).stream().map(Hiking::id).collect(Collectors.toSet());
+      for (var member : relation.members()) {
+        var taken = role.isEmpty() ? member.role() : role;
+        if (member.way()) {
+          out.putIfAbsent(member.ref(), taken.isEmpty() ? String.valueOf(member.ref()) : member.ref() + "/" + taken);
+        } else if (pieces.contains(member.ref())) {
+          members(hiking.get(member.ref()), taken, seen, out);
+        }
+      }
+    }
+
+    /**
+     * {@code trail <id> <colour> <symbol> <way>[/<role>] ...}, a piece's ways at its place and in its order,
+     * then {@code long <id> <section> ...}: build-network.py's input, sorted so two builds write the same bytes.
+     */
+    List<String> lines() {
+      var out = new ArrayList<String>();
+      for (var relation : new TreeMap<>(hiking).values()) {
+        if (isTrail(relation)) {
+          var trail = trail(relation.id());
+          var ways = new LinkedHashMap<Long, String>();
+          members(relation, "", new HashSet<>(), ways);
+          out.add(String.join("\t", "trail", String.valueOf(relation.id()), trail.colour(),
+              Objects.toString(trail.symbol(), ""), String.join(" ", ways.values())));
+        }
+      }
+      for (var relation : new TreeMap<>(hiking).values()) {
+        if (longDistance(relation)) {
+          var sections = relation.members().stream()
+              .filter(member -> !member.way() && member.role().isEmpty() && hiking.containsKey(member.ref()))
+              .map(member -> String.valueOf(member.ref()))
+              .distinct()
+              .toList();
+          out.add(String.join("\t", "long", String.valueOf(relation.id()), String.join(" ", sections)));
+        }
+      }
+      return out;
+    }
   }
 
   private static Trail trailOf(OsmElement.Relation relation) {
@@ -196,9 +377,16 @@ public class KozicaProfile implements Profile {
 
   /** One feature per Trail per way, each way oriented by its reference relation (docs/phase-2.md § 3). */
   private void trails(SourceFeature feature, FeatureCollector features) {
-    var trails = feature.relationInfo(Trail.class).stream()
+    var relations = feature.relationInfo(Trail.class).stream()
         .map(OsmReader.RelationMember::relation)
         .distinct()
+        .sorted(TRAIL_ORDER)
+        .toList();
+    var membership = membership();
+    var trails = relations.stream()
+        .flatMap(relation -> membership.ownersOf(relation.id()).stream())
+        .distinct()
+        .map(membership::trail)
         .sorted(TRAIL_ORDER)
         .toList();
     if (trails.isEmpty()) {
@@ -211,13 +399,14 @@ public class KozicaProfile implements Profile {
       e.log("trail way " + feature.id());
       return;
     }
-    if (reversed(feature.id(), trails.get(0), line)) {
+    if (reversed(feature.id(), relations.get(0), line)) {
       line = line.reverse();
     }
     for (var index = 0; index < trails.size(); index++) {
       var trail = trails.get(index);
       features.geometry("trails", line)
           .setMinZoom(10)
+          .setAttr("trail", trail.id())
           .setAttr("colour", trail.colour())
           .setAttr("symbol", trail.symbol())
           .setAttr("index", index)

@@ -1,4 +1,4 @@
-"""docs/phase-5.md § Tests, for build-network.py:
+"""docs/phase-5.md § Tests and docs/phase-6c.md § Tests, for build-network.py:
 
     python3 -m unittest scripts/test_build_network.py
     python3 scripts/test_build_network.py --write    # rewrites the fixture TrailNetworkTest reads
@@ -145,6 +145,134 @@ class EdgesTest(unittest.TestCase):
     def test_a_junction_or_a_change_of_walking_cuts_an_edge(self):
         self.assertEqual(len(edges_of({1: way([1, 2]), 2: way([2, 3]), 3: way([2, 5])})), 3)
         self.assertEqual(len(edges_of({1: way([1, 2]), 2: way([2, 3], {"highway": "path", "oneway": "yes"})})), 2)
+
+
+class EndsTest(unittest.TestCase):
+    def test_the_ends_each_convention_writes(self):
+        ends = network["ends_of"]
+        self.assertEqual(ends({"from": "Kuźnice", "to": "Kasprowy Wierch", "description": "A - B"}),
+                         ("Kuźnice", "Kasprowy Wierch"))
+        self.assertEqual(ends({"description": "Biely Váh - Kriváň", "note": "C - D"}), ("Biely Váh", "Kriváň"))
+        self.assertEqual(ends({"osmc:name": "Hronov - Kohoutov", "note:cs": "C - D"}), ("Hronov", "Kohoutov"))
+        self.assertEqual(ends({"note:cs": "Hronov - Kohoutov", "note": "C - D"}), ("Hronov", "Kohoutov"))
+        self.assertEqual(ends({"note": "Rázc. pri Žabom potoku – Rysy"}), ("Rázc. pri Žabom potoku", "Rysy"))
+        self.assertEqual(ends({"description": "Štrbské Pleso - Popradské pleso - Rysy"}), ("Štrbské Pleso", "Rysy"))
+        self.assertEqual(ends({"description": "[Ž] Náchod - Dobrošov"}), ("Náchod", "Dobrošov"))
+
+    def test_a_colour_code_leaves_a_name(self):
+        self.assertEqual(network["without_colour_code"]("[Č] Hronov - Kohoutov"), "Hronov - Kohoutov")
+        self.assertEqual(network["without_colour_code"]("Główny Szlak Beskidzki"), "Główny Szlak Beskidzki")
+
+    def test_a_mapper_s_sentence_is_no_ends(self):
+        ends = network["ends_of"]
+        self.assertIsNone(ends({"description": "Kriváň"}))
+        self.assertIsNone(ends({"note": "szlak dziki, operator nie znany, prowadzi z doliny - na grzbiet"}))
+        self.assertIsNone(ends({"note:cs": "Větrník; Česká Čermná - Nad Bělovsí"}))
+        self.assertIsNone(ends({"from": "Kuźnice"}))
+
+
+TrailLine = network["TrailLine"]
+
+
+class MembershipTest(unittest.TestCase):
+    def test_a_trail_crossing_regions_is_one_line(self):
+        west = ({7: TrailLine("red", "red_bar", [(1, ""), (2, "")])}, {9: [7]})
+        east = ({7: TrailLine("red", "red_bar", [(2, ""), (3, "excursion"), (4, "")]), 8: TrailLine("blue", None, [(5, "")])},
+                {9: [8]})
+        trails, sections = network["merge_trails"]([west, east])
+        self.assertEqual(trails[7].members, [(2, ""), (3, "excursion"), (4, ""), (1, "")])
+        self.assertEqual(sorted(trails), [7, 8])
+        self.assertEqual(sections, {9: [7, 8]})
+
+    def test_the_profile_s_lines(self):
+        trails, sections = network["parse_trails"]("trail\t5\tgreen\tgreen_bar\t11 12/excursion\nlong\t6\t5 7\n")
+        self.assertEqual(trails[5], TrailLine("green", "green_bar", [(11, ""), (12, "excursion")]))
+        self.assertEqual(sections, {6: [5, 7]})
+
+    def test_a_nest_belongs_to_its_outermost(self):
+        self.assertEqual(network["outermost"]({1: [2, 3], 3: [4, 5], 6: [7]}), {2: 1, 4: 1, 5: 1, 7: 6})
+
+
+def place(ref: int) -> tuple[float, float]:
+    """Node refs on a grid: tens north, units east, about 700 m apart."""
+    return 49.0 + (ref // 10) / 160, 20.0 + (ref % 10) / 100
+
+
+def grid_way(refs: list[int]) -> tuple:
+    return [(ref, *place(ref)) for ref in refs], {}
+
+
+def walked(ways: dict, trails: dict, number: int):
+    edges = edges_of_trails(ways, trails)
+    walk = network["walk_of"](number, trails[number], edges, ways, network["trail_edges"](edges))
+    legs = []
+    for step in walk.steps:
+        refs = [ref for ref, _, _ in edges[step.edge].points]
+        refs = refs[::-1] if step.reversed else refs
+        legs.append((refs[0], refs[-1], step.breaks))
+    return walk, edges, legs
+
+
+def edges_of_trails(ways: dict, trails: dict) -> list:
+    return network["edges_of"](ways, Rising(), network["memberships_of"](trails))[0]
+
+
+class WalkTest(unittest.TestCase):
+    def assert_joined(self, legs: list) -> None:
+        for (_, end, _), (start, _, breaks) in zip(legs, legs[1:]):
+            if not breaks:
+                self.assertEqual(end, start)
+
+    def test_a_line_starts_at_the_end_nearer_its_first_member(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3]), 3: grid_way([3, 4]), 4: grid_way([2, 12])}
+        trails = {7: TrailLine("red", None, [(3, ""), (1, ""), (2, "")]), 8: TrailLine("blue", None, [(4, "")])}
+        walk, edges, legs = walked(ways, trails, 7)
+        self.assertEqual((legs[0][0], legs[-1][1]), (4, 1))
+        self.assert_joined(legs)
+        self.assertEqual(walk.shape, "line")
+        self.assertAlmostEqual(sum(edges[s.edge].length for s in walk.steps),
+                               sum(e.length for e in edges if (7, True) in e.trails))
+
+    def test_a_loop_goes_round_once_from_its_first_way(self):
+        ways = {1: grid_way([1, 2, 12]), 2: grid_way([12, 11, 1])}
+        walk, _, legs = walked(ways, {7: TrailLine("red", None, [(2, ""), (1, "")])}, 7)
+        self.assertEqual(walk.shape, "loop")
+        self.assertEqual(legs[0][0], 12)
+        self.assertEqual(legs[-1][1], 12)
+        self.assertEqual(len(legs), 2)
+        self.assert_joined(legs)
+
+    def test_a_gap_is_recorded_and_walked_across(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([5, 6]), 3: grid_way([2, 3])}
+        walk, _, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (3, ""), (2, "")])}, 7)
+        self.assertEqual(walk.shape, "gaps")
+        self.assertEqual(legs, [(1, 3, False), (5, 6, True)])
+
+    def test_an_alternative_is_the_trail_s_but_off_its_walk(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3]), 3: grid_way([2, 12])}
+        walk, edges, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (2, ""), (3, "alternative")])}, 7)
+        self.assertEqual(legs, [(1, 2, False), (2, 3, False)])
+        self.assertTrue(any((7, False) in edge.trails for edge in edges))
+        self.assertEqual(walk.shape, "line")
+
+    def test_a_branch_with_no_role_takes_the_longest_path(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3, 4, 5]), 3: grid_way([2, 12])}
+        walk, _, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (3, ""), (2, "")])}, 7)
+        self.assertEqual(walk.shape, "branch")
+        self.assertEqual((legs[0][0], legs[-1][1]), (1, 5))
+        self.assert_joined(legs)
+
+
+class TrailCutTest(unittest.TestCase):
+    def test_a_trail_s_end_is_an_edge_s_end(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3])}
+        edges = edges_of_trails(ways, {7: TrailLine("red", None, [(1, "")]), 8: TrailLine("blue", None, [(1, ""), (2, "")])})
+        self.assertEqual(sorted((e.points[0][0], e.points[-1][0]) for e in edges), [(1, 2), (2, 3)])
+
+    def test_the_same_trails_on_both_ways_join_them(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3])}
+        edges = edges_of_trails(ways, {7: TrailLine("red", None, [(1, ""), (2, "")])})
+        self.assertEqual(len(edges), 1)
 
 
 if __name__ == "__main__":

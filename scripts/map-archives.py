@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RECORD = ROOT / "map-data" / "MAP-DATA-INPUTS.txt"
 DOWNLOADS = ROOT / "map-data" / "reused"
 BASE_ASSETS = ROOT / "map-data" / "base-assets"
-BASE_FILES = ("trails.network", "places.sqlite")
+BASE_FILES = ("trails.network", "trails.edges", "places.sqlite")
 INPUTS = [
     "scripts/build-map-data.py",
     "scripts/build-network.py",

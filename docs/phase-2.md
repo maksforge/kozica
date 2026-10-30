@@ -212,7 +212,7 @@ the filter. ADR-0007's amendment written with C records that.
 | `boundaries` | lines: the member ways of `boundary=national_park` relations, `boundary=protected_area` with `protect_class=2`, and `boundary=administrative` with `admin_level=2` | 6 | `kind` |
 | `roads` | `highway=` motorway to `unclassified`, `residential`, `service`, `track` | 8–13 by class | `kind` |
 | `paths` | `highway=path\|footway\|steps\|bridleway`, `sac_scale` | 12 | `kind`, `sac_scale` |
-| `trails` | each `route=hiking` relation's member ways | 10 | `colour`, `symbol`, `index`, `count`, `ref` |
+| `trails` | each `route=hiking` relation's member ways | 10 | `trail` (the Trail's relation id, phase 6c § 2), `colour`, `symbol`, `index`, `count`, `ref` |
 | `pois` | nodes, and a point on the surface of each area: Huts `tourism=alpine_hut`; Shelters `tourism=wilderness_hut`, `amenity=shelter` but not `shelter_type=public_transport`; `natural=peak\|saddle\|spring`, `mountain_pass=yes`, `tourism=viewpoint`; the way in and out: `amenity=parking`, `highway=bus_stop`, `railway=station\|halt` | 11–14 by kind | `kind`, `name`, `ele` |
 | `places` | `place=town\|village\|hamlet` | 8–12 by kind | `kind`, `name` |
 

@@ -13,7 +13,16 @@ fun openTrailNetwork(context: Context): InputStream? =
         null
     }
 
+/** Each Trail's walk along it, beside it in the assets. */
+fun openTrailWalks(context: Context): InputStream? =
+    try {
+        context.assets.open(TRAIL_WALKS)
+    } catch (_: FileNotFoundException) {
+        null
+    }
+
 /** The name index beside it. */
 fun placesFile(context: Context): File? = copiedPlaces(context)
 
 const val TRAIL_NETWORK = "trails.network"
+const val TRAIL_WALKS = "trails.edges"

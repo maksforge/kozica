@@ -36,7 +36,7 @@ PROFILE = ROOT / "scripts/map/KozicaProfile.java"
 NETWORK = ROOT / "scripts/build-network.py"
 RELIEF = ROOT / "relief/src/main/assets/relief.pmtiles"
 BASE_ASSETS = WORK / "base-assets"
-BASE_FILES = ("trails.network", "places.sqlite")
+BASE_FILES = ("trails.network", "trails.edges", "places.sqlite")
 
 GEOFABRIK = "https://download.geofabrik.de/europe"
 PLANETILER = WORK / "planetiler-0.10.2.jar"
@@ -283,7 +283,7 @@ def tile(source: Path, region: str, archive: Path) -> Path:
     result = run(
         "java", "-Xmx3g", "-cp", planetiler(), PROFILE,
         f"--osm_path={source}", f"--output={archive}", f"--tmpdir={scratch / 'planetiler'}",
-        f"--trail_ways={archive.with_suffix('.ways')}",
+        f"--trails={archive.with_suffix('.trails')}",
         f"--bounds={bounds(region)}", "--tile_compression=none", "--maxzoom=14",
         capture_output=True, text=True, check=False,
     )
@@ -318,7 +318,7 @@ def network(sources: dict[str, Path], target: Path) -> Path:
         fail(f"no relief at {RELIEF}: the network's heights come from it; run `python3 scripts/fetch-relief.py`")
     shutil.rmtree(target, ignore_errors=True)
     regions = [part for region, source in sources.items()
-               for part in ("--region", region, source, WORK / f"archives/{region}.ways")]
+               for part in ("--region", region, source, WORK / f"archives/{region}.trails")]
     run(sys.executable, NETWORK, "--relief", RELIEF, "--out", target, *regions)
     return target
 

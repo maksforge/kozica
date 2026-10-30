@@ -54,7 +54,7 @@ if (providers
     }
     include(":relief")
     project(":relief").buildFileName = "../gradle/region-pack.gradle.kts"
-    listOf("trails.network", "places.sqlite").forEach { name ->
+    listOf("trails.network", "trails.edges", "places.sqlite").forEach { name ->
         check(file("map-data/base-assets/$name").exists()) {
             "-PmapPacks needs map-data/base-assets/$name. Build it with `python3 scripts/build-map-data.py`."
         }

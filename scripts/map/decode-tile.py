@@ -145,7 +145,8 @@ def value_of(data: bytes):
     return None
 
 
-def print_layer(data: bytes) -> None:
+def layer(data: bytes) -> tuple[str, list[tuple[str, int, dict]]]:
+    """A layer's name and its features, each its geometry, id and attributes."""
     name, keys, values, features = "", [], [], []
     for number, _, value in fields(data):
         if number == 1:
@@ -156,7 +157,7 @@ def print_layer(data: bytes) -> None:
             keys.append(value.decode())
         elif number == 4:
             values.append(value_of(value))
-    print(f"{name}: {len(features)} features")
+    decoded = []
     for feature in features:
         feature_id, tags, geometry = None, [], 0
         for number, wire, value in fields(feature):
@@ -167,7 +168,15 @@ def print_layer(data: bytes) -> None:
             elif number == 3:
                 geometry = value
         attributes = {keys[tags[i]]: values[tags[i + 1]] for i in range(0, len(tags), 2)}
-        print(f"  {GEOMETRY.get(geometry, geometry)} {feature_id} {attributes}")
+        decoded.append((GEOMETRY.get(geometry, geometry), feature_id, attributes))
+    return name, decoded
+
+
+def print_layer(data: bytes) -> None:
+    name, features = layer(data)
+    print(f"{name}: {len(features)} features")
+    for geometry, feature_id, attributes in features:
+        print(f"  {geometry} {feature_id} {attributes}")
 
 
 def main() -> None:

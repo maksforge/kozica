@@ -88,9 +88,19 @@ jobs:
       - name: Notes gate
         run: python3 scripts/notes-gate.py
 
+      # The profile's test runs it over a hand-made cut, so it needs the jar build-map-data.py pins.
+      - name: Cache planetiler
+        uses: actions/cache@v6
+        with:
+          path: map-data/planetiler-0.10.2.jar
+          key: planetiler-0.10.2
+
+      - name: Fetch planetiler
+        run: python3 -c "import runpy; runpy.run_path('scripts/build-map-data.py', run_name='ci')['planetiler']()"
+
       # It also holds the committed network fixture to what the build's writer writes today.
       - name: Network build tests
-        run: python3 -m unittest scripts/test_build_network.py
+        run: python3 -m unittest scripts/test_build_network.py scripts/test_kozica_profile.py
 
       - name: Build debug APK
         run: ./gradlew assembleDebug

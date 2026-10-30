@@ -64,3 +64,13 @@ build gives the same numbers, under a test in Python.
 - The network's format is ours to version. Its reader and writer are tested against one fixture,
   and a format change is a release like any other, since both ship together.
 - The base APK grows by the two files' size, read in phase 5's gate.
+
+## Amendment — 2026-10-30: edges are also cut where the Trails change, and a third file walks them
+
+Phase 6c selects a Trail whole and turns it into a Route ([`docs/phase-6c.md`](../phase-6c.md) § 2),
+which needs a Trail's end to be an edge's end. Two ways now join into one edge only where they also
+carry the same Trails, each with whether the way is on that Trail's walk. The network gains those cuts
+and nothing else; its format is unchanged. **`trails.edges`** is a third base file beside the network
+and the name index: each Trail's walk as steps into the network's edges. It is an ODbL derivative, and
+it ships, is recorded and is attached to the release as the other two are. The router is unchanged:
+a Route along a Trail is an ordinary Route that its via points hold on the Trail.

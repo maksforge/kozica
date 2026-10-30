@@ -13,6 +13,14 @@ fun openTrailNetwork(context: Context): InputStream? =
         handPushed(context, TRAIL_NETWORK)?.inputStream()
     }
 
+/** The assets' Trail walks, or ones hand-pushed beside the network. */
+fun openTrailWalks(context: Context): InputStream? =
+    try {
+        context.assets.open(TRAIL_WALKS)
+    } catch (_: FileNotFoundException) {
+        handPushed(context, TRAIL_WALKS)?.inputStream()
+    }
+
 /** The assets' name index, or one hand-pushed beside the network. */
 fun placesFile(context: Context): File? = copiedPlaces(context) ?: handPushed(context, PLACES)
 
@@ -22,3 +30,4 @@ private fun handPushed(
 ): File? = File(context.filesDir, "network/$name").takeIf { it.exists() }
 
 const val TRAIL_NETWORK = "trails.network"
+const val TRAIL_WALKS = "trails.edges"
