@@ -8,17 +8,38 @@ decision here is cheap to reverse. Planned with the owner on 2026-10-30.
 
 **What closing this phase means.** Today a Route is planned, saved and drawn, and its walking times
 are the PTTK marker's rule for everybody. After this phase the user taps "Follow" on a Route's sheet
-and the map tracks them along it: the sheet counts down what is left to the next point and to the
-end, a banner says when they have left the Route and offers a leg back, and following ends by itself
-at the end. The times on every Route are the user's own once three recorded Hikes say what their pace
-is, with the signposts' time beside each total. The difference a device can be asked about: on a
-walk with a deliberate wrong turn, the banner shows within 30 s of leaving the Route and not on the
-stretches walked on it, and the time left at each point is within the reading's margin of the time
-the rest actually took (R5).
+and the map keeps them in view along it: the sheet counts down what is left to the next point and to
+the end, a banner says when they have left the Route and offers a leg back, and following ends by
+itself at the end. The times on every Route are the user's own once three recorded Hikes say what
+their pace is, with the signposts' time beside each total. The difference a device can be asked
+about: on a walk with a deliberate wrong turn, the banner shows within 30 s of the first fix beyond
+the leaving distance (§ 4) and not on the stretches walked on the Route, and the time left at each of
+three points is within 15 % or 10 minutes, whichever is larger, of the moving time the rest of the
+walk took (R5).
 
 `PLAN.md`'s paragraph still holds. One correction to the plan as discussed: the Trail sheet (phase
 6c) shows no walking time, so the user's pace appears on the Route sheet, its points, the Routes list
 and following's sheet, and nowhere else.
+
+**Settled in review** (by the agent, 2026-10-30, answering the plan's review; each is the owner's to
+reverse):
+
+- A Hike counts towards the Pace only if every one of its points has the grid's height (§ 2).
+- A fix older than 30 s when it arrives, or with an accuracy worse than 50 m, neither moves Progress
+  nor counts towards leaving; a fix beyond the leaving distance does not move Progress; a gap of
+  more than 30 s between fixes restarts leaving's count (§ 3, § 4).
+- Where the line passes near a fix more than once, the pass least far along it ahead of Progress
+  wins, for matching and "Find me on the Route" (from the start before any Progress); the leg back
+  rejoins an earlier pass where it is about as near; following ends only once Progress has passed
+  every via point (§ 3, § 4).
+- Follow is offered only for a complete Route; the dashed off-Trail approaches are part of the line;
+  editing the Route while following stops following (§ 3).
+- Precise location revoked or location switched off while following, or a grant gone on reopening,
+  pauses following under the map's banner rather than dropping it (§ 3).
+- The gate reads the debug recorder's `gate.db` as well as GPX (§ 1). R5's margin is 15 % or 10
+  minutes of moving time, whichever is larger. R2 reads the owner's Hikes from the Play build's
+  export restored into the debug build, and a Track over 5 % longer than the network's line goes to
+  the owner before B merges (*Readings*).
 
 ---
 
@@ -28,22 +49,26 @@ and following's sheet, and nowhere else.
   100 m up, 5 min per 100 m down where steeper than 10 %), applied per edge by the router and summed
   unrounded, then rounded up to 5 minutes (phase 5 § 3). A pace multiplies the sum, so the router
   and its tests do not change.
-- **A recorded Hike keeps every fix with its time and its stretch**, the moving seconds, and heights
-  from the relief (`data/hikes/`, `HikeHeights.kt`, `Climb.kt`). The rule's time for a Hike's own
+- **A recorded Hike keeps every fix with its time and its stretch, and the moving seconds**
+  (`data/hikes/`). It keeps no per-point heights: `HikeHeights.of` works them out at read time, from
+  the relief's grid inside the Regions while the relief is on the phone, and from the fix's own GPS
+  height everywhere else (`HikeHeights.kt`, `Climb.kt`). The stored ascent and descent are totals,
+  not the rule's steep descent, so the Pace does not reuse them. The rule's time for a Hike's own
   Track can therefore be computed from the Track alone, with no Trail network: its length, and its
-  climbs and steep descents from the relief's heights. Nothing needs to have been walked on a Route.
+  climbs and steep descents from the grid's heights. Nothing needs to have been walked on a Route.
 - **The map already asks for precise location, re-reads it, and says when it is off**: the position
   button's ask (phase 2), `LocationRead`, `PositionAge`'s stale fix, and the banners. Following reuses
   them rather than growing its own.
 - **Reading positions without walking is already possible.** The debug `PositionReceiver` puts "you
   are here" anywhere (phase 2 § 4), and `RouteReceiver` plans and logs a Route (phase 5). Following's
-  readings before the walk replay fixes through the first, against a Route from the second.
+  readings before the walk replay fixes through the first, against a Route from the second; each
+  gains what the replay needs (*Readings*).
 - **The position dot redraws the map at rest** (`DOD.md`, phase 6c's R3): with the screen on,
   following costs those frames on top of the camera's. Following keeps the screen's own timeout
   rather than adding to it (§ 3).
 - **A Track holds only the good fixes.** The recorder drops any fix worse than 30 m, and keeps no
-  accuracy for the rest. Following reads the live fixes, bad ones included, so a Track understates
-  what following will see (§ 1).
+  accuracy for the rest. Following reads the live fixes up to 50 m (§ 3), so a Track understates
+  what following will see. Phase 6's debug gate recorder keeps every fix with its accuracy (§ 1).
 - **Nothing of ours runs with the screen off except a recording** (phase 6's `location` foreground
   service). Following does not start one, so with the screen off following knows nothing until the
   user looks.
@@ -51,9 +76,10 @@ and following's sheet, and nowhere else.
 ## What is in, and what is deliberately not
 
 **In:** a pace learned from the user's recorded Hikes, floored at 0.75× the signposts' rule and
-shown beside the signposts' time; "Follow" on a Route's sheet, with the map tracking the user, the
-sheet counting down what is left, progress matched forward along the Route, "Find me on the Route",
-a banner when the user has left it with "Back to the Route", following surviving a closed app, and
+shown beside the signposts' time; "Follow" on a Route's sheet, with the map keeping the user in
+view, the sheet counting down what is left, progress matched forward along the Route, "Find me on
+the Route", a banner when the user has left it with "Back to the Route", following surviving a
+closed app, and
 following ending by itself at the end.
 
 **Not in, and each with a reason rather than a phase:**
@@ -106,32 +132,44 @@ against.
 Over real Tracks recorded on marked Trails, for every fix: its distance from the nearest edge of
 the Trail network. Then the number of times "farther than 40 m for 30 s" would have fired, per hour
 walked, with each firing's place and length, checked against the map to tell a wrong turn from
-drift. A Track keeps no accuracy, so the rule's accuracy term (§ 4) cannot be read here; it is read
-live on the walk (R5). And a Track is already filtered: the recorder drops every fix worse than 30 m
-(`MAX_ACCURACY_METRES`, `RecordingService.kt`), so the worst drift is missing from it and shows as a
-gap in time instead. The script lists every gap over 30 s within a stretch, with its place, since
-following sees the fixes the recorder threw away.
+drift. Two sources, read the same way:
+
+- **The debug gate recorder's `gate.db`** (phase 6's `RecorderService`, read today by
+  `scripts/track-gaps.py`) keeps every fix with its accuracy, those worse than 30 m included, so it
+  reads the rule's accuracy term (§ 4) and the 50 m bound on which fixes count (§ 3) as following
+  will apply them. Phase 6's R2 walk, if it is on marked Trails, serves here too.
+- **A Hike's GPX export** keeps no accuracy, and is already filtered: the recorder drops every fix
+  worse than 30 m (`MAX_ACCURACY_METRES`, `RecordingService.kt`), so the worst drift is missing from
+  it and shows as a gap in time instead. For a GPX the script lists every gap over 30 s within a
+  stretch, with its place, and reads the distance alone.
+
+**A bias, named now.** The distance to the nearest edge understates the offset wherever another
+Trail runs within 40 m, at junctions and on parallel paths, so it pushes the count towards verdict
+1. The verdict says how many of the firings' minutes lie within 40 m of a second Trail.
 
 ### The apparatus
 
-`scripts/routes/track-offsets.py`: reads GPX files (a Hike's export, with each point's time) and
-`trails.network`, and prints per file the hours, the fixes, the
-distance percentiles, and every firing with its start time, length and coordinates. The Tracks come
-from the owner's phone: a few Hikes walked on marked Trails exported from the Play build's share
-sheet, or, if there are none, one recorded walk on marked Trails, ideally with forest or a gorge in
-it. The same files are R2's Hikes.
+`scripts/track-offsets.py`, beside `track-gaps.py`: reads `gate.db` (each fix's time, position and
+accuracy) and GPX files (a Hike's export, with each point's time) against `trails.network`, and
+prints per file the hours, the fixes, the distance percentiles, and every firing with its start
+time, length, coordinates and, from `gate.db`, its accuracy. The Tracks come from the owner's phone:
+a `gate.db` from a walk on marked Trails with the gate recorder running, and a few Hikes walked on
+marked Trails exported from the Play build's share sheet; if there are neither, one recorded walk on
+marked Trails with the gate recorder beside it, ideally with forest or a gorge in it. The same Hikes
+are R2's.
 
 ### The verdicts, decided now rather than argued about later
 
-1. **No firing on a stretch walked on the Route, or at most one per three hours, each under a minute**
+1. **No firing on a stretch walked on a Trail, or at most one per three hours, each under a minute**
    → C and D as planned, with 40 m and 30 s.
 2. **More than that, but the firings sit where the sky is poor** (a gorge, forest, under a face) →
    the accuracy term is meant for them, and build as planned; R5 walks such a stretch and reads the
    live accuracy there. If R5's banner still fires on it, the distance goes up in 10 m steps until it
    does not, and the step taken is written there.
-3. **Drift beyond 40 m with a good accuracy, along open ground** → the network's line, not the GPS, is
-   off (a Trail drawn away from where it is walked); list the edges, and the banner waits for a
-   decision with the owner on whether to report them or widen the rule.
+3. **Drift beyond 40 m in `gate.db` from fixes with an accuracy under 40 m, along open ground** (so
+   the accuracy term would not have widened it) → the network's line, not the GPS, is off (a Trail
+   drawn away from where it is walked); list the edges, and the banner waits for a decision with the
+   owner on whether to report them or widen the rule. A GPX cannot give this verdict.
 
 ### The verdict, taken *(date)*
 
@@ -143,13 +181,16 @@ it. The same files are R2's Hikes.
 
 **The rule's time for a Hike** is the walking-time rule applied to the Hike's own Track: each
 stretch's length at 4 km/h, plus 10 minutes per 100 m of climb and 5 minutes per 100 m of descent
-where the grade between two heights is steeper than 10 %, from the relief's heights with phase 5's
-5 m dead band. Pauses between stretches are not walked, so they are not timed. The ratio is the
-Hike's moving seconds over that time.
+where the grade between two heights is steeper than 10 %, from the grid's heights by
+`HikeHeights.of` with phase 5's 5 m dead band. Pauses between stretches are not walked, so they are
+not timed. The ratio is the Hike's moving seconds over that time.
 
-**A Hike counts** when it is at least 3 km long, has at least 1 hour of moving time, and its ratio
-lies between 0.5 and 2 — a bus ride or a recording left running in a car falls outside. Only the 10
-most recent counting Hikes are read, so last year's pace does not outvote this summer's.
+**A Hike counts** when it is at least 3 km long, has at least 1 hour of moving time, every one of its
+points has the grid's height, and its ratio lies between 0.5 and 2 — a bus ride or a recording left
+running in a car falls outside. GPS heights jitter and cannot give the steep-descent grade, so a
+Hike outside the Regions, or partly outside them, or read while the relief is not on the phone, does
+not count. Only the 10 most recent counting Hikes are read, so last year's pace does not outvote
+this summer's.
 
 **The Pace** is the median ratio over those Hikes, **used once three count**, and **never below
 0.75**: no recording can promise a Route in under three quarters of the signposts' time, whatever
@@ -162,44 +203,69 @@ following's sheet. Each total also shows the signposts' time, smaller, and one l
 sheet's totals says where the user's time comes from. With fewer than three counting Hikes nothing
 changes, and the line says the times are the signposts'.
 
-The Pace is computed from the Hikes table when it changes, as a `Flow`, and is nothing stored:
-deleting or trimming a Hike changes it, and a restore brings it back with the Hikes.
+The Pace is recomputed when the ended Hikes change, as a `Flow`, and is nothing stored: deleting or
+trimming a Hike changes it, and a restore brings it back with the Hikes. Heights are read only for
+Hikes whose length and moving time could count, and each Hike's ratio is cached in memory by its id
+and length, so a rename or a note edit reads no Track again; the cache goes when the relief arrives
+or leaves, since that changes which heights are the grid's.
 
 Copy:
 
 - Total: "4 h 10 min · signposts 4 h 50 min"
 - The line, with a pace: "Your pace: 0.85× the signposts, from 7 Hikes"
-- The line, without: "Signposts' times. Your own pace starts after 3 recorded Hikes of 3 km or more."
+- The line, without: "Signposts' times. Your own pace starts after 3 recorded Hikes of 3 km and an
+  hour or more."
 - Floored: "Your pace: 0.75× the signposts, the fastest Kozica shows, from 5 Hikes"
 
 ## 3. Following
 
-**Follow** is a button on a Route's sheet, for a saved Route and for one just planned. It needs
-precise location, and asks for it there, by the position button's ask, the first time it is tapped
-without it (`PLAN.md` rule 4):
+**Follow** is a button on a Route's sheet, for a saved Route and for one just planned, and only for
+a complete one: a Route with a leg that has no way has a gap in its line that Progress cannot cross,
+so its sheet has no Follow. The dashed off-Trail approaches at each point are part of the line, for
+Progress and for leaving alike. Follow needs precise location, and asks for it there by the same
+asks as phase 6's Record (phase 6 § 2), the first time it is tapped without it (`PLAN.md` rule 4):
 
 | State at the tap | What happens |
 | --- | --- |
 | Precise location granted, location on | Following starts |
-| No location permission | The map's ask; following starts if precise is granted |
-| Approximate only | "Following needs precise location", with a button to the app's location settings; following does not start |
+| Location never asked, or denied once | The system's ask (fine and coarse together, as phase 2 asks); following starts if precise is granted |
+| Approximate only (API 31+) | The system's precise-upgrade ask, as phase 2's banner makes it (phase 2 § 4); following starts if it is granted |
+| Approximate kept at that ask, or location denied for good | "Following needs precise location", with a button to the app's location settings; following does not start |
 | Location off in the system | The map's "Location is off" banner; following starts once a fix arrives |
 
 **While following** the camera centres on the user at each fix, north up, until the user pans or
 zooms; the position button resumes it. The screen keeps its own timeout. The sheet shows, from the
 user's Progress: distance, climb and time to the next point by name, and to the end. "Stop" ends
-following and leaves the Route drawn; closing the Route ends it too.
+following and leaves the Route drawn; closing the Route ends it too. Editing the Route while
+following, by adding, moving or removing a point or reversing it, stops following, and the sheet
+says so: the line under Progress has changed.
 
-**Progress** is the user's place along the Route's line, and it only moves forward. Each fix is
-matched to the nearest point of the line within a window ahead of the last Progress, so on a Route
-that walks a stretch twice (up a valley and back down it, a loop that touches itself) it is the
-pass the user is on. The window reaches as far ahead as 6 km/h would carry the user since the last
-matched fix, and never less than 200 m, so a long stretch with the phone in the pocket still finds
-them. Walking back the way they came leaves Progress where it was rather than jumping. **"Find me on
-the Route"** matches over the whole line once, for joining a Route halfway or skipping a part of it.
+**Losing location while following** (rule 4's third clause). Precise location revoked, location
+switched off, or a grant gone when the app reopens to a followed Route each show the map's existing
+banner for that state, and following pauses rather than stopping: Progress and leaving's count stand
+still, and the sheet keeps the last figures. The first fix that counts once location is back
+resumes it.
 
-**The end.** Once Progress reaches the last point and the user is within the leaving distance of it
-(§ 4), the sheet says so and following stops, the Route still drawn.
+**Which fixes count.** A fix older than 30 s when it arrives (the last known fix that
+`positionFixes()` emits first, after a pocket or a relaunch) or with an accuracy worse than 50 m
+moves the dot and nothing else: it neither moves Progress nor counts towards leaving (§ 4). A fix
+beyond the leaving distance counts towards leaving but does not move Progress, so a parallel wrong
+path does not carry the user along the Route.
+
+**Progress** is the user's place along the Route's line, and it only moves forward. Each fix that
+counts is matched within a window ahead of Progress. The window reaches as far ahead as 6 km/h would
+carry the user since the last matched fix, and never less than 200 m, so a long stretch with the
+phone in the pocket still finds them. Where the line comes within the leaving distance of the fix
+more than once inside the window (up a valley and back down it, a loop that touches itself), each
+pass gives one candidate, its nearest point to the fix, and the candidate least far along the line
+ahead of Progress wins: it is the pass the user is on, never the later one. Walking back the way
+they came leaves Progress where it was rather than jumping. **"Find me on the Route"** matches once
+by the same rule with no window, over the whole line ahead of Progress, or from the start before
+there is any, for joining a Route halfway or skipping a part of it.
+
+**The end.** Once Progress reaches the last point, having passed every via point on the way, and the
+user is within the leaving distance of it (§ 4), the sheet says so and following stops, the Route
+still drawn.
 
 **Surviving a closed app.** The followed Route's points, its name if it has one, and the Progress are
 written to `AppPreferences` as they change. Opening the app again returns to following that Route,
@@ -214,18 +280,25 @@ Copy:
 - "Find me on the Route"
 - "Following needs precise location", button "Location settings"
 - "You've reached the end of the Route"
+- "Following stopped: the Route changed"
 
 ## 4. Leaving the Route, and the leg back
 
-**Leaving.** The banner shows once every fix for 30 s has been farther from the Route's line than
-40 m, or than the fix's own accuracy where that is larger, and clears at the first fix back within
-it. Both numbers are A's to confirm and R5's to check, and are changed only by a reading.
+**Leaving.** The banner shows once every fix that counts (§ 3) for 30 s has been farther from the
+Route's line than 40 m, or than the fix's own accuracy where that is larger, and clears at the first
+fix back within it. The 30 s is counted across fixes actually received, from the first beyond the
+distance: a gap of more than 30 s between two of them (the screen off, a pocket) restarts the count
+at the fix after it rather than satisfying it. Both numbers are A's to confirm and R5's to check, and
+are changed only by a reading.
 
-**"Back to the Route"** plans a leg over the Trails from the user's position to the nearest point of
-the line ahead of Progress, by the router as it is, and draws it apart from the Route, timed by the
-Pace. The saved Route is not changed. The leg goes when the user is back on the Route, or when it is
-planned again. Off the Trails the router starts from the nearest Trail, as phase 5's ends do, and the
-leg says how far that is. Replanning the rest of the Route instead is out: it could drop a via point,
+**"Back to the Route"** plans a leg over the Trails from the user's position to the point of the line
+the same rule picks from Progress (§ 3): the nearest within the forward window, or an earlier pass
+in it where that is no more than the leaving distance farther, so on an out-and-back the leg rejoins
+the way up rather than skipping the summit on the way down. It is planned by the router as it is,
+and drawn apart from the Route, timed by the Pace. The saved Route is not changed. The leg goes when
+the user is back on the Route, or when it is planned again. Off the Trails the router starts from
+the nearest Trail, as phase 5's ends do, and the leg says how far that is. Replanning the rest of
+the Route instead is out: it could drop a via point,
 a Hut the user meant to reach.
 
 Copy:
@@ -247,6 +320,10 @@ Copy:
   the minute: the Pace is only honest if both sides use one rule.
 - **Progress on an out-and-back Route** stays on the pass being walked and does not move backwards.
   Fails towards a time left that jumps by half the Route.
+- **The time left from inside an edge.** From a Progress partway along an edge, at a Pace, the time
+  to the next point and to the end is the rest of that edge (split by `part()`) and the edges after
+  it, by the rule, times the Pace, rounded up to 5 minutes; from the start it equals the Route's
+  total. Fails towards a time too short, the one weighed against dusk.
 - **Leaving** fires after 30 s beyond the distance and not before, and the accuracy term widens it.
   Fails towards a silent wrong turn, or a banner that cries wolf.
 
@@ -275,14 +352,46 @@ Copy:
 
 `PLAN.md` rule 3: filled in as the phase runs, from the device, with the command that read it.
 
-R1, R3 and R4 run on the test phone with `PositionReceiver`'s fixes replayed by a script from a
-Track, and the Route from `RouteReceiver`; autostart for the debug build is re-read with
-`scripts/device-gate.py` first, since the broadcasts need it. R5 is the owner's walk.
+R3 and R4 run on the test phone, with `adb shell svc power stayon usb` so its own screen timeout
+does not end a long replay, and autostart for the debug build re-read with `scripts/device-gate.py`
+first, since the broadcasts need it. R2 and R5 are the owner's Hikes and walk. The debug apparatus
+they need, built with B and C, all in `app/src/debug/` with a no-op in `src/release/` where `main/`
+calls it:
+
+- **Fixes with their own times.** `overridePosition()` stamps every fix now, so a Track replayed
+  faster than real time would look like walking faster than 6 km/h and the window would lose the
+  user. `PositionReceiver` gains `--el time <epoch ms>`, set as the fix's `time`, which the window
+  and leaving's 30 s are measured by; its `elapsedRealtimeNanos` stays the arrival's, which is what
+  freshness (§ 3) reads. `scripts/replay-track.py <gpx> --speed <n> -s <serial>` sends a GPX's
+  points through it in order, their times rebased to start now and sent `n` times faster, each with
+  an accuracy (10 m unless `--accuracy` says otherwise).
+- **The Route on the sheet.** `RouteReceiver` gains `--ez show true`, which opens the Route it has
+  just planned on the map's sheet as a Route just planned is, so Follow is one `adb shell input tap`
+  (its place read from `uiautomator dump`).
+- **What force-stop clears.** The position override is in memory only, so `am force-stop` drops it
+  and the relaunched app would read the test phone's real fix at the desk, kilometres off the Route,
+  and raise the banner. R4 therefore sends the next replayed fix after the force-stop and before the
+  relaunch: the broadcast starts the process, so the app reads the override from its first fix. The
+  followed Route and its Progress are in `AppPreferences` and survive.
+- **`KozicaFollow`**, one line per fix while following: the fix's time, its accuracy, its distance
+  from the line, whether it counted and why not (stale, inaccurate, beyond the distance), Progress in
+  metres along the line, the window's reach, leaving's count in seconds, whether the banner shows,
+  and the time left to the next point and to the end. **`KozicaPace`**, one line per Hike each time
+  the Pace is recomputed (its id, length, moving time, rule's time, ratio, counted or why not) and
+  one with the Pace and how many Hikes it is from. `RouteReceiver` logs the time × the Pace beside
+  the rule's.
+
+**Where the owner's Hikes meet the debug build.** They are in the Play build, and the debug build has
+its own `applicationId`. R2 restores the Play build's manual export (Backup, everything) into the
+debug build on the owner's phone: the restore checks the archive's format and schema version and
+nothing about the package (`BackupRestorer`), so a debug build at the same schema or a newer one
+takes it. R5 runs on that same debug build, so its times are the owner's Pace rather than the
+signposts'.
 
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
-| R1 | The gate (§ 1): firings of 40 m / 30 s per hour over real Tracks on Trails | `python3 scripts/routes/track-offsets.py <gpx>…` | *(owed)* |
-| R2 | The Pace from the owner's Hikes: each Hike's ratio, which counted, the median, and three Routes' times before and after | the owner's Hikes; the Pace's log line; `RouteReceiver` | *(owed)* |
-| R3 | Progress on an out-and-back Route and a loop: Progress never moves back, and the time left falls with every fix | replayed fixes; the following log line per fix | *(owed)* |
-| R4 | Following survives a killed process: force-stop mid-Route, relaunch, and the sheet is back with the same Progress | `am force-stop`, relaunch, screencap | *(owed)* |
-| R5 | The closing walk: a Route followed end to end with a deliberate wrong turn and a stretch under poor sky; when the banner showed, how far the leg back was, and the time left at three points against the time the rest took | the owner's walk, recorded as a Hike, the following log | *(owed)* |
+| R1 | The gate (§ 1): firings of 40 m / 30 s per hour over real Tracks on Trails | `python3 scripts/track-offsets.py <gate.db or gpx>…` | *(owed)* |
+| R2 | The Pace from the owner's Hikes: each Hike's ratio, which counted, the median, and three Routes' times before and after. And whether a GPS Track's length is inflated against the network's line: for a Hike walked on Trails, its length against a Route planned along it; a Track longer than the line lowers the ratio, so a Pace that promises too little time, and a gap over 5 % goes to the owner before B merges | the Play build's export restored into the debug build on the owner's phone; `adb logcat -d -s KozicaPace`; `RouteReceiver` | *(owed)* |
+| R3 | Progress on an out-and-back Route and a loop: Progress never moves back, and the time left falls with every fix | `RouteReceiver --ez show true`, Follow tapped, `scripts/replay-track.py`; `adb logcat -d -s KozicaFollow` | *(owed)* |
+| R4 | Following survives a killed process: force-stop mid-Route, relaunch, and the sheet is back with the same Progress | R3's replay paused; `am force-stop`, the next fix sent, relaunch, screencap; `KozicaFollow` before and after | *(owed)* |
+| R5 | The closing walk: a Route followed end to end with a deliberate wrong turn and a stretch under poor sky; when the banner showed against the first fix beyond the distance, how far the leg back was, and the time left at three points against the Hike's moving time from each to the end, within 15 % or 10 minutes, whichever is larger | the owner's walk on the debug build, recorded as a Hike; `KozicaFollow` | *(owed)* |
