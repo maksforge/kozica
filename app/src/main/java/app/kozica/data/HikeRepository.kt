@@ -139,19 +139,13 @@ class HikeRepository(
         dao.setClimb(id, climb.ascent, climb.descent, climb.fromGps)
     }
 
-    /** The rule's time for [id]'s own Track (docs/phase-6b.md § 2); null where its heights cannot give one, or cannot be read now. */
+    /** The rule's time for [id]'s own Track (docs/phase-6b.md § 2); null where its heights cannot give one, and a failed read throws. */
     suspend fun ruleSeconds(id: String): Double? =
-        try {
-            dao
-                .get(id)
-                ?.track
-                ?.let(::decodeTrack)
-                ?.let { it.ruleSeconds(heights(it)) }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            null
-        }
+        dao
+            .get(id)
+            ?.track
+            ?.let(::decodeTrack)
+            ?.let { it.ruleSeconds(heights(it)) }
 
     private suspend fun climbOf(track: Track): Climb? =
         try {

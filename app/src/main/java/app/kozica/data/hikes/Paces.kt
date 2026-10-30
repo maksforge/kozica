@@ -1,6 +1,7 @@
 package app.kozica.data.hikes
 
 import app.kozica.data.HikeSummary
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  *
  * @param hikes newest first.
  * @param relief whether the relief is on the phone, which decides whether a Track's heights are the grid's.
- * @param ruleSecondsOf the rule's time for a Hike's Track, which reads its heights; null where it cannot be timed.
+ * @param ruleSecondsOf the rule's time for a Hike's Track, which reads its heights; null where it cannot be timed, and throws where the read failed.
  */
 class Paces(
     hikes: Flow<List<HikeSummary>>,
@@ -19,7 +20,7 @@ class Paces(
     private val ruleSecondsOf: suspend (id: String) -> Double?,
 ) {
     // By id and length, since a trim changes the length, and for one state of the relief.
-    private val timed = mutableMapOf<Pair<String, Double>, Double>()
+    private val timed = mutableMapOf<Pair<String, Double>, Double?>()
     private var timedWithRelief: Boolean? = null
 
     val pace: Flow<Pace?> =
@@ -43,6 +44,13 @@ class Paces(
 
     private suspend fun ruleSeconds(hike: HikeSummary): Double? {
         val key = hike.id to hike.metres
-        return timed[key] ?: ruleSecondsOf(hike.id)?.also { timed[key] = it }
+        if (key in timed) return timed[key]
+        return try {
+            ruleSecondsOf(hike.id).also { timed[key] = it }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
     }
 }
