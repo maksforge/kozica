@@ -379,6 +379,53 @@ class MapViewModelTest {
             assertNull(settled(viewModel) { it.route.following == null }.route.following)
         }
 
+    private suspend fun legBackPlanned(viewModel: MapViewModel): LegBack? =
+        settled(viewModel) {
+            it.route.following
+                ?.back
+                .let { back -> back != null && back != LegBack.Planning }
+        }.route.following
+            ?.back
+
+    @Test
+    fun `a leg back the router finds no way for says so`() =
+        runTest {
+            var plans = 0
+            val viewModel = routingViewModel(planRoute = { if (plans++ > 0) null else RoutePlanner(fixture).plan(it) })
+            val near = followedMidway(viewModel)
+            for (at in 5_000L..35_000L step 5_000) viewModel.followFix(near(150.0, at))
+            viewModel.backToRoute(near(150.0, 35_000))
+
+            assertEquals(LegBack.NoWay, legBackPlanned(viewModel))
+        }
+
+    @Test
+    fun `leaving counts from Follow, before any Progress, and the leg back still plans`() =
+        runTest {
+            val viewModel = routingViewModel()
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            val midway =
+                settled(viewModel) { it.route.planned?.complete == true && !it.route.planning }
+                    .route.planned!!
+                    .line
+                    .let { it[it.size / 2] }
+            viewModel.follow()
+            val away = { at: Long -> FollowFix(midway.latitude + 150.0 / 111_195.0, midway.longitude, 10.0, 0, at) }
+
+            for (at in 0L..30_000L step 5_000) viewModel.followFix(away(at))
+            val following =
+                settled(viewModel) {
+                    it.route.following
+                        ?.leaving
+                        ?.shown == true
+                }.route.following!!
+            assertNull(following.progress)
+
+            viewModel.backToRoute(away(30_000))
+            assertTrue(legBackPlanned(viewModel) is LegBack.Found)
+        }
+
     @Test
     fun `long-pressed points join in the order pressed, however long their names take`() =
         runTest {
