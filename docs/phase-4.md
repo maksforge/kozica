@@ -119,7 +119,8 @@ with no relief drawn, and the gate measures what the relief adds, not those.
   `files/relief/relief.pmtiles` and `files/relief/contours.pmtiles` when pushed by hand. The release
   half returns nothing until C.
 - **A frame log**, debug-only: MapLibre's frame listener on the map view, logging each frame's
-  duration under one tag, and a pan driven by `adb shell input swipe` so both runs pan the same.
+  duration under one tag with the camera's moves and rests, so a frame drawn at rest is not timed
+  as one in motion, and a pan driven by `adb shell input swipe` so both runs pan the same.
 
 ### The verdicts, decided now rather than argued about later
 

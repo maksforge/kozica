@@ -104,16 +104,14 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       access granted, *then* that version's release notes in every locale on an ordinary branch (never
       on release-please's own, which it force-pushes), *then* the AAB and the listing go up together.
 
-- [ ] **Tell a pause from a stall in the frame log, before the next frame gate.** The zoom-13
-      "slowdown" phase 6c's R3 read was the measurement. Rerun 2026-10-30 at 6c9374d, phase 4's R1
-      command exactly with the full relief pack: each 1.2 s pause between swipes is now split by a
-      frame or two into gaps under 500 ms, so `frame-stats.py`'s default keeps them as frames, and
-      with the relief on fewer frames are drawn (zoom 13, `--idle 100`: 488 against 931; 526 against
-      951 at the default), so they pass 5 % of the sample and p95 lands on them (249.5 ms). With
-      `--idle 100` the pan at zoom 13 reads 19.8 ms relief on, 18.7 ms off, as phase 4 did. Still
-      open: what draws a frame during a pause, where phase 4 saw clean rests; and making the script
-      tell a pause from a stall (e.g. by logging the swipes' times), since `--idle 100` makes "no
-      frame over 100 ms" true by construction.
+- [x] **Tell a pause from a stall in the frame log, before the next frame gate.** The zoom-13
+      "slowdown" phase 6c's R3 read was `frame-stats.py` counting pauses between swipes as frames.
+      The debug frame log now also logs `camera=move`, `camera=idle` and `map=idle`, and the script
+      times only the frames from a move to the map's first idle after the camera's, so a gap at rest
+      is a pause and a long one in motion a stall, with no threshold to tune. What drew the frames
+      during a pause, where phase 4 saw clean rests, is the position dot: with location revoked the
+      zoom-13 pan's rests drew 25 frames, against 159 with it. R3 reread this way: no frame over
+      100 ms (2026-10-30, [`phase-6c.md`](phase-6c.md)).
 
 ## Standing checks that never close
 
