@@ -157,7 +157,7 @@ fun MapScreen(
     var centreWanted by remember { mutableStateOf(false) }
     // docs/phase-6b.md § 3: while following, each fix recentres the map until the user pans it.
     var tracking by remember { mutableStateOf(false) }
-    var followWanted by remember { mutableStateOf(false) }
+    var followWanted by rememberSaveable { mutableStateOf(false) }
     var needsPrecise by rememberSaveable { mutableStateOf(false) }
     var positionOutside by remember { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
@@ -189,7 +189,7 @@ fun MapScreen(
             if (askingForPrecise && read.grant == LocationGrant.APPROXIMATE) preciseRefused = true
             if (followWanted && read.grant != LocationGrant.PRECISE) {
                 followWanted = false
-                if (read.grant == LocationGrant.APPROXIMATE) needsPrecise = true
+                needsPrecise = true
             }
             askingForPrecise = false
         }
@@ -532,7 +532,7 @@ fun MapScreen(
                 TextButton(onClick = {
                     needsPrecise = false
                     context.startActivitySafely(context.appSettings())
-                }) { Text(stringResource(R.string.map_location_settings)) }
+                }) { Text(stringResource(R.string.following_location_settings)) }
             },
             dismissButton = {
                 TextButton(onClick = { needsPrecise = false }) { Text(stringResource(R.string.action_cancel)) }
