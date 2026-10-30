@@ -250,9 +250,10 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
 - **Edges are cut where the Trails on a way change.** `chains()` joins two ways only where both
   walk alike; "alike" gains "carry the same Trails", the Trails whose lines hold the way, so a
   piece's ways carry its parent's Trail, every way of an edge belongs to the same Trails and a
-  Trail's end is always an edge's end. The network gains those cuts and nothing else: its format is
-  unchanged, and its bytes change with the new pin anyway. ADR-0010 and phase 5 § 2
-  are amended to say so.
+  Trail's end is always an edge's end. The network gains those cuts and loses only a Long-distance
+  Trail's own ways (above), 31 at the pin: it is the ways drawn as Trails (phase 5 § 2), and they
+  leave it with the Trail they no longer carry. Its format is unchanged, and its bytes change with
+  the new pin anyway. ADR-0010 and phase 5 § 2 are amended to say so.
 - **The extract is re-pinned** (`scripts/osm-data.pin`) in B's commit, so the one re-delivery of
   every pack also brings the newest OSM. B may take a newer pin than A's candidate; the tally is not
   taken again for it.
