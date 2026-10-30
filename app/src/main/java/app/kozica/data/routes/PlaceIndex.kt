@@ -211,34 +211,36 @@ class PlaceIndex(
         val folded = fold(text)
         if (folded.isEmpty()) return emptyList()
         val squeeze = cos(Math.toRadians(latitude)).let { it * it }
-
-        fun away(
-            south: Double,
-            west: Double,
-            north: Double,
-            east: Double,
-        ): Double {
-            val dLat = maxOf(south - latitude, 0.0, latitude - north)
-            val dLon = maxOf(west - longitude, 0.0, longitude - east)
-            return dLat * dLat + dLon * dLon * squeeze
-        }
         val ranked = mutableListOf<Triple<Boolean, Double, SearchResult>>()
         for (place in search(text, latitude, longitude, limit)) {
-            val lat = place.latitude - latitude
-            val lon = place.longitude - longitude
             ranked +=
                 Triple(
                     fold(place.matched).startsWith(folded),
-                    lat * lat + lon * lon * squeeze,
+                    boxAway(latitude, longitude, place.latitude, place.longitude, place.latitude, place.longitude),
                     SearchResult.AtPlace(place),
                 )
         }
         val trails = mutableSetOf<Long>()
         db
             .rawQuery(
-                "SELECT ${TRAIL_COLUMNS.split(", ").joinToString { "t.${it.trim()}" }}, n.name " +
-                    "FROM trail_names n JOIN trails t ON t.id = n.trail WHERE n.folded MATCH ? LIMIT ?",
-                arrayOf("\"$folded*\"", (limit * 4).toString()),
+                """
+                SELECT ${TRAIL_COLUMNS.split(", ").joinToString { "t.${it.trim()}" }}, n.name
+                FROM trail_names n JOIN trails t ON t.id = n.trail
+                WHERE n.folded MATCH ?1
+                ORDER BY substr(n.folded, 1, ?2) = ?3 DESC,
+                    max(t.min_lat - ?4, 0, ?4 - t.max_lat) * max(t.min_lat - ?4, 0, ?4 - t.max_lat) +
+                    max(t.min_lon - ?5, 0, ?5 - t.max_lon) * max(t.min_lon - ?5, 0, ?5 - t.max_lon) * ?6
+                LIMIT ?7
+                """.trimIndent(),
+                arrayOf(
+                    "\"$folded*\"",
+                    folded.length.toString(),
+                    folded,
+                    latitude.toString(),
+                    longitude.toString(),
+                    squeeze.toString(),
+                    (limit * 4).toString(),
+                ),
             ).use { rows ->
                 while (rows.moveToNext()) {
                     val facts = trailFacts(rows)
@@ -247,7 +249,7 @@ class PlaceIndex(
                     ranked +=
                         Triple(
                             fold(matched).startsWith(folded),
-                            away(facts.south, facts.west, facts.north, facts.east),
+                            boxAway(latitude, longitude, facts.south, facts.west, facts.north, facts.east),
                             SearchResult.OnTrail(facts, matched),
                         )
                 }
@@ -266,7 +268,14 @@ class PlaceIndex(
                     ranked +=
                         Triple(
                             words.startsWith(folded),
-                            away(rows.getDouble(3), rows.getDouble(4), rows.getDouble(5), rows.getDouble(6)),
+                            boxAway(
+                                latitude,
+                                longitude,
+                                rows.getDouble(3),
+                                rows.getDouble(4),
+                                rows.getDouble(5),
+                                rows.getDouble(6),
+                            ),
                             SearchResult.LongDistance(rows.getLong(0), name, rows.getInt(2), name),
                         )
                 }
@@ -319,6 +328,23 @@ class PlaceIndex(
         const val METRES_PER_DEGREE = 111_320.0
         val LANDMARKS = setOf(PlaceKind.PEAK, PlaceKind.PASS, PlaceKind.HUT)
     }
+}
+
+/**
+ * Squared degrees from a point to a bounding box, nought inside it, a degree of longitude shrunk by
+ * the cosine of the point's latitude: the distance search ranks by (docs/phase-6c.md § 4).
+ */
+fun boxAway(
+    latitude: Double,
+    longitude: Double,
+    south: Double,
+    west: Double,
+    north: Double,
+    east: Double,
+): Double {
+    val dLat = maxOf(south - latitude, 0.0, latitude - north)
+    val dLon = maxOf(west - longitude, 0.0, longitude - east)
+    return dLat * dLat + dLon * dLon * cos(Math.toRadians(latitude)).let { it * it }
 }
 
 /**
