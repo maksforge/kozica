@@ -53,6 +53,7 @@ data class PlannedRoute(
     val seconds: Double,
     val secondsToPoint: List<Double?>,
     val demanding: List<DemandingStretch>,
+    val metresToPoint: List<Double?> = emptyList(),
 ) {
     val metres: Double get() = line.lastOrNull()?.metres ?: 0.0
     val complete: Boolean get() = legs.all { it != null }
@@ -80,6 +81,7 @@ class RoutePlanner(
         var ascent = 0.0
         var descent = 0.0
         val secondsToPoint = mutableListOf<Double?>(0.0)
+        val metresToPoint = MutableList<Double?>(points.size) { null }
         var acrossNoWay = false
         for ((i, leg) in legs.withIndex()) {
             secondsToPoint += leg?.let { secondsToPoint.last()?.plus(it.seconds) }
@@ -89,6 +91,7 @@ class RoutePlanner(
             }
             val reached = if (line.isEmpty() || legs[i - 1] != null) Approach.OFF_TRAIL else Approach.NO_WAY
             line.join(points[i].latitude, points[i].longitude, heightAt(leg.start), reached)
+            metresToPoint[i] = line.last().metres
             line.join(leg.start.latitude, leg.start.longitude, heightAt(leg.start), Approach.OFF_TRAIL)
             for (step in leg.steps) {
                 val part = network.part(step.edge, step.from, step.to)
@@ -104,9 +107,10 @@ class RoutePlanner(
             }
             line.join(leg.end.latitude, leg.end.longitude, heightAt(leg.end), Approach.TRAIL)
             line.join(points[i + 1].latitude, points[i + 1].longitude, heightAt(leg.end), Approach.OFF_TRAIL)
+            metresToPoint[i + 1] = line.last().metres
         }
         val seconds = legs.sumOf { it?.seconds ?: 0.0 }
-        return PlannedRoute(legs, line, ascent, descent, seconds, secondsToPoint, demanding)
+        return PlannedRoute(legs, line, ascent, descent, seconds, secondsToPoint, demanding, metresToPoint)
     }
 
     /** The step's stretch of its edge's line, in walking order, ends interpolated. */

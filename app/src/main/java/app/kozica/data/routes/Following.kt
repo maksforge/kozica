@@ -1,0 +1,239 @@
+package app.kozica.data.routes
+
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sqrt
+
+/** docs/phase-6b.md § 3 and § 4; the readings may move them, nothing else should. */
+internal const val LEAVING_METRES = 40.0
+internal const val FIX_WORST_ACCURACY_METRES = 50.0
+internal const val FIX_OLDEST_MILLIS = 30_000L
+internal const val WINDOW_METRES_PER_SECOND = 6000.0 / 3600
+internal const val WINDOW_LEAST_METRES = 200.0
+
+/** A position fix as Following reads it; [ageMillis] is how old it was when it arrived. */
+data class FollowFix(
+    val latitude: Double,
+    val longitude: Double,
+    val accuracyMetres: Double,
+    val ageMillis: Long,
+    val atMillis: Long,
+) {
+    /** A stale or vague fix moves the dot and nothing else. */
+    val counts: Boolean get() = ageMillis <= FIX_OLDEST_MILLIS && accuracyMetres <= FIX_WORST_ACCURACY_METRES
+
+    val leavingMetres: Double get() = max(LEAVING_METRES, accuracyMetres)
+}
+
+/** Where the user is along the Route's line, [metres] from its start, as of the fix matched [atMillis]. */
+data class Progress(
+    val metres: Double,
+    val atMillis: Long,
+)
+
+/** What is left to a place along the Route, by the signposts' rule; a Pace applies to [seconds]. */
+data class Ahead(
+    val metres: Double,
+    val ascent: Double,
+    val seconds: Double,
+)
+
+/** The next point by its index on the Route, and the end. */
+data class Left(
+    val nextPoint: Int,
+    val toNext: Ahead,
+    val toEnd: Ahead,
+)
+
+/** A complete Route's line, which Progress moves along (docs/phase-6b.md § 3). */
+class FollowedLine(
+    private val planned: PlannedRoute,
+) {
+    private val line = planned.line
+    private val pointMetres: List<Double> =
+        planned.metresToPoint.map {
+            requireNotNull(it) { "a Route with a gap cannot be followed" }
+        }
+
+    init {
+        require(planned.complete && line.size >= 2)
+    }
+
+    val metres: Double get() = line.last().metres
+
+    /**
+     * Progress after [fix]: unchanged unless the fix counts and the line passes within its leaving
+     * distance inside the window ahead; where it passes more than once, the pass least far along wins.
+     */
+    fun follow(
+        progress: Progress?,
+        fix: FollowFix,
+    ): Progress? {
+        if (!fix.counts) return progress
+        val from = progress?.metres ?: 0.0
+        val elapsed = progress?.let { (fix.atMillis - it.atMillis).coerceAtLeast(0) / 1000.0 } ?: Double.MAX_VALUE
+        val window = max(WINDOW_LEAST_METRES, elapsed * WINDOW_METRES_PER_SECOND)
+        val matched = firstPass(fix, from, from + window) ?: return progress
+        return Progress(max(from, matched), fix.atMillis)
+    }
+
+    /** "Find me on the Route": the same rule over the whole line ahead of [progress], or from the start. */
+    fun findMe(
+        progress: Progress?,
+        fix: FollowFix,
+    ): Progress? {
+        if (!fix.counts) return progress
+        val from = progress?.metres ?: 0.0
+        val matched = firstPass(fix, from, metres) ?: return progress
+        return Progress(max(from, matched), fix.atMillis)
+    }
+
+    /** Distance from [fix] to the nearest point of the whole line. */
+    fun distance(fix: FollowFix): Double = nearestOnLine(fix, 0.0, metres).second
+
+    /** The end is reached at the last point, within the leaving distance of it. */
+    fun ended(
+        progress: Progress,
+        fix: FollowFix,
+    ): Boolean {
+        val end = line.last()
+        return progress.metres >= metres - fix.leavingMetres &&
+            Router.metres(fix.latitude, fix.longitude, end.latitude, end.longitude) <= fix.leavingMetres
+    }
+
+    fun left(progress: Progress): Left {
+        val next =
+            pointMetres.indexOfFirst { it > progress.metres + SAME_PLACE }.takeIf { it >= 0 } ?: pointMetres.lastIndex
+        return Left(next, ahead(progress.metres, pointMetres[next]), ahead(progress.metres, metres))
+    }
+
+    private fun ahead(
+        from: Double,
+        to: Double,
+    ): Ahead {
+        val (metres, heights) = cut(from, to)
+        return Ahead(to - from, walk(metres, heights).ascent, secondsAt(to) - secondsAt(from))
+    }
+
+    /**
+     * The router's time to [at] metres: exact at each point, and between two points the leg's time
+     * spread by the rule over the line walked, so the time left never jumps and matches the sheet.
+     */
+    internal fun secondsAt(at: Double): Double {
+        val leg =
+            (0 until pointMetres.lastIndex).firstOrNull { at <= pointMetres[it + 1] } ?: (pointMetres.lastIndex - 1)
+        val start = pointMetres[leg]
+        val end = pointMetres[leg + 1]
+        val legSeconds = planned.secondsToPoint[leg + 1]!! - planned.secondsToPoint[leg]!!
+        val whole = ruleAlong(start, end)
+        val fraction = if (whole > 0) ruleAlong(start, at.coerceIn(start, end)) / whole else 0.0
+        return planned.secondsToPoint[leg]!! + legSeconds * fraction
+    }
+
+    private fun ruleAlong(
+        from: Double,
+        to: Double,
+    ): Double {
+        if (to <= from) return 0.0
+        val (metres, heights) = cut(from, to)
+        val walked = walk(metres, heights)
+        return ruleSeconds(to - from, walked.ascent, walked.steepDescent)
+    }
+
+    /** The line's metres and heights from [from] to [to], both ends interpolated. */
+    private fun cut(
+        from: Double,
+        to: Double,
+    ): Pair<List<Double>, List<Double>> {
+        val inside = line.filter { it.metres > from && it.metres < to }
+        val metres = listOf(from) + inside.map { it.metres } + to
+        val heights = listOf(heightAt(from)) + inside.map { it.heightMetres } + heightAt(to)
+        return metres to heights
+    }
+
+    private fun heightAt(at: Double): Double {
+        val k = line.indexOfFirst { it.metres >= at }.let { if (it <= 0) return line[0].heightMetres else it }
+        val a = line[k - 1]
+        val b = line[k]
+        val span = b.metres - a.metres
+        return if (span <=
+            0
+        ) {
+            b.heightMetres
+        } else {
+            a.heightMetres + (b.heightMetres - a.heightMetres) * (at - a.metres) / span
+        }
+    }
+
+    /** The nearest point of the first pass of the line within the fix's leaving distance, between [from] and [to] metres. */
+    private fun firstPass(
+        fix: FollowFix,
+        from: Double,
+        to: Double,
+    ): Double? {
+        var best: Pair<Double, Double>? = null
+        for (k in 1 until line.size) {
+            val a = line[k - 1]
+            val b = line[k]
+            if (b.metres < from || a.metres > to || b.metres == a.metres) {
+                if (best != null) return best.first
+                continue
+            }
+            val (at, distance) = nearestOnSegment(fix, a, b, from, to)
+            if (distance <= fix.leavingMetres) {
+                if (best == null || distance < best.second) best = at to distance
+            } else if (best != null) {
+                return best.first
+            }
+        }
+        return best?.first
+    }
+
+    private fun nearestOnLine(
+        fix: FollowFix,
+        from: Double,
+        to: Double,
+    ): Pair<Double, Double> {
+        var best = 0.0 to Double.MAX_VALUE
+        for (k in 1 until line.size) {
+            val a = line[k - 1]
+            val b = line[k]
+            if (b.metres < from || a.metres > to || b.metres == a.metres) continue
+            val candidate = nearestOnSegment(fix, a, b, from, to)
+            if (candidate.second < best.second) best = candidate
+        }
+        return best
+    }
+
+    /** Metres along the line of [fix]'s nearest point on the segment from [a] to [b], kept within [from]..[to], and its distance. */
+    private fun nearestOnSegment(
+        fix: FollowFix,
+        a: RouteSample,
+        b: RouteSample,
+        from: Double,
+        to: Double,
+    ): Pair<Double, Double> {
+        val east = cos(fix.latitude * PI / 180) * METRES_PER_DEGREE
+        val ax = (a.longitude - fix.longitude) * east
+        val ay = (a.latitude - fix.latitude) * METRES_PER_DEGREE
+        val bx = (b.longitude - fix.longitude) * east
+        val by = (b.latitude - fix.latitude) * METRES_PER_DEGREE
+        val dx = bx - ax
+        val dy = by - ay
+        val lengthSquared = dx * dx + dy * dy
+        var t = if (lengthSquared == 0.0) 0.0 else (-(ax * dx + ay * dy) / lengthSquared).coerceIn(0.0, 1.0)
+        val span = b.metres - a.metres
+        val lowest = ((from - a.metres) / span).coerceIn(0.0, 1.0)
+        val highest = ((to - a.metres) / span).coerceIn(0.0, 1.0)
+        t = t.coerceIn(lowest, highest)
+        val x = ax + dx * t
+        val y = ay + dy * t
+        return a.metres + span * t to sqrt(x * x + y * y)
+    }
+
+    private companion object {
+        const val METRES_PER_DEGREE = 6_371_008.8 * PI / 180
+        const val SAME_PLACE = 1.0
+    }
+}
