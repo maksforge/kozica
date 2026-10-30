@@ -24,20 +24,39 @@ class TrailRouteTest {
                 Math.round(it.longitude * 1e4) / 1e4
         }
 
+    private fun routeMetres(vararg steps: Int) =
+        RoutePlanner(network, router).plan(along(*steps).map { RoutePoint(it.first, it.second) }).metres
+
+    private fun walkMetres(vararg steps: Int) = steps.sumOf { network.edgeLength[it ushr 2].toDouble() }
+
     @Test
-    fun `a Trail the router follows by itself needs only its ends`() {
-        assertEquals(listOf(a, c), along(step(0), step(1)))
+    fun `a Trail the router follows by itself both ways needs only its ends`() {
+        assertEquals(listOf(d, b), along(step(2, reversed = true), step(0)))
+    }
+
+    @Test
+    fun `a one-way stretch is a span of its own, so the two-way one before it still holds reversed`() {
+        assertEquals(listOf(a, b, c), along(step(0), step(1)))
+    }
+
+    @Test
+    fun `a loop keeps to its own way round`() {
+        val loop = intArrayOf(step(0), step(1), step(3, reversed = true), step(2, reversed = true))
+        assertEquals(listOf(a, b, c, d, a), along(*loop))
+        assertEquals(walkMetres(*loop), routeMetres(*loop), 1.0)
+    }
+
+    @Test
+    fun `a walk through the same junction twice keeps both visits`() {
+        val back = intArrayOf(step(2), step(3), step(3, reversed = true))
+        assertEquals(listOf(a, d, c, d), along(*back))
+        assertEquals(walkMetres(*back), routeMetres(*back), 1.0)
     }
 
     @Test
     fun `a via point holds the Route where another Trail is a shortcut`() {
         assertEquals(listOf(a, d, c), along(step(2), step(3)))
-        val planned =
-            RoutePlanner(
-                network,
-                router,
-            ).plan(along(step(2), step(3)).map { RoutePoint(it.first, it.second) })
-        assertEquals(network.edgeLength[2] + network.edgeLength[3].toDouble(), planned.metres, 1.0)
+        assertEquals(walkMetres(step(2), step(3)), routeMetres(step(2), step(3)), 1.0)
     }
 
     @Test

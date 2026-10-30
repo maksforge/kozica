@@ -230,12 +230,14 @@ data class RouteUiState(
  * @param choices the Trails under a tap that found several, until one is picked.
  * @param whole every Section of [shown]'s Long-distance Trail, once asked for; shown with it.
  * @param fits counts the asks to fit the camera to the highlighted Trails, across selections, so a new one never reads as an ask.
+ * @param planningRoute while the points of a Route along [shown] are being found.
  */
 data class TrailUiState(
     val shown: TrailDetail? = null,
     val choices: List<TrailDetail> = emptyList(),
     val whole: List<TrailDetail> = emptyList(),
     val fits: Int = 0,
+    val planningRoute: Boolean = false,
 ) {
     val highlighted: List<TrailDetail> get() = whole.ifEmpty { listOfNotNull(shown) }
 }
@@ -341,6 +343,8 @@ class MapViewModel(
     private val trail = MutableStateFlow(TrailUiState())
 
     private var tapping: Job? = null
+
+    private var planningAlong: Job? = null
 
     private var loadingLongDistance: Job? = null
 
@@ -592,6 +596,7 @@ class MapViewModel(
      */
     fun tapTrails(ids: List<Long>) {
         tapping?.cancel()
+        planningAlong?.cancel()
         loadingLongDistance?.cancel()
         if (ids.isEmpty()) {
             closeTrail()
@@ -617,10 +622,16 @@ class MapViewModel(
         if (shownHike.value != null) closeHike()
         dismissOffer()
         loadingLongDistance?.cancel()
+        planningAlong?.cancel()
         trail.update { TrailUiState(shown = picked, fits = it.fits) }
     }
 
     fun closeTrail() {
+        planningAlong?.cancel()
+        clearTrail()
+    }
+
+    private fun clearTrail() {
         tapping?.cancel()
         loadingLongDistance?.cancel()
         trail.update { TrailUiState(fits = it.fits) }
@@ -632,27 +643,39 @@ class MapViewModel(
      */
     fun planAlongTrail(title: String) {
         val shown = trail.value.shown ?: return
-        tapping?.cancel()
-        tapping =
+        planningAlong?.cancel()
+        trail.update { it.copy(planningRoute = true) }
+        planningAlong =
             viewModelScope.launch {
-                val points = withContext(compute) { routeAlong(shown) }?.takeIf { it.size >= 2 } ?: return@launch
+                val points = withContext(compute) { routeAlong(shown) }?.takeIf { it.size >= 2 }
                 if (trail.value.shown?.id != shown.id) return@launch
-                closeTrail()
+                if (points == null) {
+                    trail.update { it.copy(planningRoute = false) }
+                    return@launch
+                }
+                clearTrail()
                 planning?.cancel()
                 routeGeneration++
                 route.value = RouteUiState(suggestedName = title)
                 changePoints { points }
-                val labels = withContext(io) { points.map { places()?.nearest(it.latitude, it.longitude)?.name } }
-                route.update { state ->
-                    if (state.points !=
-                        points
-                    ) {
-                        state
-                    } else {
-                        state.copy(points = points.zip(labels) { p, l -> p.copy(label = l) })
-                    }
+                labelPoints(points)
+            }
+    }
+
+    // Its own job, so a Trail selected while the labels are read does not lose them.
+    private fun labelPoints(points: List<RoutePoint>) {
+        viewModelScope.launch {
+            val labels = withContext(io) { points.map { places()?.nearest(it.latitude, it.longitude)?.name } }
+            route.update { state ->
+                if (state.points !=
+                    points
+                ) {
+                    state
+                } else {
+                    state.copy(points = points.zip(labels) { p, l -> p.copy(label = l) })
                 }
             }
+        }
     }
 
     /** The shown Trail's walk as a GPX file for the share sheet, named [title]. */

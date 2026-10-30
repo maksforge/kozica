@@ -614,6 +614,7 @@ fun MapScreen(
                     onClose = viewModel::closeTrail,
                     onShowWhole = viewModel::showWholeTrail,
                     onShowLongDistance = viewModel::showLongDistance,
+                    planningRoute = state.trail.planningRoute,
                     onPlanRoute = viewModel::planAlongTrail,
                     gpx = gpx,
                     onExportGpx = viewModel::exportTrailGpx,

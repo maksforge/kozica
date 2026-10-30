@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -493,6 +494,49 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `a Route along a Trail found off the main thread comes with its labels`() =
+        runTest {
+            val viewModel =
+                routingViewModel(loadTrail = ::trailDetail, routeAlong = {
+                    withContext(Dispatchers.Default) {
+                        delay(20)
+                        listOf(RoutePoint(49.0, 20.0), RoutePoint(49.0, 20.02))
+                    }
+                })
+            viewModel.tapTrails(listOf(7))
+            settled(viewModel) { it.trail.shown?.id == 7L }
+
+            viewModel.planAlongTrail("Trail 7")
+            assertTrue(settled(viewModel) { true }.trail.planningRoute)
+
+            val state = settled(viewModel) { state -> state.route.points.any { it.label != null } }
+            assertEquals(listOf("Near 49.0", "Near 49.0"), state.route.points.map { it.label })
+            assertEquals("Trail 7", state.route.suggestedName)
+            assertEquals(TrailUiState(), state.trail)
+        }
+
+    @Test
+    fun `closing the Trail stops a Route along it still being found`() =
+        runTest {
+            val stopped = CompletableDeferred<Unit>()
+            val viewModel =
+                routingViewModel(loadTrail = ::trailDetail, routeAlong = {
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        stopped.complete(Unit)
+                    }
+                })
+            viewModel.tapTrails(listOf(7))
+            settled(viewModel) { it.trail.shown?.id == 7L }
+            viewModel.planAlongTrail("Trail 7")
+
+            viewModel.closeTrail()
+            assertTrue(stopped.isCompleted)
+            assertFalse(settled(viewModel) { it.trail.shown == null }.trail.planningRoute)
+        }
+
+    @Test
     fun `a fit asked for is never asked again by selecting or closing another Trail`() =
         runTest {
             val viewModel = routingViewModel(loadTrail = ::trailDetail)
@@ -578,6 +622,7 @@ private fun routingViewModel(
     observeName: (String) -> Flow<String?> = { emptyFlow() },
     loadTrail: (Long) -> TrailDetail? = { null },
     sectionsOf: (Long) -> List<Long> = { emptyList() },
+    routeAlong: suspend (TrailDetail) -> List<RoutePoint>? = { null },
     io: CoroutineDispatcher = Dispatchers.Main,
 ) = MapViewModel(
     regions = flowOf(emptyList()),
@@ -597,6 +642,7 @@ private fun routingViewModel(
     observeName = observeName,
     loadTrail = loadTrail,
     sectionsOf = sectionsOf,
+    routeAlong = routeAlong,
 )
 
 private fun trailDetail(
