@@ -56,7 +56,7 @@ CROP = round(W * (1 - (16 / 9) / (W / H)) / 2)  # 68px lost from each side
 VISIBLE_MARGIN = 40  # what a viewer of the cropped graphic should actually see
 MARGIN = CROP + VISIBLE_MARGIN  # 108px from the canvas edge to any content, both sides
 
-MARK_SIZE = 198
+MARK_SIZE = 196
 MARK_CY = 215
 MIN_GAP = 24  # the copy must clear the mark by this much; render() checks it
 
