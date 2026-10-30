@@ -156,7 +156,7 @@ fun MapScreen(
     var askingForPrecise by remember { mutableStateOf(false) }
     var centreWanted by remember { mutableStateOf(false) }
     // docs/phase-6b.md § 3: while following, each fix recentres the map until the user pans it.
-    var tracking by remember { mutableStateOf(false) }
+    var keepInView by remember { mutableStateOf(false) }
     var followWanted by rememberSaveable { mutableStateOf(false) }
     var needsPrecise by rememberSaveable { mutableStateOf(false) }
     var positionOutside by remember { mutableStateOf(false) }
@@ -207,7 +207,7 @@ fun MapScreen(
             !read.on -> context.startActivitySafely(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
             else -> {
                 centreWanted = true
-                if (state.route.following != null) tracking = true
+                if (state.route.following != null) keepInView = true
             }
         }
     }
@@ -218,7 +218,7 @@ fun MapScreen(
             read == null -> Unit
             read.grant == LocationGrant.PRECISE -> {
                 viewModel.follow()
-                tracking = true
+                keepInView = true
             }
             read.grant == LocationGrant.NONE && (!denied || activity.mayAskAgain()) -> {
                 followWanted = true
@@ -311,7 +311,7 @@ fun MapScreen(
             positionOutside = false
             if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
                 centreWanted = false
-                tracking = false
+                keepInView = false
             }
         }
         map.addOnCameraIdleListener {
@@ -513,16 +513,23 @@ fun MapScreen(
         if (!followWanted || state.location?.grant != LocationGrant.PRECISE) return@LaunchedEffect
         followWanted = false
         viewModel.follow()
-        tracking = true
+        keepInView = true
     }
     val following = state.route.following != null
     LaunchedEffect(following, state.fix) {
         if (following) state.fix?.let { viewModel.followFix(it.toFollowFix()) }
     }
-    LaunchedEffect(map, following, tracking, state.fix) {
+    LaunchedEffect(map, following, keepInView, state.fix) {
         val map = map ?: return@LaunchedEffect
         val fix = state.fix ?: return@LaunchedEffect
-        if (following && tracking) map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(fix.latitude, fix.longitude)))
+        if (!following || !keepInView) return@LaunchedEffect
+        val northUp =
+            CameraPosition
+                .Builder(
+                    map.cameraPosition,
+                ).target(LatLng(fix.latitude, fix.longitude))
+                .bearing(0.0)
+        map.animateCamera(CameraUpdateFactory.newCameraPosition(northUp.build()))
     }
     if (needsPrecise) {
         AlertDialog(
