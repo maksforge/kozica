@@ -243,6 +243,54 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `a place picked while a Trail is selected closes it and joins the Route brought back`() =
+        runTest {
+            val viewModel = routingViewModel(loadTrail = ::trailDetail)
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            settled(viewModel) { it.route.planned != null }
+            viewModel.tapTrails(listOf(7))
+            settled(viewModel) { it.trail.shown != null }
+
+            val place = Place(1, PlaceKind.PEAK, 49.0, 20.01, "tatry", "Kopa")
+            viewModel.pick(SearchResult.AtPlace(place))
+            assertEquals(place, settled(viewModel) { it.trail.shown == null }.search.offered)
+            viewModel.addOffered()
+            assertEquals(
+                "Kopa",
+                settled(viewModel) { it.route.points.size == 3 }
+                    .route.points
+                    .last()
+                    .label,
+            )
+        }
+
+    @Test
+    fun `a Trail still loading when a place is picked does not replace the offered place`() =
+        runTest {
+            Executors.newSingleThreadExecutor().asCoroutineDispatcher().use { io ->
+                val release = CountDownLatch(1)
+                val viewModel =
+                    routingViewModel(
+                        io = io,
+                        loadTrail = {
+                            release.await()
+                            trailDetail(it)
+                        },
+                    )
+                viewModel.tapTrails(listOf(7))
+                val place = Place(1, PlaceKind.PEAK, 49.0, 20.01, "tatry", "Kopa")
+                viewModel.pick(SearchResult.AtPlace(place))
+                release.countDown()
+                withContext(io) {}
+
+                val state = settled(viewModel) { it.search.offered != null }
+                assertEquals(place, state.search.offered)
+                assertNull(state.trail.shown)
+            }
+        }
+
+    @Test
     fun `a build without the network says planning is not in it`() =
         runTest {
             val viewModel = routingViewModel(planRoute = { null })

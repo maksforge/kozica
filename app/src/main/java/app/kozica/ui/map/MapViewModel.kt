@@ -38,6 +38,7 @@ import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.SearchResult
 import app.kozica.data.routes.TrailDetail
+import app.kozica.data.routes.boxAway
 import app.kozica.record.Recording
 import app.kozica.ui.common.GpxExport
 import app.kozica.ui.common.GpxExports
@@ -455,14 +456,18 @@ class MapViewModel(
     }
 
     /**
-     * A place is centred and offered as a point; a Trail is selected and fitted, and a Long-distance
-     * Trail by its Section nearest the centre, shown whole (docs/phase-6c.md § 4).
+     * A place closes any selected Trail, bringing the Route back, and is centred and offered as a
+     * point; a Trail is selected and fitted, and a Long-distance Trail by its Section nearest the
+     * centre, shown whole (docs/phase-6c.md § 4).
      */
     fun pick(result: SearchResult) {
         searching?.cancel()
         search.update { it.copy(results = emptyList()) }
         when (result) {
-            is SearchResult.AtPlace -> search.update { it.copy(offered = result.place) }
+            is SearchResult.AtPlace -> {
+                closeTrail()
+                search.update { it.copy(offered = result.place) }
+            }
             is SearchResult.OnTrail -> pickTrail(result.facts.id)
             is SearchResult.LongDistance -> pickLongDistance(result.id)
         }
@@ -486,9 +491,7 @@ class MapViewModel(
                 val sections = withContext(io) { sectionsOf(id).mapNotNull(loadTrail) }
                 val nearest =
                     sections.minByOrNull {
-                        val lat = (it.facts.south + it.facts.north) / 2 - centre.latitude
-                        val lon = (it.facts.west + it.facts.east) / 2 - centre.longitude
-                        lat * lat + lon * lon
+                        with(it.facts) { boxAway(centre.latitude, centre.longitude, south, west, north, east) }
                     } ?: return@launch
                 showTrail(nearest)
                 trail.update { it.copy(whole = sections, fits = it.fits + 1) }
