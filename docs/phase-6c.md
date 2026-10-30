@@ -228,9 +228,10 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   "European long distance path E3" and "Show the whole" shows all of it; `Via Mariae (combined)`
   r11154539 holds r4649443, and the two Svatojakubská cesty hold r10364398 and r11078362. B's build
   at the pin reads 2,492 Trails, 62 of them Sections of 15 Long-distance Trails, all 15 named, still
-  over verdict 3's five; and walks 1,929 lines, 75 loops, 267 with a branch and 221 with gaps, 204 of
-  their 340 gaps under 100 m, where two ways of a relation do not quite meet, and 52 over a kilometre,
-  where a Trail leaves the Regions.
+  over verdict 3's five; and walks 1,929 lines, 75 loops, 267 with a branch and 221 with gaps, 203 of
+  their 340 gaps under 100 m, where two ways of a relation do not quite meet, and 54 over a kilometre,
+  where a Trail leaves the Regions. 4 walks were past the search, and 3 cover under half of their
+  Trail's edges.
 - **The profile writes the membership**, since it already decides what a Trail is: `<id>.ways`
   becomes `<id>.trails`, one line per Trail, a `route=hiking` relation or a regional parent, with
   its id and its member ways in member order with their roles. A regional parent's line holds its
@@ -312,7 +313,13 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   does a line's first end. Each break is recorded: the
   length and climb are the stretches' sum, and the profile breaks at each gap. **A branch
   with no role**, a node where three of the Trail's own edges meet, is walked along the longest path
-  between two of the Trail's ends, and the rest is treated as an `alternative`. A Trail whose every way
+  between two of the Trail's ends that takes no edge twice, so round the long side of a loop between
+  them and round a loop it passes on the way; where a walk from an end that stops elsewhere is more
+  than twice as long, as where a loop hangs off the Trail beyond a short stub, it takes that one.
+  With fewer than two ends, it is the longest such walk from the one end, or else from the start of
+  the edge holding the first way. The rest is treated as an `alternative`. Where the edges hold a
+  loop every such walk is searched; past 60 edges or 200,000 steps of search, the walk is the path
+  between the two ends farthest apart, as the build logs. A Trail whose every way
   has one of those roles is walked over all of them, so that every Trail has a walk. The build logs
   how many Trails took each shape.
 - **The title is composed on the phone**, in the app's language, from the row's parts: `name:pl` or

@@ -59,6 +59,9 @@ COLOUR_CODE = re.compile(r"^\[[^\]]{1,3}\]\s*")
 DASH = re.compile(r"\s+[-–—]\s+")
 LONGEST_END = 40
 TIED_GAPS = 1.0
+SEARCHED_EDGES = 60
+SEARCH_STEPS = 200_000
+ENDLESS_LONGER = 2
 OFF_WALK = {"alternative", "excursion", "approach", "branch"}
 UNDECOMPOSED = str.maketrans({"ł": "l", "đ": "d", "ð": "d", "ø": "o", "ß": "ss", "æ": "ae", "œ": "oe", "ı": "i"})
 
@@ -668,6 +671,7 @@ class Step:
 class Walk:
     steps: list[Step]
     shape: str
+    estimated: bool = False
 
 
 def trail_edges(edges: list[Edge]) -> dict[tuple[int, bool], list[int]]:
@@ -682,8 +686,8 @@ def trail_edges(edges: list[Edge]) -> dict[tuple[int, bool], list[int]]:
 def walk_of(number: int, line: TrailLine, edges: list[Edge], ways: dict, by_trail: dict) -> Walk | None:
     """docs/phase-6c.md § 2's walk: the Trail's edges as a graph, the members' order only picking which end
     comes first; a loop goes round once from the edge holding the first way, the way that way runs; a
-    branch takes the longest path between two ends; stretches apart are joined in the order and directions
-    that leave the least gap."""
+    branch takes the longest path between two ends that takes no edge twice; stretches apart are joined in
+    the order and directions that leave the least gap."""
     own = by_trail.get((number, True)) or by_trail.get((number, False))
     if not own:
         return None
@@ -731,6 +735,7 @@ def walk_of(number: int, line: TrailLine, edges: list[Edge], ways: dict, by_trai
 
     shapes = set()
     stretches = []
+    estimated = False
     for component in components:
         members = set(component)
         degree: dict[int, int] = {}
@@ -756,13 +761,24 @@ def walk_of(number: int, line: TrailLine, edges: list[Edge], ways: dict, by_trai
         ends = sorted(vertex for vertex, d in degree.items() if d == 1)
         if max(degree.values()) > 2:
             shapes.add("branch")
-        sources = ends if len(ends) >= 2 else [farthest(min(degree), members, at, edges, other)[0]]
-        best = None
-        for source in sources:
-            target, length, path = farthest(source, members, at, edges, other, ends if len(ends) >= 2 else None)
-            if best is None or length > best[0]:
-                best = (length, source, path)
-        _, source, path = best
+        found = None
+        if len(component) >= len(degree):
+            head = first_edge if first_edge in members else component[0]
+            searched = longest(ends or [start(head)], members, at, edges, other, set(ends))
+            if searched is not None:
+                between, anywhere = searched
+                found = anywhere if between is None or anywhere[0] > ENDLESS_LONGER * between[0] else between
+                found = found[1:]
+            estimated = estimated or found is None
+        if found is None:
+            sources = ends if len(ends) >= 2 else [farthest(min(degree), members, at, edges, other)[0]]
+            best = None
+            for source in sources:
+                target, length, path = farthest(source, members, at, edges, other, ends if len(ends) >= 2 else None)
+                if best is None or length > best[0]:
+                    best = (length, source, path)
+            found = best[1:]
+        source, path = found
         steps, vertex = [], source
         for i in path:
             steps.append(step(i, vertex))
@@ -818,7 +834,7 @@ def walk_of(number: int, line: TrailLine, edges: list[Edge], ways: dict, by_trai
     least = min(gaps for gaps, _ in options)
     walked = min((walked for gaps, walked in options if gaps <= least + TIED_GAPS), key=from_first_way)
     shape = "gaps" if len(stretches) > 1 else "branch" if "branch" in shapes else "loop" if "loop" in shapes else "line"
-    return Walk(walked, shape)
+    return Walk(walked, shape, estimated)
 
 
 def runs_as_way(edge: Edge, way: tuple | None) -> bool:
@@ -831,6 +847,43 @@ def runs_as_way(edge: Edge, way: tuple | None) -> bool:
         if a in refs and b in refs:
             return refs.index(a) < refs.index(b)
     return True
+
+
+def longest(sources: list[int], members: set[int], at: dict, edges: list[Edge], other, ends: set[int]
+            ) -> tuple[tuple | None, tuple] | None:
+    """The longest walks over the component's edges from one of the sources that take no edge twice, as (length,
+    source, edges): the longest to another of the ends, if any, and the longest to anywhere; ties go to the
+    smallest edge indices. None when the component or the search is too large to search through."""
+    if len(members) > SEARCHED_EDGES:
+        return None
+    best: list = [(-1.0, ()), (-1.0, ())]
+    found: list = [None, None]
+    path: list[int] = []
+    budget = SEARCH_STEPS
+
+    def visit(source: int, vertex: int, length: float) -> bool:
+        nonlocal budget
+        budget -= 1
+        if budget < 0:
+            return False
+        if path:
+            key = (length, tuple(-i for i in sorted(path)))
+            for k in (0, 1) if vertex in ends else (1,):
+                if key > best[k]:
+                    best[k], found[k] = key, (length, source, list(path))
+        for i in sorted(at[vertex]):
+            if i in members and i not in path:
+                path.append(i)
+                ok = visit(source, other(i, vertex), length + edges[i].length)
+                path.pop()
+                if not ok:
+                    return False
+        return True
+
+    for source in sources:
+        if not visit(source, source, 0.0):
+            return None
+    return found[0], found[1]
 
 
 def farthest(source: int, members: set[int], at: dict, edges: list[Edge], other, targets: list[int] | None = None
@@ -983,17 +1036,19 @@ def main() -> None:
     edges, flat = edges_of(ways, relief, memberships_of(trails))
     long_distance = outermost(sections)
     by_trail = trail_edges(edges)
-    rows, shapes = [], {}
+    rows, shapes, estimated = [], {}, 0
     for number, line in trails.items():
         walk = walk_of(number, line, edges, ways, by_trail)
         if walk is None:
             shapes["no way in any cut"] = shapes.get("no way in any cut", 0) + 1
             continue
         shapes[walk.shape] = shapes.get(walk.shape, 0) + 1
+        estimated += walk.estimated
         rows.append(TrailRow(number, names_of.get(number, {}), line, walk, long_distance.get(number)))
     log(f"{len(rows)} Trails, {sum(1 for row in rows if row.long_distance)} of them Sections of "
         f"{len({row.long_distance for row in rows if row.long_distance})} Long-distance Trails; walks: "
-        + ", ".join(f"{count} {shape}" for shape, count in sorted(shapes.items())))
+        + ", ".join(f"{count} {shape}" for shape, count in sorted(shapes.items()))
+        + f"; {estimated} of them past the longest-path search, taken by the farthest ends instead")
     args.out.mkdir(parents=True, exist_ok=True)
     nodes, edge_count, points = write_network(edges, args.out / "trails.network")
     log(f"trails.network: {nodes} nodes, {edge_count} edges, {points} points, "
