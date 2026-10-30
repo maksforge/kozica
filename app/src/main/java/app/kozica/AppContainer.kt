@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -151,7 +152,13 @@ class AppContainer(
     val recorder by lazy { Recorder(appContext, hikes, ::places, applicationScope) }
 
     val pace: StateFlow<Pace?> by lazy {
-        Paces(hikes.observeEnded(), hikes::ruleSeconds).pace.stateIn(applicationScope, SharingStarted.Eagerly, null)
+        Paces(
+            hikes.observeEnded(),
+            relief.map {
+                it.state is RegionState.Ready
+            },
+            hikes::ruleSeconds,
+        ).pace.stateIn(applicationScope, SharingStarted.Eagerly, null)
     }
 
     /** A saved Route the Routes tab asked the map to show, until the map takes it. */
