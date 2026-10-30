@@ -322,14 +322,14 @@ Idź trasą z prowadzeniem: dotknij Prowadź, a mapa będzie podążać za tobą
 
 ### 0.13.0 — when you leave a followed Route, and the way back
 
-**English** — 372/500:
+**English** — 359/500:
 
 ```
-While you follow a Route, Kozica now says when you've left it: after 30 seconds more than 40 m from the Route, a banner shows how far away you are. Tap Back to the Route and the map draws a way over the Trails to rejoin it, with its length and walking time at your pace; away from the Trails, it says how far the nearest Trail is. The Route itself stays as you planned it.
+While you follow a Route, Kozica now says when you've left it: after 30 seconds more than 40 m from the Route, a banner shows how far away you are. Tap Back to the Route and the map draws a way over the Trails to rejoin it, with its length and walking time; away from the Trails, it says how far the nearest Trail is. The Route itself stays as you planned it.
 ```
 
-**Polish** — 357/500:
+**Polish** — 342/500:
 
 ```
-Podczas prowadzenia Kozica mówi teraz, gdy jesteś poza trasą: po 30 sekundach dalej niż 40 m od niej baner pokazuje, jak daleko jesteś. Dotknij Powrót na trasę, a mapa narysuje drogę szlakami z powrotem, z jej długością i czasem przejścia w twoim tempie; z dala od szlaków poda, jak daleko jest najbliższy szlak. Sama trasa zostaje taka, jak ją zaplanowano.
+Podczas prowadzenia Kozica mówi teraz, gdy jesteś poza trasą: po 30 sekundach dalej niż 40 m od niej baner pokazuje, jak daleko jesteś. Dotknij Powrót na trasę, a mapa narysuje drogę szlakami z powrotem, z jej długością i czasem przejścia; z dala od szlaków poda, jak daleko jest najbliższy szlak. Sama trasa zostaje taka, jak ją zaplanowano.
 ```
