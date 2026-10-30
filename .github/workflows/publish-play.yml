@@ -156,6 +156,7 @@ jobs:
           TAG: ${{ github.event.release.tag_name || github.ref_name }}
         run: >-
           gh release upload "${TAG}" region_*/src/main/assets/*.pmtiles map-data/base-assets/trails.network
+          map-data/base-assets/trails.edges
           map-data/base-assets/places.sqlite scripts/map/MAP-DATA-LICENCE.txt scripts/map/RELIEF-DATA-LICENCE.txt
           map-data/MAP-DATA-INPUTS.txt --clobber
 

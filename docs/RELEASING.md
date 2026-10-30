@@ -212,8 +212,8 @@ with osmium and pyosmium (`build-map-data.py --discard-extracts --check-determin
 matches, when its archives are reused instead (ADR-0007's 2026-10-25 amendment), so a bad
 dispatch, a bad relief pin or a missing secret fails before it, `bundleRelease -PmapPacks`, run all four `aab-*.py`
 artifact checks, print the signing certificate, **attach the nine `.pmtiles`, the Trail network
-`trails.network` and the name index `places.sqlite` (which the bundle also carries in its base
-module), `scripts/map/MAP-DATA-LICENCE.txt`, `scripts/map/RELIEF-DATA-LICENCE.txt` and
+`trails.network`, the Trails' walks `trails.edges` and the name index `places.sqlite` (which the
+bundle also carries in its base module), `scripts/map/MAP-DATA-LICENCE.txt`, `scripts/map/RELIEF-DATA-LICENCE.txt` and
 `MAP-DATA-INPUTS.txt` to the GitHub release** (the ODbL offer and its notices, so it
 comes before Play and a failed attach stops the run), upload the AAB **and its R8 mapping**, keep both as
 a build artifact for 90 days, delete the key. The attach is why the job has `contents: write`.

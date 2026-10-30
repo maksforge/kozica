@@ -212,16 +212,35 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   r5120297, and r7466160 `Ścieżka Rycerska`, whose Polish and Czech halves are marked differently
   and so are two Trails. The walk is built from its own ways and its pieces' ways together, by the
   walk rule below, and its colour and symbol are the ones its pieces share. The pieces are not rows,
-  not tapped and not found by search. Only an `nwn` or `iwn` relation of relations is a Long-distance
-  Trail with Sections. Over A's cuts that is 41 Trails from 233 pieces (121 of them in the Tatry),
-  15 members of 11 parents left Trails of their own, and 17 Long-distance Trails, 16 named.
+  not tapped and not found by search. Over A's cuts that is 41 Trails from 233 pieces (121 of them in
+  the Tatry), and 15 members of 11 parents left Trails of their own.
+- **A Long-distance Trail is an `nwn` or `iwn` relation of relations** (the owner, 2026-10-30), and
+  its member relations without a role are its Sections. One with a role is a piece taking that role,
+  as a regional parent's is: KČT's main Trails are `nwn`, and r549809 `Hronov - Kohoutov` (351 ways)
+  and r2824733 (87) each hold one spur as an `excursion`, so each is a Trail, its spur tapped and
+  highlighted with it and off its walk. The role decides, not the marking: read as the profile reads
+  it, r4649443 `Via Mariae M02` and its Sections are all blue with no symbol, their `M02` and `SzM`
+  being text. A Long-distance Trail's own ways carry no Trail: r4649443's three (887 m of track and
+  service road) and E8 r1175728's one (55 m) are drawn as the paths and roads they are. **A nest
+  flattens to its outermost** (the owner, 2026-10-30): where one Long-distance Trail holds another,
+  the inner one's Sections are the outer one's, and the inner one is neither a row nor a
+  Long-distance Trail. E3 r1175707 holds its Czech part r83249, so a Czech E3 Section is named
+  "European long distance path E3" and "Show the whole" shows all of it; `Via Mariae (combined)`
+  r11154539 holds r4649443, and the two Svatojakubská cesty hold r10364398 and r11078362. B's build
+  at the pin reads 2,492 Trails, 62 of them Sections of 15 Long-distance Trails, all 15 named, still
+  over verdict 3's five; and walks 1,929 lines, 75 loops, 266 with a branch and 222 with gaps, 187 of
+  their 341 gaps under 100 m, where two ways of a relation do not quite meet, and 75 over a kilometre,
+  where a Trail leaves the Regions.
 - **The profile writes the membership**, since it already decides what a Trail is: `<id>.ways`
   becomes `<id>.trails`, one line per Trail, a `route=hiking` relation or a regional parent, with
   its id and its member ways in member order with their roles. A regional parent's line holds its
   own ways and, at each piece's place, that piece's ways in its own order, with the piece's role
   where it has one and each way's own where not; the profile picks the pieces, since it reads the
-  markings, and a piece has no line of its own. And one per Long-distance Trail with its id, its
-  name, its `network` and its member relations (`preprocessOsmRelation` sees `type=superroute` too).
+  markings, and a piece has no line of its own. And one per Long-distance Trail with its id and its
+  Sections (`preprocessOsmRelation` sees `type=superroute` too). A line is tab-separated: `trail`,
+  the id, the colour and symbol as the tiles carry them, and the ways as `<way>` or `<way>/<role>`;
+  or `long`, the id and the Sections. Names and ends are tags, which `build-network.py` reads from the
+  relation in the cut.
   `build-network.py` reads the wanted ways from it, as it reads `<id>.ways` today, and the mapping
   with them, so the rule for a Trail stays written once. The profile runs once per Region, so a relation crossing a boundary is in two
   or more files, each with only the members its cut holds: `build-network.py` merges the lines by
@@ -239,17 +258,10 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   taken again for it.
 - **`trails` table in `places.sqlite`**: one row per Trail with its id, `name`, `name:pl`, `ref`,
   colour, symbol, `from`, `to`, its Long-distance Trail's id and name, the positions of its walk's
-  two ends, its length, ascent and descent each way, and its bounding box. No title column: the
+  two ends, its length, its ascent and descent along the walk (the other way's are the two swapped),
+  its number of gaps, and the bounding box of all its ways, its walk's and the rest. No title column: the
   title is composed on the phone (below). The climbs are the relief's heights, so `RELIEF-DATA-LICENCE.txt` names
   `places.sqlite` beside `trails.network`.
-- **Open for B: the Long-distance Trails that sit in more than one place in the hierarchy.** The
-  regional rule above settles 13 of the 16 relations that are both a Trail and a parent (r1020537
-  `Gubałówka - Ciemniak`, one way and eight pieces, is one Trail). Three `nwn` or `iwn` ones remain,
-  with ways of their own and Sections among their members (r4649443 `Szlak Maryjny`, r549809
-  `Hronov - Kohoutov`, and r2824733 with no name), and two Long-distance Trails hold another
-  (r1175707, E3, holds its Czech part, r83249; r11154539, `Via Mariae (combined)`, holds r4649443).
-  B settles, before the table's columns are fixed, whether such a relation is a row, a parent or
-  both, and what "Show the whole *name*" highlights for a nest.
 - **The row's `from` and `to` are the ends a mapper wrote, in whichever country's convention**
   (§ 1's verdict): the `from` and `to` tags, else the first of `description`, `osmc:name`,
   `note:cs` and `note` holding place names between spaced dashes, `A - B` or `A - B - C`, whose
@@ -269,7 +281,11 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   a Trail to its bounding box, nought when the centre lies inside it. A result is then a place or a
   Trail, one sealed type, and the list stays one list.
 - **`trails.edges`**, a third base file beside `trails.network`: for each Trail, its walk (below) as
-  edges in order, each with its direction, and where the walk breaks. Length, climb and the profile
+  edges in order, each with its direction, and where the walk breaks. Little-endian, like the
+  network: `KZTE`, a format version and the counts of Trails and steps, then the Trails' ids in
+  order, each one's first step and number of steps, and the steps, each the edge's index in the
+  network shifted left two, its second bit a gap before it, its first the edge walked from its last
+  point to its first. Length, climb and the profile
   are summed from the network's edges along it, as a Route's are, so a gapless Trail and the Route
   made from it agree to the metre. A gapped one cannot: its length and climb are its stretches' sum,
   and its Route adds a router leg across each gap (§ 5), so the sheet's numbers say "with gaps" and
@@ -288,13 +304,14 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   highlighted with it, but off its walk, so not in its length, profile, Route or GPX; where `forward`
   and `backward` members split the line in two, the walk takes the `forward` strand. What is left
   takes one of four shapes. **A line** is walked from its first end to its other. **A loop**, with no
-  end, starts and finishes at the node where the first way in member order starts, and goes round
-  once the way that way runs. **Gaps**, the edges falling in more than one stretch, are walked stretch
+  end, starts and finishes at the start of the edge holding the first way in member order, and goes
+  round once the way that way runs. **Gaps**, the edges falling in more than one stretch, are walked stretch
   by stretch, each entered at the end nearest the one just left, and each break is recorded: the
   length and climb are the stretches' sum, and the profile breaks at each gap. **A branch
   with no role**, a node where three of the Trail's own edges meet, is walked along the longest path
-  between two of the Trail's ends, and the rest is treated as an `alternative`. The build logs how
-  many Trails took each shape.
+  between two of the Trail's ends, and the rest is treated as an `alternative`. A Trail whose every way
+  has one of those roles is walked over all of them, so that every Trail has a walk. The build logs
+  how many Trails took each shape.
 - **The title is composed on the phone**, in the app's language, from the row's parts: `name:pl` or
   `name` if present; else "*colour* Trail: *from* – *to*" from the row's ends; else the same with the
   place `PlaceIndex.nearest` names at each end (phase 5's rule); else the colour alone, "*colour*

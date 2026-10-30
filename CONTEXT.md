@@ -10,7 +10,9 @@ user-facing word genuinely differ, both are written here with the difference sta
 
 | Term | Means | Not |
 | --- | --- | --- |
-| **Trail** | A marked hiking route with a colour and a symbol, as on the signposts, running over any number of paths and roads. Polish UI: *szlak*. | "route", "track", "path" |
+| **Trail** | A marked hiking route with a colour and a symbol, as on the signposts, running over any number of paths and roads. A regional Trail that OSM maps in pieces is one Trail. Its title is its name, else "*colour* Trail: *from* – *to*" from the ends a mapper wrote or the places nearest them, else the colour alone ([`docs/phase-6c.md`](docs/phase-6c.md) § 2). Polish UI: *szlak*. | "route", "track", "path" |
+| **Long-distance Trail** | A Trail made of Sections, each its own Trail: an `nwn` or `iwn` relation whose members are relations, `type=superroute` or `route=hiking`; where one holds another, the outermost. E3, Via Slovakia, the Tatranská magistrála. Polish UI: *szlak długodystansowy*. | "parent", "long Trail", "superroute" |
+| **Section** | One Trail of a Long-distance Trail, selected and walked on its own. Polish UI: *odcinek*. | "stage", "part", "piece" (a piece is not a Trail) |
 | **Path** | Any footway on the map, marked or not. A Path is never drawn or named as if it were a Trail. Polish UI: *ścieżka*. | "trail" for an unmarked way |
 | **Hut** | A staffed mountain hut. Polish UI: *schronisko*. | "shelter", "refuge", "hostel" |
 | **Shelter** | An unstaffed roof on or near a Trail. Polish UI: *wiata*. A staffed *chatka* is a Hut. | "hut", *chatka* |

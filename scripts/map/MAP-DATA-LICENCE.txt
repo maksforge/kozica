@@ -1,8 +1,9 @@
 Kozica map data
 
 The .pmtiles files, trails.network (the Trail network the app plans Routes
-over) and places.sqlite (the names it searches) attached to this release are a
-derivative database of OpenStreetMap.
+over), trails.edges (each Trail's walk along it) and places.sqlite (the names
+and the Trails it searches) attached to this release are a derivative database
+of OpenStreetMap.
 
 © OpenStreetMap contributors
 https://www.openstreetmap.org/copyright

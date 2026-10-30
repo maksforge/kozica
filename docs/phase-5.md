@@ -152,10 +152,10 @@ from cost 3 MB, so only OSM's own nodes are stored.
 - **`trails.network`**: every way that the map draws as a Trail, from the union of the nine
   Regions. An edge runs from one junction to the next, through as many ways as meet end to end
   between them, and is cut early only where the walking changes (its one-way direction or its
-  `sac_scale` grade), and a way that closes on itself is cut in its middle too, so a loop is
+  `sac_scale` grade) or the Trails on it do (phase 6c § 2), and a way that closes on itself is cut in its middle too, so a loop is
   kept with no edge from a node to itself; an edge keeps its first way's OSM id. A climb split at every way's end would lose
-  up to the dead band each time. The ways are the ones `KozicaProfile.java` lists for its `route=hiking` relations, written
-  to `map-data/archives/<id>.ways` beside each Region's built archive, before `install()` moves the
+  up to the dead band each time. The ways are the ones `KozicaProfile.java` lists for its Trails, written with each
+  Trail's membership to `map-data/archives/<id>.trails` (phase 6c § 2) beside each Region's built archive, before `install()` moves the
   archive into its pack, so the list never ships and the rule stays written once; their tags and
   nodes are read from the merged cut. Nodes carry a position and a height; edges carry their geometry, length, the
   walking time each way (§ 3), the ascent and descent each way, the `sac_scale` grade, and their
