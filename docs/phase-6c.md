@@ -5,7 +5,8 @@ relies on ADR-0007 (every Region's pack is rebuilt and delivered again), ADR-000
 the network: the Trail index ships in the app like the name index) and ADR-0010 (the Trail network,
 which gains a third base file and an edge cut wherever the Trails on a way change; the router itself
 is unchanged). [`CONTEXT.md`](../CONTEXT.md) gains **Long-distance Trail** and **Section**, and
-**Trail** gains the rule for its title. Planned with the owner on 2026-10-27.
+**Trail** gains the rule for its title and that a regional Trail OSM maps in pieces is one Trail.
+Planned with the owner on 2026-10-27.
 
 **What closing this phase means.** Today a Trail on the map is a coloured line that does nothing when
 tapped, and the search knows places but not Trails. After this phase the user taps the green line
@@ -174,45 +175,58 @@ with KČT's colour letter, `[Ž] A - B`; the build strips it (§ 2).
 **Verdict 3 does not apply**: 70 Long-distance Trails have Sections in the Regions (57 `route=hiking`
 relations of relations, 13 `type=superroute`), 66 of them named, with 306 Sections. "Show the whole
 *name*" is built. Most of the 70 are not long-distance, though: 53 are `rwn` or `lwn` relations, a
-regional Trail split at its junctions into Sections, which is how PTTK's Tatry Trails are mapped.
-r1593233, the green `Bulwary Słowackiego - Kasprowy Wierch (stacja kolejki)`, holds four Sections,
-among them `Kuźnice - Myślenickie Turnie` and `Myślenickie Turnie - Kasprowy Wierch`; r1593481, the
-blue `Kuźnice - Schronisko PTTK przy Morskim Oku`, holds eleven; and 137 of the Tatry's 311 Trails
-are Sections. By § 2's Section rule a tap there selects one Section, not the Trail a walker would
-name, and the whole Trail is its Long-distance Trail, shown on request. The verdict holds without
-them: 16 of the 66 named are `nwn` or `iwn` (E3, Via Slovakia, the Tatranská magistrála), over the
-five it asks for. **The owner then made the 53 regional ones Trails** (2026-10-30, § 2): a tap
-selects the Trail a walker names, and only the 17 `nwn` and `iwn` relations keep Sections. The
-tally above counted the 248 pieces as Trails and is not taken again for it; over A's cuts the
-union becomes 2,483 Trails.
+regional Trail split at its junctions into pieces, which is how PTTK's Tatry Trails are mapped; A
+counted the pieces as Sections, and these figures are A's. r1593233, the green
+`Bulwary Słowackiego - Kasprowy Wierch (stacja kolejki)`, holds four pieces, among them
+`Kuźnice - Myślenickie Turnie` and `Myślenickie Turnie - Kasprowy Wierch`; r1593481, the blue
+`Kuźnice - Schronisko PTTK przy Morskim Oku`, holds eleven; and 137 of the Tatry's 311 Trails are
+pieces or Sections, 121 of them pieces. Taken as Sections, a tap there would select one piece, not
+the Trail a walker would name, with the whole Trail shown only on request. The verdict holds
+without them: 16 of the 66 named are `nwn` or `iwn` (E3, Via Slovakia, the Tatranská magistrála),
+over the five it asks for. **The owner then made the regional ones Trails** (2026-10-30, § 2): a
+tap selects the Trail a walker names, as signposted, and only the 17 `nwn` and `iwn` relations keep
+Sections. A member marked otherwise than its parent stays a Trail of its own, so over A's cuts 41
+of the 53 become Trails from 233 pieces, 10 are Trails of their own ways alone, and 2 are nothing.
+The tally above counted the pieces as Trails and is not taken again for it; recounted, the union
+becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
 
 ## 2. The data
 
 - **`KozicaProfile.java` writes `trail` (the relation id) on every `trails` feature**, alongside
   colour, symbol and `index`. A Section writes its own id; the Long-distance Trail lives only in the
   index. A piece of a regional Trail (below) writes its parent's id, so the tap and the highlight
-  take the whole Trail; a piece in two such Trails is written once for each.
+  take the whole Trail; a piece in two such Trails is written once for each. Features stay one per
+  Trail per way, deduplicated by the id written: a way held by both a parent and one of its pieces
+  (r1020537's w325798318, also in its piece r105387), or by two of its pieces, is one feature, so
+  `count` counts the Trail once and the chooser lists it once.
 - **A regional Trail mapped in pieces is one Trail** (the owner, 2026-10-30). Where an `rwn` or
   `lwn` relation has `route=hiking` relations among its members, as PTTK's Tatry Trails are mapped,
-  split at their junctions, the parent is the Trail: its row, its title, its walk, its Route and its
-  GPX. The walk is built from its own ways and its pieces' ways together, by the same graph rule as
-  any walk, and its colour and symbol are its pieces', which over A's cuts never differ among the
-  pieces of one parent (3 parents' own tags disagree with them). The pieces are not rows, not tapped
-  and not found by search. Only an `nwn` or `iwn` relation of relations is a Long-distance Trail
-  with Sections. Over A's cuts that is 53 Trails from 248 pieces (121 of them in the Tatry), and
-  17 Long-distance Trails, 16 named. One piece, r5120297, is in two of them (r4005823 and
-  r5012450): it is in both Trails' walks, as a way two Trails share always is.
+  split at their junctions, the members marked as the parent is are its pieces, and the parent is
+  the Trail: its row, its title, its walk, its Route and its GPX. A member is marked as the parent
+  when its colour and symbol, read as the profile reads them, equal the parent's own, or, where the
+  parent carries neither `osmc:symbol` nor `colour`, the one marking all its members share. A member
+  marked otherwise is a different Trail on the ground and stays its own Trail with its own row: PTTK's
+  *szlak dojściowy* and KČT's `odb.`, a triangle or a turned T branching off a bar Trail, which OSM
+  nests under the Trail they leave (r1716770 `Szklary - Bielawa - Przełęcz Puchacza` holds two). A
+  parent left with no ways and no pieces is nothing: r5012450, red, whose only member is the blue
+  r5120297, and r7466160 `Ścieżka Rycerska`, whose Polish and Czech halves are marked differently
+  and so are two Trails. The walk is built from its own ways and its pieces' ways together, by the
+  walk rule below, and its colour and symbol are the ones its pieces share. The pieces are not rows,
+  not tapped and not found by search. Only an `nwn` or `iwn` relation of relations is a Long-distance
+  Trail with Sections. Over A's cuts that is 41 Trails from 233 pieces (121 of them in the Tatry),
+  15 members of 12 parents left Trails of their own, and 17 Long-distance Trails, 16 named.
 - **The profile writes the membership**, since it already decides what a Trail is: `<id>.ways`
-  becomes `<id>.trails`, one line per `route=hiking` relation with its id and its member ways in
-  member order with their roles, and one per relation of relations, a regional parent or a
-  Long-distance Trail, with its id, its name, its `network` and its member relations
-  (`preprocessOsmRelation` sees `type=superroute` too). `build-network.py` reads the wanted
+  becomes `<id>.trails`, one line per Trail, a `route=hiking` relation or a regional parent, with
+  its id and its members in member order with their roles: its ways and, for a regional parent, its
+  pieces, which the profile picks since it reads the markings. And one per Long-distance Trail with
+  its id, its name, its `network` and its member relations (`preprocessOsmRelation` sees
+  `type=superroute` too). `build-network.py` reads the wanted
   ways from it, as it reads `<id>.ways` today, and the mapping with them, so the rule for a Trail
   stays written once. The profile runs once per Region, so a relation crossing a boundary is in two
   or more files, each with only the members its cut holds: `build-network.py` merges the lines by
   relation id before any walk is built, the union of their members, with the member order and roles
-  of the line holding the most members and the others' extra members after it. A Long-distance
-  Trail's lines merge the same way.
+  of the line holding the most members and the others' extra members after it. A regional parent's
+  lines merge so too, as r373033 and r1716770 cross Regions, and so do a Long-distance Trail's.
 - **Edges are cut where the Trails on a way change.** `chains()` joins two pieces only where both
   walk alike; "alike" gains "carry the same Trails", so every way of an edge belongs to the same
   Trails and a Trail's end is always an edge's end. The network gains those cuts and nothing else:
@@ -255,7 +269,7 @@ union becomes 2,483 Trails.
 - **`trails.edges`**, a third base file beside `trails.network`: for each Trail, its walk (below) as
   edges in order, each with its direction, and where the walk breaks. Length, climb and the profile
   are summed from the network's edges along it, as a Route's are, so a gapless Trail and the Route
-  made from it agree to the metre. A gapped one cannot: its length and climb are its pieces' sum,
+  made from it agree to the metre. A gapped one cannot: its length and climb are its stretches' sum,
   and its Route adds a router leg across each gap (§ 5), so the sheet's numbers say "with gaps" and
   the Route is longer by those legs. It is an ODbL derivative and ships, records and publishes like the other
   two, so it joins every list that names them: `BASE_FILES` in `build-map-data.py` and
@@ -265,14 +279,17 @@ union becomes 2,483 Trails.
   `files/network/`), and `docs/RELEASING.md`'s account of what a release attaches.
 - **A Trail's walk** is built from its edges as a graph, not from its members' order, which OSM does
   not keep reliably; the members' order only picks which end comes first, the one nearer the first
-  member way. Members with role `alternative`, `excursion` or `approach` are the Trail's, in its
-  tiles and so tapped and highlighted with it, but off its walk, so not in its length, profile, Route
-  or GPX; where `forward` and `backward` members split the line in two, the walk takes the `forward`
-  strand. What is left takes one of four shapes. **A line** is walked from its first end to its
-  other. **A loop**, with no end, starts and finishes at the node where the first member way starts,
-  and goes round once the way that member runs. **Gaps**, the edges falling in more than one piece,
-  are walked piece by piece, each entered at the end nearest the one just left, and each break is
-  recorded: the length and climb are the pieces' sum, and the profile breaks at each gap. **A branch
+  way in member order. A regional Trail's ways are its own and its pieces', each piece's ways taking
+  its place in the parent's member order, in the piece's own order; nodes and any other member that
+  is not a way are ignored, and a role on a piece applies to each of its ways. Members with role
+  `alternative`, `excursion`, `approach` or `branch` are the Trail's, in its tiles and so tapped and
+  highlighted with it, but off its walk, so not in its length, profile, Route or GPX; where `forward`
+  and `backward` members split the line in two, the walk takes the `forward` strand. What is left
+  takes one of four shapes. **A line** is walked from its first end to its other. **A loop**, with no
+  end, starts and finishes at the node where the first way in member order starts, and goes round
+  once the way that way runs. **Gaps**, the edges falling in more than one stretch, are walked stretch
+  by stretch, each entered at the end nearest the one just left, and each break is recorded: the
+  length and climb are the stretches' sum, and the profile breaks at each gap. **A branch
   with no role**, a node where three of the Trail's own edges meet, is walked along the longest path
   between two of the Trail's ends, and the rest is treated as an `alternative`. The build logs how
   many Trails took each shape.
@@ -354,7 +371,7 @@ tab writes one.
   the Trail when reversed. The Route opens in the ordinary Route sheet, saved under the Trail's title
   by default.
 - **"Export GPX"** writes the Trail's walk with the network's heights through phase 6's writer and
-  share path, one track segment per piece where the walk has gaps, named after its title, with the
+  share path, one track segment per stretch where the walk has gaps, named after its title, with the
   OSM `<copyright>` and `<link>` the Route export carries.
 
 ---
@@ -372,11 +389,14 @@ tab writes one.
   branch with no role, and members out of order. Consecutive edges join end to end except at a
   recorded gap, a loop returns to its start once, branches are off the walk, and the length equals
   the sum of the walk's edges. Fails towards a profile that jumps.
-- **A regional Trail in pieces**, in the build: an `rwn` parent with ways of its own and three
-  pieces, one of them also in a second parent. One row, under the parent's id, with the pieces'
-  colour over the parent's own; a walk over all its ways; the pieces' features carrying the parent's
-  id, the shared piece's once per parent; no row for a piece. An `nwn` parent of the same shape
-  stays a Long-distance Trail with Sections. Fails towards a tap that takes a fragment of a Trail.
+- **A regional Trail in pieces**, in the build: an `rwn` bar-marked parent with ways of its own,
+  one of them also in a piece, three bar-marked pieces, one of them also in a second parent, and a
+  triangle-marked spur. One row, under the parent's id, in the parent's colour and symbol; a walk
+  over its ways and its pieces'; the pieces' features carrying the parent's id, one per way however
+  many of its relations hold it, the shared piece's once per parent; no row for a piece; the spur a
+  row of its own under its own id. A parent with no ways whose only member is marked otherwise gives
+  no row. An `nwn` parent of the same shape stays a Long-distance Trail with Sections. Fails towards a
+  tap that takes a fragment of a Trail, or a spur taken for the Trail it leaves.
 - **The cut where the Trails change**: on a fixture where one Trail ends at a node where only two
   ways meet and another Trail carries on, that node is an edge's end. Fails towards a Trail whose end
   lies inside an edge.
@@ -409,12 +429,15 @@ tab writes one.
 - **A Trail's title is OSM's, not the signposts'.** Where a relation has no name, no ends written in
   a convention § 2 reads and no place near an end, the title is the colour alone, "Red Trail" or
   "Marked Trail". The shape check that reads the written ends misreads a few values either way
-  (§ 1). Search finds a Trail by its `name` or `name:pl` alone, so the 572 Trails with neither, 21 %
-  of 2,691 (§ 1), are not found: the 277 titled by `from`/`to` or by written ends as well as the 295
-  titled by nothing. Nor is a Trail found by the places at its ends; the places themselves are. A
-  convention not yet read,
-  such as KČT's `destinations`, is a change to § 2's list; a Trail with no ends anywhere is an OSM
-  edit. Either reaches the app with the next data pin.
+  (§ 1). Search finds a Trail by its `name` or `name:pl` alone, so the 572 Trails with neither,
+  22.9 % of the 2,496 the regional rule leaves (§ 1), are not found: the 277 titled by `from`/`to`
+  or by written ends as well as the 295 titled by nothing. Nor is a Trail found by the places at its
+  ends; the places themselves are. A convention not yet read, such as KČT's `destinations`, is a
+  change to § 2's list; a Trail with no ends anywhere is an OSM edit. Either reaches the app with the next data pin.
+- **A piece's own name is not searched.** The pieces are not rows, so `trail_names` holds the
+  parent's name and not theirs, although all 233 carry one: `Kuźnice - Myślenickie Turnie`, a piece
+  of r1593233, is not found, and its Trail is found as
+  `Bulwary Słowackiego - Kasprowy Wierch (stacja kolejki)`. The places at a piece's ends are found.
 - **A Trail's walk is the build's reading of a relation OSM may map loosely.** A branch with no role
   is walked by the longest path, which may not be the signposted one.
 - **A Trail crossing out of every Region is cut where the data stops.** Its length and Route are
