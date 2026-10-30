@@ -11,6 +11,7 @@ import app.kozica.data.SavedRoute
 import app.kozica.data.regions.GeoBounds
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
+import app.kozica.data.routes.FollowFix
 import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceKind
 import app.kozica.data.routes.PlaceSearch
@@ -200,6 +201,30 @@ class MapViewModelTest {
             val route = settled(viewModel) { it.route.followingNote != null }.route
             assertNull(route.following)
             assertEquals(FollowingNote.ROUTE_CHANGED, route.followingNote)
+        }
+
+    @Test
+    fun `a vague or accuracy-less fix at the end does not end following`() =
+        runTest {
+            val viewModel = routingViewModel()
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            val line =
+                settled(
+                    viewModel,
+                ) { it.route.planned?.complete == true && !it.route.planning }.route.planned!!.line
+            viewModel.follow()
+            val midway = line[line.size / 2]
+            viewModel.followFix(FollowFix(midway.latitude, midway.longitude, 10.0, 0, 0))
+            val progress = settled(viewModel) { it.route.following?.progress != null }.route.following!!.progress
+
+            val end = line.last()
+            viewModel.followFix(FollowFix(end.latitude, end.longitude, 2000.0, 0, 60_000))
+            viewModel.followFix(FollowFix(end.latitude, end.longitude, Double.MAX_VALUE, 0, 60_000))
+
+            val route = settled(viewModel) { true }.route
+            assertNull(route.followingNote)
+            assertEquals(progress, route.following?.progress)
         }
 
     @Test

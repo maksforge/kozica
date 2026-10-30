@@ -912,7 +912,7 @@ class MapViewModel(
         val line = followed ?: return
         val current = route.value.following ?: return
         val progress = match(line, current.progress) ?: return
-        if (line.ended(progress, fix)) {
+        if (fix.counts && line.ended(progress, fix)) {
             followed = null
             route.update { it.copy(following = null, followingNote = FollowingNote.ENDED) }
         } else if (progress != current.progress) {
