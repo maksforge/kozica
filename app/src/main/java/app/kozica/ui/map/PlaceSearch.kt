@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -34,7 +35,9 @@ import app.kozica.R
 import app.kozica.data.regions.REGION_NAMES
 import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceKind
+import app.kozica.data.routes.SearchResult
 import app.kozica.theme.Spacing
+import java.util.Locale
 
 /** docs/phase-5.md § 4's search field, disabled with a reason in a build without the name index. */
 @Composable
@@ -77,24 +80,75 @@ internal fun SearchField(
 
 @Composable
 internal fun SearchResults(
-    results: List<Place>,
-    onPick: (Place) -> Unit,
+    results: List<SearchResult>,
+    onPick: (SearchResult) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val words = rememberTrailWords()
+    val locale = LocalConfiguration.current.locales[0]
     Surface(shape = MaterialTheme.shapes.large, tonalElevation = 3.dp, modifier = modifier) {
         LazyColumn(Modifier.heightIn(max = 360.dp)) {
-            items(results, key = { it.id }) { place ->
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onPick(place) }
-                        .padding(horizontal = Spacing.base, vertical = Spacing.tight),
+            items(results, key = { it.key }) { result ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onPick(result) }
+                            .padding(horizontal = Spacing.base, vertical = Spacing.tight),
                 ) {
-                    PlaceLines(place)
+                    when (result) {
+                        is SearchResult.AtPlace -> Column { PlaceLines(result.place) }
+                        is SearchResult.OnTrail -> {
+                            TrailMark(result.facts.colour, result.facts.symbol)
+                            Column(Modifier.padding(start = Spacing.tight)) { TrailLines(result, words, locale) }
+                        }
+                        is SearchResult.LongDistance -> Column { LongDistanceLines(result) }
+                    }
                 }
             }
         }
     }
+}
+
+private val SearchResult.key: String
+    get() =
+        when (this) {
+            is SearchResult.AtPlace -> "place ${place.id}"
+            is SearchResult.OnTrail -> "trail ${facts.id}"
+            is SearchResult.LongDistance -> "long-distance $id"
+        }
+
+/** Its title, the name that matched where that differs, then "Trail" or the Long-distance Trail it is a Section of, and its length. */
+@Composable
+private fun TrailLines(
+    result: SearchResult.OnTrail,
+    words: TrailWords,
+    locale: Locale,
+) {
+    val title = trailTitle(result.facts, null, null, words)
+    Text(title, style = MaterialTheme.typography.bodyLarge)
+    if (result.matched != title) {
+        Text(result.matched, style = MaterialTheme.typography.bodyMedium)
+    }
+    val kind =
+        result.facts.longDistanceName?.let { stringResource(R.string.search_section_of, it) }
+            ?: stringResource(R.string.search_kind_trail)
+    Text(
+        listOf(kind, length(result.facts.metres, locale)).joinToString(" · "),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun LongDistanceLines(result: SearchResult.LongDistance) {
+    Text(result.name, style = MaterialTheme.typography.bodyLarge)
+    Text(
+        stringResource(R.string.search_kind_long_distance),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 /** The place offered as a point: added as the start of an empty Route, or else as its new end. */

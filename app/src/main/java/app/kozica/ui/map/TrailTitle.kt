@@ -55,13 +55,14 @@ internal data class TrailHeading(
     val title: String,
 )
 
+/** A Section named as its Long-distance Trail, as the Tatranská magistrála's are, shows the name once. */
 internal fun trailHeading(
     trail: TrailDetail,
     words: TrailWords,
-) = TrailHeading(
-    above = trail.facts.longDistanceName,
-    title = trailTitle(trail.facts, trail.nearestFrom, trail.nearestTo, words),
-)
+): TrailHeading {
+    val title = trailTitle(trail.facts, trail.nearestFrom, trail.nearestTo, words)
+    return TrailHeading(above = trail.facts.longDistanceName?.takeIf { it != title }, title = title)
+}
 
 @Composable
 internal fun rememberTrailWords(): TrailWords {

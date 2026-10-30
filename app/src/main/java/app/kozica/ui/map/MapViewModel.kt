@@ -36,6 +36,7 @@ import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.SearchResult
 import app.kozica.data.routes.TrailDetail
 import app.kozica.record.Recording
 import app.kozica.ui.common.GpxExport
@@ -199,7 +200,7 @@ internal fun shownClimb(
  */
 data class SearchUiState(
     val available: Boolean? = null,
-    val results: List<Place> = emptyList(),
+    val results: List<SearchResult> = emptyList(),
     val offered: Place? = null,
 )
 
@@ -447,15 +448,51 @@ class MapViewModel(
                     } else {
                         withContext(
                             io,
-                        ) { places()?.search(text, centre.latitude, centre.longitude) }.orEmpty()
+                        ) { places()?.searchAll(text, centre.latitude, centre.longitude) }.orEmpty()
                     }
                 search.update { it.copy(results = results) }
             }
     }
 
-    fun pick(place: Place) {
+    /**
+     * A place is centred and offered as a point; a Trail is selected and fitted, and a Long-distance
+     * Trail by its Section nearest the centre, shown whole (docs/phase-6c.md § 4).
+     */
+    fun pick(result: SearchResult) {
         searching?.cancel()
-        search.update { it.copy(results = emptyList(), offered = place) }
+        search.update { it.copy(results = emptyList()) }
+        when (result) {
+            is SearchResult.AtPlace -> search.update { it.copy(offered = result.place) }
+            is SearchResult.OnTrail -> pickTrail(result.facts.id)
+            is SearchResult.LongDistance -> pickLongDistance(result.id)
+        }
+    }
+
+    private fun pickTrail(id: Long) {
+        tapping?.cancel()
+        tapping =
+            viewModelScope.launch {
+                val found = withContext(io) { loadTrail(id) } ?: return@launch
+                showTrail(found)
+                trail.update { it.copy(fits = it.fits + 1) }
+            }
+    }
+
+    private fun pickLongDistance(id: Long) {
+        val centre = camera.value ?: TATRY
+        tapping?.cancel()
+        tapping =
+            viewModelScope.launch {
+                val sections = withContext(io) { sectionsOf(id).mapNotNull(loadTrail) }
+                val nearest =
+                    sections.minByOrNull {
+                        val lat = (it.facts.south + it.facts.north) / 2 - centre.latitude
+                        val lon = (it.facts.west + it.facts.east) / 2 - centre.longitude
+                        lat * lat + lon * lon
+                    } ?: return@launch
+                showTrail(nearest)
+                trail.update { it.copy(whole = sections, fits = it.fits + 1) }
+            }
     }
 
     fun dismissOffer() {

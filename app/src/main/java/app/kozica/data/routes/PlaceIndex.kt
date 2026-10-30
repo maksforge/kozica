@@ -1,6 +1,7 @@
 package app.kozica.data.routes
 
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import java.io.File
@@ -40,6 +41,31 @@ data class Place(
     val matched: String = name,
 )
 
+/** One search result, a place or a Trail, ranked together (docs/phase-6c.md § 4). */
+sealed interface SearchResult {
+    /** The name the search matched, which may be another language's or an older one. */
+    val matched: String
+
+    data class AtPlace(
+        val place: Place,
+    ) : SearchResult {
+        override val matched: String get() = place.matched
+    }
+
+    data class OnTrail(
+        val facts: TrailFacts,
+        override val matched: String,
+    ) : SearchResult
+
+    /** A Long-distance Trail, found by its own name; it has no row, only its [sections]. */
+    data class LongDistance(
+        val id: Long,
+        val name: String,
+        val sections: Int,
+        override val matched: String,
+    ) : SearchResult
+}
+
 interface PlaceSearch {
     fun search(
         text: String,
@@ -52,6 +78,14 @@ interface PlaceSearch {
         latitude: Double,
         longitude: Double,
     ): Place?
+
+    /** Places, Trails and Long-distance Trails, ranked by [search]'s rule; a build without Trails finds places alone. */
+    fun searchAll(
+        text: String,
+        latitude: Double,
+        longitude: Double,
+        limit: Int = 20,
+    ): List<SearchResult> = search(text, latitude, longitude, limit).map(SearchResult::AtPlace)
 
     /** A Trail's row, null for an id the index does not hold (docs/phase-6c.md § 2). */
     fun trail(id: Long): TrailFacts? = null
@@ -159,44 +193,117 @@ class PlaceIndex(
     }
 
     override fun trail(id: Long): TrailFacts? =
+        db.rawQuery("SELECT $TRAIL_COLUMNS FROM trails WHERE id = ?", arrayOf(id.toString())).use { rows ->
+            if (rows.moveToFirst()) trailFacts(rows) else null
+        }
+
+    /**
+     * [search]'s places, the Trails whose names match by the same fold and the Long-distance Trails
+     * whose own names do, together: a match at a name's start first, then nearest the centre, a Trail
+     * measured to its bounding box and nought inside it.
+     */
+    override fun searchAll(
+        text: String,
+        latitude: Double,
+        longitude: Double,
+        limit: Int,
+    ): List<SearchResult> {
+        val folded = fold(text)
+        if (folded.isEmpty()) return emptyList()
+        val squeeze = cos(Math.toRadians(latitude)).let { it * it }
+
+        fun away(
+            south: Double,
+            west: Double,
+            north: Double,
+            east: Double,
+        ): Double {
+            val dLat = maxOf(south - latitude, 0.0, latitude - north)
+            val dLon = maxOf(west - longitude, 0.0, longitude - east)
+            return dLat * dLat + dLon * dLon * squeeze
+        }
+        val ranked = mutableListOf<Triple<Boolean, Double, SearchResult>>()
+        for (place in search(text, latitude, longitude, limit)) {
+            val lat = place.latitude - latitude
+            val lon = place.longitude - longitude
+            ranked +=
+                Triple(
+                    fold(place.matched).startsWith(folded),
+                    lat * lat + lon * lon * squeeze,
+                    SearchResult.AtPlace(place),
+                )
+        }
+        val trails = mutableSetOf<Long>()
         db
             .rawQuery(
-                """
-                SELECT id, name, name_pl, ref, colour, symbol, from_place, to_place, long_distance,
-                    long_distance_name, start_lat, start_lon, end_lat, end_lon, length, ascent, descent, gaps,
-                    min_lat, min_lon, max_lat, max_lon
-                FROM trails WHERE id = ?
-                """.trimIndent(),
-                arrayOf(id.toString()),
+                "SELECT ${TRAIL_COLUMNS.split(", ").joinToString { "t.${it.trim()}" }}, n.name " +
+                    "FROM trail_names n JOIN trails t ON t.id = n.trail WHERE n.folded MATCH ? LIMIT ?",
+                arrayOf("\"$folded*\"", (limit * 4).toString()),
             ).use { rows ->
-                if (!rows.moveToFirst()) return null
-
-                fun text(column: Int) = if (rows.isNull(column)) null else rows.getString(column)
-                TrailFacts(
-                    id = rows.getLong(0),
-                    name = text(1),
-                    namePl = text(2),
-                    ref = text(3),
-                    colour = TrailColour.of(rows.getString(4)),
-                    symbol = text(5),
-                    from = text(6),
-                    to = text(7),
-                    longDistanceId = if (rows.isNull(8)) null else rows.getLong(8),
-                    longDistanceName = text(9),
-                    startLatitude = rows.getDouble(10),
-                    startLongitude = rows.getDouble(11),
-                    endLatitude = rows.getDouble(12),
-                    endLongitude = rows.getDouble(13),
-                    metres = rows.getDouble(14),
-                    ascent = rows.getDouble(15),
-                    descent = rows.getDouble(16),
-                    gaps = rows.getInt(17),
-                    south = rows.getDouble(18),
-                    west = rows.getDouble(19),
-                    north = rows.getDouble(20),
-                    east = rows.getDouble(21),
-                )
+                while (rows.moveToNext()) {
+                    val facts = trailFacts(rows)
+                    if (!trails.add(facts.id)) continue
+                    val matched = rows.getString(TRAIL_COLUMN_COUNT)
+                    ranked +=
+                        Triple(
+                            fold(matched).startsWith(folded),
+                            away(facts.south, facts.west, facts.north, facts.east),
+                            SearchResult.OnTrail(facts, matched),
+                        )
+                }
             }
+        db
+            .rawQuery(
+                "SELECT long_distance, long_distance_name, COUNT(*), " +
+                    "MIN(min_lat), MIN(min_lon), MAX(max_lat), MAX(max_lon) " +
+                    "FROM trails WHERE long_distance_name IS NOT NULL GROUP BY long_distance",
+                null,
+            ).use { rows ->
+                while (rows.moveToNext()) {
+                    val name = rows.getString(1)
+                    val words = fold(name)
+                    if (!words.startsWith(folded) && " $folded" !in " $words") continue
+                    ranked +=
+                        Triple(
+                            words.startsWith(folded),
+                            away(rows.getDouble(3), rows.getDouble(4), rows.getDouble(5), rows.getDouble(6)),
+                            SearchResult.LongDistance(rows.getLong(0), name, rows.getInt(2), name),
+                        )
+                }
+            }
+        return ranked
+            .sortedWith(compareBy({ !it.first }, { it.second }))
+            .take(limit)
+            .map { it.third }
+    }
+
+    private fun trailFacts(rows: Cursor): TrailFacts {
+        fun text(column: Int) = if (rows.isNull(column)) null else rows.getString(column)
+        return TrailFacts(
+            id = rows.getLong(0),
+            name = text(1),
+            namePl = text(2),
+            ref = text(3),
+            colour = TrailColour.of(rows.getString(4)),
+            symbol = text(5),
+            from = text(6),
+            to = text(7),
+            longDistanceId = if (rows.isNull(8)) null else rows.getLong(8),
+            longDistanceName = text(9),
+            startLatitude = rows.getDouble(10),
+            startLongitude = rows.getDouble(11),
+            endLatitude = rows.getDouble(12),
+            endLongitude = rows.getDouble(13),
+            metres = rows.getDouble(14),
+            ascent = rows.getDouble(15),
+            descent = rows.getDouble(16),
+            gaps = rows.getInt(17),
+            south = rows.getDouble(18),
+            west = rows.getDouble(19),
+            north = rows.getDouble(20),
+            east = rows.getDouble(21),
+        )
+    }
 
     override fun sections(longDistance: Long): List<Long> =
         db
@@ -204,6 +311,10 @@ class PlaceIndex(
             .use { rows -> buildList { while (rows.moveToNext()) add(rows.getLong(0)) } }
 
     private companion object {
+        const val TRAIL_COLUMNS =
+            "id, name, name_pl, ref, colour, symbol, from_place, to_place, long_distance, long_distance_name, " +
+                "start_lat, start_lon, end_lat, end_lon, length, ascent, descent, gaps, min_lat, min_lon, max_lat, max_lon"
+        const val TRAIL_COLUMN_COUNT = 22
         const val NAMING_METRES = 500.0
         const val METRES_PER_DEGREE = 111_320.0
         val LANDMARKS = setOf(PlaceKind.PEAK, PlaceKind.PASS, PlaceKind.HUT)

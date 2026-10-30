@@ -54,7 +54,7 @@
     <string name="map_download_failed">Download failed</string>
 
     <!-- Search and the Route (docs/phase-5.md § 4). "Trail" is a marked hiking trail, as on the signposts; a "route" is what the user plans over the Trails. -->
-    <string name="map_search">Search places</string>
+    <string name="map_search">Search places and Trails</string>
     <string name="map_search_clear">Clear search</string>
     <!-- Shown in place of the search field and the Route in a build without the Trail network, such as a developer's. -->
     <string name="map_planning_missing">Search and planning are not in this build</string>
@@ -393,4 +393,9 @@
     <string name="trail_with_gaps">with gaps</string>
     <!-- Under a Trail's ascent and descent, which are from its start to its end; %1$s and %2$s are heights such as "120 m". -->
     <string name="trail_other_way">The other way: %1$s up, %2$s down</string>
+    <!-- A Trail's line in the search results, where a place shows its kind. -->
+    <string name="search_kind_trail">Trail</string>
+    <!-- A Section's line in the search results; %1$s is its Long-distance Trail's name as OSM writes it. -->
+    <string name="search_section_of">Section of %1$s</string>
+    <string name="search_kind_long_distance">Long-distance Trail</string>
 </resources>

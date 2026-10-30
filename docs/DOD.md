@@ -103,6 +103,13 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       access granted, *then* that version's release notes in every locale on an ordinary branch (never
       on release-please's own, which it force-pushes), *then* the AAB and the listing go up together.
 
+- [ ] **Find what slowed the map's pan since phase 4's gate.** Phase 6c's R3 (2026-10-30) read the
+      Tatry pan at p95 24–26 ms at zoom 11 and 250–315 ms at zoom 13, with 24–38 frames over 100 ms
+      and no rest between swipes, on builds both before and after checkpoint C. Phase 4's R1
+      (2026-10-22) read 17.5–19.5 ms with none over 100 ms. Suspects: B's archives (pin 4952), the
+      network and walks loaded at start, something rendering continuously. Bisect with the same
+      apparatus before the next release.
+
 ## Standing checks that never close
 
 - [ ] **Every release: run the artifact checks on the built AAB**, not on the source.
