@@ -509,7 +509,11 @@ class MapViewModelTest {
             viewModel.planAlongTrail("Trail 7")
             assertTrue(settled(viewModel) { true }.trail.planningRoute)
 
-            val state = settled(viewModel) { state -> state.route.points.any { it.label != null } }
+            // Planned too, so nothing is left resuming on Main, on Default's thread, once tearDown resets it.
+            val state =
+                settled(
+                    viewModel,
+                ) { state -> state.route.planned != null && state.route.points.any { it.label != null } }
             assertEquals(listOf("Near 49.0", "Near 49.0"), state.route.points.map { it.label })
             assertEquals("Trail 7", state.route.suggestedName)
             assertEquals(TrailUiState(), state.trail)
