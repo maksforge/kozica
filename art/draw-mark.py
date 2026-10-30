@@ -49,7 +49,7 @@ def taper(n, w0, w1):
     return [w0 + (w1 - w0) * (i / n) ** 0.75 for i in range(n + 1)]
 
 
-NEAR_C = horn_centre((52, -98), 45, 8, 12.5, 185)
+NEAR_C = horn_centre((52, -98), 37, 8, 11.5, 185)
 NEAR_W = taper(12, 16, 1.2)
 FAR_C = horn_centre((39, -103), 18, -12, 9.5, 190)
 FAR_W = taper(12, 13, 1.2)
@@ -126,11 +126,11 @@ OUTER = [
     (47, 7, 'c'),      # summit tip
     (57, 36, 'c'),
     (51, 46, 'c'),
-    (64, 70, 'c'),
-    (62, 88, 'c'),     # bottom right
-    (-76, 88, 'c'),    # bottom left
-    (-70, 64, 'c'),
-    (-78, 54, 'c'),
+    (60, 70, 'c'),
+    (57, 88, 'c'),     # bottom right
+    (-70, 88, 'c'),    # bottom left
+    (-66, 64, 'c'),
+    (-74, 54, 'c'),
     (-60, 44, 'c'),    # ledge
     (-48, 40, 'c'),    # hind hoof back
     (-55, 22, 's'),    # cannon

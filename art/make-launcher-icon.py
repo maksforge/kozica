@@ -30,7 +30,7 @@ RES = ART.parent / "app/src/main/res"
 
 CANVAS = 108  # adaptive-icon canvas, in dp
 VISIBLE = 72  # the most any launcher shows of it — what the flat assets are cropped to
-ART_SIZE = 55  # longest side of the mark — bounded by SAFE_DIAMETER
+ART_SIZE = 57  # longest side of the mark — bounded by SAFE_DIAMETER
 
 # A launcher may mask the icon to this circle and clip whatever lies outside it.
 SAFE_DIAMETER = 66
