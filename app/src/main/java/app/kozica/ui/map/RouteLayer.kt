@@ -40,11 +40,11 @@ internal fun routeGeoJson(
             feature(
                 "LineString",
                 JsonArray(coordinates.map { position(it[0], it[1]) }),
-                "approach" to if (approach == Approach.TRAIL) "trail" else "off",
+                "approach" to JsonPrimitive(if (approach == Approach.TRAIL) "trail" else "off"),
             )
         } +
             points.mapIndexed { i, point ->
-                feature("Point", position(point.longitude, point.latitude), "number" to "${i + 1}")
+                feature("Point", position(point.longitude, point.latitude), "number" to JsonPrimitive("${i + 1}"))
             }
     return buildJsonObject {
         put("type", "FeatureCollection")
@@ -52,7 +52,7 @@ internal fun routeGeoJson(
     }.toString()
 }
 
-/** The style's `trail-walk` source, below zoom 10: each highlighted Trail's walk, one line per stretch, by its colour. */
+/** The style's `trail-walk` source, below zoom 10: each highlighted Trail's walk, one line per stretch, by its colour and with its id for a tap. */
 internal fun trailWalkGeoJson(trails: List<TrailDetail>): String {
     val features =
         trails.flatMap { trail ->
@@ -65,7 +65,8 @@ internal fun trailWalkGeoJson(trails: List<TrailDetail>): String {
                 feature(
                     "LineString",
                     JsonArray(stretch.map { position(it.longitude, it.latitude) }),
-                    "colour" to trail.facts.colour.stored,
+                    "colour" to JsonPrimitive(trail.facts.colour.stored),
+                    "trail" to JsonPrimitive(trail.id),
                 )
             }
         }
@@ -107,7 +108,13 @@ internal fun photoPinsGeoJson(photos: List<HikePhoto>): String =
             "features",
             JsonArray(
                 photos.mapNotNull { photo ->
-                    photo.pin?.let { feature("Point", position(it.longitude, it.latitude), "id" to photo.id) }
+                    photo.pin?.let {
+                        feature(
+                            "Point",
+                            position(it.longitude, it.latitude),
+                            "id" to JsonPrimitive(photo.id),
+                        )
+                    }
                 },
             ),
         )
@@ -124,7 +131,7 @@ private fun position(
 private fun feature(
     type: String,
     coordinates: JsonArray,
-    property: Pair<String, String>,
+    vararg properties: Pair<String, JsonPrimitive>,
 ) = buildJsonObject {
     put("type", "Feature")
     put(
@@ -134,5 +141,5 @@ private fun feature(
             put("coordinates", coordinates)
         },
     )
-    put("properties", JsonObject(mapOf(property.first to JsonPrimitive(property.second))))
+    put("properties", JsonObject(properties.toMap()))
 }
