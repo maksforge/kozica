@@ -9,12 +9,11 @@ is unchanged). [`CONTEXT.md`](../CONTEXT.md) gains **Long-distance Trail** and *
 
 **What closing this phase means.** Today a Trail on the map is a coloured line that does nothing when
 tapped, and the search knows places but not Trails. After this phase the user taps the green line
-above Kuźnice and sees the Trail under the finger picked out with the rest of the map faded. In the
-data that is a Section, Kuźnice – Myślenickie Turnie, of the Long-distance Trail from Zakopane's
-Bulwary Słowackiego to Kasprowy Wierch (§ 1, verdict 3): the sheet names the Long-distance Trail above
-the Section's title and shows it whole on request, reads the Section's length, climb each way and
-profile, and with one button turns the Section into a Route or a GPX file. Typing "Główny Szlak
-Beskidzki", one Trail with no Sections, into search finds it whole. The difference
+above Kuźnice and sees that whole Trail picked out from Zakopane's Bulwary Słowackiego to Kasprowy
+Wierch with the rest of the map faded, although OSM maps it as four relations (§ 2, *A regional
+Trail mapped in pieces*); reads its name, length, climb each way and profile on a sheet, and with one
+button turns it into a Route or a GPX file. Typing "Główny Szlak Beskidzki" into search finds it
+too. The difference
 a device can be asked about: on the test phone, a tap on each of the four strands where four Trails
 share a way selects the Trail it was on, by way of a chooser, and the highlight draws within phase
 4's frame gate.
@@ -58,8 +57,9 @@ share a way selects the Trail it was on, by way of a chooser, and the highlight 
 tapping a Trail to select it, with a chooser where several share the way; the selected Trail
 highlighted whole with the rest faded; a sheet with the Trail's title, colour and symbol, length,
 ascent and descent each way, elevation profile, "Plan a Route along it" (the whole Trail, either
-direction) and "Export GPX"; Trails found by name in the existing search; a Long-distance Trail's
-Sections selectable one at a time, with the Long-distance Trail named and shown whole on request.
+direction) and "Export GPX"; Trails found by name in the existing search; a regional Trail that OSM
+maps in pieces taken as one Trail; a Long-distance Trail's Sections selectable one at a time, with
+the Long-distance Trail named and shown whole on request.
 
 **Not in, and each with a reason rather than a phase:**
 
@@ -181,18 +181,32 @@ blue `Kuźnice - Schronisko PTTK przy Morskim Oku`, holds eleven; and 137 of the
 are Sections. By § 2's Section rule a tap there selects one Section, not the Trail a walker would
 name, and the whole Trail is its Long-distance Trail, shown on request. The verdict holds without
 them: 16 of the 66 named are `nwn` or `iwn` (E3, Via Slovakia, the Tatranská magistrála), over the
-five it asks for. The relations sitting in more than one place in that hierarchy are open for B
-(§ 2).
+five it asks for. **The owner then made the 53 regional ones Trails** (2026-10-30, § 2): a tap
+selects the Trail a walker names, and only the 17 `nwn` and `iwn` relations keep Sections. The
+tally above counted the 248 pieces as Trails and is not taken again for it; over A's cuts the
+union becomes 2,483 Trails.
 
 ## 2. The data
 
 - **`KozicaProfile.java` writes `trail` (the relation id) on every `trails` feature**, alongside
   colour, symbol and `index`. A Section writes its own id; the Long-distance Trail lives only in the
-  index.
+  index. A piece of a regional Trail (below) writes its parent's id, so the tap and the highlight
+  take the whole Trail; a piece in two such Trails is written once for each.
+- **A regional Trail mapped in pieces is one Trail** (the owner, 2026-10-30). Where an `rwn` or
+  `lwn` relation has `route=hiking` relations among its members, as PTTK's Tatry Trails are mapped,
+  split at their junctions, the parent is the Trail: its row, its title, its walk, its Route and its
+  GPX. The walk is built from its own ways and its pieces' ways together, by the same graph rule as
+  any walk, and its colour and symbol are its pieces', which over A's cuts never differ among the
+  pieces of one parent (3 parents' own tags disagree with them). The pieces are not rows, not tapped
+  and not found by search. Only an `nwn` or `iwn` relation of relations is a Long-distance Trail
+  with Sections. Over A's cuts that is 53 Trails from 248 pieces (121 of them in the Tatry), and
+  17 Long-distance Trails, 16 named. One piece, r5120297, is in two of them (r4005823 and
+  r5012450): it is in both Trails' walks, as a way two Trails share always is.
 - **The profile writes the membership**, since it already decides what a Trail is: `<id>.ways`
   becomes `<id>.trails`, one line per `route=hiking` relation with its id and its member ways in
-  member order with their roles, and one per Long-distance Trail with its id, its name and its member
-  relations (`preprocessOsmRelation` sees `type=superroute` too). `build-network.py` reads the wanted
+  member order with their roles, and one per relation of relations, a regional parent or a
+  Long-distance Trail, with its id, its name, its `network` and its member relations
+  (`preprocessOsmRelation` sees `type=superroute` too). `build-network.py` reads the wanted
   ways from it, as it reads `<id>.ways` today, and the mapping with them, so the rule for a Trail
   stays written once. The profile runs once per Region, so a relation crossing a boundary is in two
   or more files, each with only the members its cut holds: `build-network.py` merges the lines by
@@ -212,17 +226,14 @@ five it asks for. The relations sitting in more than one place in that hierarchy
   two ends, its length, ascent and descent each way, and its bounding box. No title column: the
   title is composed on the phone (below). The climbs are the relief's heights, so `RELIEF-DATA-LICENCE.txt` names
   `places.sqlite` beside `trails.network`.
-- **Open for B: relations that sit in more than one place in the hierarchy.** The row holds one
-  Long-distance Trail, but over A's cuts 16 relations are both a Trail and a Long-distance Trail,
-  with ways of their own and Trails among their members (r1020537 `Gubałówka - Ciemniak`, one way
-  and eight Sections; r4649443 `Via Mariae M02`, three ways and ten); two Long-distance Trails hold
-  another (r1175707, E3, holds its Czech part, r83249; r11154539, `Via Mariae (combined)`, holds
-  r4649443); and one Section, r5120297, belongs to two (r4005823 and r5012450). B settles, before
-  the table's columns are fixed, which parent a Section's row names, whether a relation that is
-  both is a row, a parent or both, and what "Show the whole *name*" highlights for a nest. **Open
-  for the owner** beside it: since a tap selects a Section (§ 1, verdict 3), "Plan a Route along it"
-  and "Export GPX" act on that Section, so a PTTK Tatry Trail as a walker names it, Zakopane to
-  Kasprowy Wierch, is shown whole but never planned or exported whole.
+- **Open for B: the Long-distance Trails that sit in more than one place in the hierarchy.** The
+  regional rule above settles 13 of the 16 relations that are both a Trail and a parent (r1020537
+  `Gubałówka - Ciemniak`, one way and eight pieces, is one Trail). Three `nwn` or `iwn` ones remain,
+  with ways of their own and Sections among their members (r4649443 `Szlak Maryjny`, r549809
+  `Hronov - Kohoutov`, and r2824733 with no name), and two Long-distance Trails hold another
+  (r1175707, E3, holds its Czech part, r83249; r11154539, `Via Mariae (combined)`, holds r4649443).
+  B settles, before the table's columns are fixed, whether such a relation is a row, a parent or
+  both, and what "Show the whole *name*" highlights for a nest.
 - **The row's `from` and `to` are the ends a mapper wrote, in whichever country's convention**
   (§ 1's verdict): the `from` and `to` tags, else the first of `description`, `osmc:name`,
   `note:cs` and `note` holding place names between spaced dashes, `A - B` or `A - B - C`, whose
@@ -361,6 +372,11 @@ tab writes one.
   branch with no role, and members out of order. Consecutive edges join end to end except at a
   recorded gap, a loop returns to its start once, branches are off the walk, and the length equals
   the sum of the walk's edges. Fails towards a profile that jumps.
+- **A regional Trail in pieces**, in the build: an `rwn` parent with ways of its own and three
+  pieces, one of them also in a second parent. One row, under the parent's id, with the pieces'
+  colour over the parent's own; a walk over all its ways; the pieces' features carrying the parent's
+  id, the shared piece's once per parent; no row for a piece. An `nwn` parent of the same shape
+  stays a Long-distance Trail with Sections. Fails towards a tap that takes a fragment of a Trail.
 - **The cut where the Trails change**: on a fixture where one Trail ends at a node where only two
   ways meet and another Trail carries on, that node is an edge's end. Fails towards a Trail whose end
   lies inside an edge.
@@ -379,10 +395,11 @@ tab writes one.
 - **`docs/phase-5.md` § 2**: `<id>.ways` becomes `<id>.trails`, and the edge cut gains the Trails on
   a way.
 - **`docs/RELEASING.md`**: the release attaches `trails.edges` with the other base files.
-- **`CONTEXT.md`**: **Long-distance Trail** (a Trail made of Sections, each its own relation: OSM's
-  `type=superroute`, or a `route=hiking` relation whose members are relations; Polish UI *szlak
-  długodystansowy*; not "parent", "long Trail" or "superroute") and **Section** (one relation of a
-  Long-distance Trail; Polish UI *odcinek*), and the title rule under **Trail**.
+- **`CONTEXT.md`**: **Long-distance Trail** (a Trail made of Sections, each its own relation: an
+  `nwn` or `iwn` relation whose members are relations, `type=superroute` or `route=hiking`; Polish UI
+  *szlak długodystansowy*; not "parent", "long Trail" or "superroute") and **Section** (one relation
+  of a Long-distance Trail; Polish UI *odcinek*), and under **Trail** the title rule and that a
+  regional Trail OSM maps in pieces is one Trail.
 - **`docs/store-listing.md`**: the full description gains tapping and finding Trails by name, in
   both languages, and the release notes say so.
 - **`docs/phase-2.md` § 3**: the `trails` layer's attributes gain `trail`.
@@ -412,6 +429,6 @@ debug broadcast sent as phase 5's readings send them.
 | --- | --- | --- | --- |
 | R1 | The gate's tally over the union and per Region | `build-map-data.py` over A's uncommitted candidate pin, then `python3 scripts/map/trail-tally.py` | **Verdict 1**, 2026-10-30, pin `poland 4952`, `slovakia 4952`, `czech-republic 4953`: 89.0 % of 2,691 titled by the rule as § 2 widened it (79.1 % as first written), every Region at 83.3 % or more; 66 of 70 Long-distance Trails named (§ 1) |
 | R2 | Four strands at one point: each tap's chooser lists all four, and each pick highlights the right one | test phone, debug build with the Regions hand-pushed; screencaps | *(owed)* |
-| R3 | The highlight and fade against phase 4's gate: the pan at zoom 11 and 13 with the green Section `Kuźnice - Myślenickie Turnie` (r1593232) selected, against the same pan with nothing selected taken straight before it. Pass: p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's | phase 4's R1 apparatus and pan, all nine Regions and the relief hand-pushed; `CameraReceiver` to a point on that Trail at each zoom, then for the selected run `input tap` at the screen's centre and the chooser's green row if one opens; `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py` | *(owed)* |
-| R4 | A Route along a Trail matches the Trail: the Section `Kuźnice - Myślenickie Turnie` (r1593232) and Główny Szlak Beskidzki (r545421, one Trail with no Sections), each way, and again planned anew from its stored points. Pass: length to the metre and ascent and descent equal to the Trail's row plus the legs across its gaps, if any (none for a gapless walk), and Główny Szlak Beskidzki's Route made within 2 s | `RouteReceiver` gains `--el trail <id>` and `--ez reversed true`: it makes the Route by the button's code, logs the Trail's row, its number of gaps with each gap leg's length, ascent and descent, and the time taken beside its `route:` line, then plans the stored points again and logs that `route:` line too; `adb logcat -d -s KozicaRoute` | *(owed)* |
+| R3 | The highlight and fade against phase 4's gate: the pan at zoom 11 and 13 with the green Trail from Bulwary Słowackiego to Kasprowy Wierch (r1593233, four pieces) selected, against the same pan with nothing selected taken straight before it. Pass: p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's | phase 4's R1 apparatus and pan, all nine Regions and the relief hand-pushed; `CameraReceiver` to a point on that Trail at each zoom, then for the selected run `input tap` at the screen's centre and the chooser's green row if one opens; `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py` | *(owed)* |
+| R4 | A Route along a Trail matches the Trail: the green Bulwary Słowackiego – Kasprowy Wierch (r1593233, one Trail from four pieces) and Główny Szlak Beskidzki (r545421, one relation), each way, and again planned anew from its stored points. Pass: length to the metre and ascent and descent equal to the Trail's row plus the legs across its gaps, if any (none for a gapless walk), and Główny Szlak Beskidzki's Route made within 2 s | `RouteReceiver` gains `--el trail <id>` and `--ez reversed true`: it makes the Route by the button's code, logs the Trail's row, its number of gaps with each gap leg's length, ascent and descent, and the time taken beside its `route:` line, then plans the stored points again and logs that `route:` line too; `adb logcat -d -s KozicaRoute` | *(owed)* |
 | R5 | The update size Play reports for the re-delivered packs, and the three base files' sizes beside the last release's two | Play Console, the release's size; the release's attachments | *(owed)* |
