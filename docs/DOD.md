@@ -106,9 +106,13 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 - [ ] **Find what slowed the map's pan since phase 4's gate.** Phase 6c's R3 (2026-10-30) read the
       Tatry pan at p95 24–26 ms at zoom 11 and 250–315 ms at zoom 13, with 24–38 frames over 100 ms
       and no rest between swipes, on builds both before and after checkpoint C. Phase 4's R1
-      (2026-10-22) read 17.5–19.5 ms with none over 100 ms. Suspects: B's archives (pin 4952), the
-      network and walks loaded at start, something rendering continuously. Bisect with the same
-      apparatus before the next release.
+      (2026-10-22) read 17.5–19.5 ms with none over 100 ms. R3's apparatus was not phase 4's in four
+      ways: the swipes at y 600–800, not 1100–1300; a warm-up pan before the baseline; the camera at
+      49.237, 19.978, not 49.23, 20.0; and the full relief pack hand-pushed, not the 13.7 MB Tatry
+      cut. So first rerun phase 4's R1 command exactly, on the current build: if it reads as phase 4
+      did, the gap is the apparatus, not the code. Only then suspect the code — B's archives (pin
+      4952), the network and walks loaded at start, something rendering continuously — and bisect
+      with that same apparatus, before the next release.
 
 ## Standing checks that never close
 
