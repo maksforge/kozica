@@ -343,12 +343,20 @@ Copy:
   > **Your location while you follow a Route**, only once you tap Follow and allow precise location.
   > While the app is on screen it reads your location to show how far along the Route you are. So
   > that it can pick up where you were if Android closes it, the app keeps the Route you follow and
-  > how far along it you are in its settings on the phone, until you stop, reach the end, or 24 hours
-  > pass. It is never sent anywhere by the app, and goes into Android's backup below with the rest
-  > of the app's data.
+  > how far along it you are in its settings on the phone, until following ends, or the next time you
+  > open the app once 24 hours have passed. It is never sent anywhere by the app, and goes into
+  > Android's backup below with the rest of the app's data.
 
 - **`play-app-content.md`**: `ACCESS_FINE_LOCATION`'s row gains following a Route, whose Route and
-  Progress are kept in the app's settings on the phone until following ends, in E with the policy.
+  Progress are kept in the app's settings on the phone until following ends, or the next open once
+  24 hours have passed, in E with the policy. Its numbered "no data collected" reasons gain a sixth
+  beside the saved Route's and the recorded Hike's:
+
+  > 6. **Following's Route and Progress are location, stored and not collected.** While following,
+  >    the Route's points and how far along it the user is are kept in the app's settings on the
+  >    device, and leave it only by point 2's backup, which is the user's own. Since phase 6b's
+  >    checkpoint E; still no data collected.
+
   Data safety stays "no data collected": nothing leaves the device. No new permission, no network.
 
 ## Known gaps, deliberately
