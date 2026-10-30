@@ -70,9 +70,12 @@ class MapViewModelTest {
     @After
     fun tearDown() {
         val scopes = viewModels.map { it.viewModelScope.coroutineContext.job }
-        runBlocking { withTimeout(5.seconds) { scopes.forEach { it.cancelAndJoin() } } }
         viewModels.clear()
-        Dispatchers.resetMain()
+        try {
+            runBlocking { withTimeout(5.seconds) { scopes.forEach { it.cancelAndJoin() } } }
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
 
     // On a cold start the resume effect reads location before the screen subscribes to the state.
@@ -519,7 +522,6 @@ class MapViewModelTest {
             viewModel.planAlongTrail("Trail 7")
             assertTrue(settled(viewModel) { true }.trail.planningRoute)
 
-            // Planned too, so nothing is left resuming on Main, on Default's thread, once tearDown resets it.
             val state =
                 settled(
                     viewModel,
