@@ -100,10 +100,12 @@ its 95th-percentile frame time within 25 % of the same pan without the relief, w
 over 100 ms than that pan has?
 
 **The statistic.** Each run is the same ten swipes at each zoom, on the same build and camera; its
-p95 is taken over every frame the frame log records across them. The relief run is compared with
-the baseline run taken straight before it. A frame over 100 ms counts against the relief only
-beyond the number the baseline run shows: tile loads at zoom 13 over nine Regions can stall a frame
-with no relief drawn, and the gate measures what the relief adds, not those.
+p95 is taken over the frames drawn while the camera moves, from each swipe's `camera=move` to the
+map's idle after it, and frames at rest are counted apart (`scripts/map/frame-stats.py`). The
+relief run is compared with the baseline run taken straight before it. A frame over 100 ms counts
+against the relief only beyond the number the baseline run shows: tile loads at zoom 13 over nine
+Regions can stall a frame with no relief drawn, and the gate measures what the relief adds, not
+those.
 
 ### The apparatus
 
