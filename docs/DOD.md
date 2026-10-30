@@ -107,10 +107,11 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
 - [x] **Tell a pause from a stall in the frame log, before the next frame gate.** Done 2026-10-30;
       the rule is `frame-stats.py`'s, R3's reread is in [`phase-6c.md`](phase-6c.md).
 - [ ] **Weigh the position dot's redraws at rest against real use.** With the dot shown the map
-      draws 3–4 frames about every 470 ms with nothing moving: the zoom-13 pan's rests drew 159
-      frames, 25 with location revoked (2026-10-30, test phone). Provisional until the closed test
-      shows what it costs a real hike's battery; if it matters, find which of the dot's animations
-      draws them before changing anything, and if it does not, drop this item.
+      draws frames with the camera at rest; the figures are in R3's row of [`phase-6c.md`](phase-6c.md),
+      and the 25 frames that remain with location revoked are unexplained. Provisional until real use, such as a
+      hike with the dot shown on the owner's phone, shows what it costs the battery; if it matters,
+      find what about the dot draws them (its animation, compass bearing updates, or the fixes it
+      is fed) before changing anything; either way, tick it and record the verdict.
 
 ## Standing checks that never close
 
