@@ -6,6 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.PI
 import kotlin.math.roundToLong
 
 class PaceTest {
@@ -64,26 +65,48 @@ class PaceTest {
         assertEquals(50, null.minutes(50 * 60.0))
     }
 
-    @Test
-    fun `a Track is timed by the router's own rule`() {
-        val network = TrailNetwork.read(PaceTest::class.java.getResource("/trails-fixture.network")!!.readBytes())
-        val climbing =
-            (0 until network.edgeLength.size).maxBy { network.edgeAscent[it] + network.edgeDescent[it] }
-        val first = network.edgeFirstPoint[climbing]
-        val indices = first until first + network.edgePointCount[climbing]
+    private val network = TrailNetwork.read(PaceTest::class.java.getResource("/trails-fixture.network")!!.readBytes())
+    private val climbing = (0 until network.edgeLength.size).maxBy { network.edgeAscent[it] + network.edgeDescent[it] }
+
+    private fun ruleSecondsAlong(points: List<Int>): Double {
         val track =
             listOf(
-                indices.map {
-                    TrackPoint(0, network.pointLat[it] * 1e-7, network.pointLon[it] * 1e-7, altitude = null)
-                },
+                points.map { TrackPoint(0, network.pointLat[it] * 1e-7, network.pointLon[it] * 1e-7, altitude = null) },
             )
-        val heights = indices.map { Height(network.pointHeight[it] / 10.0, HeightSource.GRID) }
+        return track.ruleSeconds(points.map { Height(network.pointHeight[it] / 10.0, HeightSource.GRID) })!!
+    }
 
-        val ours = track.ruleSeconds(heights)!!
+    private val climbingPoints: List<Int>
+        get() = network.edgeFirstPoint[climbing].let { (it until it + network.edgePointCount[climbing]).toList() }
+
+    @Test
+    fun `a Track is timed by the router's own rule`() {
+        val ours = ruleSecondsAlong(climbingPoints)
         val router = network.part(climbing, 0.0, 1.0).seconds
 
         assertTrue(network.edgeAscent[climbing] + network.edgeDescent[climbing] > 50)
         assertEquals((router / 60).roundToLong(), (ours / 60).roundToLong())
+    }
+
+    @Test
+    fun `a Track walked down the edge is timed by the router's steep-descent rule`() {
+        val ours = ruleSecondsAlong(climbingPoints.reversed())
+        val router = network.part(climbing, 1.0, 0.0).seconds
+
+        assertTrue(network.edgeAscent[climbing] > 50)
+        assertEquals((router / 60).roundToLong(), (ours / 60).roundToLong())
+    }
+
+    @Test
+    fun `heights wobbling under five metres climb nothing until they move five`() {
+        val degreesPerHundredMetres = 100 / (6_371_008.8 * PI / 180)
+        val metres = listOf(1000, 1003, 998, 1002, 995, 998, 992, 997, 1001, 1004, 1003)
+        val track =
+            listOf(metres.indices.map { TrackPoint(0, 49.0 + it * degreesPerHundredMetres, 20.0, altitude = null) })
+        val heights = metres.map { Height(it.toDouble(), HeightSource.GRID) }
+
+        assertEquals(1000.0, track.along().last(), 1e-6)
+        assertEquals(900.0 + 8 * 6.0, track.ruleSeconds(heights)!!, 1e-6)
     }
 
     @Test
