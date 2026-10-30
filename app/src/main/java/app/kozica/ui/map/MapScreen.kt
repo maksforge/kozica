@@ -720,7 +720,7 @@ fun MapScreen(
                     onSave = viewModel::save,
                     onFollow = follow,
                     onStopFollowing = viewModel::stopFollowing,
-                    onFindMe = { state.fix?.let { viewModel.findMeOnRoute(it.toFollowFix()) } },
+                    onFindMe = { viewModel.findMeOnRoute(state.fix?.toFollowFix()) },
                     onDismissNote = viewModel::dismissFollowingNote,
                     modifier = Modifier.heightIn(max = sheetHeight),
                 )

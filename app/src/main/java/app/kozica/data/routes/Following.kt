@@ -105,14 +105,17 @@ class FollowedLine(
         return Progress(max(from, matched), fix.atMillis)
     }
 
-    /** "Find me on the Route": the same rule over the whole line ahead of [progress], or from the start. */
+    /**
+     * "Find me on the Route": the same rule over the whole line ahead of [progress], or from the start;
+     * null when the fix does not count or no pass ahead is within its leaving distance.
+     */
     fun findMe(
         progress: Progress?,
         fix: FollowFix,
     ): Progress? {
-        if (!fix.counts) return progress
+        if (!fix.counts) return null
         val from = progress?.metres ?: 0.0
-        val matched = firstPass(fix, from, metres) ?: return progress
+        val matched = firstPass(fix, from, metres) ?: return null
         return Progress(max(from, matched), fix.atMillis)
     }
 

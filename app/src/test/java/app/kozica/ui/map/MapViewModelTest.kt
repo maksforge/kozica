@@ -228,6 +228,36 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `find me with no fix or far from the Route says so, until the next Progress`() =
+        runTest {
+            val viewModel = routingViewModel()
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            val line =
+                settled(
+                    viewModel,
+                ) { it.route.planned?.complete == true && !it.route.planning }.route.planned!!.line
+            viewModel.follow()
+
+            viewModel.findMeOnRoute(null)
+            assertEquals(
+                FollowingNote.NOT_FOUND,
+                settled(viewModel) { it.route.followingNote != null }.route.followingNote,
+            )
+            viewModel.dismissFollowingNote()
+            viewModel.findMeOnRoute(FollowFix(49.5, 20.0, 10.0, 0, 0))
+            assertEquals(
+                FollowingNote.NOT_FOUND,
+                settled(viewModel) { it.route.followingNote != null }.route.followingNote,
+            )
+
+            val midway = line[line.size / 2]
+            viewModel.followFix(FollowFix(midway.latitude, midway.longitude, 10.0, 0, 0))
+            val route = settled(viewModel) { it.route.following?.progress != null }.route
+            assertNull(route.followingNote)
+        }
+
+    @Test
     fun `long-pressed points join in the order pressed, however long their names take`() =
         runTest {
             val viewModel = routingViewModel(places = { awaitCancellation() })

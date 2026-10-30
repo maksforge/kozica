@@ -240,8 +240,8 @@ data class FollowingUiState(
     val left: Left,
 )
 
-/** Why following ended by itself, said on the sheet until the next change. */
-enum class FollowingNote { ENDED, ROUTE_CHANGED }
+/** What the sheet says about following, until the next change: why it ended, or that "Find me" found nothing. */
+enum class FollowingNote { ENDED, ROUTE_CHANGED, NOT_FOUND }
 
 /**
  * @param shown the selected Trail, which sets a planned Route aside until it is closed.
@@ -900,31 +900,42 @@ class MapViewModel(
     }
 
     /** Each fix while the map is on screen; one that does not count moves nothing (docs/phase-6b.md § 3). */
-    fun followFix(fix: FollowFix) = moveAlong(fix) { line, progress -> line.follow(progress, fix) }
-
-    /** "Find me on the Route", from the latest fix. */
-    fun findMeOnRoute(fix: FollowFix) = moveAlong(fix) { line, progress -> line.findMe(progress, fix) }
-
-    private fun moveAlong(
-        fix: FollowFix,
-        match: (FollowedLine, Progress?) -> Progress?,
-    ) {
+    fun followFix(fix: FollowFix) {
         val line = followed ?: return
+        line.follow(route.value.following?.progress, fix)?.let { moveTo(line, it, fix) }
+    }
+
+    /** "Find me on the Route", from the latest fix, if any; says so when it finds nothing. */
+    fun findMeOnRoute(fix: FollowFix?) {
+        val line = followed ?: return
+        val found = fix?.let { line.findMe(route.value.following?.progress, it) }
+        if (fix == null || found == null) {
+            route.update { it.copy(followingNote = FollowingNote.NOT_FOUND) }
+        } else {
+            moveTo(line, found, fix)
+        }
+    }
+
+    private fun moveTo(
+        line: FollowedLine,
+        progress: Progress,
+        fix: FollowFix,
+    ) {
         val current = route.value.following ?: return
-        val progress = match(line, current.progress) ?: return
         if (fix.counts && line.ended(progress, fix)) {
             followed = null
             route.update { it.copy(following = null, followingNote = FollowingNote.ENDED) }
         } else if (progress != current.progress) {
-            route.update { it.copy(following = current.copy(progress = progress, left = line.left(progress))) }
+            route.update {
+                it.copy(following = current.copy(progress = progress, left = line.left(progress)), followingNote = null)
+            }
         }
     }
 
     private fun changePoints(change: (List<RoutePoint>) -> List<RoutePoint>) {
-        if (route.value.following != null) {
-            followed = null
-            route.update { it.copy(following = null, followingNote = FollowingNote.ROUTE_CHANGED) }
-        }
+        val stopped = route.value.following != null
+        followed = null
+        route.update { it.copy(following = null, followingNote = if (stopped) FollowingNote.ROUTE_CHANGED else null) }
         val points =
             route
                 .updateAndGet {
