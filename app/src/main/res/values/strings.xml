@@ -96,6 +96,7 @@
     <string name="following_ended">You\'ve reached the end of the Route</string>
     <!-- Following stops when the user adds, moves, removes or reverses a point. -->
     <string name="following_route_changed">Following stopped: the Route changed</string>
+    <string name="following_not_found">Can\'t find you on the Route yet</string>
     <string name="following_needs_precise">Following needs precise location</string>
     <string name="following_location_settings">Location settings</string>
     <!-- Beside a walking time worked out from the user's own pace: the time by the signposts' rule. %1$s is a time, such as "4 h 50 min". -->

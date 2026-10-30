@@ -116,6 +116,7 @@ internal fun RouteSheet(
                             when (note) {
                                 FollowingNote.ENDED -> R.string.following_ended
                                 FollowingNote.ROUTE_CHANGED -> R.string.following_route_changed
+                                FollowingNote.NOT_FOUND -> R.string.following_not_found
                             },
                         ),
                         style = MaterialTheme.typography.bodyMedium,
@@ -131,7 +132,7 @@ internal fun RouteSheet(
                 }
             } else if (route.points.size >= 2) {
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                    if (planned?.complete == true) {
+                    if (planned?.complete == true && !route.planning) {
                         TextButton(onClick = onFollow) { Text(stringResource(R.string.following_follow)) }
                     }
                     TextButton(onClick = onReverse) { Text(stringResource(R.string.route_reverse)) }
