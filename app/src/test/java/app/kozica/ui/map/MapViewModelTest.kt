@@ -4,6 +4,7 @@ import android.location.Location
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.lifecycle.viewModelScope
 import app.kozica.data.AppPreferences
 import app.kozica.data.MapCamera
 import app.kozica.data.SavedRoute
@@ -28,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -35,12 +37,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -57,13 +62,18 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
-    // Every ViewModel here runs its io and compute work on this Main too, so none of it can resume
-    // on another thread after tearDown has unset Main.
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
+    // Work a ViewModel resumes on Main after resetMain fails whichever test runs next, so each one's
+    // scope is joined while Main is still set.
     @After
-    fun tearDown() = Dispatchers.resetMain()
+    fun tearDown() {
+        val scopes = viewModels.map { it.viewModelScope.coroutineContext.job }
+        runBlocking { withTimeout(5.seconds) { scopes.forEach { it.cancelAndJoin() } } }
+        viewModels.clear()
+        Dispatchers.resetMain()
+    }
 
     // On a cold start the resume effect reads location before the screen subscribes to the state.
     @Test
@@ -80,7 +90,7 @@ class MapViewModelTest {
                     confirmFetch = { false },
                     io = Dispatchers.Main,
                     compute = Dispatchers.Main,
-                )
+                ).tracked()
             viewModel.darkTheme(false)
             viewModel.locationRead(LocationRead(LocationGrant.PRECISE, on = true))
 
@@ -428,7 +438,7 @@ class MapViewModelTest {
                     saveCaption = { id, caption -> stored += "caption $id $caption" },
                     savePinRemoved = { stored += "unpin $it" },
                     deleteStoredPhoto = { stored += "delete $it" },
-                )
+                ).tracked()
 
             viewModel.setCaption("p", "Hala")
             viewModel.unpinPhoto("p")
@@ -614,6 +624,10 @@ class MapViewModelTest {
         } ?: error("the state never settled")
 }
 
+private val viewModels = mutableListOf<MapViewModel>()
+
+private fun MapViewModel.tracked() = also { viewModels += it }
+
 private val fixture =
     TrailNetwork.read(
         MapViewModelTest::class.java.getResource("/trails-fixture.network")!!.readBytes(),
@@ -665,7 +679,7 @@ private fun routingViewModel(
     loadTrail = loadTrail,
     sectionsOf = sectionsOf,
     routeAlong = routeAlong,
-)
+).tracked()
 
 private fun trailDetail(
     id: Long,
@@ -714,7 +728,7 @@ private fun mapViewModel(
     relief = relief,
     io = Dispatchers.Main,
     compute = Dispatchers.Main,
-)
+).tracked()
 
 private fun tatry(state: RegionState) = Region("tatry", name = 0, state)
 
