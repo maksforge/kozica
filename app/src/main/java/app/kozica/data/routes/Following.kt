@@ -12,7 +12,7 @@ internal const val FIX_OLDEST_MILLIS = 30_000L
 internal const val WINDOW_METRES_PER_SECOND = 6000.0 / 3600
 internal const val WINDOW_LEAST_METRES = 200.0
 
-/** A position fix as Following reads it; [ageMillis] is how old it was when it arrived. */
+/** A position fix as Following reads it; [ageMillis] is how old it was when it arrived, [atMillis] its own time. */
 data class FollowFix(
     val latitude: Double,
     val longitude: Double,

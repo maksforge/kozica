@@ -48,7 +48,9 @@ reverse):
   `data/routes/Following.kt` (`LEAVING_METRES`, `FIX_WORST_ACCURACY_METRES`, `FIX_OLDEST_MILLIS`,
   `WINDOW_METRES_PER_SECOND`, `WINDOW_LEAST_METRES`), so a verdict changes them and nothing else.
 - The screen hands each fix to the ViewModel while following, so with the app off screen nothing is
-  matched, as § 3 has it. A fix's age is read against `elapsedRealtimeNanos`, the clock it carries.
+  matched, as § 3 has it. A fix's age on arrival is read against `elapsedRealtimeNanos`; the
+  window's clock is the fix's own `time`, so a replayed fix's time and a Progress kept across a
+  reboot both read right.
 - Before the first fix that counts, the sheet shows what is left from the start. The time left is
   the router's at each point and between two points the leg's time spread by the rule over the line
   walked, so standing at the start it is the sheet's own total.
