@@ -38,7 +38,7 @@ share a way selects the Trail it was on, by way of a chooser, and the highlight 
 - **The build lists the Trails' ways, but not per Trail.** `KozicaProfile` gathers every hiking
   relation's ways into one flat set and writes it sorted to `map-data/archives/<id>.ways` (phase 5
   § 2), and the network keeps each edge's first way id. Nothing records which Trails a way belongs
-  to. And `chains()` in `scripts/build-network.py` joins pieces through every node where exactly two
+  to. And `chains()` in `scripts/build-network.py` joins ways through every node where exactly two
   meet, so where one Trail ends at such a node and another carries on, that end falls inside an
   edge. The sheet's length, climb and profile, the Route along a Trail and the highlight below zoom
   10 all need a Trail's edges exactly, so B makes the profile write the membership and cuts the
@@ -214,23 +214,25 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   walk rule below, and its colour and symbol are the ones its pieces share. The pieces are not rows,
   not tapped and not found by search. Only an `nwn` or `iwn` relation of relations is a Long-distance
   Trail with Sections. Over A's cuts that is 41 Trails from 233 pieces (121 of them in the Tatry),
-  15 members of 12 parents left Trails of their own, and 17 Long-distance Trails, 16 named.
+  15 members of 11 parents left Trails of their own, and 17 Long-distance Trails, 16 named.
 - **The profile writes the membership**, since it already decides what a Trail is: `<id>.ways`
   becomes `<id>.trails`, one line per Trail, a `route=hiking` relation or a regional parent, with
-  its id and its members in member order with their roles: its ways and, for a regional parent, its
-  pieces, which the profile picks since it reads the markings. And one per Long-distance Trail with
-  its id, its name, its `network` and its member relations (`preprocessOsmRelation` sees
-  `type=superroute` too). `build-network.py` reads the wanted
-  ways from it, as it reads `<id>.ways` today, and the mapping with them, so the rule for a Trail
-  stays written once. The profile runs once per Region, so a relation crossing a boundary is in two
+  its id and its member ways in member order with their roles. A regional parent's line holds its
+  own ways and, at each piece's place, that piece's ways in its own order, with the piece's role
+  where it has one and each way's own where not; the profile picks the pieces, since it reads the
+  markings, and a piece has no line of its own. And one per Long-distance Trail with its id, its
+  name, its `network` and its member relations (`preprocessOsmRelation` sees `type=superroute` too).
+  `build-network.py` reads the wanted ways from it, as it reads `<id>.ways` today, and the mapping
+  with them, so the rule for a Trail stays written once. The profile runs once per Region, so a relation crossing a boundary is in two
   or more files, each with only the members its cut holds: `build-network.py` merges the lines by
   relation id before any walk is built, the union of their members, with the member order and roles
   of the line holding the most members and the others' extra members after it. A regional parent's
   lines merge so too, as r373033 and r1716770 cross Regions, and so do a Long-distance Trail's.
-- **Edges are cut where the Trails on a way change.** `chains()` joins two pieces only where both
-  walk alike; "alike" gains "carry the same Trails", so every way of an edge belongs to the same
-  Trails and a Trail's end is always an edge's end. The network gains those cuts and nothing else:
-  its format is unchanged, and its bytes change with the new pin anyway. ADR-0010 and phase 5 § 2
+- **Edges are cut where the Trails on a way change.** `chains()` joins two ways only where both
+  walk alike; "alike" gains "carry the same Trails", the Trails whose lines hold the way, so a
+  piece's ways carry its parent's Trail, every way of an edge belongs to the same Trails and a
+  Trail's end is always an edge's end. The network gains those cuts and nothing else: its format is
+  unchanged, and its bytes change with the new pin anyway. ADR-0010 and phase 5 § 2
   are amended to say so.
 - **The extract is re-pinned** (`scripts/osm-data.pin`) in B's commit, so the one re-delivery of
   every pack also brings the newest OSM. B may take a newer pin than A's candidate; the tally is not
