@@ -72,8 +72,9 @@ reverse):
   is back is dropped. Where the router finds no way, the sheet says "No way back to the Route over
   the Trails".
 - "From the nearest Trail" shows past 50 m, the Route sheet's threshold for its points.
-- The leg is dashed in the tertiary palette (the style's `route_back`), its sheet line in
-  `tertiary`, so it reads as neither the Route nor a Track; a selected Trail hides it with the Route.
+- The leg is dashed in `onSurface`'s tones (the style's `route_back`), as is its sheet line, and
+  drawn above the Track it often retraces: the Route has the primary palette and the Track the
+  tertiary, so it reads as neither; a selected Trail hides it with the Route.
 - Polish: "Jesteś poza trasą" needs no gender, and the action is the noun "Powrót na trasę" (the app
   observes rather than advises).
 ---

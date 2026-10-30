@@ -305,7 +305,7 @@ private fun LegBackLines(
                     walkingTime(pace.minutes(back.planned.seconds), locale),
                 ),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.tertiary,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             back.planned.offTrailMetres(0)?.takeIf { it > OFF_TRAIL_SHOWN_METRES }?.let {
                 Text(

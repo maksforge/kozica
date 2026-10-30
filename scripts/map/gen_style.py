@@ -82,7 +82,7 @@ def palette(dark: bool) -> dict[str, str]:
         "route_casing": tone(N, pick(100, 10)),
         "route_number": tone(N, pick(100, 10)),
         "hike_track": tone(T, pick(45, 70)),
-        "route_back": tone(T, pick(40, 80)),
+        "route_back": tone(N, pick(10, 90)),
     }
 
 
@@ -285,8 +285,14 @@ def style(dark: bool) -> dict:
          "layout": text_layout(13, **{"text-field": ["get", "number"], "text-allow-overlap": True,
                                       "text-ignore-placement": True}),
          "paint": {"text-color": c["route_number"]}},
-        # The leg back to a followed Route (docs/phase-6b.md § 4), dashed so it never reads as the Route
-        # or a Track.
+        # The Hike being recorded (docs/phase-6.md § 2), each stretch its own line, above the Route.
+        {"id": "hike-track-casing", "type": "line", "source": "hike-track",
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": c["route_casing"], "line-width": trail_width(6.0)}},
+        {"id": "hike-track", "type": "line", "source": "hike-track",
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": c["hike_track"], "line-width": trail_width(3.0)}},
+        # The leg back to a followed Route (docs/phase-6b.md § 4), above the Track it often retraces.
         {"id": "route-back-casing", "type": "line", "source": "route-back",
          "filter": ["==", ["get", "approach"], "trail"],
          "layout": {"line-join": "round"},
@@ -298,13 +304,6 @@ def style(dark: bool) -> dict:
         {"id": "route-back-off-trail", "type": "line", "source": "route-back",
          "filter": ["==", ["get", "approach"], "off"],
          "paint": {"line-color": c["route_back"], "line-width": trail_width(), "line-dasharray": ["literal", [1, 1.5]]}},
-        # The Hike being recorded (docs/phase-6.md § 2), each stretch its own line, above the Route.
-        {"id": "hike-track-casing", "type": "line", "source": "hike-track",
-         "layout": {"line-join": "round", "line-cap": "round"},
-         "paint": {"line-color": c["route_casing"], "line-width": trail_width(6.0)}},
-        {"id": "hike-track", "type": "line", "source": "hike-track",
-         "layout": {"line-join": "round", "line-cap": "round"},
-         "paint": {"line-color": c["hike_track"], "line-width": trail_width(3.0)}},
         # The shown Hike's pinned photos (docs/phase-6.md § 6), tapped to open; above its Track.
         {"id": "hike-photos", "type": "circle", "source": "hike-photos",
          "paint": {"circle-color": c["hike_track"], "circle-radius": 9, "circle-stroke-color": c["route_casing"],
