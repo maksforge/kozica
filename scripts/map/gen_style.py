@@ -92,6 +92,7 @@ def by_zoom(*stops: tuple[float, object]) -> list:
 TRAIL_WIDTHS = ((10, 2.0), (13, 3.0), (15, 4.5), (17, 7.0))
 SYMBOL_STEP = 18
 FADED_OPACITY = 0.3
+NO_TRAIL = ["==", ["get", "trail"], -1]
 SLOT = ["-", ["coalesce", ["get", "index"], 0], ["/", ["-", ["coalesce", ["get", "count"], 1], 1], 2]]
 
 
@@ -253,6 +254,20 @@ def style(dark: bool) -> dict:
          "layout": text_layout(by_zoom((5, 12), (8, 16)),
                                **{"text-field": ["get", "name"], "text-max-width": 7, "text-ignore-placement": ["step", ["zoom"], False, 8, True]}),
          "paint": text_paint(c["region_edge"]) | {"text-opacity": by_zoom((8, 1.0), (9, 0.0))}},
+        # The selected Trail (docs/phase-6c.md § 3), never faded: from zoom 10 on its own strand in the
+        # tiles, by the filter MapScreen.kt sets on its id; below it, its walk from MapScreen.kt's GeoJSON.
+        layer("trail-selected-casing", "line", "trails", minzoom=10, filter=NO_TRAIL,
+              layout={"line-join": "round", "line-cap": "round"},
+              paint={"line-color": c["route_casing"], "line-width": trail_width(5.0), "line-offset": trail_offset()}),
+        layer("trail-selected", "line", "trails", minzoom=10, filter=NO_TRAIL,
+              layout={"line-join": "round", "line-cap": "round"},
+              paint={"line-color": trail_colour, "line-width": trail_width(2.0), "line-offset": trail_offset()}),
+        {"id": "trail-walk-casing", "type": "line", "source": "trail-walk", "maxzoom": 10,
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": c["route_casing"], "line-width": 6.0}},
+        {"id": "trail-walk", "type": "line", "source": "trail-walk", "maxzoom": 10,
+         "layout": {"line-join": "round", "line-cap": "round"},
+         "paint": {"line-color": trail_colour, "line-width": 3.0}},
         # The planned Route (docs/phase-5.md § 4), drawn from MapScreen.kt's GeoJSON over everything.
         {"id": "route-casing", "type": "line", "source": "route", "filter": ["==", ["get", "approach"], "trail"],
          "layout": {"line-join": "round", "line-cap": "round"},
@@ -286,6 +301,7 @@ def style(dark: bool) -> dict:
         "metadata": {"kozica:faded-opacity": FADED_OPACITY,
                      "kozica:bounds": json.loads(REGIONS.read_text())["bbox"]},
         "sources": {"route": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
+                    "trail-walk": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "hike-track": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "hike-photos": {"type": "geojson", "data": {"type": "FeatureCollection", "features": []}},
                     "regions": {"type": "geojson", "data": "asset://map/regions.geojson"}},

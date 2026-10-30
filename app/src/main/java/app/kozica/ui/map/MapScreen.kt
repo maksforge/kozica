@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.RectF
 import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
@@ -104,6 +106,7 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
@@ -235,6 +238,7 @@ fun MapScreen(
         map.uiSettings.setCompassImage(CompassDrawable(colors, density))
     }
     val focus = LocalFocusManager.current
+    val trailTouchPx = with(density) { TRAIL_TOUCH_RADIUS.toPx() }
     var viewingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     // Saved rather than read from the ViewModel: the picker in front is when a low-memory kill comes.
     var pickingFor by rememberSaveable { mutableStateOf<String?>(null) }
@@ -261,7 +265,10 @@ fun MapScreen(
                     .queryRenderedFeatures(map.projection.toScreenLocation(it), HIKE_PHOTOS_LAYER)
                     .firstNotNullOfOrNull { feature -> feature.getStringProperty("id") }
             photo?.let { id -> viewingPhoto = id }
-            photo != null
+            if (photo != null) return@addOnMapClickListener true
+            val tapped = map.trailsAt(it, loaded, trailTouchPx)
+            viewModel.tapTrails(tapped)
+            tapped.isNotEmpty()
         }
         val start = shown ?: viewModel.state.mapNotNull { it.camera }.first()
         map.moveCamera(start.toCameraUpdate())
@@ -340,13 +347,17 @@ fun MapScreen(
     }
 
     val fade = remember(state.style) { state.style?.let(::fadeOf) }
-    LaunchedEffect(loaded, state.route, state.faded) {
+    // A selected Trail sets the Route aside: drawn again, as it was, once the Trail is closed.
+    val routeAside = state.trail.shown != null
+    LaunchedEffect(loaded, state.route, state.faded, routeAside) {
         val style = loaded ?: return@LaunchedEffect
         (
             style.getSource(
                 ROUTE_SOURCE,
             ) as? GeoJsonSource
-        )?.setGeoJson(routeGeoJson(state.route.points, state.route.planned))
+        )?.setGeoJson(
+            if (routeAside) routeGeoJson(emptyList(), null) else routeGeoJson(state.route.points, state.route.planned),
+        )
         val opacity = if (state.faded) fade?.opacity ?: 1f else 1f
         for (id in fade?.layers.orEmpty()) {
             when (val layer = style.getLayer(id)) {
@@ -357,6 +368,16 @@ fun MapScreen(
                         PropertyFactory.textOpacity(opacity),
                     )
             }
+        }
+    }
+
+    val highlighted = state.trail.highlighted
+    LaunchedEffect(loaded, highlighted) {
+        val style = loaded ?: return@LaunchedEffect
+        (style.getSource(TRAIL_WALK_SOURCE) as? GeoJsonSource)?.setGeoJson(trailWalkGeoJson(highlighted))
+        val filter = selectedTrailFilter(highlighted.map { it.id })
+        for (layer in style.layers) {
+            if (layer.id.startsWith(SELECTED_TRAIL_LAYERS) && layer is LineLayer) layer.setFilter(filter)
         }
     }
 
@@ -385,6 +406,30 @@ fun MapScreen(
         map.animateCamera(
             CameraUpdateFactory.newLatLngBounds(bounds, sidePadding, topPadding, sidePadding, bottomPadding),
         )
+    }
+
+    var fittedTrail by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(map, state.trail.fits, regions, placed) {
+        val map = map ?: return@LaunchedEffect
+        if (regions == null || !placed || state.trail.fits == fittedTrail) return@LaunchedEffect
+        val boxes =
+            state.trail.highlighted
+                .map { it.facts }
+                .ifEmpty { return@LaunchedEffect }
+        fittedTrail = state.trail.fits
+        val bounds =
+            LatLngBounds.from(
+                boxes.maxOf { it.north },
+                boxes.maxOf { it.east },
+                boxes.minOf { it.south },
+                boxes.minOf { it.west },
+            )
+        map.animateCamera(
+            CameraUpdateFactory.newLatLngBounds(bounds, sidePadding, topPadding, sidePadding, bottomPadding),
+        )
+    }
+    BackHandler(enabled = state.trail.shown != null || state.trail.choices.isNotEmpty()) {
+        if (state.trail.choices.isNotEmpty()) viewModel.dismissTrailChoices() else viewModel.closeTrail()
     }
 
     val hike = state.hike
@@ -550,7 +595,26 @@ fun MapScreen(
                     OsmCredit(state.osmDate, relief = state.reliefShown)
                 }
             }
-            if (hike != null) {
+            val trailWords = rememberTrailWords()
+            val shownTrail = state.trail.shown
+            if (state.trail.choices.isNotEmpty()) {
+                TrailChooser(
+                    choices = state.trail.choices,
+                    words = trailWords,
+                    onPick = viewModel::chooseTrail,
+                    onDismiss = viewModel::dismissTrailChoices,
+                    modifier = Modifier.heightIn(max = sheetHeight),
+                )
+            } else if (shownTrail != null) {
+                TrailSheet(
+                    trail = shownTrail,
+                    words = trailWords,
+                    onClose = viewModel::closeTrail,
+                    onShowWhole = viewModel::showWholeTrail,
+                    onShowLongDistance = viewModel::showLongDistance,
+                    modifier = Modifier.heightIn(max = sheetHeight),
+                )
+            } else if (hike != null) {
                 HikeSheet(
                     hike = hike,
                     onClose = viewModel::closeHike,
@@ -585,6 +649,30 @@ fun MapScreen(
         }
     }
 }
+
+/** The Trail ids drawn under a finger's width around [at], from every Region's `trails` layer. */
+private fun MapLibreMap.trailsAt(
+    at: LatLng,
+    style: Style?,
+    radius: Float,
+): List<Long> {
+    val layers = style?.layers?.map { it.id }?.filter { it.startsWith("$TRAILS_LAYER-") } ?: return emptyList()
+    val point = projection.toScreenLocation(at)
+    val box = RectF(point.x - radius, point.y - radius, point.x + radius, point.y + radius)
+    return queryRenderedFeatures(box, *layers.toTypedArray())
+        .mapNotNull { it.getNumberProperty("trail")?.toLong() }
+        .distinct()
+}
+
+/** Matches no feature for no ids, as the style's own filter does until a Trail is selected. */
+private fun selectedTrailFilter(ids: List<Long>): Expression =
+    if (ids.isEmpty()) {
+        Expression.eq(Expression.get("trail"), Expression.literal(-1))
+    } else {
+        Expression.any(
+            *ids.distinct().map { Expression.eq(Expression.get("trail"), Expression.literal(it)) }.toTypedArray(),
+        )
+    }
 
 private fun CameraBounds.latLngBounds() = LatLngBounds.from(north, east, south, west)
 
@@ -831,6 +919,9 @@ private val CameraSaver =
 
 /** Close enough that the Trails around a picked place are drawn. */
 private const val OFFERED_ZOOM = 13.0
+
+// About a fingertip's half-width, so a tap between two strands drawn side by side catches both.
+private val TRAIL_TOUCH_RADIUS = 16.dp
 
 // Bounds how long one pick takes to write, each photo decoded and encoded twice; not the picker's own limit.
 private const val MAX_PHOTOS_PICKED = 50

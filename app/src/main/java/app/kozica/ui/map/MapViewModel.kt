@@ -36,6 +36,7 @@ import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.TrailDetail
 import app.kozica.record.Recording
 import app.kozica.ui.common.GpxExport
 import app.kozica.ui.common.GpxExports
@@ -80,6 +81,7 @@ import java.time.ZoneId
  * @param recording the Hike being recorded, null when none is.
  * @param track the recording Hike's Track so far, drawn live (docs/phase-6.md § 2).
  * @param hike the Hike the Hikes tab asked the map to show, null when none is (docs/phase-6.md § 4).
+ * @param trail the Trail picked on the map, or the Trails a tap offers (docs/phase-6c.md § 3).
  */
 data class MapUiState(
     val regions: List<Region>? = null,
@@ -93,6 +95,7 @@ data class MapUiState(
     val recording: Recording? = null,
     val track: Track = emptyList(),
     val hike: HikeUiState? = null,
+    val trail: TrailUiState = TrailUiState(),
 ) {
     private val ready: List<RegionState.Ready> get() = regions.orEmpty().mapNotNull { it.state as? RegionState.Ready }
 
@@ -109,8 +112,8 @@ data class MapUiState(
     /** The recording's Track and the shown Hike's, each stretch its own line. */
     val drawnTrack: Track get() = track + hike?.drawn.orEmpty()
 
-    /** A planned Route or a shown Hike fades the rest of the map (docs/phase-5.md § 4). */
-    val faded: Boolean get() = route.planned != null || hike != null
+    /** A planned Route, a shown Hike or a selected Trail fades the rest of the map (docs/phase-5.md § 4). */
+    val faded: Boolean get() = route.planned != null || hike != null || trail.shown != null
 }
 
 /**
@@ -218,6 +221,21 @@ data class RouteUiState(
     val naming: Boolean = false,
 )
 
+/**
+ * @param shown the selected Trail, which sets a planned Route aside until it is closed.
+ * @param choices the Trails under a tap that found several, until one is picked.
+ * @param whole every Section of [shown]'s Long-distance Trail, once asked for; shown with it.
+ * @param fits counts the asks to fit the camera to the highlighted Trails.
+ */
+data class TrailUiState(
+    val shown: TrailDetail? = null,
+    val choices: List<TrailDetail> = emptyList(),
+    val whole: List<TrailDetail> = emptyList(),
+    val fits: Int = 0,
+) {
+    val highlighted: List<TrailDetail> get() = whole.ifEmpty { listOfNotNull(shown) }
+}
+
 /** A demanding stretch with the places that name its two ends, either null where nothing is near. */
 data class NamedStretch(
     val stretch: DemandingStretch,
@@ -259,6 +277,8 @@ class MapViewModel(
     private val deleteStoredPhoto: suspend (photoId: String) -> Unit = {},
     private val photosLeftOut: MutableStateFlow<Int> = MutableStateFlow(0),
     private val writeGpx: suspend (Gpx, LocalDate) -> File = { _, _ -> error("No GPX in this view model") },
+    private val loadTrail: (id: Long) -> TrailDetail? = { null },
+    private val sectionsOf: (longDistance: Long) -> List<Long> = { emptyList() },
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -313,6 +333,10 @@ class MapViewModel(
 
     private val shownHike = MutableStateFlow<String?>(null)
 
+    private val trail = MutableStateFlow(TrailUiState())
+
+    private var tapping: Job? = null
+
     private val hikeKeep = MutableStateFlow<ClosedFloatingPointRange<Double>?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -336,11 +360,11 @@ class MapViewModel(
                 MapUiState(packs?.first, packs?.second, style, camera, location, fix)
             },
             search,
-            combine(route, hike.onStart { emit(null) }, ::Pair),
+            combine(route, hike.onStart { emit(null) }, trail, ::Triple),
             recording,
             track.onStart { emit(emptyList()) },
-        ) { map, search, (route, hike), recording, track ->
-            map.copy(search = search, route = route, recording = recording, track = track, hike = hike)
+        ) { map, search, (route, hike, trail), recording, track ->
+            map.copy(search = search, route = route, recording = recording, track = track, hike = hike, trail = trail)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     init {
@@ -450,6 +474,7 @@ class MapViewModel(
     ) {
         val point = RoutePoint(latitude, longitude)
         closeHike()
+        closeTrail()
         changePoints { it + point }
         viewModelScope.launch {
             val label = withContext(io) { places()?.nearest(latitude, longitude)?.name } ?: return@launch
@@ -512,7 +537,59 @@ class MapViewModel(
         route.value = RouteUiState()
         hikeKeep.value = null
         readHeights = null
+        closeTrail()
         shownHike.value = id
+    }
+
+    /**
+     * docs/phase-6c.md § 3: a tap on one Trail selects it, on several offers them, and on none closes
+     * whatever Trail is selected or offered.
+     */
+    fun tapTrails(ids: List<Long>) {
+        tapping?.cancel()
+        if (ids.isEmpty()) {
+            closeTrail()
+            return
+        }
+        tapping =
+            viewModelScope.launch {
+                val found = withContext(io) { ids.mapNotNull(loadTrail) }
+                when (found.size) {
+                    0 -> Unit
+                    1 -> showTrail(found.single())
+                    else -> trail.update { it.copy(choices = found) }
+                }
+            }
+    }
+
+    fun chooseTrail(picked: TrailDetail) = showTrail(picked)
+
+    fun dismissTrailChoices() = trail.update { it.copy(choices = emptyList()) }
+
+    /** A shown Hike gives way, a planned Route is set aside, and a recording goes on (docs/phase-6c.md § 3). */
+    private fun showTrail(picked: TrailDetail) {
+        if (shownHike.value != null) closeHike()
+        dismissOffer()
+        trail.value = TrailUiState(shown = picked)
+    }
+
+    fun closeTrail() {
+        tapping?.cancel()
+        trail.value = TrailUiState()
+    }
+
+    fun showWholeTrail() = trail.update { it.copy(whole = emptyList(), fits = it.fits + 1) }
+
+    /** Every Section of the selected one's Long-distance Trail, highlighted together. */
+    fun showLongDistance() {
+        val longDistance =
+            trail.value.shown
+                ?.facts
+                ?.longDistanceId ?: return
+        viewModelScope.launch {
+            val sections = withContext(io) { sectionsOf(longDistance).mapNotNull(loadTrail) }
+            trail.update { it.copy(whole = sections, fits = it.fits + 1) }
+        }
     }
 
     fun closeHike() {
@@ -763,6 +840,8 @@ class MapViewModel(
                         deleteStoredPhoto = app.container.hikes::deletePhoto,
                         photosLeftOut = app.container.photosLeftOut,
                         writeGpx = app.container.gpxFiles::write,
+                        loadTrail = app.container::trail,
+                        sectionsOf = app.container::sections,
                     )
                 }
             }

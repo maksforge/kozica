@@ -32,9 +32,11 @@ import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.RouteTotals
+import app.kozica.data.routes.TrailDetail
 import app.kozica.data.routes.TrailNetworks
 import app.kozica.data.routes.openPlaces
 import app.kozica.data.routes.placesFile
+import app.kozica.data.routes.walkLine
 import app.kozica.media.MediaFiles
 import app.kozica.record.Recorder
 import app.kozica.ui.common.revokeShares
@@ -167,6 +169,24 @@ class AppContainer(
 
     /** Null in a build without the network. Blocks on its first call, which loads it (docs/phase-5.md § 1). */
     suspend fun planRoute(points: List<RoutePoint>): PlannedRoute? = planning.withLock { planner?.plan(points) }
+
+    /** A Trail as the map shows it (docs/phase-6c.md § 3); reads the index and the network, so off the main thread. */
+    fun trail(id: Long): TrailDetail? {
+        val index = placeIndex ?: return null
+        val facts = index.trail(id) ?: return null
+        val network = TrailNetworks.load(appContext)
+        val steps = TrailNetworks.walks(appContext)?.steps(id)
+        val line = if (network != null && steps != null) network.walkLine(steps) else emptyList()
+        val named = facts.name != null || facts.namePl != null || (facts.from != null && facts.to != null)
+        return TrailDetail(
+            facts,
+            line,
+            nearestFrom = if (named) null else index.nearest(facts.startLatitude, facts.startLongitude)?.name,
+            nearestTo = if (named) null else index.nearest(facts.endLatitude, facts.endLongitude)?.name,
+        )
+    }
+
+    fun sections(longDistance: Long): List<Long> = placeIndex?.sections(longDistance).orEmpty()
 
     @RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     fun positions(approximateOnly: Boolean): Flow<Location> =

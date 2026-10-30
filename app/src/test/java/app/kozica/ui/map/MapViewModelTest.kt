@@ -16,6 +16,9 @@ import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.TrailColour
+import app.kozica.data.routes.TrailDetail
+import app.kozica.data.routes.TrailFacts
 import app.kozica.data.routes.TrailNetwork
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -400,6 +403,42 @@ class MapViewModelTest {
             assertEquals(1, failed)
         }
 
+    @Test
+    fun `a tap on one Trail selects it, on several offers them, and on none closes it`() =
+        runTest {
+            val viewModel = routingViewModel(loadTrail = ::trailDetail)
+
+            viewModel.tapTrails(listOf(7))
+            assertTrue(settled(viewModel) { it.trail.shown?.id == 7L }.faded)
+
+            viewModel.tapTrails(listOf(7, 8))
+            val offered = settled(viewModel) { it.trail.choices.size == 2 }.trail.choices
+            viewModel.chooseTrail(offered[1])
+            assertEquals(emptyList<TrailDetail>(), settled(viewModel) { it.trail.shown?.id == 8L }.trail.choices)
+
+            viewModel.tapTrails(emptyList())
+            assertFalse(settled(viewModel) { it.trail.shown == null }.faded)
+        }
+
+    @Test
+    fun `a selected Trail sets the Route aside, and closing it or a long press brings the Route back`() =
+        runTest {
+            val viewModel = routingViewModel(loadTrail = ::trailDetail)
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            settled(viewModel) { it.route.planned != null }
+
+            viewModel.tapTrails(listOf(7))
+            assertEquals(2, settled(viewModel) { it.trail.shown != null }.route.points.size)
+            viewModel.closeTrail()
+            assertEquals(2, settled(viewModel) { it.trail.shown == null }.route.points.size)
+
+            viewModel.tapTrails(listOf(7))
+            settled(viewModel) { it.trail.shown != null }
+            viewModel.addPoint(49.01, 20.01)
+            assertEquals(3, settled(viewModel) { it.trail.shown == null }.route.points.size)
+        }
+
     private suspend fun settled(
         viewModel: MapViewModel,
         until: (MapUiState) -> Boolean,
@@ -437,6 +476,7 @@ private fun routingViewModel(
     loadRoute: suspend (String) -> SavedRoute? = { null },
     saveRoute: suspend (String?, String, List<RoutePoint>) -> String = { _, _, _ -> "" },
     observeName: (String) -> Flow<String?> = { emptyFlow() },
+    loadTrail: (Long) -> TrailDetail? = { null },
 ) = MapViewModel(
     regions = flowOf(emptyList()),
     preferences = AppPreferences(MemoryPreferences()),
@@ -453,7 +493,37 @@ private fun routingViewModel(
     loadRoute = loadRoute,
     saveRoute = saveRoute,
     observeName = observeName,
+    loadTrail = loadTrail,
 )
+
+private fun trailDetail(id: Long) =
+    TrailDetail(
+        TrailFacts(
+            id = id,
+            name = "Trail $id",
+            namePl = null,
+            ref = null,
+            colour = TrailColour.GREEN,
+            symbol = null,
+            from = null,
+            to = null,
+            longDistanceId = null,
+            longDistanceName = null,
+            startLatitude = 49.0,
+            startLongitude = 20.0,
+            endLatitude = 49.0,
+            endLongitude = 20.02,
+            metres = 1460.0,
+            ascent = 0.0,
+            descent = 0.0,
+            gaps = 0,
+            south = 49.0,
+            west = 20.0,
+            north = 49.0,
+            east = 20.02,
+        ),
+        line = emptyList(),
+    )
 
 private fun mapViewModel(
     regions: Flow<List<Region>>,

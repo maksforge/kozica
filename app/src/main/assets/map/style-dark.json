@@ -17,6 +17,13 @@
     "features": []
    }
   },
+  "trail-walk": {
+   "type": "geojson",
+   "data": {
+    "type": "FeatureCollection",
+    "features": []
+   }
+  },
   "hike-track": {
    "type": "geojson",
    "data": {
@@ -1662,6 +1669,420 @@
      9,
      0.0
     ]
+   }
+  },
+  {
+   "id": "trail-selected-casing",
+   "type": "line",
+   "source": "region",
+   "source-layer": "trails",
+   "minzoom": 10,
+   "filter": [
+    "==",
+    [
+     "get",
+     "trail"
+    ],
+    -1
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#1e1b16",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     7.0,
+     13,
+     8.0,
+     15,
+     9.5,
+     17,
+     12.0
+    ],
+    "line-offset": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      2.0
+     ],
+     13,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      3.0
+     ],
+     15,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      4.5
+     ],
+     17,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      7.0
+     ]
+    ]
+   }
+  },
+  {
+   "id": "trail-selected",
+   "type": "line",
+   "source": "region",
+   "source-layer": "trails",
+   "minzoom": 10,
+   "filter": [
+    "==",
+    [
+     "get",
+     "trail"
+    ],
+    -1
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": [
+     "match",
+     [
+      "get",
+      "colour"
+     ],
+     "red",
+     "#d62828",
+     "blue",
+     "#1d4ed8",
+     "green",
+     "#2e8b3a",
+     "yellow",
+     "#e6b800",
+     "black",
+     "#1a1a1a",
+     "#998f7f"
+    ],
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     4.0,
+     13,
+     5.0,
+     15,
+     6.5,
+     17,
+     9.0
+    ],
+    "line-offset": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      2.0
+     ],
+     13,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      3.0
+     ],
+     15,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      4.5
+     ],
+     17,
+     [
+      "*",
+      [
+       "-",
+       [
+        "coalesce",
+        [
+         "get",
+         "index"
+        ],
+        0
+       ],
+       [
+        "/",
+        [
+         "-",
+         [
+          "coalesce",
+          [
+           "get",
+           "count"
+          ],
+          1
+         ],
+         1
+        ],
+        2
+       ]
+      ],
+      7.0
+     ]
+    ]
+   }
+  },
+  {
+   "id": "trail-walk-casing",
+   "type": "line",
+   "source": "trail-walk",
+   "maxzoom": 10,
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#1e1b16",
+    "line-width": 6.0
+   }
+  },
+  {
+   "id": "trail-walk",
+   "type": "line",
+   "source": "trail-walk",
+   "maxzoom": 10,
+   "layout": {
+    "line-join": "round",
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": [
+     "match",
+     [
+      "get",
+      "colour"
+     ],
+     "red",
+     "#d62828",
+     "blue",
+     "#1d4ed8",
+     "green",
+     "#2e8b3a",
+     "yellow",
+     "#e6b800",
+     "black",
+     "#1a1a1a",
+     "#998f7f"
+    ],
+    "line-width": 3.0
    }
   },
   {

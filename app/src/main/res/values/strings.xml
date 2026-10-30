@@ -371,4 +371,26 @@
     </plurals>
     <!-- The banner's button: exports everything, photos included. -->
     <string name="hikes_backup_export">Export</string>
+    <!-- Over the list a tap on several Trails at once opens (docs/phase-6c.md § 3). -->
+    <string name="trail_chooser_title">Trails here</string>
+    <string name="trail_close">Close Trail</string>
+    <string name="trail_show_whole">Show whole Trail</string>
+    <!-- On a Section's sheet; %1$s is its Long-distance Trail's name as OSM writes it, e.g. "Via Slovakia". -->
+    <string name="trail_show_long_distance">Show the whole %1$s</string>
+    <!-- A Trail's title where OSM gives it no name; %1$s is one of the trail_colour_ adjectives, %2$s and %3$s its two ends' place names. -->
+    <string name="trail_with_ends">%1$s Trail: %2$s – %3$s</string>
+    <!-- A Trail's title with no name and no place at its ends; %1$s is one of the trail_colour_ adjectives. -->
+    <string name="trail_colour_only">%1$s Trail</string>
+    <!-- The six adjectives, each formed for trail_with_ends and trail_colour_only, the only two strings they go into. -->
+    <string name="trail_colour_red">Red</string>
+    <string name="trail_colour_blue">Blue</string>
+    <string name="trail_colour_green">Green</string>
+    <string name="trail_colour_yellow">Yellow</string>
+    <string name="trail_colour_black">Black</string>
+    <!-- Any colour outside the five, or none: every Trail is marked, so the word claims nothing a signpost might contradict. -->
+    <string name="trail_colour_other">Marked</string>
+    <!-- Beside a Trail's length when OSM maps it with gaps, so the length is the sum of the parts mapped. -->
+    <string name="trail_with_gaps">with gaps</string>
+    <!-- Under a Trail's ascent and descent, which are from its start to its end; %1$s and %2$s are heights such as "120 m". -->
+    <string name="trail_other_way">The other way: %1$s up, %2$s down</string>
 </resources>
