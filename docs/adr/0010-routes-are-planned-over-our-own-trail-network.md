@@ -69,8 +69,9 @@ build gives the same numbers, under a test in Python.
 
 Phase 6c selects a Trail whole and turns it into a Route ([`docs/phase-6c.md`](../phase-6c.md) § 2),
 which needs a Trail's end to be an edge's end. Two ways now join into one edge only where they also
-carry the same Trails, each with whether the way is on that Trail's walk. The network gains those cuts
-and nothing else; its format is unchanged. **`trails.edges`** is a third base file beside the network
+carry the same Trails, each with whether the way is on that Trail's walk. The network gains those cuts,
+and a Long-distance Trail's own ways leave it with the Trail they no longer carry (31 ways at this
+pin); its format is unchanged. **`trails.edges`** is a third base file beside the network
 and the name index: each Trail's walk as steps into the network's edges. It is an ODbL derivative, and
 it ships, is recorded and is attached to the release as the other two are. The router is unchanged:
 a Route along a Trail is an ordinary Route that its via points hold on the Trail.
