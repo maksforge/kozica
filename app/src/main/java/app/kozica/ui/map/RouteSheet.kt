@@ -101,7 +101,7 @@ internal fun RouteSheet(
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                     TextButton(onClick = onReverse) { Text(stringResource(R.string.route_reverse)) }
                     TextButton(onClick = {
-                        draft = route.name
+                        draft = route.name ?: route.suggestedName
                             ?: listOf(route.points.first(), route.points.last()).joinToString(" – ") { it.name() }
                         onShowSaveDialog(true)
                     }) { Text(stringResource(R.string.route_save)) }

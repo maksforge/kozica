@@ -32,10 +32,12 @@ import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.RouteTotals
+import app.kozica.data.routes.Router
 import app.kozica.data.routes.TrailDetail
 import app.kozica.data.routes.TrailNetworks
 import app.kozica.data.routes.openPlaces
 import app.kozica.data.routes.placesFile
+import app.kozica.data.routes.pointsAlong
 import app.kozica.data.routes.walkLine
 import app.kozica.media.MediaFiles
 import app.kozica.record.Recorder
@@ -158,7 +160,9 @@ class AppContainer(
 
     private val placeIndex by lazy { placesFile(appContext)?.let(::openPlaces) }
 
-    private val planner by lazy { TrailNetworks.load(appContext)?.let(::RoutePlanner) }
+    private val router by lazy { TrailNetworks.load(appContext)?.let(::Router) }
+
+    private val planner by lazy { router?.let { RoutePlanner(TrailNetworks.load(appContext)!!, it) } }
 
     private val planning = Mutex()
 
@@ -185,6 +189,14 @@ class AppContainer(
             nearestTo = if (named) null else index.nearest(facts.endLatitude, facts.endLongitude)?.name,
         )
     }
+
+    /** The points that hold a Route on the Trail's walk (docs/phase-6c.md § 5), null in a build without them. */
+    suspend fun routeAlong(trail: TrailDetail): List<RoutePoint>? =
+        planning.withLock {
+            val network = TrailNetworks.load(appContext) ?: return@withLock null
+            val steps = TrailNetworks.walks(appContext)?.steps(trail.id) ?: return@withLock null
+            router?.let { network.pointsAlong(steps, it) }
+        }
 
     fun sections(longDistance: Long): List<Long> = placeIndex?.sections(longDistance).orEmpty()
 

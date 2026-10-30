@@ -37,6 +37,8 @@ import app.kozica.data.hikes.ProfilePoint
 import app.kozica.data.routes.TrailColour
 import app.kozica.data.routes.TrailDetail
 import app.kozica.theme.Spacing
+import app.kozica.ui.common.GpxExport
+import app.kozica.ui.common.GpxFailureNotice
 
 /** The selected Trail's sheet (docs/phase-6c.md § 3): its title, mark, length, climb each way and profile. */
 @Composable
@@ -46,15 +48,20 @@ internal fun TrailSheet(
     onClose: () -> Unit,
     onShowWhole: () -> Unit,
     onShowLongDistance: () -> Unit,
+    onPlanRoute: (title: String) -> Unit,
+    gpx: GpxExport,
+    onExportGpx: (title: String) -> Unit,
+    onDismissGpxFailure: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val facts = trail.facts
+    val heading = trailHeading(trail, words)
     SheetSurface(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Spacing.tight)) {
             TrailMark(facts.colour, facts.symbol)
             HeadingText(
-                trailHeading(trail, words),
+                heading,
                 MaterialTheme.typography.titleMedium,
                 Modifier.weight(1f).padding(horizontal = Spacing.tight),
             )
@@ -89,11 +96,16 @@ internal fun TrailSheet(
             )
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.tight)) {
+            TextButton(onClick = { onPlanRoute(heading.title) }) { Text(stringResource(R.string.trail_plan_route)) }
+            TextButton(onClick = { onExportGpx(heading.title) }, enabled = !gpx.running) {
+                Text(stringResource(R.string.gpx_export))
+            }
             TextButton(onClick = onShowWhole) { Text(stringResource(R.string.trail_show_whole)) }
             facts.longDistanceName?.let {
                 TextButton(onClick = onShowLongDistance) { Text(stringResource(R.string.trail_show_long_distance, it)) }
             }
         }
+        gpx.failure?.let { GpxFailureNotice(it, onDismissGpxFailure) }
     }
 }
 

@@ -5,6 +5,7 @@ import app.kozica.data.hikes.Pin
 import app.kozica.data.hikes.Track
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.TrailPoint
 import java.time.Instant
 import java.time.LocalDate
 import java.util.Locale
@@ -64,6 +65,19 @@ fun routeGpx(
     val line = planned.line.map { GpxPoint(it.latitude, it.longitude, it.heightMetres) }
     val waypoints = points.map { GpxWaypoint(it.latitude, it.longitude, it.label) }
     return Gpx(name, null, listOf(line), waypoints, fromOsm = true)
+}
+
+/** A Trail's walk with the network's heights, a `<trkseg>` per stretch where it has gaps (docs/phase-6c.md § 5). */
+fun trailGpx(
+    name: String,
+    line: List<TrailPoint>,
+): Gpx {
+    val segments = mutableListOf<MutableList<GpxPoint>>()
+    for (point in line) {
+        if (point.breakBefore || segments.isEmpty()) segments += mutableListOf<GpxPoint>()
+        segments.last() += GpxPoint(point.latitude, point.longitude, point.heightMetres)
+    }
+    return Gpx(name, null, segments, emptyList(), fromOsm = true)
 }
 
 fun Gpx.write(out: Appendable) {

@@ -19,6 +19,7 @@ import app.kozica.data.MapCamera
 import app.kozica.data.SavedRoute
 import app.kozica.data.gpx.Gpx
 import app.kozica.data.gpx.hikeGpx
+import app.kozica.data.gpx.trailGpx
 import app.kozica.data.hikes.Climb
 import app.kozica.data.hikes.Height
 import app.kozica.data.hikes.Pin
@@ -221,6 +222,7 @@ data class RouteUiState(
     val savedId: String? = null,
     val name: String? = null,
     val naming: Boolean = false,
+    val suggestedName: String? = null,
 )
 
 /**
@@ -281,6 +283,7 @@ class MapViewModel(
     private val writeGpx: suspend (Gpx, LocalDate) -> File = { _, _ -> error("No GPX in this view model") },
     private val loadTrail: (id: Long) -> TrailDetail? = { null },
     private val sectionsOf: (longDistance: Long) -> List<Long> = { emptyList() },
+    private val routeAlong: suspend (TrailDetail) -> List<RoutePoint>? = { null },
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -623,6 +626,41 @@ class MapViewModel(
         trail.update { TrailUiState(fits = it.fits) }
     }
 
+    /**
+     * Replaces the Route set aside, unsaved changes and all, with one the Trail's points hold on it,
+     * offered for saving under [title] (docs/phase-6c.md § 5).
+     */
+    fun planAlongTrail(title: String) {
+        val shown = trail.value.shown ?: return
+        tapping?.cancel()
+        tapping =
+            viewModelScope.launch {
+                val points = withContext(compute) { routeAlong(shown) }?.takeIf { it.size >= 2 } ?: return@launch
+                if (trail.value.shown?.id != shown.id) return@launch
+                closeTrail()
+                planning?.cancel()
+                routeGeneration++
+                route.value = RouteUiState(suggestedName = title)
+                changePoints { points }
+                val labels = withContext(io) { points.map { places()?.nearest(it.latitude, it.longitude)?.name } }
+                route.update { state ->
+                    if (state.points !=
+                        points
+                    ) {
+                        state
+                    } else {
+                        state.copy(points = points.zip(labels) { p, l -> p.copy(label = l) })
+                    }
+                }
+            }
+    }
+
+    /** The shown Trail's walk as a GPX file for the share sheet, named [title]. */
+    fun exportTrailGpx(title: String) {
+        val shown = trail.value.shown ?: return
+        gpxExports.start(LocalDate.now()) { trailGpx(title, shown.line) }
+    }
+
     fun showWholeTrail() = trail.update { it.copy(whole = emptyList(), fits = it.fits + 1) }
 
     /** Every Section of the selected one's Long-distance Trail, highlighted together. */
@@ -887,6 +925,7 @@ class MapViewModel(
                         writeGpx = app.container.gpxFiles::write,
                         loadTrail = app.container::trail,
                         sectionsOf = app.container::sections,
+                        routeAlong = app.container::routeAlong,
                     )
                 }
             }

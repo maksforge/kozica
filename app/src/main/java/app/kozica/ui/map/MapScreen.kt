@@ -614,6 +614,10 @@ fun MapScreen(
                     onClose = viewModel::closeTrail,
                     onShowWhole = viewModel::showWholeTrail,
                     onShowLongDistance = viewModel::showLongDistance,
+                    onPlanRoute = viewModel::planAlongTrail,
+                    gpx = gpx,
+                    onExportGpx = viewModel::exportTrailGpx,
+                    onDismissGpxFailure = viewModel::dismissGpxFailure,
                     modifier = Modifier.heightIn(max = sheetHeight),
                 )
             } else if (hike != null) {

@@ -294,14 +294,14 @@ Kozica ma własną ikonę: kozicę tatrzańską na skale. Powiadomienie o nagryw
 
 ### 0.11.0 — tap and search Trails, and fresher map data
 
-**English** — 331/500:
+**English** — 380/500:
 
 ```
-Tap a Trail on the map to see all of it, with its name, length, ascent and descent each way, and its profile; where Trails share a path, pick the one you mean. Search finds Trails by name too. The map's OpenStreetMap data is refreshed to 28 October 2026: trails, paths and places as mappers have changed them since the last update.
+Tap a Trail on the map to see all of it, with its name, length, ascent and descent each way, and its profile; where Trails share a path, pick the one you mean. Search finds Trails by name too. Plan a Route along a Trail, or export it as GPX. The map's OpenStreetMap data is refreshed to 28 October 2026: trails, paths and places as mappers have changed them since the last update.
 ```
 
-**Polish** — 372/500:
+**Polish** — 431/500:
 
 ```
-Dotknij szlaku na mapie, by zobaczyć go w całości, z nazwą, długością, podejściami i zejściami w obie strony oraz profilem; gdzie szlaki biegną razem, wybierz ten, o który chodzi. Wyszukiwarka znajduje też szlaki po nazwie. Dane OpenStreetMap na mapie są odświeżone do 28 października 2026: szlaki, ścieżki i miejsca tak, jak zmienili je maperzy od ostatniej aktualizacji.
+Dotknij szlaku na mapie, by zobaczyć go w całości, z nazwą, długością, podejściami i zejściami w obie strony oraz profilem; gdzie szlaki biegną razem, wybierz ten, o który chodzi. Wyszukiwarka znajduje też szlaki po nazwie. Zaplanuj trasę wzdłuż szlaku albo wyeksportuj go jako GPX. Dane OpenStreetMap na mapie są odświeżone do 28 października 2026: szlaki, ścieżki i miejsca tak, jak zmienili je maperzy od ostatniej aktualizacji.
 ```
