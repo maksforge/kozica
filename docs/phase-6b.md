@@ -53,7 +53,9 @@ reverse):
   reboot both read right.
 - Before the first fix that counts, the sheet shows what is left from the start. The time left is
   the router's at each point and between two points the leg's time spread by the rule over the line
-  walked, so standing at the start it is the sheet's own total.
+  walked; the climb left is the line's own, scaled to the sheet's Ascent. Both are counted once
+  along the whole line with the dead band committed in walking order, so standing at the start
+  they are the sheet's own totals and neither rises as Progress moves on.
 - A replay faster than walking stalls Progress by design: the window is 6 km/h since the last match,
   so R3's fixes keep their own times, and a jump ahead is "Find me on the Route"'s.
 ---

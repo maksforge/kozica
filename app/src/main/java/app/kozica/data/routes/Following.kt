@@ -1,6 +1,7 @@
 package app.kozica.data.routes
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sqrt
@@ -56,8 +57,34 @@ class FollowedLine(
             requireNotNull(it) { "a Route with a gap cannot be followed" }
         }
 
+    /** At each vertex, the rule's seconds from the start, the dead band committed in walking order so they never fall. */
+    private val rule = DoubleArray(line.size)
+
+    /** At each vertex, the climb from the start by the same walk, scaled so the whole line climbs the sheet's Ascent. */
+    private val climb = DoubleArray(line.size)
+
     init {
         require(planned.complete && line.size >= 2)
+        var reference = line[0].heightMetres
+        var run = 0.0
+        var ascent = 0.0
+        var steepDescent = 0.0
+        for (k in 1 until line.size) {
+            run += line[k].metres - line[k - 1].metres
+            val change = line[k].heightMetres - reference
+            if (abs(change) >= DEAD_BAND_METRES || k == line.lastIndex) {
+                if (change > 0) ascent += change
+                if (change < 0 && run > 0 && -change / run > STEEP_GRADE) steepDescent -= change
+                reference = line[k].heightMetres
+                run = 0.0
+            }
+            climb[k] = ascent
+            rule[k] = ruleSeconds(line[k].metres, ascent, steepDescent)
+        }
+        for (k in climb.indices) {
+            climb[k] =
+                if (ascent > 0) climb[k] * planned.ascent / ascent else planned.ascent * line[k].metres / metres
+        }
     }
 
     val metres: Double get() = line.last().metres
@@ -111,59 +138,40 @@ class FollowedLine(
     private fun ahead(
         from: Double,
         to: Double,
-    ): Ahead {
-        val (metres, heights) = cut(from, to)
-        return Ahead(to - from, walk(metres, heights).ascent, secondsAt(to) - secondsAt(from))
-    }
+    ): Ahead = Ahead(to - from, interpolated(climb, to) - interpolated(climb, from), secondsAt(to) - secondsAt(from))
 
     /**
      * The router's time to [at] metres: exact at each point, and between two points the leg's time
-     * spread by the rule over the line walked, so the time left never jumps and matches the sheet.
+     * spread by the rule's seconds along the line, which never fall, so the time left never rises.
      */
     internal fun secondsAt(at: Double): Double {
         val leg =
             (0 until pointMetres.lastIndex).firstOrNull { at <= pointMetres[it + 1] } ?: (pointMetres.lastIndex - 1)
-        val start = pointMetres[leg]
-        val end = pointMetres[leg + 1]
+        val start = interpolated(rule, pointMetres[leg])
+        val whole = interpolated(rule, pointMetres[leg + 1]) - start
         val legSeconds = planned.secondsToPoint[leg + 1]!! - planned.secondsToPoint[leg]!!
-        val whole = ruleAlong(start, end)
-        val fraction = if (whole > 0) ruleAlong(start, at.coerceIn(start, end)) / whole else 0.0
+        val fraction =
+            if (whole >
+                0
+            ) {
+                (interpolated(rule, at.coerceIn(pointMetres[leg], pointMetres[leg + 1])) - start) / whole
+            } else {
+                0.0
+            }
         return planned.secondsToPoint[leg]!! + legSeconds * fraction
     }
 
-    private fun ruleAlong(
-        from: Double,
-        to: Double,
+    private fun interpolated(
+        atVertex: DoubleArray,
+        at: Double,
     ): Double {
-        if (to <= from) return 0.0
-        val (metres, heights) = cut(from, to)
-        val walked = walk(metres, heights)
-        return ruleSeconds(to - from, walked.ascent, walked.steepDescent)
-    }
-
-    /** The line's metres and heights from [from] to [to], both ends interpolated. */
-    private fun cut(
-        from: Double,
-        to: Double,
-    ): Pair<List<Double>, List<Double>> {
-        val inside = line.filter { it.metres > from && it.metres < to }
-        val metres = listOf(from) + inside.map { it.metres } + to
-        val heights = listOf(heightAt(from)) + inside.map { it.heightMetres } + heightAt(to)
-        return metres to heights
-    }
-
-    private fun heightAt(at: Double): Double {
-        val k = line.indexOfFirst { it.metres >= at }.let { if (it <= 0) return line[0].heightMetres else it }
-        val a = line[k - 1]
-        val b = line[k]
-        val span = b.metres - a.metres
-        return if (span <=
-            0
-        ) {
-            b.heightMetres
-        } else {
-            a.heightMetres + (b.heightMetres - a.heightMetres) * (at - a.metres) / span
-        }
+        val k = line.indexOfFirst { it.metres >= at }
+        if (k == 0) return atVertex.first()
+        if (k < 0) return atVertex.last()
+        val a = line[k - 1].metres
+        val span = line[k].metres - a
+        val t = if (span <= 0) 1.0 else (at - a) / span
+        return atVertex[k - 1] + (atVertex[k] - atVertex[k - 1]) * t
     }
 
     /** The nearest point of the first pass of the line within the fix's leaving distance, between [from] and [to] metres. */
