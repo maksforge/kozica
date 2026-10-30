@@ -46,6 +46,7 @@ import app.kozica.ui.common.GpxExports
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -646,20 +647,22 @@ class MapViewModel(
         planningAlong?.cancel()
         trail.update { it.copy(planningRoute = true) }
         planningAlong =
-            viewModelScope.launch {
-                val points = withContext(compute) { routeAlong(shown) }?.takeIf { it.size >= 2 }
-                if (trail.value.shown?.id != shown.id) return@launch
-                if (points == null) {
-                    trail.update { it.copy(planningRoute = false) }
-                    return@launch
+            viewModelScope.launch(start = CoroutineStart.LAZY) {
+                val self = coroutineContext[Job]
+                try {
+                    val points = withContext(compute) { routeAlong(shown) }?.takeIf { it.size >= 2 }
+                    if (points == null || trail.value.shown?.id != shown.id) return@launch
+                    clearTrail()
+                    planning?.cancel()
+                    routeGeneration++
+                    route.value = RouteUiState(suggestedName = title)
+                    changePoints { points }
+                    labelPoints(points)
+                } finally {
+                    if (planningAlong === self) trail.update { it.copy(planningRoute = false) }
                 }
-                clearTrail()
-                planning?.cancel()
-                routeGeneration++
-                route.value = RouteUiState(suggestedName = title)
-                changePoints { points }
-                labelPoints(points)
             }
+        planningAlong?.start()
     }
 
     // Its own job, so a Trail selected while the labels are read does not lose them.
