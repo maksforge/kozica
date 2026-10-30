@@ -39,7 +39,7 @@ reverse):
 - The gate reads the debug recorder's `gate.db` as well as GPX (§ 1). R5's margin is 15 % or 10
   minutes of moving time, whichever is larger. R2 reads the owner's Hikes from the Play build's
   export restored into the debug build, and a Track over 5 % longer than the network's line goes to
-  the owner before B merges (*Readings*).
+  the owner, though B's merge does not wait on R2 (*Readings*).
 
 ---
 
@@ -212,10 +212,10 @@ or leaves, since that changes which heights are the grid's.
 Copy:
 
 - Total: "4 h 10 min · signposts 4 h 50 min"
-- The line, with a pace: "Your pace: 0.85× the signposts, from 7 Hikes"
-- The line, without: "Signposts' times. Your own pace starts after 3 recorded Hikes of 3 km and an
+- The line, with a pace: "Your pace: 0.85× the signposts, from 7 hikes"
+- The line, without: "Signposts' times. Your own pace starts after 3 recorded hikes of 3 km and an
   hour or more."
-- Floored: "Your pace: 0.75× the signposts, the fastest Kozica shows, from 5 Hikes"
+- Floored: "Your pace: 0.75× the signposts, the fastest Kozica shows, from 5 hikes"
 
 ## 3. Following
 
@@ -390,7 +390,7 @@ signposts'.
 | # | Reading | Command | Result |
 | --- | --- | --- | --- |
 | R1 | The gate (§ 1): firings of 40 m / 30 s per hour over real Tracks on Trails | `python3 scripts/track-offsets.py <gate.db or gpx>…` | *(owed)* |
-| R2 | The Pace from the owner's Hikes: each Hike's ratio, which counted, the median, and three Routes' times before and after. And whether a GPS Track's length is inflated against the network's line: for a Hike walked on Trails, its length against a Route planned along it; a Track longer than the line lowers the ratio, so a Pace that promises too little time, and a gap over 5 % goes to the owner before B merges | the Play build's export restored into the debug build on the owner's phone; `adb logcat -d -s KozicaPace`; `RouteReceiver` | *(owed)* |
+| R2 | The Pace from the owner's Hikes: each Hike's ratio, which counted, the median, and three Routes' times before and after. And whether a GPS Track's length is inflated against the network's line: for a Hike walked on Trails, its length against a Route planned along it; a Track longer than the line lowers the ratio, so a Pace that promises too little time, and a gap over 5 % goes to the owner; B's merge does not wait on R2 | the Play build's export restored into the debug build on the owner's phone; `adb logcat -d -s KozicaPace`; `RouteReceiver` | *(owed)* |
 | R3 | Progress on an out-and-back Route and a loop: Progress never moves back, and the time left falls with every fix | `RouteReceiver --ez show true`, Follow tapped, `scripts/replay-track.py`; `adb logcat -d -s KozicaFollow` | *(owed)* |
 | R4 | Following survives a killed process: force-stop mid-Route, relaunch, and the sheet is back with the same Progress | R3's replay paused; `am force-stop`, the next fix sent, relaunch, screencap; `KozicaFollow` before and after | *(owed)* |
 | R5 | The closing walk: a Route followed end to end with a deliberate wrong turn and a stretch under poor sky; when the banner showed against the first fix beyond the distance, how far the leg back was, and the time left at three points against the Hike's moving time from each to the end, within 15 % or 10 minutes, whichever is larger | the owner's walk on the debug build, recorded as a Hike; `KozicaFollow` | *(owed)* |
