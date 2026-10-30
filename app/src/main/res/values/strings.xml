@@ -97,6 +97,7 @@
     <!-- Following stops when the user adds, moves, removes or reverses a point. -->
     <string name="following_route_changed">Following stopped: the Route changed</string>
     <string name="following_needs_precise">Following needs precise location</string>
+    <string name="following_location_settings">Location settings</string>
     <!-- Beside a walking time worked out from the user's own pace: the time by the signposts' rule. %1$s is a time, such as "4 h 50 min". -->
     <string name="route_time_signposts">signposts %1$s</string>
     <!-- Under a Route's totals, where the user's own pace sets its times (docs/phase-6b.md § 2). %1$s is the factor, such as "0.85", against the time on the signposts; %2$d is how many recorded Hikes it comes from. -->

@@ -64,6 +64,7 @@
     <string name="following_ended">Jesteś na końcu trasy</string>
     <string name="following_route_changed">Prowadzenie zakończone: trasa się zmieniła</string>
     <string name="following_needs_precise">Prowadzenie wymaga dokładnej lokalizacji</string>
+    <string name="following_location_settings">Ustawienia lokalizacji</string>
     <string name="route_time_signposts">wg drogowskazów %1$s</string>
     <plurals name="pace_yours">
         <item quantity="one">Twoje tempo: %1$s× czasu z drogowskazów, z %2$d wycieczki</item>
