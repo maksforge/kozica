@@ -204,6 +204,41 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `follow is refused while the Route is planning`() =
+        runTest {
+            val held = CompletableDeferred<Unit>()
+            var plans = 0
+            val viewModel =
+                routingViewModel(planRoute = {
+                    if (plans++ > 0) held.await()
+                    RoutePlanner(fixture).plan(it)
+                })
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(49.0, 20.02)
+            settled(viewModel) { it.route.planned?.complete == true && !it.route.planning }
+            viewModel.reverse()
+            settled(viewModel) { it.route.planning }
+
+            viewModel.follow()
+
+            assertNull(settled(viewModel) { true }.route.following)
+            held.complete(Unit)
+        }
+
+    @Test
+    fun `follow is refused on a Route with a leg missing`() =
+        runTest {
+            val viewModel = routingViewModel()
+            viewModel.addPoint(49.0, 20.0)
+            viewModel.addPoint(52.23, 21.01)
+            settled(viewModel) { it.route.planned?.complete == false && !it.route.planning }
+
+            viewModel.follow()
+
+            assertNull(settled(viewModel) { true }.route.following)
+        }
+
+    @Test
     fun `a vague or accuracy-less fix at the end does not end following`() =
         runTest {
             val viewModel = routingViewModel()

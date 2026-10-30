@@ -56,6 +56,20 @@ class RoutePlannerTest {
     }
 
     @Test
+    fun `each point's metres are where the line reaches it, its dashed approach included`() {
+        val points = listOf(RoutePoint(49.0003, 20.0), b, RoutePoint(48.9997, 20.02))
+        val route = planner.plan(points)
+
+        assertEquals(Approach.OFF_TRAIL, route.line[1].approach)
+        assertEquals(0.0, route.metresToPoint.first()!!, 0.0)
+        assertEquals(route.line.last().metres, route.metresToPoint.last()!!, 0.0)
+        for ((point, metres) in points.zip(route.metresToPoint)) {
+            val sample = route.line.single { it.metres == metres }
+            assertTrue(Router.metres(sample.latitude, sample.longitude, point.latitude, point.longitude) < 0.5)
+        }
+    }
+
+    @Test
     fun `a whole edge costs exactly what the build stored, each way`() {
         assertEquals(EdgePart(network.edgeSecondsForward[4].toDouble(), 100.0, 60.0), network.part(4, 0.0, 1.0))
         assertEquals(EdgePart(network.edgeSecondsBackward[4].toDouble(), 60.0, 100.0), network.part(4, 1.0, 0.0))
