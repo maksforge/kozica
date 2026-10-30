@@ -103,6 +103,23 @@ class PlaceIndexTest {
     }
 
     @Test
+    fun theNearestTrailsAreReadBeforeTheLimit() {
+        SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
+            for (id in 200L..290L) trail(db, id, "Szlak daleki $id", null, null, 54.0, 14.0, 54.1, 14.1)
+            trail(db, 300, "Na Szlak bliski", null, null, 49.54, 20.11, 49.55, 20.12)
+            db.execSQL(
+                "INSERT INTO trail_names (trail, name, folded) VALUES (?, ?, ?)",
+                arrayOf<Any>(300, "Szlak bliski", fold("Szlak bliski")),
+            )
+        }
+
+        val nearest = index.searchAll("szlak", 49.5431, 20.1114).first() as SearchResult.OnTrail
+
+        assertEquals(300L, nearest.facts.id)
+        assertEquals("Szlak bliski", nearest.matched)
+    }
+
+    @Test
     fun accentsAndCaseDoNotMatter() {
         assertEquals(listOf("Polana Długa"), index.search("POLANA DLU", 49.5, 20.1).map { it.name })
     }
