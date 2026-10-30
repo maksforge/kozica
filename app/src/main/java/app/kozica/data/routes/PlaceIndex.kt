@@ -52,6 +52,12 @@ interface PlaceSearch {
         latitude: Double,
         longitude: Double,
     ): Place?
+
+    /** A Trail's row, null for an id the index does not hold (docs/phase-6c.md § 2). */
+    fun trail(id: Long): TrailFacts? = null
+
+    /** The Sections of a Long-distance Trail, by id. */
+    fun sections(longDistance: Long): List<Long> = emptyList()
 }
 
 /** `places.sqlite`, opened read-only. */
@@ -151,6 +157,51 @@ class PlaceIndex(
             .minWithOrNull(compareBy({ (place, _) -> place.kind !in LANDMARKS }, { (_, away) -> away }))
             ?.first
     }
+
+    override fun trail(id: Long): TrailFacts? =
+        db
+            .rawQuery(
+                """
+                SELECT id, name, name_pl, ref, colour, symbol, from_place, to_place, long_distance,
+                    long_distance_name, start_lat, start_lon, end_lat, end_lon, length, ascent, descent, gaps,
+                    min_lat, min_lon, max_lat, max_lon
+                FROM trails WHERE id = ?
+                """.trimIndent(),
+                arrayOf(id.toString()),
+            ).use { rows ->
+                if (!rows.moveToFirst()) return null
+
+                fun text(column: Int) = if (rows.isNull(column)) null else rows.getString(column)
+                TrailFacts(
+                    id = rows.getLong(0),
+                    name = text(1),
+                    namePl = text(2),
+                    ref = text(3),
+                    colour = TrailColour.of(rows.getString(4)),
+                    symbol = text(5),
+                    from = text(6),
+                    to = text(7),
+                    longDistanceId = if (rows.isNull(8)) null else rows.getLong(8),
+                    longDistanceName = text(9),
+                    startLatitude = rows.getDouble(10),
+                    startLongitude = rows.getDouble(11),
+                    endLatitude = rows.getDouble(12),
+                    endLongitude = rows.getDouble(13),
+                    metres = rows.getDouble(14),
+                    ascent = rows.getDouble(15),
+                    descent = rows.getDouble(16),
+                    gaps = rows.getInt(17),
+                    south = rows.getDouble(18),
+                    west = rows.getDouble(19),
+                    north = rows.getDouble(20),
+                    east = rows.getDouble(21),
+                )
+            }
+
+    override fun sections(longDistance: Long): List<Long> =
+        db
+            .rawQuery("SELECT id FROM trails WHERE long_distance = ? ORDER BY id", arrayOf(longDistance.toString()))
+            .use { rows -> buildList { while (rows.moveToNext()) add(rows.getLong(0)) } }
 
     private companion object {
         const val NAMING_METRES = 500.0

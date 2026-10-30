@@ -359,6 +359,14 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   length, ascent and descent each way, the elevation profile (the Route sheet's chart), and two
   buttons: "Plan a Route along it" and "Export GPX".
 
+- **Settled in C** (by the agent, 2026-10-30, while the owner slept; each is the owner's to reverse).
+  The name in the title is `name:pl` first in Polish and `name` first in English, so an English
+  sheet does not show a Polish name where OSM has both. The tap's box is 16 dp each way of the
+  finger, which takes in strands drawn side by side. A long press while a Trail is selected closes it
+  and adds the point to the Route set aside, so the Route the press changes is the one on screen. The
+  sheet's mark is drawn in Compose by `sprites.py`'s shapes, in the map style's five Trail colours.
+  "Plan a Route along it" and "Export GPX" arrive with E.
+
 **Copy:** "Trails here", "Show whole Trail", "Show the whole %1$s", "Plan a Route along it", "Export
 GPX", "%1$s Trail: %2$s – %3$s" (colour adjective, ends), "%1$s Trail" (the colour alone), "with
 gaps" (beside a gapped Trail's length), and the five colour names and "marked" as adjectives for a

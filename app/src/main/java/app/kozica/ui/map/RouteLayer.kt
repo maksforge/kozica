@@ -4,6 +4,8 @@ import app.kozica.data.hikes.Track
 import app.kozica.data.routes.Approach
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.TrailDetail
+import app.kozica.data.routes.TrailPoint
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -44,6 +46,29 @@ internal fun routeGeoJson(
             points.mapIndexed { i, point ->
                 feature("Point", position(point.longitude, point.latitude), "number" to "${i + 1}")
             }
+    return buildJsonObject {
+        put("type", "FeatureCollection")
+        put("features", JsonArray(features))
+    }.toString()
+}
+
+/** The style's `trail-walk` source, below zoom 10: each highlighted Trail's walk, one line per stretch, by its colour. */
+internal fun trailWalkGeoJson(trails: List<TrailDetail>): String {
+    val features =
+        trails.flatMap { trail ->
+            val stretches = mutableListOf<MutableList<TrailPoint>>()
+            for (point in trail.line) {
+                if (point.breakBefore || stretches.isEmpty()) stretches += mutableListOf<TrailPoint>()
+                stretches.last() += point
+            }
+            stretches.filter { it.size >= 2 }.map { stretch ->
+                feature(
+                    "LineString",
+                    JsonArray(stretch.map { position(it.longitude, it.latitude) }),
+                    "colour" to trail.facts.colour.stored,
+                )
+            }
+        }
     return buildJsonObject {
         put("type", "FeatureCollection")
         put("features", JsonArray(features))

@@ -292,16 +292,16 @@ Kozica has its own icon: a Tatra chamois on a crag. The hike recording notificat
 Kozica ma własną ikonę: kozicę tatrzańską na skale. Powiadomienie o nagrywaniu wycieczki i nazwy nowych wycieczek są teraz w języku wybranym w ustawieniach Kozicy także na Androidzie 12 i starszym, a nie w języku telefonu.
 ```
 
-### 0.11.0 — fresher map data
+### 0.11.0 — tap a Trail, and fresher map data
 
-**English** — 138/500:
-
-```
-The map's OpenStreetMap data is refreshed to 28 October 2026: trails, paths and places as mappers have changed them since the last update.
-```
-
-**Polish** — 148/500:
+**English** — 298/500:
 
 ```
-Dane OpenStreetMap na mapie są odświeżone do 28 października 2026: szlaki, ścieżki i miejsca tak, jak zmienili je maperzy od ostatniej aktualizacji.
+Tap a Trail on the map to see all of it, with its name, length, ascent and descent each way, and its profile; where Trails share a path, pick the one you mean. The map's OpenStreetMap data is refreshed to 28 October 2026: trails, paths and places as mappers have changed them since the last update.
+```
+
+**Polish** — 328/500:
+
+```
+Dotknij szlaku na mapie, by zobaczyć go w całości, z nazwą, długością, podejściami i zejściami w obie strony oraz profilem; gdzie szlaki biegną razem, wybierz ten, o który chodzi. Dane OpenStreetMap na mapie są odświeżone do 28 października 2026: szlaki, ścieżki i miejsca tak, jak zmienili je maperzy od ostatniej aktualizacji.
 ```

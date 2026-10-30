@@ -282,4 +282,18 @@
         <item quantity="other">%d zdjęcia nie jest w żadnej kopii zapasowej</item>
     </plurals>
     <string name="hikes_backup_export">Eksportuj</string>
+    <string name="trail_chooser_title">Szlaki w tym miejscu</string>
+    <string name="trail_close">Zamknij szlak</string>
+    <string name="trail_show_whole">Pokaż cały szlak</string>
+    <string name="trail_show_long_distance">Pokaż całość: %1$s</string>
+    <string name="trail_with_ends">%1$s szlak: %2$s – %3$s</string>
+    <string name="trail_colour_only">%1$s szlak</string>
+    <string name="trail_colour_red">Czerwony</string>
+    <string name="trail_colour_blue">Niebieski</string>
+    <string name="trail_colour_green">Zielony</string>
+    <string name="trail_colour_yellow">Żółty</string>
+    <string name="trail_colour_black">Czarny</string>
+    <string name="trail_colour_other">Znakowany</string>
+    <string name="trail_with_gaps">z przerwami</string>
+    <string name="trail_other_way">W drugą stronę: %1$s w górę, %2$s w dół</string>
 </resources>

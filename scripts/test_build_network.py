@@ -1,7 +1,7 @@
 """docs/phase-5.md § Tests and docs/phase-6c.md § Tests, for build-network.py:
 
     python3 -m unittest scripts/test_build_network.py
-    python3 scripts/test_build_network.py --write    # rewrites the fixture TrailNetworkTest reads
+    python3 scripts/test_build_network.py --write    # rewrites the fixtures TrailNetworkTest and TrailWalksTest read
 """
 
 import math
@@ -13,6 +13,7 @@ from pathlib import Path
 
 network = runpy.run_path(str(Path(__file__).with_name("build-network.py")), run_name="test")
 FIXTURE = Path(__file__).resolve().parent.parent / "app/src/test/resources/trails-fixture.network"
+WALKS_FIXTURE = FIXTURE.with_suffix(".edges")
 Edge = network["Edge"]
 
 
@@ -36,6 +37,21 @@ def fixture_edges() -> list:
         edge(102, [1, 0, 4], [a, (49.005, 20.005), d], [500.0, 600.0, 700.0], sac=3),
         edge(103, [4] + [0] * 7 + [3], [d, *ridge, c], [700.0, 696.0, 700.0, 696.0, 700.0, 696.0, 700.0, 700.0, 500.0]),
         edge(104, [5, 0, 6], [e, (49.2, 20.205), f], [900.0, 1000.0, 940.0], sac=3),
+    ]
+
+
+def fixture_walks() -> list:
+    """Over fixture_edges(): Trail 7 along A–B–C, Trail 9 the island walked from F to E, and Trail 8 from D
+    down to A, then across a gap, B to C."""
+    Step, Walk, TrailRow = network["Step"], network["Walk"], network["TrailRow"]
+
+    def row(number: int, steps: list) -> object:
+        return TrailRow(number, {}, network["TrailLine"]("red", None, []), Walk(steps, "line"), None)
+
+    return [
+        row(7, [Step(0, False), Step(1, False)]),
+        row(8, [Step(2, True), Step(1, False, True)]),
+        row(9, [Step(4, True)]),
     ]
 
 
@@ -107,6 +123,13 @@ class FixtureTest(unittest.TestCase):
             network["write_network"](fixture_edges(), written)
             self.assertEqual(written.read_bytes(), FIXTURE.read_bytes(),
                              "run `python3 scripts/test_build_network.py --write` and commit the fixture")
+
+    def test_the_committed_walks_are_what_the_writer_writes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            written = Path(directory) / "fixture.edges"
+            network["write_walks"](fixture_walks(), written)
+            self.assertEqual(written.read_bytes(), WALKS_FIXTURE.read_bytes(),
+                             "run `python3 scripts/test_build_network.py --write` and commit the fixtures")
 
     def test_the_lengths_in_it(self):
         edges = fixture_edges()
@@ -309,5 +332,6 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["--write"]:
         FIXTURE.parent.mkdir(parents=True, exist_ok=True)
         print(network["write_network"](fixture_edges(), FIXTURE))
+        print(network["write_walks"](fixture_walks(), WALKS_FIXTURE))
     else:
         unittest.main()
