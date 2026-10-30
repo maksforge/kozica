@@ -85,6 +85,20 @@
     <string name="route_ascent">Ascent</string>
     <string name="route_descent">Descent</string>
     <string name="route_walking_time">Walking time</string>
+    <!-- Beside a walking time worked out from the user's own pace: the time by the signposts' rule. %1$s is a time, such as "4 h 50 min". -->
+    <string name="route_time_signposts">signposts %1$s</string>
+    <!-- Under a Route's totals, where the user's own pace sets its times (docs/phase-6b.md § 2). %1$s is the factor, such as "0.85", against the time on the signposts; %2$d is how many recorded Hikes it comes from. -->
+    <plurals name="pace_yours">
+        <item quantity="one">Your pace: %1$s× the signposts, from %2$d hike</item>
+        <item quantity="other">Your pace: %1$s× the signposts, from %2$d hikes</item>
+    </plurals>
+    <!-- As pace_yours, where the Hikes say faster than Kozica ever shows: its times are never under three quarters of the signposts'. -->
+    <plurals name="pace_floored">
+        <item quantity="one">Your pace: %1$s× the signposts, the fastest Kozica shows, from %2$d hike</item>
+        <item quantity="other">Your pace: %1$s× the signposts, the fastest Kozica shows, from %2$d hikes</item>
+    </plurals>
+    <!-- Under a Route's totals until the user has recorded enough Hikes for a pace of their own. -->
+    <string name="pace_none">Signposts\' times. Your own pace starts after 3 recorded hikes of 3 km and an hour or more.</string>
 
     <!-- The tab bar and the Routes tab (docs/phase-5.md § 5). "Map" names the tab, not the map data. -->
     <string name="nav_map">Map</string>

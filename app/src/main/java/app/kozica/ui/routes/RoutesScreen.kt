@@ -155,8 +155,13 @@ private fun RouteRowItem(
         Column(Modifier.weight(1f)) {
             Text(row.route.name, style = MaterialTheme.typography.bodyLarge)
             if (row.metres != null && row.minutes != null) {
+                val signposts =
+                    row.signpostMinutes
+                        ?.takeIf { it != row.minutes }
+                        ?.let { " · " + stringResource(R.string.route_time_signposts, walkingTime(it, locale)) }
+                        .orEmpty()
                 Text(
-                    "${length(row.metres, locale)} · ${walkingTime(row.minutes, locale)}",
+                    "${length(row.metres, locale)} · ${walkingTime(row.minutes, locale)}$signposts",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

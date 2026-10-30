@@ -10,9 +10,12 @@ import app.kozica.MainApplication
 import app.kozica.data.SavedRoute
 import app.kozica.data.gpx.Gpx
 import app.kozica.data.gpx.routeGpx
+import app.kozica.data.hikes.Pace
+import app.kozica.data.hikes.minutes
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.RouteTotals
+import app.kozica.data.routes.roundedUpToFiveMinutes
 import app.kozica.ui.common.GpxExport
 import app.kozica.ui.common.GpxExports
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,7 +26,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,6 +42,7 @@ data class RouteRow(
     val route: SavedRoute,
     val metres: Double? = null,
     val minutes: Int? = null,
+    val signpostMinutes: Int? = null,
 )
 
 /** @param routes null until the first read, then by name. */
@@ -57,6 +63,7 @@ class RoutesViewModel(
     private val compute: CoroutineDispatcher = Dispatchers.Default,
     private val planRoute: suspend (List<RoutePoint>) -> PlannedRoute? = { null },
     private val writeGpx: suspend (Gpx, LocalDate) -> File = { _, _ -> error("No GPX in this view model") },
+    pace: Flow<Pace?> = flowOf(null),
 ) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<RoutesUiState> =
@@ -65,10 +72,16 @@ class RoutesViewModel(
             .flatMapLatest { routes ->
                 channelFlow {
                     launch { for (route in routes) withContext(compute) { totals.plan(route.points) } }
-                    totals.planned.collect { planned ->
+                    combine(totals.planned, pace, ::Pair).collect { (planned, pace) ->
                         val rows =
                             routes.map { route ->
-                                planned[route.points].let { RouteRow(route, it?.metres, it?.minutes) }
+                                val totals = planned[route.points]
+                                RouteRow(
+                                    route,
+                                    totals?.metres,
+                                    totals?.seconds?.let(pace::minutes),
+                                    totals?.seconds?.let(::roundedUpToFiveMinutes),
+                                )
                             }
                         send(RoutesUiState(rows))
                     }
@@ -123,6 +136,7 @@ class RoutesViewModel(
                         app.container.routeToShow,
                         planRoute = app.container::planRoute,
                         writeGpx = app.container.gpxFiles::write,
+                        pace = app.container.pace,
                     )
                 }
             }

@@ -22,6 +22,7 @@ import app.kozica.data.gpx.hikeGpx
 import app.kozica.data.gpx.trailGpx
 import app.kozica.data.hikes.Climb
 import app.kozica.data.hikes.Height
+import app.kozica.data.hikes.Pace
 import app.kozica.data.hikes.Pin
 import app.kozica.data.hikes.ProfilePoint
 import app.kozica.data.hikes.Track
@@ -100,6 +101,7 @@ data class MapUiState(
     val track: Track = emptyList(),
     val hike: HikeUiState? = null,
     val trail: TrailUiState = TrailUiState(),
+    val pace: Pace? = null,
 ) {
     private val ready: List<RegionState.Ready> get() = regions.orEmpty().mapNotNull { it.state as? RegionState.Ready }
 
@@ -287,6 +289,7 @@ class MapViewModel(
     private val loadTrail: (id: Long) -> TrailDetail? = { null },
     private val sectionsOf: (longDistance: Long) -> List<Long> = { emptyList() },
     private val routeAlong: suspend (TrailDetail) -> List<RoutePoint>? = { null },
+    pace: Flow<Pace?> = flowOf(null),
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -371,12 +374,20 @@ class MapViewModel(
             combine(packs, style, camera, location, fix) { packs, style, camera, location, fix ->
                 MapUiState(packs?.first, packs?.second, style, camera, location, fix)
             },
-            search,
+            combine(search, pace, ::Pair),
             combine(route, hike.onStart { emit(null) }, trail, ::Triple),
             recording,
             track.onStart { emit(emptyList()) },
-        ) { map, search, (route, hike, trail), recording, track ->
-            map.copy(search = search, route = route, recording = recording, track = track, hike = hike, trail = trail)
+        ) { map, (search, pace), (route, hike, trail), recording, track ->
+            map.copy(
+                search = search,
+                route = route,
+                recording = recording,
+                track = track,
+                hike = hike,
+                trail = trail,
+                pace = pace,
+            )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     init {
@@ -952,6 +963,7 @@ class MapViewModel(
                         loadTrail = app.container::trail,
                         sectionsOf = app.container::sections,
                         routeAlong = app.container::routeAlong,
+                        pace = app.container.pace,
                     )
                 }
             }

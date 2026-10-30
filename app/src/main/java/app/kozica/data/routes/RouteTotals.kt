@@ -5,10 +5,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/** A Route's length and walking time. */
+/** A Route's length and its walking time by the signposts' rule, unrounded. */
 data class Totals(
     val metres: Double,
-    val minutes: Int,
+    val seconds: Double,
 )
 
 /**
@@ -25,7 +25,7 @@ class RouteTotals(
 
     suspend fun plan(points: List<RoutePoint>) {
         if (points.size < 2 || points in known.value) return
-        val totals = planRoute(points)?.takeIf { it.complete }?.let { Totals(it.metres, it.minutes) }
+        val totals = planRoute(points)?.takeIf { it.complete }?.let { Totals(it.metres, it.seconds) }
         known.update { it + (points to totals) }
     }
 }

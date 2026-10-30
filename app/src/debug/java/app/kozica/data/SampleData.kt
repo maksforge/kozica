@@ -83,6 +83,25 @@ object SampleData {
         repository.fillClimbs()
     }
 
+    /**
+     * The `pace` variant, for docs/phase-6b.md § 2: Kuźnice to Kasprowy Wierch walked three times at
+     * three speeds, every height the grid's, so the Pace is their middle one.
+     */
+    suspend fun seedPace(repository: HikeRepository) {
+        for (hike in repository.observeEnded().first()) repository.delete(hike.id)
+        listOf(12_000L, 15_000L, 18_000L).forEachIndexed { day, fixMillis ->
+            hike(
+                repository,
+                "Pace ${fixMillis / 1000} s",
+                Instant.parse("2026-09-12T06:30:00Z").plusSeconds(day * 24 * 3_600L),
+                listOf(line(49.2700, 19.9810, 49.2320, 19.9820, null, null, 850)),
+                pauseMillis = 0,
+                fixMillis = fixMillis,
+            )
+        }
+        repository.fillClimbs()
+    }
+
     private class Stretch(
         val points: List<Triple<Double, Double, Double?>>,
     )
@@ -110,6 +129,7 @@ object SampleData {
         start: Instant,
         stretches: List<Stretch>,
         pauseMillis: Long,
+        fixMillis: Long = FIX_MILLIS,
     ) {
         val id = UUID.randomUUID().toString()
         repository.start(id, start)
@@ -117,7 +137,7 @@ object SampleData {
         stretches.forEachIndexed { stretch, line ->
             if (stretch > 0) time += pauseMillis
             for ((latitude, longitude, height) in line.points) {
-                time += FIX_MILLIS
+                time += fixMillis
                 repository.addPoint(id, stretch, TrackPoint(time, latitude, longitude, height))
             }
         }

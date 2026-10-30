@@ -35,11 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.kozica.R
+import app.kozica.data.hikes.Pace
 import app.kozica.data.hikes.ProfilePoint
+import app.kozica.data.hikes.minutes
 import app.kozica.data.routes.Approach
 import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePoint
@@ -50,6 +53,7 @@ import java.util.Locale
 @Composable
 internal fun RouteSheet(
     route: RouteUiState,
+    pace: Pace?,
     onRemove: (Int) -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
     onReverse: () -> Unit,
@@ -95,7 +99,10 @@ internal fun RouteSheet(
                 route.unavailable -> Text(stringResource(R.string.map_planning_missing))
                 route.points.size < 2 -> Unit
                 planned == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
-                else -> Totals(planned, locale)
+                else -> {
+                    Totals(planned, pace, locale)
+                    PaceLine(pace, locale)
+                }
             }
             if (route.points.size >= 2) {
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
@@ -115,7 +122,12 @@ internal fun RouteSheet(
                             index = i,
                             point = point,
                             count = route.points.size,
-                            minutes = planned?.minutesTo(i)?.takeIf { i > 0 },
+                            minutes =
+                                planned
+                                    ?.secondsToPoint
+                                    ?.get(i)
+                                    ?.takeIf { i > 0 }
+                                    ?.let(pace::minutes),
                             offTrailMetres = planned?.offTrailMetres(i),
                             locale = locale,
                             onRemove = { onRemove(i) },
@@ -172,13 +184,22 @@ internal fun RouteNameDialog(
 @Composable
 private fun Totals(
     planned: PlannedRoute,
+    pace: Pace?,
     locale: Locale,
 ) {
+    val signposts = planned.minutes
+    val yours = pace.minutes(planned.seconds)
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
         Total(stringResource(R.string.route_length), length(planned.metres, locale))
         Total(stringResource(R.string.route_ascent), wholeMetres(planned.ascent, locale))
         Total(stringResource(R.string.route_descent), wholeMetres(planned.descent, locale))
-        Total(stringResource(R.string.route_walking_time), walkingTime(planned.minutes, locale))
+        Total(
+            stringResource(R.string.route_walking_time),
+            walkingTime(yours, locale),
+            beside =
+                stringResource(R.string.route_time_signposts, walkingTime(signposts, locale))
+                    .takeIf { yours != signposts },
+        )
     }
 }
 
@@ -186,12 +207,41 @@ private fun Totals(
 private fun Total(
     label: String,
     value: String,
+    beside: String? = null,
 ) {
     Column {
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.titleMedium)
+        beside?.let {
+            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
+
+/** docs/phase-6b.md § 2: where the times come from, the user's own or the signposts'. */
+@Composable
+private fun PaceLine(
+    pace: Pace?,
+    locale: Locale,
+) {
+    val text =
+        when {
+            pace == null -> stringResource(R.string.pace_none)
+            pace.floored -> pluralStringResource(R.plurals.pace_floored, pace.hikes, factor(pace, locale), pace.hikes)
+            else -> pluralStringResource(R.plurals.pace_yours, pace.hikes, factor(pace, locale), pace.hikes)
+        }
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = Spacing.hair),
+    )
+}
+
+private fun factor(
+    pace: Pace,
+    locale: Locale,
+): String = String.format(locale, "%.2f", pace.factor)
 
 @Composable
 private fun Warnings(

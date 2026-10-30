@@ -40,6 +40,22 @@ fun TrailNetwork.part(
     val inside = along.indices.filter { along[it] > low && along[it] < high }
     val metres = listOf(from * total) + (if (forward) inside else inside.reversed()).map { along[it] } + (to * total)
     val heights = metres.map { heightAt(first, along, it) }
+    val walked = walk(metres, heights)
+    val seconds = ruleSeconds(abs(to - from) * edgeLength[edge], walked.ascent, walked.steepDescent)
+    return EdgePart(seconds, walked.ascent, walked.descent)
+}
+
+internal data class Walked(
+    val ascent: Double,
+    val descent: Double,
+    val steepDescent: Double,
+)
+
+/** Climbs over [heights] at [metres] along a line, in walking order, by the dead band; a descent steeper than [STEEP_GRADE] counts apart. */
+internal fun walk(
+    metres: List<Double>,
+    heights: List<Double>,
+): Walked {
     var ascent = 0.0
     var descent = 0.0
     var steepDescent = 0.0
@@ -55,11 +71,15 @@ fun TrailNetwork.part(
         reference = heights[i]
         run = 0.0
     }
-    val seconds =
-        abs(to - from) * edgeLength[edge] / FLAT_METRES_PER_SECOND + ascent * SECONDS_PER_METRE_UP +
-            steepDescent * SECONDS_PER_METRE_STEEP_DOWN
-    return EdgePart(seconds, ascent, descent)
+    return Walked(ascent, descent, steepDescent)
 }
+
+internal fun ruleSeconds(
+    flatMetres: Double,
+    ascent: Double,
+    steepDescent: Double,
+): Double =
+    flatMetres / FLAT_METRES_PER_SECOND + ascent * SECONDS_PER_METRE_UP + steepDescent * SECONDS_PER_METRE_STEEP_DOWN
 
 /** Metres from the edge's first point to each of its points. */
 internal fun TrailNetwork.along(edge: Int): DoubleArray {

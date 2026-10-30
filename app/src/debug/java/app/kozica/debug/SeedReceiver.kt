@@ -51,6 +51,7 @@ class SeedReceiver : BroadcastReceiver() {
                     "" -> SampleData.seed(app.container.routes)
                     "hikes" -> SampleData.seedHikes(app.container.hikes)
                     "route-hike" -> SampleData.seedRouteHike(app.container.hikes, app.container::planRoute)
+                    "pace" -> SampleData.seedPace(app.container.hikes)
                     else -> {
                         pending.setResult(1, "unknown variant: $variant", null)
                         return@launch

@@ -56,6 +56,20 @@
     <string name="route_ascent">Podejścia</string>
     <string name="route_descent">Zejścia</string>
     <string name="route_walking_time">Czas przejścia</string>
+    <string name="route_time_signposts">drogowskazy %1$s</string>
+    <plurals name="pace_yours">
+        <item quantity="one">Twoje tempo: %1$s× czasu z drogowskazów, z %2$d wycieczki</item>
+        <item quantity="few">Twoje tempo: %1$s× czasu z drogowskazów, z %2$d wycieczek</item>
+        <item quantity="many">Twoje tempo: %1$s× czasu z drogowskazów, z %2$d wycieczek</item>
+        <item quantity="other">Twoje tempo: %1$s× czasu z drogowskazów, z %2$d wycieczki</item>
+    </plurals>
+    <plurals name="pace_floored">
+        <item quantity="one">Twoje tempo: %1$s× czasu z drogowskazów, najszybsze, jakie pokazuje Kozica, z %2$d wycieczki</item>
+        <item quantity="few">Twoje tempo: %1$s× czasu z drogowskazów, najszybsze, jakie pokazuje Kozica, z %2$d wycieczek</item>
+        <item quantity="many">Twoje tempo: %1$s× czasu z drogowskazów, najszybsze, jakie pokazuje Kozica, z %2$d wycieczek</item>
+        <item quantity="other">Twoje tempo: %1$s× czasu z drogowskazów, najszybsze, jakie pokazuje Kozica, z %2$d wycieczki</item>
+    </plurals>
+    <string name="pace_none">Czasy z drogowskazów. Twoje własne tempo pojawi się po 3 zapisanych wycieczkach na co najmniej 3 km i godzinę.</string>
 
     <string name="nav_map">Mapa</string>
     <string name="routes_title">Trasy</string>
