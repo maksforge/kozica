@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.12.0](https://github.com/maksforge/kozica/compare/v0.11.0...v0.12.0) (2026-10-30)
+
+
+### Features
+
+* follow a Route on the map, with what is left to the next point and the end ([82f108a](https://github.com/maksforge/kozica/commit/82f108a43e959a5a60d93060c54130e7c2fc1ac2))
+* match a position to a Route's line, forward only, and count what is left ([49a1b25](https://github.com/maksforge/kozica/commit/49a1b255356ba677d2fb6af864fcf84cb076fa86))
+* walking times from the user's own pace, beside the signposts' ([f1e1183](https://github.com/maksforge/kozica/commit/f1e1183ca56a37e272ddba97c8de6f73e5152425))
+
+
+### Bug Fixes
+
+* count the climb and time left once along the line, so neither rises ([b028455](https://github.com/maksforge/kozica/commit/b028455fc40194f74031cdc0fa6bb31c587850f0))
+* end following only on a fix that counts ([3599ce1](https://github.com/maksforge/kozica/commit/3599ce1a4a562dd464741188da3f22bb052d8ab0))
+* hide Follow while planning, clear the note on an edit, and say when Find me finds nothing ([849ea8e](https://github.com/maksforge/kozica/commit/849ea8ede77297104f3290f8ea78f632f89a9f03))
+* keep the user in view north up while following ([fa6217b](https://github.com/maksforge/kozica/commit/fa6217b460e4a29613633eb54b9492e452ea3835))
+* let the pace stop with its last screen, as the map's state does ([b35cf05](https://github.com/maksforge/kozica/commit/b35cf056fffe41d7f0df0b18c92e0ca9d71b4d83))
+* measure following's window by the fix's own time ([1ef866a](https://github.com/maksforge/kozica/commit/1ef866aece4f69c6abcada2402a62eaface87691))
+* read the pace again when the relief arrives or leaves ([237b063](https://github.com/maksforge/kozica/commit/237b06300e505862defcf85d406e33964bcb3871))
+* remember a Hike that cannot be timed, and read a failed one again ([72423c1](https://github.com/maksforge/kozica/commit/72423c158b63441bb346b9f455f24eb542501b0b))
+* say the signposts' time as "wg drogowskazów" in Polish ([8739f2f](https://github.com/maksforge/kozica/commit/8739f2f8548b572c4db6064be9a90c426e4da894))
+* show Follow's precise-location dialog for every refused ask ([77b89e2](https://github.com/maksforge/kozica/commit/77b89e253cdf038ab73ae159fd7fc8b19a15dceb))
+* word the Polish Find me note as the app's Polish does ([8c628f2](https://github.com/maksforge/kozica/commit/8c628f212b8f6ccc51de2d870b1bf8905a48c1c3))
+
 ## [0.11.0](https://github.com/maksforge/kozica/compare/v0.10.0...v0.11.0) (2026-10-30)
 
 
