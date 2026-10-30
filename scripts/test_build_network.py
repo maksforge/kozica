@@ -248,6 +248,23 @@ class WalkTest(unittest.TestCase):
         self.assertEqual(walk.shape, "gaps")
         self.assertEqual(legs, [(1, 3, False), (5, 6, True)])
 
+    def test_gaps_are_joined_in_the_order_that_leaves_the_least_gap(self):
+        ways = {1: grid_way([4, 5]), 2: grid_way([1, 2]), 3: grid_way([7, 8, 9])}
+        walk, _, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (2, ""), (3, "")])}, 7)
+        self.assertEqual(walk.shape, "gaps")
+        self.assertEqual(legs, [(1, 2, False), (4, 5, True), (7, 9, True)])
+
+    def test_backward_is_off_the_walk_only_beside_a_forward_strand(self):
+        ways = {1: grid_way([1, 2]), 2: grid_way([2, 3]), 3: grid_way([2, 13, 3]), 4: grid_way([3, 4])}
+        split = {7: TrailLine("red", None, [(1, ""), (2, "forward"), (3, "backward"), (4, "")])}
+        walk, edges, legs = walked(ways, split, 7)
+        self.assertEqual(legs, [(1, 2, False), (2, 3, False), (3, 4, False)])
+        self.assertEqual([len(edges[s.edge].points) for s in walk.steps], [2, 2, 2])
+        alone = {7: TrailLine("red", None, [(1, ""), (3, "backward"), (4, "")])}
+        walk, _, legs = walked({k: ways[k] for k in (1, 3, 4)}, alone, 7)
+        self.assertEqual(walk.shape, "line")
+        self.assertEqual(legs, [(1, 4, False)])
+
     def test_an_alternative_is_the_trail_s_but_off_its_walk(self):
         ways = {1: grid_way([1, 2]), 2: grid_way([2, 3]), 3: grid_way([2, 12])}
         walk, edges, legs = walked(ways, {7: TrailLine("red", None, [(1, ""), (2, ""), (3, "alternative")])}, 7)

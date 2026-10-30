@@ -228,8 +228,8 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   "European long distance path E3" and "Show the whole" shows all of it; `Via Mariae (combined)`
   r11154539 holds r4649443, and the two Svatojakubská cesty hold r10364398 and r11078362. B's build
   at the pin reads 2,492 Trails, 62 of them Sections of 15 Long-distance Trails, all 15 named, still
-  over verdict 3's five; and walks 1,929 lines, 75 loops, 266 with a branch and 222 with gaps, 187 of
-  their 341 gaps under 100 m, where two ways of a relation do not quite meet, and 75 over a kilometre,
+  over verdict 3's five; and walks 1,929 lines, 75 loops, 267 with a branch and 221 with gaps, 204 of
+  their 340 gaps under 100 m, where two ways of a relation do not quite meet, and 52 over a kilometre,
   where a Trail leaves the Regions.
 - **The profile writes the membership**, since it already decides what a Trail is: `<id>.ways`
   becomes `<id>.trails`, one line per Trail, a `route=hiking` relation or a regional parent, with
@@ -306,7 +306,9 @@ becomes 2,496 Trails, 88.2 % titled by tags, which is still verdict 1.
   takes one of four shapes. **A line** is walked from its first end to its other. **A loop**, with no
   end, starts and finishes at the start of the edge holding the first way in member order, and goes
   round once the way that way runs. **Gaps**, the edges falling in more than one stretch, are walked stretch
-  by stretch, each entered at the end nearest the one just left, and each break is recorded: the
+  by stretch, each entered at the end nearest the one just left, from whichever stretch's end leaves
+  the least gap in all; where two starts leave the same to a metre, the members' order picks, as it
+  does a line's first end. Each break is recorded: the
   length and climb are the stretches' sum, and the profile breaks at each gap. **A branch
   with no role**, a node where three of the Trail's own edges meet, is walked along the longest path
   between two of the Trail's ends, and the rest is treated as an `alternative`. A Trail whose every way
