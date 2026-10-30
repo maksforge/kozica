@@ -43,6 +43,8 @@ import app.kozica.media.MediaFiles
 import app.kozica.record.Recorder
 import app.kozica.ui.common.revokeShares
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -195,7 +197,8 @@ class AppContainer(
         planning.withLock {
             val network = TrailNetworks.load(appContext) ?: return@withLock null
             val steps = TrailNetworks.walks(appContext)?.steps(trail.id) ?: return@withLock null
-            router?.let { network.pointsAlong(steps, it) }
+            val context = currentCoroutineContext()
+            router?.let { network.pointsAlong(steps, it) { context.ensureActive() } }
         }
 
     fun sections(longDistance: Long): List<Long> = placeIndex?.sections(longDistance).orEmpty()

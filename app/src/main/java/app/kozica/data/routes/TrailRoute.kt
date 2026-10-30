@@ -1,101 +1,120 @@
 package app.kozica.data.routes
 
+/** An edge of a Trail's walk, and whether it is walked from `edgeFrom` to `edgeTo`. */
+internal data class WalkedEdge(
+    val edge: Int,
+    val forward: Boolean,
+) {
+    fun reversed() = WalkedEdge(edge, !forward)
+}
+
+/** The edges the leg walks, in order, each its way; a step of no length walks none. */
+private fun Leg.walked(): List<WalkedEdge> = steps.filter { it.from != it.to }.map { WalkedEdge(it.edge, it.forward) }
+
 /**
  * docs/phase-6c.md § 5: the points that hold an ordinary Route on a Trail's walk. The walk's two ends,
  * a point on each side of a gap, and between them a via point at the farthest junction to which a
- * leg, planned either way, keeps to the walk's own edges; found by doubling the span along the walk,
- * then bisecting back, since a leg that keeps to the Trail as far as one junction keeps to it as far
- * as every junction before.
+ * leg, planned either way, walks exactly the walk's edges in order; found by doubling the span along
+ * the walk, then bisecting back, since a leg that follows the walk as far as one junction follows it
+ * as far as every junction before. [checkCancelled] runs before each leg is planned, so a search no
+ * longer wanted can stop by throwing.
  */
 fun TrailNetwork.pointsAlong(
     steps: IntArray,
     router: Router,
+    checkCancelled: () -> Unit = {},
 ): List<RoutePoint> {
-    val own = steps.map(TrailWalks::edge).toSet()
     val stretches = mutableListOf<MutableList<Int>>()
-    val stretchEdges = mutableListOf<MutableList<Int>>()
+    val stretchWays = mutableListOf<MutableList<WalkedEdge>>()
     for (step in steps) {
-        val edge = TrailWalks.edge(step)
+        val way = WalkedEdge(TrailWalks.edge(step), !TrailWalks.reversed(step))
         val (from, to) =
-            if (TrailWalks.reversed(step)) {
-                edgeTo[edge] to edgeFrom[edge]
-            } else {
-                edgeFrom[edge] to
-                    edgeTo[edge]
-            }
+            if (way.forward) edgeFrom[way.edge] to edgeTo[way.edge] else edgeTo[way.edge] to edgeFrom[way.edge]
         if (stretches.isEmpty() || TrailWalks.gapBefore(step)) {
             stretches += mutableListOf(from)
-            stretchEdges += mutableListOf<Int>()
+            stretchWays += mutableListOf<WalkedEdge>()
         }
         stretches.last() += to
-        stretchEdges.last() += edge
+        stretchWays.last() += way
     }
     val loop = stretches.size == 1 && stretches[0].first() == stretches[0].last()
 
-    fun alongTrail(
-        from: Int,
-        to: Int,
-    ): Leg? =
-        router.leg(lat(from), lon(from), lat(to), lon(to))?.takeIf { leg ->
-            leg.steps.all {
-                it.edge in own ||
-                    it.from == it.to
-            }
-        }
-
-    // A one-way stretch is walked only its own way, so a leg over one is not asked to hold reversed.
-    fun holds(
-        from: Int,
-        to: Int,
+    fun follows(
+        from: RoutePoint,
+        to: RoutePoint,
+        ways: List<WalkedEdge>,
     ): Boolean {
-        val leg = alongTrail(from, to) ?: return false
-        return leg.steps.any { edgeOneway[it.edge].toInt() != 0 } || alongTrail(to, from) != null
+        checkCancelled()
+        return router.leg(from.latitude, from.longitude, to.latitude, to.longitude)?.walked() == ways
     }
 
+    // Only a span that is all one-way is walked its own way alone, so only it is not asked to hold reversed.
+    fun holds(
+        from: RoutePoint,
+        to: RoutePoint,
+        ways: List<WalkedEdge>,
+    ): Boolean =
+        follows(from, to, ways) &&
+            (
+                ways.all { edgeOneway[it.edge].toInt() != 0 } ||
+                    follows(to, from, ways.asReversed().map(WalkedEdge::reversed))
+            )
+
     val points = mutableListOf<RoutePoint>()
-    for ((nodes, edges) in stretches.zip(stretchEdges)) {
+    for ((nodes, ways) in stretches.zip(stretchWays)) {
         val last = nodes.lastIndex
-        var at = 0
+        val at = nodes.map(::pointAt)
+
+        fun holds(
+            from: Int,
+            to: Int,
+        ) = holds(at[from], at[to], ways.subList(from, to))
+
+        var here = 0
         // Neighbouring points are about as far apart, so each search starts at the span the last one found.
         var start = 1
-        points += RoutePoint(lat(nodes[0]), lon(nodes[0]))
-        while (at < last) {
+        points += at[0]
+        while (here < last) {
             // A loop's first leg may not close it, or the Route would have nowhere to go.
-            val reach = if (loop && at == 0) last - 1 else last
-            var good = at
-            var span = minOf(start, reach - at).coerceAtLeast(1)
-            while (at + span <= reach && holds(nodes[at], nodes[at + span])) {
-                good = at + span
+            val reach = if (loop && here == 0) last - 1 else last
+            var good = here
+            var span = minOf(start, reach - here).coerceAtLeast(1)
+            while (here + span <= reach && holds(here, here + span)) {
+                good = here + span
                 span *= 2
             }
-            var bad = minOf(at + span, reach + 1)
+            var bad = minOf(here + span, reach + 1)
             while (bad - good > 1) {
                 val middle = (good + bad) / 2
-                if (holds(nodes[at], nodes[middle])) good = middle else bad = middle
+                if (holds(here, middle)) good = middle else bad = middle
             }
-            if (good == at) {
-                // Another way joins these two junctions more cheaply, so a point on the Trail's own edge holds it.
-                points += middleOf(edges[at])
-                at++
+            if (good == here) {
+                // Another way joins these two junctions more cheaply, so a point on the Trail's own edge holds it;
+                // halfway, a rival has half the edge to beat from either end, and if one still does, nothing better holds it.
+                points += halfway(ways[here].edge)
+                here++
             } else {
-                start = good - at
-                at = good
+                start = good - here
+                here = good
             }
-            points += RoutePoint(lat(nodes[at]), lon(nodes[at]))
+            points += at[here]
         }
     }
     return points
 }
 
-/** Halfway along the edge's middle segment, so even an edge of two points gets a point inside it. */
-private fun TrailNetwork.middleOf(edge: Int): RoutePoint {
-    val point = edgeFirstPoint[edge] + (edgePointCount[edge] - 1) / 2
+/** Halfway along the edge by length, between the two of its points either side of it. */
+private fun TrailNetwork.halfway(edge: Int): RoutePoint {
+    val along = along(edge)
+    val metres = along.last() / 2
+    val k = (1 until along.size).first { along[it] >= metres }
+    val span = along[k] - along[k - 1]
+    val t = if (span == 0.0) 0.0 else (metres - along[k - 1]) / span
+    val point = edgeFirstPoint[edge] + k - 1
     return RoutePoint(
-        (pointLat[point] + pointLat[point + 1]) * 0.5e-7,
-        (pointLon[point] + pointLon[point + 1]) * 0.5e-7,
+        (pointLat[point] + (pointLat[point + 1] - pointLat[point]) * t) * 1e-7,
+        (pointLon[point] + (pointLon[point + 1] - pointLon[point]) * t) * 1e-7,
     )
 }
 
-private fun TrailNetwork.lat(node: Int) = nodeLat[node] * 1e-7
-
-private fun TrailNetwork.lon(node: Int) = nodeLon[node] * 1e-7
+private fun TrailNetwork.pointAt(node: Int) = RoutePoint(nodeLat[node] * 1e-7, nodeLon[node] * 1e-7)

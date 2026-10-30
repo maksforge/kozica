@@ -8,7 +8,10 @@ import android.util.Log
 import app.kozica.MainApplication
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
+import app.kozica.data.routes.Step
 import app.kozica.data.routes.TrailNetworks
+import app.kozica.data.routes.TrailWalks
+import app.kozica.data.routes.WalkedEdge
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.concurrent.thread
@@ -164,23 +167,38 @@ class RouteReceiver : BroadcastReceiver() {
             ),
         )
         val network = TrailNetworks.load(app) ?: return
-        val own =
+        val walk =
             TrailNetworks
                 .walks(app)
                 ?.steps(id)
-                ?.map { it ushr 2 }
-                ?.toSet()
+                ?.map { WalkedEdge(TrailWalks.edge(it), !TrailWalks.reversed(it)) }
                 .orEmpty()
+                .let { if (reversed) it.asReversed().map(WalkedEdge::reversed) else it }
+        // pointsAlong's test over the whole Route: each edge walked is the walk's next, its way; a point inside an
+        // edge splits it into two steps, so the edge just matched may come again.
+        var next = 0
+        var matched: WalkedEdge? = null
         for ((i, leg) in route.legs.withIndex()) {
-            val off = leg?.steps?.filter { it.edge !in own && it.from != it.to }.orEmpty()
+            val off = mutableListOf<Step>()
+            for (step in leg?.steps.orEmpty().filter { it.from != it.to }) {
+                when (WalkedEdge(step.edge, step.forward)) {
+                    walk.getOrNull(next) -> matched = walk[next++]
+                    matched -> Unit
+                    else -> {
+                        off += step
+                        matched = null
+                    }
+                }
+            }
             if (off.isNotEmpty()) {
                 val metres = off.sumOf { kotlin.math.abs(it.to - it.from) * network.edgeLength[it.edge] }
                 Log.i(
                     TAG,
-                    "leg ${i + 1} leaves the Trail over ${off.size} edges, %.1f m, from %s".format(metres, points[i]),
+                    "leg ${i + 1} leaves the walk over ${off.size} edges, %.1f m, from %s".format(metres, points[i]),
                 )
             }
         }
+        Log.i(TAG, "follows $next of the walk's ${walk.size} edges in order")
         val again =
             runBlocking { app.container.planRoute(points.map { RoutePoint(it.latitude, it.longitude) }) } ?: return
         Log.i(TAG, "again: %.1f m, ascent %.1f m, descent %.1f m".format(again.metres, again.ascent, again.descent))

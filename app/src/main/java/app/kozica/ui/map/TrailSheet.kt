@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,6 +49,7 @@ internal fun TrailSheet(
     onClose: () -> Unit,
     onShowWhole: () -> Unit,
     onShowLongDistance: () -> Unit,
+    planningRoute: Boolean,
     onPlanRoute: (title: String) -> Unit,
     gpx: GpxExport,
     onExportGpx: (title: String) -> Unit,
@@ -96,7 +98,9 @@ internal fun TrailSheet(
             )
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.tight)) {
-            TextButton(onClick = { onPlanRoute(heading.title) }) { Text(stringResource(R.string.trail_plan_route)) }
+            TextButton(onClick = { onPlanRoute(heading.title) }, enabled = !planningRoute) {
+                Text(stringResource(R.string.trail_plan_route))
+            }
             TextButton(onClick = { onExportGpx(heading.title) }, enabled = !gpx.running) {
                 Text(stringResource(R.string.gpx_export))
             }
@@ -105,6 +109,7 @@ internal fun TrailSheet(
                 TextButton(onClick = onShowLongDistance) { Text(stringResource(R.string.trail_show_long_distance, it)) }
             }
         }
+        if (planningRoute) LinearProgressIndicator(Modifier.fillMaxWidth())
         gpx.failure?.let { GpxFailureNotice(it, onDismissGpxFailure) }
     }
 }
