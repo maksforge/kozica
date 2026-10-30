@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.PointF
 import android.graphics.RectF
 import android.location.Location
 import android.location.LocationManager
@@ -525,7 +526,8 @@ fun MapScreen(
     LaunchedEffect(following, state.fix) {
         if (following) state.fix?.let { viewModel.followFix(it.toFollowFix()) }
     }
-    LaunchedEffect(map, following, keepInView, state.fix) {
+    // The top padding puts the user in the part of the map the search row and the banners leave open.
+    LaunchedEffect(map, following, keepInView, state.fix, overlayHeight) {
         val map = map ?: return@LaunchedEffect
         val fix = state.fix ?: return@LaunchedEffect
         if (!following || !keepInView) return@LaunchedEffect
@@ -535,7 +537,11 @@ fun MapScreen(
                     map.cameraPosition,
                 ).target(LatLng(fix.latitude, fix.longitude))
                 .bearing(0.0)
+                .padding(0.0, overlayHeight.toDouble(), 0.0, 0.0)
         map.animateCamera(CameraUpdateFactory.newCameraPosition(northUp.build()))
+    }
+    LaunchedEffect(map, following) {
+        if (!following) map?.clearPadding()
     }
     if (needsPrecise) {
         AlertDialog(
@@ -1051,6 +1057,19 @@ private fun MapCamera.toCameraUpdate(): CameraUpdate =
     )
 
 private fun CameraPosition.toMapCamera(): MapCamera? = target?.let { MapCamera(it.latitude, it.longitude, zoom) }
+
+/** Drops the follow camera's padding, keeping what the map shows where it is. */
+private fun MapLibreMap.clearPadding() {
+    if (cameraPosition.padding?.any { it != 0.0 } != true) return
+    val centre = projection.fromScreenLocation(PointF(width / 2, height / 2))
+    val unpadded =
+        CameraPosition
+            .Builder(cameraPosition)
+            .target(centre)
+            .padding(0.0, 0.0, 0.0, 0.0)
+            .build()
+    moveCamera(CameraUpdateFactory.newCameraPosition(unpadded))
+}
 
 /** Freshness by the arrival's clock, the window by the fix's own `time` (docs/phase-6b.md, Readings). */
 private fun Location.toFollowFix() =
