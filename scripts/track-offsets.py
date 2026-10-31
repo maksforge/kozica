@@ -4,10 +4,14 @@
 Reads Tracks walked on marked Trails, from the debug gate recorder's `gate.db` or from a Hike's GPX
 export, against the Trail network, and prints per file the hours, the fixes, the percentiles of each
 fix's distance from the nearest edge, and every firing of § 4's leaving rule as the banner applies
-it: only fixes that count (accuracy at most 50 m; a GPX has none, so all of its fixes count), each
-measured against 40 m or its own accuracy where larger, 30 s across the fixes received, a gap of
-more than 30 s restarting the count. For a GPX it also lists every gap over 30 s inside a stretch,
-since the recorder dropped the fixes worse than 30 m and the worst drift shows as a gap instead.
+it: only fixes that count (accuracy at most 50 m and stored at most 30 s after their own time; a
+`gate.db` fix without accuracy does not count, as in the app, while a GPX keeps neither, so all of
+its fixes count), each measured against 40 m or its own accuracy where larger, 30 s across the fixes
+received, a gap of more than 30 s restarting the count. A firing still shown when its stretch ends
+ends there. Each firing prints the median and worst accuracy of its counting fixes and the nearest
+edge's OSM way at its start and at its peak, for § 1's verdict 3. For a GPX it also lists every gap
+over 30 s inside a stretch, since the recorder dropped the fixes worse than 30 m and the worst drift
+shows as a gap instead.
 
 § 1's bias is reported too: the minutes walked within 40 m of a second edge not joined to the
 nearest one, where another Trail can hide a real wrong turn from the distance.
@@ -24,12 +28,13 @@ from __future__ import annotations
 import argparse
 import math
 import sqlite3
+import statistics
 import struct
 import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -38,6 +43,7 @@ import project  # noqa: E402
 
 LEAVING_METRES = 40.0
 FIX_WORST_ACCURACY_METRES = 50.0
+FIX_OLDEST_MILLIS = 30_000
 LEAVING_MILLIS = 30_000
 SECOND_TRAIL_METRES = 40.0
 CELL_DEGREES = 0.002
@@ -51,10 +57,12 @@ class Fix:
     latitude: float
     longitude: float
     accuracy: float | None
+    age_ms: int = 0
 
     @property
     def counts(self) -> bool:
-        return self.accuracy is None or self.accuracy <= FIX_WORST_ACCURACY_METRES
+        accurate = self.accuracy is None or self.accuracy <= FIX_WORST_ACCURACY_METRES
+        return accurate and self.age_ms <= FIX_OLDEST_MILLIS
 
     @property
     def leaving_metres(self) -> float:
@@ -64,12 +72,16 @@ class Fix:
 @dataclass
 class Firing:
     since_ms: int
-    shown_ms: int
-    end_ms: int | None
+    last_ms: int
     latitude: float
     longitude: float
+    start_edge: int
     peak_metres: float
-    accuracy: float | None
+    peak_edge: int
+    shown_ms: int | None = None
+    end_ms: int | None = None
+    to_stretch_end: bool = False
+    accuracies: list[float] = field(default_factory=list)
 
 
 class Network:
@@ -79,6 +91,7 @@ class Network:
         if data[:4] != b"KZTN":
             raise ValueError("not a trails.network")
         _, _, vertices, edges, points = struct.unpack_from("<HHIII", data, 4)
+        self.ways = struct.unpack_from(f"<{edges}q", data, 20)
         pos = 20 + 8 * edges + 4 * vertices * 2
         starts = struct.unpack_from(f"<{edges}I", data, pos)
         ends = struct.unpack_from(f"<{edges}I", data, pos + 4 * edges)
@@ -143,33 +156,40 @@ def to_line(latitude: float, longitude: float, line: list[tuple[float, float]]) 
     return best
 
 
-def firings(fixes: list[Fix], metres: list[float]) -> list[Firing]:
-    """§ 4's rule over the fixes in order, as `Leaving.after` applies it; a new stretch is a gap."""
+def firings(fixes: list[Fix], nearest: list[tuple[float, int]]) -> list[Firing]:
+    """§ 4's rule over the fixes in order, as `Leaving.after` applies it, each with its (metres, edge)."""
     found: list[Firing] = []
-    since = last = None
-    shown: Firing | None = None
-    previous_stretch = None
-    for fix, distance in zip(fixes, metres):
-        if fix.stretch != previous_stretch:
-            since = last = None
-            previous_stretch = fix.stretch
+    run: Firing | None = None
+    previous: Fix | None = None
+
+    def close_at_stretch_end():
+        if run is not None and run.shown_ms is not None and run.end_ms is None:
+            run.end_ms = previous.at_ms
+            run.to_stretch_end = True
+
+    for fix, (distance, edge) in zip(fixes, nearest):
+        if previous is not None and fix.stretch != previous.stretch:
+            close_at_stretch_end()
+            run = None
+        previous = fix
         if not fix.counts:
             continue
         if distance <= fix.leaving_metres:
-            if shown is not None:
-                shown.end_ms = fix.at_ms
-            since = last = None
-            shown = None
+            if run is not None and run.shown_ms is not None:
+                run.end_ms = fix.at_ms
+            run = None
             continue
-        if since is None or fix.at_ms - last > LEAVING_MILLIS:
-            since = fix.at_ms
-            start = fix
-        last = fix.at_ms
-        if shown is None and fix.at_ms - since >= LEAVING_MILLIS:
-            shown = Firing(since, fix.at_ms, None, start.latitude, start.longitude, distance, start.accuracy)
-            found.append(shown)
-        if shown is not None:
-            shown.peak_metres = max(shown.peak_metres, distance)
+        if run is None or (run.shown_ms is None and fix.at_ms - run.last_ms > LEAVING_MILLIS):
+            run = Firing(fix.at_ms, fix.at_ms, fix.latitude, fix.longitude, edge, distance, edge)
+        run.last_ms = fix.at_ms
+        if fix.accuracy is not None:
+            run.accuracies.append(fix.accuracy)
+        if distance > run.peak_metres:
+            run.peak_metres, run.peak_edge = distance, edge
+        if run.shown_ms is None and fix.at_ms - run.since_ms >= LEAVING_MILLIS:
+            run.shown_ms = fix.at_ms
+            found.append(run)
+    close_at_stretch_end()
     return found
 
 
@@ -190,11 +210,12 @@ def read_gpx(path: Path) -> list[Fix]:
 
 
 def read_gate(path: Path) -> list[Fix]:
+    """A fix without accuracy is `Double.MAX_VALUE` to the app (`toFollowFix`), so it never counts."""
     db = sqlite3.connect(path)
     return [
-        Fix(*row)
-        for row in db.execute(
-            "SELECT fix_time, segment, latitude, longitude, accuracy FROM gate_points ORDER BY fix_time"
+        Fix(at, segment, latitude, longitude, math.inf if accuracy is None else accuracy, stored - at)
+        for at, stored, segment, latitude, longitude, accuracy in db.execute(
+            "SELECT fix_time, stored_at, segment, latitude, longitude, accuracy FROM gate_points ORDER BY fix_time"
         )
     ]
 
@@ -253,14 +274,20 @@ def report(name: str, fixes: list[Fix], network: Network, is_gpx: bool) -> None:
             second += (following.at_ms - fix.at_ms) / 60_000
     print(f"  minutes within {SECOND_TRAIL_METRES:.0f} m of a second edge not joined to the nearest: {second:.1f}")
 
-    found = firings(fixes, metres)
+    found = firings(fixes, [n[0] for n in near])
     rate = len(found) / hours if hours > 0 else 0.0
     print(f"  firings: {len(found)}, {rate:.2f} per hour")
+
+    def way(edge: int) -> str:
+        return str(network.ways[edge]) if edge >= 0 else "none"
+
     for f in found:
-        length = f"{(f.end_ms - f.since_ms) / 1000:.0f} s off" if f.end_ms else "to the end of the stretch"
-        accuracy = f", accuracy {f.accuracy:.0f} m at its start" if f.accuracy is not None else ""
+        length = f"{(f.end_ms - f.since_ms) / 1000:.0f} s off" + (", to the end of its stretch" if f.to_stretch_end else "")
+        accuracy = (f", accuracy median {statistics.median(f.accuracies):.0f} m, worst {max(f.accuracies):.0f} m"
+                    if f.accuracies else "")
         print(f"    {stamp(f.since_ms)}  {length}, peak {f.peak_metres:.0f} m, "
-              f"at {f.latitude:.6f},{f.longitude:.6f}{accuracy}")
+              f"at {f.latitude:.6f},{f.longitude:.6f}{accuracy}, "
+              f"way {way(f.start_edge)} at its start, {way(f.peak_edge)} at its peak")
 
     if is_gpx:
         gaps = [
