@@ -1045,6 +1045,7 @@ def wipe() -> None:
     _SEEDED = None
     shell(f"pm clear {PACKAGE}")
     settle(1.0)
+    push_network()
     # Before the launch, not after: `pm clear` drops the per-app locale, and re-applying it to a
     # package that is not running costs nothing, where doing it afterwards restarts the activity.
     if _LOCALE is not None:
@@ -1081,6 +1082,30 @@ def reset_to_seeded() -> None:
 # of [SeedVariantReceiver]'s, and None for "unknown" — which is what a wipe leaves and what the
 # start of every cell asserts, so the first scene of a cell always reseeds exactly as it always did.
 _SEEDED: "str | None" = None
+
+NETWORK_DIR: "Path | None" = None
+NETWORK_FILES = ("trails.network", "places.sqlite", "trails.edges")
+
+
+def push_network() -> None:
+    """Put the release's base files where the debug build looks for them, before the app starts."""
+    if NETWORK_DIR is None:
+        return
+    shell(f"run-as {PACKAGE} mkdir -p files/network")
+    for name in NETWORK_FILES:
+        with (NETWORK_DIR / name).open("rb") as source:
+            subprocess.run(
+                ["adb", "shell", f"run-as {PACKAGE} sh -c 'cat > files/network/{name}'"],
+                stdin=source,
+                check=True,
+            )
+
+
+def grant(permission: str) -> None:
+    if permission == "POST_NOTIFICATIONS" and api_level() < 33:
+        return
+    if not shell_ok(f"pm grant {PACKAGE} android.permission.{permission}"):
+        raise StepFailed(f"pm grant {permission} failed")
 
 SEED_RECEIVER = f"{PACKAGE}/{project.NAMESPACE}.debug.SeedReceiver"
 
@@ -1216,6 +1241,7 @@ STEP_RUNNERS = {
     "wait": lambda arg: settle(float(arg)),
     "wipe": lambda arg: wipe(),
     "fake_schema_mismatch": lambda arg: fake_schema_mismatch(),
+    "grant": grant,
 }
 
 
@@ -1245,6 +1271,11 @@ class Scene:
     # is never edited, because every scene and the listing screenshots rest on it. Scenes are grouped
     # by this, so a variant costs one reseed per cell rather than one per scene.
     seed: str = ""
+    # Search and planning read the Trail network and the name index, which a debug install has only
+    # when they are pushed to `files/network/`; see `--network-dir`.
+    needs_network: bool = False
+    # A recording or a followed Route outlives the scene, so the scene after it reseeds.
+    dirties: bool = False
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1298,6 +1329,31 @@ SCENES = [
     Scene("hikes", "home", [("tap", "Hikes")], seed="hikes"),
     Scene("hike-sheet", "home", [("tap", "Hikes"), ("tap", "Kuźnice – Kasprowy Wierch")], seed="hikes"),
     Scene("hike-trim", "home", [("tap", "Hikes"), ("tap", "Kuźnice – Kasprowy Wierch"), ("tap", "Trim")], seed="hikes"),
+    Scene(
+        "recording",
+        "home",
+        [("grant", "ACCESS_FINE_LOCATION"), ("grant", "ACCESS_COARSE_LOCATION"), ("grant", "POST_NOTIFICATIONS"),
+         ("tap", "Record hike")],
+        dirties=True,
+    ),
+
+    # --- over the map, from the Trail network and the name index -----------------------------------
+    Scene("search", "home", [("tap_field", "0"), ("type", "Szlak%sBeskidzki")], needs_network=True),
+    Scene(
+        "trail-sheet",
+        "home",
+        [("tap_field", "0"), ("type", "Szlak%sBeskidzki"), ("tap", "Główny Szlak Beskidzki")],
+        needs_network=True,
+    ),
+    Scene("route-sheet", "home", [("tap", "Routes"), ("tap_text", "Kasprowy Wierch")], needs_network=True),
+    Scene(
+        "following",
+        "home",
+        [("grant", "ACCESS_FINE_LOCATION"), ("grant", "ACCESS_COARSE_LOCATION"), ("tap", "Routes"),
+         ("tap_text", "Kasprowy Wierch"), ("tap", "Follow")],
+        needs_network=True,
+        dirties=True,
+    ),
 
     # --- pushed screens: no bottom bar, so the navigation-bar inset is the app's own problem ----
     Scene("safety", "detail", [("tap", "Safety")]),
@@ -1588,6 +1644,9 @@ def run_scene(scene: Scene, config: Config, out_dir: Path, retries: int = 0) -> 
     # That is the exact failure retrying is supposed to avoid, arriving by the other road.
     allowed = 1 + (0 if scene.keeps_seeded_prompt else max(retries, 0))
     for attempt in range(1, allowed + 1):
+        if scene.dirties and attempt > 1:
+            invalidate_seed()
+            ensure_seed(scene.seed)
         error = reach_scene(scene)
         if error is None:
             break
@@ -1655,6 +1714,11 @@ def main() -> int:
         choices=["debug", "release"],
         default="debug",
         help="which install to drive. 'release' is the shipped applicationId and is never wiped",
+    )
+    parser.add_argument(
+        "--network-dir",
+        type=Path,
+        help="directory holding a release's trails.network, places.sqlite and trails.edges, pushed after every wipe",
     )
     parser.add_argument(
         "--retry-unreached",
@@ -1740,6 +1804,21 @@ def main() -> int:
     if args.scene:
         wanted = set(args.scene.split(","))
         scenes = [scene for scene in SCENES if scene.name in wanted]
+    global NETWORK_DIR
+    NETWORK_DIR = args.network_dir
+    needing = [scene.name for scene in scenes if scene.needs_network]
+    if needing and NETWORK_DIR is None:
+        print(
+            f"edge-to-edge: {', '.join(needing)} need the Trail network: download trails.network, "
+            "places.sqlite and trails.edges from the latest v* release and pass --network-dir",
+            file=sys.stderr,
+        )
+        return 2
+    if NETWORK_DIR is not None:
+        missing = [name for name in NETWORK_FILES if not (NETWORK_DIR / name).is_file()]
+        if missing:
+            print(f"edge-to-edge: --network-dir lacks {', '.join(missing)}", file=sys.stderr)
+            return 2
 
     # Before anything touches the phone: a needle that names two strings, or none, is worth knowing
     # about now rather than 40 seconds into a cell (see [resolve_needles]).
@@ -1901,6 +1980,8 @@ def run_matrix(
             if suite == "full":
                 ensure_seed(scene.seed)
             result = run_scene(scene, config, out_dir, retries)
+            if scene.dirties:
+                invalidate_seed()
             results.append(result)
             again = f"  (attempt {result['attempts']})" if result.get("attempts", 1) > 1 else ""
             if "error" in result:
