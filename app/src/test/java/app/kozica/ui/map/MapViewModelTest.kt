@@ -352,11 +352,94 @@ class MapViewModelTest {
             preferences.setFollowedRoute(FollowedRoute(points, progress = Progress(700.0, 0), touchedAtMillis = 0))
 
             val viewModel = routingViewModel(preferences = preferences, now = { FOLLOWED_KEPT_MILLIS + 1 })
-            val route = settled(viewModel) { true }.route
+            stored(preferences) { it == null }
+            val route = settled(viewModel) { it.camera != null }.route
 
             assertNull(route.following)
             assertEquals(emptyList<RoutePoint>(), route.points)
-            assertNull(preferences.followedRoute.first())
+        }
+
+    @Test
+    fun `a resumed Route keeps its stamp until something about it changes`() =
+        runTest {
+            val preferences = AppPreferences(MemoryPreferences())
+            val points = listOf(RoutePoint(49.0, 20.0), RoutePoint(49.0, 20.02))
+            preferences.setFollowedRoute(FollowedRoute(points, progress = Progress(0.0, 0), touchedAtMillis = 0))
+
+            val viewModel = routingViewModel(preferences = preferences, now = { FOLLOWED_KEPT_MILLIS })
+            val line = settled(viewModel) { it.route.following != null }.route.planned!!.line
+            assertEquals(0L, preferences.followedRoute.first()?.touchedAtMillis)
+
+            val midway = line[line.size / 2]
+            viewModel.followFix(FollowFix(midway.latitude, midway.longitude, 10.0, 0, 3_600_000))
+            val kept = stored(preferences) { it?.progress?.atMillis == 3_600_000L }
+            assertEquals(FOLLOWED_KEPT_MILLIS, kept?.touchedAtMillis)
+        }
+
+    @Test
+    fun `a stored Route that now plans with a leg missing stays drawn, unfollowed, and the value goes`() =
+        runTest {
+            val preferences = AppPreferences(MemoryPreferences())
+            val points = listOf(RoutePoint(49.0, 20.0), RoutePoint(52.23, 21.01))
+            preferences.setFollowedRoute(FollowedRoute(points, progress = Progress(700.0, 0), touchedAtMillis = 0))
+
+            val viewModel = routingViewModel(preferences = preferences, now = { 0 })
+            stored(preferences) { it == null }
+            val route = settled(viewModel) { it.route.planned?.complete == false && !it.route.planning }.route
+
+            assertEquals(points, route.points)
+            assertNull(route.following)
+        }
+
+    @Test
+    fun `a Route shown before the read wins over the stored one, and the value goes`() =
+        runTest {
+            val preferences = AppPreferences(MemoryPreferences())
+            val stored = listOf(RoutePoint(49.0, 20.0), RoutePoint(49.0, 20.02))
+            preferences.setFollowedRoute(FollowedRoute(stored, progress = Progress(700.0, 0), touchedAtMillis = 0))
+            val shown = listOf(RoutePoint(49.0, 20.0), RoutePoint(49.0, 20.01))
+            val saved = SavedRoute("r", "Shown", shown)
+
+            val viewModel =
+                routingViewModel(
+                    routeToShow = MutableStateFlow("r"),
+                    loadRoute = { saved },
+                    preferences = preferences,
+                    now = { 0 },
+                )
+            stored(preferences) { it == null }
+            val route = settled(viewModel) { it.route.savedId == "r" && !it.route.planning }.route
+
+            assertEquals(shown, route.points)
+            assertNull(route.following)
+        }
+
+    @Test
+    fun `an edit while the resumed Route is planned stops it being followed`() =
+        runTest {
+            val preferences = AppPreferences(MemoryPreferences())
+            val points = listOf(RoutePoint(49.0, 20.0), RoutePoint(49.0, 20.02))
+            preferences.setFollowedRoute(FollowedRoute(points, progress = Progress(700.0, 0), touchedAtMillis = 0))
+            var first = true
+            val viewModel =
+                routingViewModel(
+                    planRoute = {
+                        if (first) {
+                            first = false
+                            awaitCancellation()
+                        }
+                        RoutePlanner(fixture).plan(it)
+                    },
+                    preferences = preferences,
+                    now = { 0 },
+                )
+            settled(viewModel) { it.route.points == points && it.route.planning }
+
+            viewModel.addPoint(49.0, 20.01)
+            val route = settled(viewModel) { it.route.points.size == 3 && !it.route.planning }.route
+
+            assertEquals(true, route.planned?.complete)
+            assertNull(route.following)
         }
 
     @Test
@@ -920,6 +1003,12 @@ class MapViewModelTest {
         withContext(Dispatchers.Default) {
             withTimeoutOrNull(5.seconds) { viewModel.state.first(until) }
         } ?: error("the state never settled")
+
+    private suspend fun stored(
+        preferences: AppPreferences,
+        until: (FollowedRoute?) -> Boolean,
+    ): FollowedRoute? =
+        withContext(Dispatchers.Default) { withTimeout(5.seconds) { preferences.followedRoute.first(until) } }
 }
 
 private val viewModels = mutableListOf<MapViewModel>()
