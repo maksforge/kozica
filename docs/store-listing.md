@@ -49,7 +49,7 @@ The line that appears under the name in search results, and the most-read text i
 Offline trail map of the Polish mountains, drawn in the signposts' own colours.
 ```
 
-### Full description — 1463/4000
+### Full description — 2359/4000
 
 ```
 Kozica is a hiking map of the Polish mountains, from the Karkonosze to the Bieszczady and across the Czech and Slovak borders where the ranges do. Every range arrives with the app, and the map works with no signal at all.
@@ -57,6 +57,12 @@ Kozica is a hiking map of the Polish mountains, from the Karkonosze to the Biesz
 Every marked trail is drawn in the colour on its signposts — red, blue, green, yellow or black — with its symbol along the line. Where two trails share a path, both are drawn side by side, so you can see which one you are on.
 
 The map also shows paths, huts and shelters, peaks, passes, springs, viewpoints, car parks and stops, national-park boundaries and the state border, in a light and a dark style. Shading and contour lines every 20 metres show the shape of the mountains.
+
+Tap a trail to see all of it, with its name, length, ascent and descent each way, and its profile. Search finds peaks, huts, passes, villages and trails by name.
+
+Plan a hike: pick points from search or press and hold on the map, and Kozica draws a route over the marked trails only, with its length, ascent and descent, the walking time to each point by the rule on Polish signposts, an elevation profile and a warning at every demanding stretch. One button plans a route along a whole trail. Save routes under a name.
+
+Record a hike with the screen off and the phone in your pocket, with Pause and Stop in the notification. Each hike keeps its track, distance, times, ascent and profile, a note, and photos from the camera or picked afterwards, pinned where they were taken. Export hikes, routes and trails as GPX, and back everything up to one file, photos included, to restore on any phone.
 
 Tap the position button to see where you are, with the accuracy and the direction you are facing. Your location stays on your phone: Kozica has no permission to use the internet, no account and no ads, and it collects nothing.
 
@@ -79,7 +85,7 @@ Kozica
 Mapa szlaków w polskich górach bez internetu, w kolorach z drogowskazów.
 ```
 
-### Full description — 1475/4000
+### Full description — 2473/4000
 
 ```
 Kozica to mapa turystyczna polskich gór, od Karkonoszy po Bieszczady, także po czeskiej i słowackiej stronie granicy. Wszystkie pasma przychodzą razem z aplikacją, a mapa działa bez zasięgu.
@@ -87,6 +93,12 @@ Kozica to mapa turystyczna polskich gór, od Karkonoszy po Bieszczady, także po
 Każdy znakowany szlak jest narysowany w kolorze z drogowskazów — czerwonym, niebieskim, zielonym, żółtym albo czarnym — ze swoim znakiem wzdłuż linii. Gdy dwa szlaki biegną jedną ścieżką, oba są narysowane obok siebie, więc widać, którym idziesz.
 
 Na mapie są też ścieżki, schroniska i wiaty, szczyty, przełęcze, źródła, punkty widokowe, parkingi i przystanki, granice parków narodowych i granica państwa, w jasnym i ciemnym stylu. Cieniowanie i poziomice co 20 metrów pokazują kształt gór.
+
+Dotknij szlaku, by zobaczyć go w całości, z nazwą, długością, podejściami i zejściami w obie strony oraz profilem. Wyszukiwarka znajduje po nazwie szczyty, schroniska, przełęcze, wsie i szlaki.
+
+Zaplanuj wycieczkę: wybierz punkty w wyszukiwarce albo przytrzymaj palec na mapie, a Kozica wyznaczy trasę wyłącznie znakowanymi szlakami, z długością, podejściami i zejściami, czasem dojścia do każdego punktu według zasady z polskich drogowskazów, profilem wysokości i ostrzeżeniem na każdym wymagającym odcinku. Jeden przycisk planuje trasę wzdłuż całego szlaku. Zapisuj trasy pod własną nazwą.
+
+Nagraj wycieczkę przy wygaszonym ekranie i telefonie w kieszeni, z przyciskami Wstrzymaj i Zakończ w powiadomieniu. Każda wycieczka ma swój ślad, dystans, czasy, podejścia i profil, notatkę oraz zdjęcia z aparatu albo wybrane potem, przypięte tam, gdzie je zrobiono. Wycieczki, trasy i szlaki wyeksportujesz do GPX, a wszystko, ze zdjęciami, zapiszesz w jednym pliku i przywrócisz na dowolnym telefonie.
 
 Dotknij przycisku pozycji, aby zobaczyć, gdzie jesteś, z dokładnością i kierunkiem, w którym patrzysz. Twoja lokalizacja zostaje w telefonie: Kozica nie ma uprawnienia do internetu, nie wymaga konta, nie wyświetla reklam i niczego nie zbiera.
 
