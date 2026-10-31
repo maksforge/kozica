@@ -311,12 +311,23 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       # The debug build has no Trail network or name index of its own; the scenes over search and
-      # planning read the current version's, as a phone does with them hand-pushed.
+      # planning read the current version's, as a phone does with them hand-pushed. The version's
+      # release lacks them until publish-play.yml attaches them, so the newest one that has them
+      # stands in.
       - name: Fetch the Trail network
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "v$(jq -r '."."' .release-please-manifest.json)" \
+          carries() {
+            [ -n "$(gh release view "$1" --json assets --jq '.assets[] | select(.name == "trails.network") | .name' 2>/dev/null)" ]
+          }
+          tag="v$(jq -r '."."' .release-please-manifest.json)"
+          if ! carries "$tag"; then
+            for candidate in $(gh release list --limit 20 --exclude-drafts --json tagName --jq '.[].tagName | select(startswith("v"))'); do
+              if carries "$candidate"; then tag=$candidate; break; fi
+            done
+          fi
+          gh release download "$tag" \
             --pattern trails.network --pattern places.sqlite --pattern trails.edges --dir artifacts/network
       - name: Run the matrix
         uses: ReactiveCircus/android-emulator-runner@v2.38.0
