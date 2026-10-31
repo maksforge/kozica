@@ -158,6 +158,12 @@ class FollowedLine(
         return pointAt(firstPass(fix, from, to, nearest + fix.leavingMetres) ?: from)
     }
 
+    /** How far along the line the window ahead of [progress] reaches for [fix]. */
+    fun reach(
+        progress: Progress?,
+        fix: FollowFix,
+    ): Double = ((progress?.metres ?: 0.0) + window(progress, fix)).coerceAtMost(metres)
+
     private fun window(
         progress: Progress?,
         fix: FollowFix,

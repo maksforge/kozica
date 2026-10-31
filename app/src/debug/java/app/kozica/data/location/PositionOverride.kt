@@ -16,20 +16,22 @@ private val chosen = MutableStateFlow<Location?>(null)
 fun Flow<Location>.withPositionOverride(): Flow<Location> = chosen.flatMapLatest { it?.let(::flowOf) ?: this }
 
 /**
- * Stamped now, so it goes stale like a real fix. It carries no bearing: the heading cone follows
- * the phone's real compass.
+ * Arrives now, so it goes stale like a real fix, but carries [time] as its own, so a replayed Track
+ * keeps its walking pace (docs/phase-6b.md, Readings). It carries no bearing: the heading cone
+ * follows the phone's real compass.
  */
 fun overridePosition(
     latitude: Double,
     longitude: Double,
     accuracy: Float = DEFAULT_ACCURACY,
+    time: Long = System.currentTimeMillis(),
 ) {
     chosen.value =
         Location("debug").apply {
             this.latitude = latitude
             this.longitude = longitude
             this.accuracy = accuracy
-            time = System.currentTimeMillis()
+            this.time = time
             elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
         }
 }

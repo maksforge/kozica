@@ -1000,7 +1000,8 @@ class MapViewModel(
     fun followFix(fix: FollowFix) {
         val line = followed ?: return
         val current = route.value.following ?: return
-        val leaving = current.leaving.after(fix, line.distance(fix))
+        val metres = line.distance(fix)
+        val leaving = current.leaving.after(fix, metres)
         if (leaving != current.leaving) {
             if (leaving == null) planningBack?.cancel()
             route.update { state ->
@@ -1011,6 +1012,14 @@ class MapViewModel(
             }
         }
         line.follow(current.progress, fix)?.let { moveTo(line, it, fix) }
+        logFollow(
+            fix,
+            metres,
+            line.reach(current.progress, fix),
+            route.value.following,
+            route.value.followingNote,
+            state.value.pace,
+        )
     }
 
     /** "Back to the Route": a leg from [fix] to where § 4's rule rejoins the line, planned again on each ask. */

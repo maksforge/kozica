@@ -30,6 +30,9 @@ import kotlin.concurrent.thread
  * With `--el trail <id>` (and `--ez reversed true` for the other way) it makes the Route along that
  * Trail by "Plan a Route along it"'s code, logs the Trail's row beside it, and plans the points
  * again as a saved Route is on open, for phase 6c's R4.
+ *
+ * With `--ez show true` it also saves the Route as "Reading" and opens it on the map's sheet, so
+ * Follow is one tap, for phase 6b's R3 and R4.
  */
 class RouteReceiver : BroadcastReceiver() {
     override fun onReceive(
@@ -65,11 +68,18 @@ class RouteReceiver : BroadcastReceiver() {
             resultData = "from and to are required and via is optional, each point as lat,lon, via's joined by ;"
             return
         }
+        val show = intent.getBooleanExtra("show", false)
         val pending = goAsync()
-        val app = context.applicationContext
+        val app = context.applicationContext as MainApplication
         thread(name = "RouteReceiver") {
             try {
-                plan(app, listOf(from) + via.filterNotNull() + listOf(to))
+                val points = listOf(from) + via.filterNotNull() + listOf(to)
+                plan(app, points)
+                if (show) {
+                    val id = runBlocking { app.container.routes.save(null, "Reading", points) }
+                    app.container.routeToShow.value = id
+                    Log.i(TAG, "shown as saved Route $id")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "planning failed", e)
             } finally {
