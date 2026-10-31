@@ -347,3 +347,17 @@ The app's icon is a little bigger: the chamois fills more of its frame, its long
 ```
 Ikona aplikacji jest nieco większa: kozica wypełnia więcej swojej ramki, jej dłuższy róg jest odrobinę krótszy, a skała pod nią odrobinę węższa. Ikona powiadomień zmienia się razem z nią.
 ```
+
+### 0.14.0 — following picks up where it was, and a bigger icon
+
+**English** — 289/500:
+
+```
+If Kozica is closed while you follow a Route, opening it again within 24 hours picks up where you were. The app's icon is a little bigger: the chamois fills more of its frame, its long horn is a touch shorter and the crag beneath it a touch narrower. The notification icon changes with it.
+```
+
+**Polish** — 320/500:
+
+```
+Jeśli Kozica zostanie zamknięta podczas prowadzenia, otwarcie jej w ciągu 24 godzin wznowi prowadzenie tam, gdzie zostało przerwane. Ikona aplikacji jest nieco większa: kozica wypełnia więcej swojej ramki, jej dłuższy róg jest odrobinę krótszy, a skała pod nią odrobinę węższa. Ikona powiadomień zmienia się razem z nią.
+```
