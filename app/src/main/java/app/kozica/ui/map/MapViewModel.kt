@@ -1014,6 +1014,7 @@ class MapViewModel(
         line.follow(current.progress, fix)?.let { moveTo(line, it, fix) }
         logFollow(
             fix,
+            current.progress,
             metres,
             line.reach(current.progress, fix),
             route.value.following,
