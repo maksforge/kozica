@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.14.0](https://github.com/maksforge/kozica/compare/v0.13.0...v0.14.0) (2026-10-31)
+
+
+### Features
+
+* pick up a followed Route where it was when the app is opened again ([a447847](https://github.com/maksforge/kozica/commit/a44784783c3a14241fb24b2ff7b4c82480b9b01d))
+
+
+### Bug Fixes
+
+* keep a resumed Route's stamp and write its last value past the screen ([6a57824](https://github.com/maksforge/kozica/commit/6a57824adb9e6fad37ffb84348f291bf94c886af))
+* leave the feature graphic's mark a little clear of the copy ([e6dfa22](https://github.com/maksforge/kozica/commit/e6dfa224039370aa425c8384b63e6defb3025aa8))
+* remove a followed Route that no longer decodes when the app opens ([7711769](https://github.com/maksforge/kozica/commit/7711769fd3d620382e903aefaf41b87365fa0084))
+* shorten the mark's long horn, tuck the crag's base and scale the icon up to the safe zone ([013c0df](https://github.com/maksforge/kozica/commit/013c0df4bd599deaefb8cfbe4bd4995d79c3d79d))
+* take the way out at a turn while following, not the way back ([e8e6c31](https://github.com/maksforge/kozica/commit/e8e6c310b7f87f5ca162cc49531329b93fb3fda2))
+
 ## [0.13.0](https://github.com/maksforge/kozica/compare/v0.12.0...v0.13.0) (2026-10-30)
 
 
