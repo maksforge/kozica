@@ -6,13 +6,18 @@ import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
 import app.kozica.MainApplication
+import app.kozica.data.hikes.minutes
+import app.kozica.data.routes.PlannedRoute
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.Step
 import app.kozica.data.routes.TrailNetworks
 import app.kozica.data.routes.TrailWalks
 import app.kozica.data.routes.WalkedEdge
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import kotlin.concurrent.thread
 
@@ -74,7 +79,7 @@ class RouteReceiver : BroadcastReceiver() {
         thread(name = "RouteReceiver") {
             try {
                 val points = listOf(from) + via.filterNotNull() + listOf(to)
-                plan(app, points)
+                plan(app, points)?.let { logAtPace(app, it.seconds, it.minutes) }
                 if (show) {
                     val id = runBlocking { app.container.routes.save(null, "Reading", points) }
                     app.container.routeToShow.value = id
@@ -91,12 +96,12 @@ class RouteReceiver : BroadcastReceiver() {
     private fun plan(
         context: Context,
         points: List<RoutePoint>,
-    ) {
+    ): PlannedRoute? {
         var started = SystemClock.elapsedRealtime()
         val network = TrailNetworks.load(context)
         if (network == null) {
             Log.i(TAG, "no network in this build")
-            return
+            return null
         }
         Log.i(
             TAG,
@@ -136,6 +141,27 @@ class RouteReceiver : BroadcastReceiver() {
                 out.println("${sample.latitude} ${sample.longitude} ${sample.heightMetres} ${sample.approach}")
             }
         }
+        return route
+    }
+
+    /** The Route's time at the user's Pace beside the signposts', for phase 6b's R2; the Pace is read for up to 5 s. */
+    private fun logAtPace(
+        app: MainApplication,
+        seconds: Double,
+        minutes: Int,
+    ) {
+        val pace =
+            runBlocking {
+                withTimeoutOrNull(5_000) {
+                    app.container.pace
+                        .filterNotNull()
+                        .first()
+                }
+            }
+        Log.i(
+            TAG,
+            "at your pace: ${pace.minutes(seconds)} min (pace ${pace?.factor ?: "none"}), signposts $minutes min",
+        )
     }
 
     private fun along(
