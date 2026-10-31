@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.14.1](https://github.com/maksforge/kozica/compare/v0.14.0...v0.14.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* let the Route sheet scroll as a whole, so Follow, Reverse and Save are reachable in landscape ([18925da](https://github.com/maksforge/kozica/commit/18925da143bdd78399e084771e2a426e709f9449))
+* **scripts:** screenshots.py honours the network and dirtying scenes, and a failed retry reseed stays in its scene ([e48997f](https://github.com/maksforge/kozica/commit/e48997f65a0b2e2349d845d0e246231ce45163a3))
+
 ## [0.14.0](https://github.com/maksforge/kozica/compare/v0.13.0...v0.14.0) (2026-10-31)
 
 
