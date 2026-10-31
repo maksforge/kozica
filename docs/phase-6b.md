@@ -213,6 +213,10 @@ are R2's.
 40 m from every edge, so none of its minutes can lie within 40 m of a second Trail. The script
 reports the bias where it can hide a wrong turn instead: the minutes walked within 40 m of a second
 edge not joined to the nearest. A `gate.db` is pulled with its `-wal`, whose rows are the newest.
+As in the app, a `gate.db` fix without accuracy, or stored more than 30 s after its own time, does
+not count. A firing still shown when its stretch ends ends there, so none spans two walks. For
+verdict 3, each firing prints the median and worst accuracy of its counting fixes and the nearest
+edge's OSM way at its start and at its peak.
 
 ### The verdicts, decided now rather than argued about later
 
