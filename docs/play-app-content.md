@@ -124,8 +124,8 @@ The answer rests on one fact per route data could take:
    which never happens. Since phase 6's checkpoint B; still no data collected.
 6. **Following's Route and Progress are location, stored and not collected.** While following,
    the Route's points and how far along it the user is are kept in the app's settings on the
-   device, and leave it only by point 2's backup, which is the user's own. Since phase 6b's
-   checkpoint E; still no data collected.
+   device, and leave it only by point 2's backup, which is the user's own, or by a backup file the
+   user exports. Since phase 6b's checkpoint E; still no data collected.
 
 Would change any of it:
 

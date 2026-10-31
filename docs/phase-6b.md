@@ -402,8 +402,8 @@ Copy:
 
   > 6. **Following's Route and Progress are location, stored and not collected.** While following,
   >    the Route's points and how far along it the user is are kept in the app's settings on the
-  >    device, and leave it only by point 2's backup, which is the user's own. Since phase 6b's
-  >    checkpoint E; still no data collected.
+  >    device, and leave it only by point 2's backup, which is the user's own, or by a backup file the
+  >    user exports. Since phase 6b's checkpoint E; still no data collected.
 
   Data safety stays "no data collected": nothing leaves the device. No new permission, no network.
 
