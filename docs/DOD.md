@@ -68,8 +68,9 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       `https://srednimax.github.io/kozica/privacy-policy.html` since 2026-10-20.
 - [x] **Answer the Console's App content pages and write [`play-app-content.md`](play-app-content.md)
       in the same sitting.** All ten answered 2026-10-20.
-- [ ] **`LICENSE` and `README.md`.** Bootstrap wrote an all-rights-reserved notice that grants
-      nothing; choose the licence you mean, and make the README's *Contributing* agree with it.
+- [x] **`LICENSE` and `README.md`.** All rights reserved, source-available as the owner's other
+      apps are, the map data under ODbL apart from it; *Contributing* says pull requests are not
+      accepted.
 - [x] **Create the upload keystore, outside the repo.** Recorded in [`RELEASING.md`](RELEASING.md)
       § *The upload key*.
 - [x] **Set up the GitHub repository.** The `main: require CI` ruleset, rebase merges, Pages and
