@@ -252,7 +252,11 @@ class FollowedLine(
         return atVertex[k - 1] + (atVertex[k] - atVertex[k - 1]) * t
     }
 
-    /** The nearest point of the first pass of the line within [within] metres of [fix], between [from] and [to] metres. */
+    /**
+     * The nearest point of the first pass of the line within [within] metres of [fix], between [from]
+     * and [to] metres. A pass also ends where the line, past its nearest point, draws more than
+     * [PASS_RISE] away again, so the two sides of a turn are two passes (docs/phase-6b.md, R3).
+     */
     private fun firstPass(
         fix: FollowFix,
         from: Double,
@@ -267,6 +271,7 @@ class FollowedLine(
                 if (best != null) return best.first
                 continue
             }
+            if (best != null && a.metres >= from && metresTo(fix, a) > best.second + PASS_RISE) return best.first
             val (at, distance) = nearestOnSegment(fix, a, b, from, to)
             if (distance <= within) {
                 if (best == null || distance < best.second) best = at to distance
@@ -291,6 +296,15 @@ class FollowedLine(
             if (candidate.second < best.second) best = candidate
         }
         return best
+    }
+
+    private fun metresTo(
+        fix: FollowFix,
+        sample: RouteSample,
+    ): Double {
+        val east = (sample.longitude - fix.longitude) * cos(fix.latitude * PI / 180) * METRES_PER_DEGREE
+        val north = (sample.latitude - fix.latitude) * METRES_PER_DEGREE
+        return sqrt(east * east + north * north)
     }
 
     /** Metres along the line of [fix]'s nearest point on the segment from [a] to [b], kept within [from]..[to], and its distance. */
@@ -322,5 +336,6 @@ class FollowedLine(
     private companion object {
         const val METRES_PER_DEGREE = 6_371_008.8 * PI / 180
         const val SAME_PLACE = 1.0
+        const val PASS_RISE = 5.0
     }
 }
