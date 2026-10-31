@@ -86,7 +86,9 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       the Console asked no foreground-service declaration for `dataSync` (2026-10-27,
       [`play-app-content.md`](play-app-content.md)). The one-pin update size waits for the closed
       track ([`phase-2b.md`](phase-2b.md) § 6): 0.11.0's Console reports none for a pack, so it is
-      read on a phone ([`phase-6c.md`](phase-6c.md) R5).
+      read on a phone, updated from the release just before one that moves the pin; an update
+      from 0.10.0 straight to 0.14.0 got no patch at all, the unchanged relief included
+      ([`phase-6c.md`](phase-6c.md) R5).
 - [x] **Take phase 1's phone readings before phase 2 builds on MapLibre.** Taken 2026-10-19: R1
       verdict 1, R8 verdict 3 (undecided until E), R9 after fixing a crash, R10's screen
       ([`phase-1.md`](phase-1.md) § 1).
