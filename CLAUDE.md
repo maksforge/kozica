@@ -211,4 +211,5 @@ with a build to prove it.
   without its `-wal` sidecar is **stale** — the app's most recent writes sit in the WAL, so a deleted
   row still reads as present. Pull both and `PRAGMA wal_checkpoint(TRUNCATE)` on the host. Never
   open the live file with `sqlite3` on the device while the app runs: it can unlink the app's WAL,
-  and every later write lands in a deleted file.
+  and every later write lands in a deleted file, readable only through `/proc/<pid>/fd` while the
+  app holds it open.
