@@ -29,7 +29,10 @@ class Paces(
                 timed.clear()
                 timedWithRelief = relief
             }
-            paceOf(samples(hikes))
+            val samples = samples(hikes)
+            paceOf(samples).also { pace ->
+                logPace(hikes.mapIndexed { i, hike -> hike.id to samples.getOrNull(i) }, pace)
+            }
         }.distinctUntilChanged()
 
     private suspend fun samples(hikes: List<HikeSummary>): List<PaceSample> {
