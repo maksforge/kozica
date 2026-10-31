@@ -78,6 +78,12 @@ reverse):
 - Polish: "Jesteś poza trasą" needs no gender, and the action is the noun "Powrót na trasę" (the app
   observes rather than advises).
 
+**Settled after R3** (by the agent, 2026-10-31; the owner's to reverse): a pass also ends where the
+line, past its nearest point to the fix, draws more than 5 m away from it again. At a turn, the far
+end of an out-and-back or a dashed approach to a point, the way out and the way back lie within the
+leaving distance of each other without a break, so without it they were one pass and its nearest
+point could be on the way back, carrying Progress past where the user was (R3).
+
 **Settled in E** (by the agent, 2026-10-31, building it; each is the owner's to reverse):
 
 - The saved Route's id is kept beside the points, so a resumed Route is still the saved one: Save
@@ -455,8 +461,9 @@ calls it:
   followed Route and its Progress are in `AppPreferences` and survive.
 - **`KozicaFollow`**, one line per fix while following: the fix's time, its accuracy, its distance
   from the line, whether it counted and why not (stale, inaccurate, beyond the distance), Progress in
-  metres along the line, the window's reach, leaving's count in seconds, whether the banner shows,
-  and the time left to the next point and to the end. **`KozicaPace`**, one line per Hike each time
+  metres along the line, whether this fix moved it, the window's reach, leaving's count in seconds,
+  whether the banner shows, and the time left to the next point and to the end, in the sheet's
+  minutes and unrounded in seconds × the Pace. **`KozicaPace`**, one line per Hike each time
   the Pace is recomputed (its id, length, moving time, rule's time, ratio, counted or why not) and
   one with the Pace and how many Hikes it is from. `RouteReceiver` logs the time × the Pace beside
   the rule's.
@@ -476,6 +483,6 @@ owner's Pace rather than the signposts'.
 | --- | --- | --- | --- |
 | R1 | The gate (§ 1): firings of 40 m / 30 s per hour over real Tracks on Trails | `python3 scripts/track-offsets.py <gate.db or gpx>…` | *(owed)* |
 | R2 | The Pace from the owner's Hikes: each Hike's ratio, which counted, the median, and three Routes' times before and after. And whether a GPS Track's length is inflated against the network's line: for a Hike walked on Trails, its length against a Route planned along it; a Track longer than the line lowers the ratio, so a Pace that promises too little time, and a gap over 5 % goes to the owner; B's merge does not wait on R2 | the Play build's export restored into the debug build on the owner's phone; `adb logcat -d -s KozicaPace`; `RouteReceiver` | *(owed)* |
-| R3 | Progress on an out-and-back Route and a loop: Progress never moves back, and the time left falls with every fix | `RouteReceiver --ez show true`, Follow tapped, `scripts/replay-track.py`; `adb logcat -d -s KozicaFollow` | **Pass**, 2026-10-31, test phone, each Route's own line replayed (`--route --every 20 --speed 20`, 4 km/h, 10 m accuracy), at the debug build's Pace of 1.15. **Out-and-back**, Kuźnice → Kalatówki → Kuźnice, 4147 m: 207 fixes, Progress 0 → 4100 m and never back, the time to the end 110 → 5 min, falling 21 times and never rising, and following ended by itself. **Loop**, Kuźnice → Boczań → Przełęcz między Kopami → Wyżnia Polana Jaworzynka → Kuźnice, 6507 m, its start and end the same place: 325 fixes, Progress 0 → 6460 m and never back, 195 → 5 min, never rising; at the start Progress stayed at 0 rather than taking the end's pass, and following ended at the end. **Found:** at a turnaround, the Kalatówki one and each dashed approach to a via point, the way out and the way back lie within the leaving distance of each other without a break, so § 3's rule sees one pass, and its nearest point can be on the way back: Progress jumped ahead 128 m at Kalatówki and 48 m and 76 m at the loop's approaches, then held for up to 5 fixes until the walk caught up |
+| R3 | Progress on an out-and-back Route and a loop: Progress never moves back, and the time left falls with every fix | `RouteReceiver --ez show true`, Follow tapped, `scripts/replay-track.py`; `adb logcat -d -s KozicaFollow` | **Pass**, 2026-10-31, test phone, each Route's own line replayed (`--route --every 20 --speed 20`, 4 km/h, 10 m accuracy), at the debug build's Pace of 1.15, after *Settled after R3*. **Out-and-back**, Kuźnice → Kalatówki → Kuźnice, 4147 m: 206 fixes; Progress 0 → 4100 m, never back, and never more than 0.2 m ahead of the replayed place; the time to the end, unrounded, 6563 → 50 s, falling on all 204 fixes that moved Progress and held on the 2 that did not (the approach to Kalatówki, 32 m at most behind); following ended by itself. **Loop**, Kuźnice → Boczań → Przełęcz między Kopami → Wyżnia Polana Jaworzynka → Kuźnice, 6507 m, starting and ending at one place: 324 fixes; Progress 0 → 6460 m, never back, at most 0.2 m ahead and 40 m behind; 11567 → 68 s, falling on 320 fixes and held on 4; Progress stayed at the start rather than taking the end's pass, and following ended at the end. So the time left falls with every fix that moves Progress; a fix that does not move it holds it, and never raises it. **Before the fix** the same replays carried Progress up to 108 m past the replayed place at Kalatówki, and 48 m and 76 m at the loop's approaches |
 | R4 | Following survives a killed process: force-stop mid-Route, relaunch, and the sheet is back with the same Progress | R3's replay paused; `am force-stop`, the next fix sent, relaunch, screencap; `KozicaFollow` before and after | **Pass**, 2026-10-31, test phone, by hand since R3's apparatus is not built: a 0.4 km Route from Kuźnice long-pressed, Follow, one `PositionReceiver` fix midway; the sheet read "Do końca: 0,2 km · ↑ 26 m · 10 min" before `am force-stop` and the same after the fix re-sent and a relaunch, the map back on the dot. Stop then left no `followed_route` in the settings (`run-as … cat files/datastore/app_preferences.preferences_pb`) |
 | R5 | The closing walk: a Route followed end to end with a deliberate wrong turn and a stretch under poor sky; when the banner showed against the first fix beyond the distance, how far the leg back was, and the time left at three points against the Hike's moving time from each to the end, within 15 % or 10 minutes, whichever is larger | the owner's walk on the debug build, recorded as a Hike; `KozicaFollow` | *(owed)* |
