@@ -148,29 +148,27 @@ internal fun RouteSheet(
                     }) { Text(stringResource(R.string.route_save)) }
                 }
             }
-            Column {
-                if (planned != null) Warnings(planned, route, locale)
-                if (open) {
-                    route.points.forEachIndexed { i, point ->
-                        PointRow(
-                            index = i,
-                            point = point,
-                            count = route.points.size,
-                            minutes =
-                                planned
-                                    ?.secondsToPoint
-                                    ?.get(i)
-                                    ?.takeIf { i > 0 }
-                                    ?.let(pace::minutes),
-                            offTrailMetres = planned?.offTrailMetres(i),
-                            locale = locale,
-                            onRemove = { onRemove(i) },
-                            onMove = { to -> onMove(i, to) },
-                        )
-                    }
-                    if (planned != null && planned.metres > 0) {
-                        Profile(planned.profile(), locale, Modifier.padding(top = Spacing.base))
-                    }
+            if (planned != null) Warnings(planned, route, locale)
+            if (open) {
+                route.points.forEachIndexed { i, point ->
+                    PointRow(
+                        index = i,
+                        point = point,
+                        count = route.points.size,
+                        minutes =
+                            planned
+                                ?.secondsToPoint
+                                ?.get(i)
+                                ?.takeIf { i > 0 }
+                                ?.let(pace::minutes),
+                        offTrailMetres = planned?.offTrailMetres(i),
+                        locale = locale,
+                        onRemove = { onRemove(i) },
+                        onMove = { to -> onMove(i, to) },
+                    )
+                }
+                if (planned != null && planned.metres > 0) {
+                    Profile(planned.profile(), locale, Modifier.padding(top = Spacing.base))
                 }
             }
         }
