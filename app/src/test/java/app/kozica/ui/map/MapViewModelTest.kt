@@ -11,11 +11,14 @@ import app.kozica.data.SavedRoute
 import app.kozica.data.regions.GeoBounds
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
+import app.kozica.data.routes.FOLLOWED_KEPT_MILLIS
 import app.kozica.data.routes.FollowFix
+import app.kozica.data.routes.FollowedRoute
 import app.kozica.data.routes.Place
 import app.kozica.data.routes.PlaceKind
 import app.kozica.data.routes.PlaceSearch
 import app.kozica.data.routes.PlannedRoute
+import app.kozica.data.routes.Progress
 import app.kozica.data.routes.RoutePlanner
 import app.kozica.data.routes.RoutePoint
 import app.kozica.data.routes.SearchResult
@@ -303,6 +306,58 @@ class MapViewModelTest {
         settled(viewModel) { it.route.following?.progress != null }
         return { north, at -> FollowFix(midway.latitude + north / 111_195.0, midway.longitude, 10.0, 0, at) }
     }
+
+    @Test
+    fun `following keeps the Route and its Progress in the settings, and Stop clears them`() =
+        runTest {
+            val preferences = AppPreferences(MemoryPreferences())
+            val viewModel = routingViewModel(preferences = preferences, now = { 5_000 })
+            followedMidway(viewModel)
+            val progress =
+                viewModel.state.value.route.following!!
+                    .progress
+
+            val kept = preferences.followedRoute.first()
+            assertEquals(viewModel.state.value.route.points, kept?.points)
+            assertEquals(progress, kept?.progress)
+            assertEquals(5_000L, kept?.touchedAtMillis)
+
+            viewModel.stopFollowing()
+            settled(viewModel) { it.route.following == null }
+            assertNull(preferences.followedRoute.first())
+        }
+
+    @Test
+    fun `a Route followed when the app closed is followed again from its Progress`() =
+        runTest {
+            val preferences = AppPreferences(MemoryPreferences())
+            val points = listOf(RoutePoint(49.0, 20.0, "Start"), RoutePoint(49.0, 20.02, "End"))
+            val progress = Progress(700.0, 1_000)
+            preferences.setFollowedRoute(FollowedRoute(points, "Saved", "route-1", progress, touchedAtMillis = 0))
+
+            val viewModel = routingViewModel(preferences = preferences, now = { FOLLOWED_KEPT_MILLIS })
+            val route = settled(viewModel) { it.route.following != null }.route
+
+            assertEquals(points, route.points)
+            assertEquals("Saved", route.name)
+            assertEquals("route-1", route.savedId)
+            assertEquals(progress, route.following?.progress)
+        }
+
+    @Test
+    fun `a followed Route untouched for over a day is dropped on the next open`() =
+        runTest {
+            val preferences = AppPreferences(MemoryPreferences())
+            val points = listOf(RoutePoint(49.0, 20.0), RoutePoint(49.0, 20.02))
+            preferences.setFollowedRoute(FollowedRoute(points, progress = Progress(700.0, 0), touchedAtMillis = 0))
+
+            val viewModel = routingViewModel(preferences = preferences, now = { FOLLOWED_KEPT_MILLIS + 1 })
+            val route = settled(viewModel) { true }.route
+
+            assertNull(route.following)
+            assertEquals(emptyList<RoutePoint>(), route.points)
+            assertNull(preferences.followedRoute.first())
+        }
 
     @Test
     fun `the banner shows after 30 s off the Route, and goes with the leg back at the first fix on it`() =
@@ -903,9 +958,11 @@ private fun routingViewModel(
     sectionsOf: (Long) -> List<Long> = { emptyList() },
     routeAlong: suspend (TrailDetail) -> List<RoutePoint>? = { null },
     io: CoroutineDispatcher = Dispatchers.Main,
+    preferences: AppPreferences = AppPreferences(MemoryPreferences()),
+    now: () -> Long = System::currentTimeMillis,
 ) = MapViewModel(
     regions = flowOf(emptyList()),
-    preferences = AppPreferences(MemoryPreferences()),
+    preferences = preferences,
     readAsset = { "" },
     applicationScope = CoroutineScope(Dispatchers.Unconfined),
     positions = { MutableSharedFlow<Location>() },
@@ -922,6 +979,7 @@ private fun routingViewModel(
     loadTrail = loadTrail,
     sectionsOf = sectionsOf,
     routeAlong = routeAlong,
+    now = now,
 ).tracked()
 
 private fun trailDetail(

@@ -27,7 +27,7 @@ Read at **versionCode _, versionName _** by `publish-play.yml`'s verify step on 
 | Permission | Whose | What it is for | Console consequence |
 | --- | --- | --- | --- |
 | `…DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | its own non-exported receivers, signature-level | none: not user-visible |
-| `ACCESS_FINE_LOCATION` | Kozica | the position button: the dot, its accuracy circle and heading on the map, read on the phone only; and recording a Hike, whose Track is stored on the phone | the location permission declaration; Data safety stays "no data collected", because nothing leaves the device |
+| `ACCESS_FINE_LOCATION` | Kozica | the position button: the dot, its accuracy circle and heading on the map, read on the phone only; recording a Hike, whose Track is stored on the phone; and following a Route, whose Route and Progress are kept in the app's settings on the phone until following ends, or the next open once 24 hours have passed | the location permission declaration; Data safety stays "no data collected", because nothing leaves the device |
 | `ACCESS_COARSE_LOCATION` | Kozica | asked with fine, as Android requires from API 31 for the approximate option | as fine |
 | `FOREGROUND_SERVICE_LOCATION` | Kozica | the Hike recording service, started from the visible app at Record | the foreground service declaration below |
 | `POST_NOTIFICATIONS` | Kozica | the recording's notification, asked once at the first Record | none |
@@ -122,6 +122,10 @@ The answer rests on one fact per route data could take:
    in the database on the device, and leaves it only by point 2's backup, which is the user's own,
    or by a share the user makes. Play's "collected" means transmitted off the device by the app,
    which never happens. Since phase 6's checkpoint B; still no data collected.
+6. **Following's Route and Progress are location, stored and not collected.** While following,
+   the Route's points and how far along it the user is are kept in the app's settings on the
+   device, and leave it only by point 2's backup, which is the user's own. Since phase 6b's
+   checkpoint E; still no data collected.
 
 Would change any of it:
 
