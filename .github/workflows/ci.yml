@@ -310,6 +310,14 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # The debug build has no Trail network or name index of its own; the scenes over search and
+      # planning read the current version's, as a phone does with them hand-pushed.
+      - name: Fetch the Trail network
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "v$(jq -r '."."' .release-please-manifest.json)" \
+            --pattern trails.network --pattern places.sqlite --pattern trails.edges --dir artifacts/network
       - name: Run the matrix
         uses: ReactiveCircus/android-emulator-runner@v2.38.0
         with:
@@ -329,7 +337,7 @@ jobs:
             # costs another 36 — so the scene is re-walked in place instead, for about a minute.
             # It does not soften the check: a scene that never lands still fails the assert, and
             # one that needed two goes is printed as `flaky:` whether the run is red or green.
-            python3 scripts/edge-to-edge.py --out artifacts/edge-to-edge --assert-clean --retry-unreached 2 --config ${{ matrix.config }}
+            python3 scripts/edge-to-edge.py --out artifacts/edge-to-edge --assert-clean --retry-unreached 2 --network-dir artifacts/network --config ${{ matrix.config }}
 
       # if: always() because a red run is exactly when the screenshots and the report are wanted.
       - name: Upload matrix
