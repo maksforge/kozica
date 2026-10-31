@@ -17,8 +17,8 @@ placeholder domain goes — until then a run walks to screens that do not exist,
 edge-to-edge job reports a red that means nothing. That rewrite is the one edit that makes both
 scripts yours; everything else here is about the phone, not the app.
 
-    scripts/screenshots.py --out docs/screenshots/before
-    scripts/screenshots.py --out docs/screenshots/after
+    scripts/screenshots.py --out docs/screenshots/before --network-dir NET   # NET: see edge-to-edge.py
+    scripts/screenshots.py --out docs/screenshots/after --network-dir NET
     scripts/screenshots.py --out DIR --theme light          # one cell
     scripts/screenshots.py --out DIR --scene home,settings  # one screen, while iterating
     scripts/screenshots.py --out DIR --scene home,settings --numbered   # 1_home-en.png, 2_settings-en.png
@@ -281,6 +281,14 @@ def run_cell(theme: str, locale: str | None, scenes: list, out: Path, reseed: bo
             schema_dirty = schema_dirty or suite == "mismatch"
             print(f"  -- {suite} ({len(wanted)} scenes)")
             for scene in wanted:
+                if scene.dirties and not reseed:
+                    # Under `--build release` this would start a real hike or a real follow in the
+                    # shipped install, with no reseed to end it.
+                    results.append(
+                        {"scene": scene.name, "family": scene.family, "error": "outlives the scene; --no-reseed"},
+                    )
+                    print(f"     {scene.name:28s} SKIPPED  outlives the scene; --no-reseed")
+                    continue
                 if suite == "full" and reseed:
                     e2e.ensure_seed(scene.seed)
                 elif scene.seed:
@@ -294,6 +302,10 @@ def run_cell(theme: str, locale: str | None, scenes: list, out: Path, reseed: bo
                     print(f"     {scene.name:28s} SKIPPED  needs seed {scene.seed!r}")
                     continue
                 result = capture(scene, out_dir, tag)
+                if scene.dirties:
+                    # Now rather than at the next scene, which may be in another suite or none.
+                    e2e.invalidate_seed()
+                    e2e.ensure_seed(scene.seed)
                 results.append(result)
                 if "error" in result:
                     print(f"     {scene.name:28s} SKIPPED  {result['error'][:80]}")
@@ -336,6 +348,12 @@ def main() -> int:
         default="debug",
         help="which install to shoot. 'release' is the shipped one — the only one a store set should "
         "come from — and implies --no-reseed",
+    )
+    parser.add_argument(
+        "--network-dir",
+        type=Path,
+        help="directory holding a release's trails.network, places.sqlite and trails.edges, pushed to the "
+        "debug build for the search and planning scenes. The release build ships them",
     )
     parser.add_argument(
         "--no-reseed",
@@ -405,6 +423,16 @@ def main() -> int:
     elif args.numbered:
         parser.error("--numbered needs --scene: the number is the position in the list you asked for")
 
+    if args.build == "release":
+        if args.network_dir:
+            parser.error(
+                "--network-dir is for the debug build: the release ships the network, and run-as cannot reach it",
+            )
+    else:
+        problem = e2e.use_network(args.network_dir, scenes)
+        if problem:
+            parser.error(problem)
+
     if args.numbered:
         global _ORDER
         _ORDER = {scene.name: i for i, scene in enumerate(scenes, 1)}
@@ -415,6 +443,9 @@ def main() -> int:
         e2e.resolve_needles(args.locale)
     set_locale(args.locale)
 
+    if args.no_reseed:
+        # Without a reseed nothing wipes, and the wipe is where the files are pushed.
+        e2e.push_network()
     e2e.apply_config(CONFIG)
     started = time.time()
     manifest = {

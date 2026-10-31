@@ -17,13 +17,16 @@ looking for, found by arithmetic instead of by squinting at 80 PNGs.
 The screenshots are still the deliverable: this narrows which ones a human has to open.
 
 Usage:
-    scripts/edge-to-edge.py --out /path/to/dir            # the whole matrix
+    scripts/edge-to-edge.py --out /path/to/dir --network-dir NET   # the whole matrix
     scripts/edge-to-edge.py --out DIR --config landscape-threebutton
     scripts/edge-to-edge.py --out DIR --scene home,weight-chart
     scripts/edge-to-edge.py --out DIR --locale pl         # the same walk, in Polish
     scripts/edge-to-edge.py --out DIR --assert-clean       # exit 1 on a defect, for CI
     scripts/edge-to-edge.py --out DIR --retry-unreached 2  # re-walk a scene the driver missed
     scripts/edge-to-edge.py --restore                     # hand the phone back to auto-rotate
+
+`NET` holds a `v*` release's trails.network, places.sqlite and trails.edges, which the debug build
+lacks; a run that includes the search or planning scenes refuses to start without it.
 
 The phone is left in whatever configuration the last cell used; `--restore` puts it back.
 
@@ -1087,6 +1090,23 @@ NETWORK_DIR: "Path | None" = None
 NETWORK_FILES = ("trails.network", "places.sqlite", "trails.edges")
 
 
+def use_network(directory: "Path | None", scenes: "list[Scene]") -> "str | None":
+    """Point [push_network] at `directory`, or say why these scenes cannot run without it."""
+    global NETWORK_DIR
+    NETWORK_DIR = directory
+    needing = [scene.name for scene in scenes if scene.needs_network]
+    if needing and directory is None:
+        return (
+            f"{', '.join(needing)} need the Trail network: download trails.network, places.sqlite "
+            "and trails.edges from the latest v* release and pass --network-dir"
+        )
+    if directory is not None:
+        missing = [name for name in NETWORK_FILES if not (directory / name).is_file()]
+        if missing:
+            return f"--network-dir lacks {', '.join(missing)}"
+    return None
+
+
 def push_network() -> None:
     """Put the release's base files where the debug build looks for them, before the app starts."""
     if NETWORK_DIR is None:
@@ -1106,6 +1126,7 @@ def grant(permission: str) -> None:
         return
     if not shell_ok(f"pm grant {PACKAGE} android.permission.{permission}"):
         raise StepFailed(f"pm grant {permission} failed")
+
 
 SEED_RECEIVER = f"{PACKAGE}/{project.NAMESPACE}.debug.SeedReceiver"
 
@@ -1644,10 +1665,15 @@ def run_scene(scene: Scene, config: Config, out_dir: Path, retries: int = 0) -> 
     # That is the exact failure retrying is supposed to avoid, arriving by the other road.
     allowed = 1 + (0 if scene.keeps_seeded_prompt else max(retries, 0))
     for attempt in range(1, allowed + 1):
+        error = None
         if scene.dirties and attempt > 1:
             invalidate_seed()
-            ensure_seed(scene.seed)
-        error = reach_scene(scene)
+            try:
+                ensure_seed(scene.seed)
+            except StepFailed as failure:
+                error = f"reseed before the retry: {failure}"
+        if error is None:
+            error = reach_scene(scene)
         if error is None:
             break
         if attempt < allowed:
@@ -1804,21 +1830,10 @@ def main() -> int:
     if args.scene:
         wanted = set(args.scene.split(","))
         scenes = [scene for scene in SCENES if scene.name in wanted]
-    global NETWORK_DIR
-    NETWORK_DIR = args.network_dir
-    needing = [scene.name for scene in scenes if scene.needs_network]
-    if needing and NETWORK_DIR is None:
-        print(
-            f"edge-to-edge: {', '.join(needing)} need the Trail network: download trails.network, "
-            "places.sqlite and trails.edges from the latest v* release and pass --network-dir",
-            file=sys.stderr,
-        )
+    problem = use_network(args.network_dir, scenes)
+    if problem:
+        print(f"edge-to-edge: {problem}", file=sys.stderr)
         return 2
-    if NETWORK_DIR is not None:
-        missing = [name for name in NETWORK_FILES if not (NETWORK_DIR / name).is_file()]
-        if missing:
-            print(f"edge-to-edge: --network-dir lacks {', '.join(missing)}", file=sys.stderr)
-            return 2
 
     # Before anything touches the phone: a needle that names two strings, or none, is worth knowing
     # about now rather than 40 seconds into a cell (see [resolve_needles]).
