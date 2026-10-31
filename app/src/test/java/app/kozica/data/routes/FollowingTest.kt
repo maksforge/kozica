@@ -58,6 +58,24 @@ class FollowingTest {
         assertEquals(300.0, progress!!.metres, 1.0)
     }
 
+    /** [outAndBackRoute] with the way down drawn 2 m east of the way up, as two sides of a turn are on a real line. */
+    private val sideBySide =
+        FollowedLine(
+            outAndBackRoute.copy(
+                line =
+                    outAndBackRoute.line.map {
+                        if (it.metres > 1000) it.copy(longitude = 20.0 + 2.0 * degreesPerMetre / 0.656) else it
+                    },
+            ),
+        )
+
+    @Test
+    fun `just before the turn Progress stays on the way up, though the way down is a little nearer`() {
+        val progress = sideBySide.follow(Progress(900.0, 0), fix(980.0, 30_000, east = 1.2))
+
+        assertEquals(980.0, progress!!.metres, 1.0)
+    }
+
     @Test
     fun `past the turn the same place along the valley is the way down`() {
         val atTurn = Progress(1000.0, 0)
