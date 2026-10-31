@@ -59,6 +59,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -374,6 +375,10 @@ class MapViewModel(
 
     private var resuming: Job? = null
 
+    private val followedWrites = Channel<FollowedRoute?>(Channel.CONFLATED)
+
+    private var keepingFollowed = false
+
     // Changes whenever the map's Route is replaced, so a Save that returns late lands only on its own.
     private var routeGeneration = 0
 
@@ -452,7 +457,9 @@ class MapViewModel(
         }
         viewModelScope.launch { followSavedName() }
         viewModelScope.launch {
-            preferences.followedRoute.first()?.let { resume(it) }
+            val stored = preferences.followedRoute.first()
+            applicationScope.launch { writeFollowed(stored) }
+            stored?.let { resume(it) }
             keepFollowed()
         }
         // Play fetches fast-follow packs by itself; this covers one it has not started and a Region a
@@ -932,10 +939,7 @@ class MapViewModel(
      * its Progress, unless it was last touched over a day ago or the map already shows something else.
      */
     private suspend fun resume(stored: FollowedRoute) {
-        if (now() - stored.touchedAtMillis > FOLLOWED_KEPT_MILLIS) {
-            preferences.setFollowedRoute(null)
-            return
-        }
+        if (now() - stored.touchedAtMillis > FOLLOWED_KEPT_MILLIS) return
         if (route.value.points.isNotEmpty() || shownHike.value != null) return
         routeGeneration++
         route.value = RouteUiState(savedId = stored.savedId, name = stored.name)
@@ -949,18 +953,32 @@ class MapViewModel(
         job.join()
     }
 
-    /** Writes the followed Route as it changes, and clears it once following ends, for [resume]. */
+    /** Hands the followed Route to [writeFollowed] as it changes, and null once following ends, for [resume]. */
     private suspend fun keepFollowed() {
-        route
-            .map { state ->
-                state.following?.let { FollowedRoute(state.points, state.name, state.savedId, it.progress) }
-            }.distinctUntilChanged()
-            .collect { followed ->
-                // Past the screen's life, so a Stop just before Back is not lost and resumed on the next open.
-                applicationScope
-                    .launch { preferences.setFollowedRoute(followed?.copy(touchedAtMillis = now())) }
-                    .join()
-            }
+        keepingFollowed = true
+        route.map(::followedOf).distinctUntilChanged().collect { followedWrites.trySend(it) }
+    }
+
+    private fun followedOf(state: RouteUiState): FollowedRoute? =
+        state.following?.let { FollowedRoute(state.points, state.name, state.savedId, it.progress) }
+
+    /**
+     * The followed Route's only writer, in [applicationScope] so the last value lands even after the
+     * screen has gone. An unchanged value keeps its stamp, so a reopen alone never restarts the day.
+     */
+    private suspend fun writeFollowed(stored: FollowedRoute?) {
+        var kept = stored
+        for (followed in followedWrites) {
+            if (followed == kept?.copy(touchedAtMillis = 0)) continue
+            kept = followed?.copy(touchedAtMillis = now())
+            preferences.setFollowedRoute(kept)
+        }
+    }
+
+    // A Stop just before Back may not have reached keepFollowed's collector before its scope was cancelled.
+    override fun onCleared() {
+        if (keepingFollowed) followedWrites.trySend(followedOf(route.value))
+        followedWrites.close()
     }
 
     fun stopFollowing() {
