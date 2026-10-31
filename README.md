@@ -1,19 +1,19 @@
 # Kozica
 
-<One or two sentences: what the app does, and for whom.>
+Kozica is an offline hiking map of the Polish mountains, from the Karkonosze to the Bieszczady and
+across the Czech and Slovak borders, with every marked trail drawn in its signposts' colour. Plan a
+route over the trails, record a hike, and look back at it, all without signal.
 
-<The constraint that shapes everything — for example: "Every feature is free. No ads, no server, no
-account.">
+Everything stays on the phone: the app never opens a network connection. Free, no ads, no account.
 
 ## Status
 
-Just bootstrapped from [android-starter](https://github.com/maksforge/android-starter). The release
-pipeline and quality gates are real; the screens are still the template's placeholder app. Nothing
-is on Play yet.
+On Google Play's internal and closed testing tracks; production and 1.0 follow the closed test.
 
 ## Contributing
 
-<Say whether pull requests are accepted — and make it agree with [LICENSE](LICENSE).>
+Kozica is source-available, not open source: read it, verify it, file issues. Pull requests are not
+accepted — see [LICENSE](LICENSE).
 
 ## Build
 

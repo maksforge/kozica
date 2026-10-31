@@ -1,9 +1,20 @@
 Kozica
 Copyright (c) 2026 Maksymilian Średniawa. All rights reserved.
 
-No licence is granted yet. This notice was written by the template's bootstrap and
-stands until the owner replaces it with the licence they choose.
+This source code is published for reading, review, and verification of what
+the released app does. It is not open source.
+
+You may not copy, modify, distribute, sublicense, publish, or make derivative
+works of this software, in source or binary form, or distribute builds of it
+through any app store or other channel, without prior written permission.
+Viewing and forking within GitHub, as permitted by the GitHub Terms of
+Service, is not a grant of any of the rights above.
 
 Third-party components bundled in the built application remain under their own
 licences, reproduced in the app's licences screen and in
 app/src/main/assets/licences/. Those obligations travel with every build.
+
+The map data is not covered by this notice. It is built from OpenStreetMap and
+offered under the Open Database License 1.0 with every release on GitHub, as
+MAP-DATA-LICENCE.txt says; the relief keeps the licences of its national
+sources, in RELIEF-DATA-LICENCE.txt. Both are in app/src/main/assets/licences/.
