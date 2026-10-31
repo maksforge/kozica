@@ -209,4 +209,6 @@ with a build to prove it.
   it. `scripts/device-gate.py` reads and sets it.
 - **A device reading can look identical to a pass when it is nothing at all.** A database pulled
   without its `-wal` sidecar is **stale** — the app's most recent writes sit in the WAL, so a deleted
-  row still reads as present. Pull both and `PRAGMA wal_checkpoint(TRUNCATE)` on the host.
+  row still reads as present. Pull both and `PRAGMA wal_checkpoint(TRUNCATE)` on the host. Never
+  open the live file with `sqlite3` on the device while the app runs: it can unlink the app's WAL,
+  and every later write lands in a deleted file.
