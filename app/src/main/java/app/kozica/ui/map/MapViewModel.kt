@@ -457,7 +457,7 @@ class MapViewModel(
         }
         viewModelScope.launch { followSavedName() }
         viewModelScope.launch {
-            val stored = preferences.followedRoute.first()
+            val stored = preferences.readFollowedRoute()
             applicationScope.launch { writeFollowed(stored) }
             stored?.let { resume(it) }
             keepFollowed()

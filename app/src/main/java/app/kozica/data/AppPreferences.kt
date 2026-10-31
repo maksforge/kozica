@@ -110,8 +110,19 @@ class AppPreferences(
     /** The Route being followed and its Progress, null when none is; unreadable reads as none, like [themeMode]. */
     val followedRoute: Flow<FollowedRoute?> =
         store.data.map { prefs ->
-            prefs[Keys.FOLLOWED_ROUTE]?.let { runCatching { json.decodeFromString<FollowedRoute>(it) }.getOrNull() }
+            prefs[Keys.FOLLOWED_ROUTE]?.let(::decodeFollowed)
         }
+
+    /** [followedRoute] read once, removing a value that no longer decodes so its points do not linger. */
+    suspend fun readFollowedRoute(): FollowedRoute? {
+        var followed: FollowedRoute? = null
+        store.edit { prefs ->
+            val stored = prefs[Keys.FOLLOWED_ROUTE] ?: return@edit
+            followed = decodeFollowed(stored)
+            if (followed == null) prefs.remove(Keys.FOLLOWED_ROUTE)
+        }
+        return followed
+    }
 
     /**
      * The theme mode, read once, before any Activity exists.
@@ -177,3 +188,6 @@ class AppPreferences(
 }
 
 private val json = Json { ignoreUnknownKeys = true }
+
+private fun decodeFollowed(stored: String): FollowedRoute? =
+    runCatching { json.decodeFromString<FollowedRoute>(stored) }.getOrNull()

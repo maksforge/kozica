@@ -4,6 +4,8 @@ import android.location.Location
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.preferencesOf
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.viewModelScope
 import app.kozica.data.AppPreferences
 import app.kozica.data.MapCamera
@@ -357,6 +359,16 @@ class MapViewModelTest {
 
             assertNull(route.following)
             assertEquals(emptyList<RoutePoint>(), route.points)
+        }
+
+    @Test
+    fun `a stored Route that no longer reads is removed on the next open`() =
+        runTest {
+            val key = stringPreferencesKey("followed_route")
+            val store = MemoryPreferences().apply { data.value = preferencesOf(key to "{\"points\":") }
+            routingViewModel(preferences = AppPreferences(store))
+
+            withContext(Dispatchers.Default) { withTimeout(5.seconds) { store.data.first { key !in it } } }
         }
 
     @Test
