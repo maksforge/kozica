@@ -77,6 +77,18 @@ reverse):
   tertiary, so it reads as neither; a selected Trail hides it with the Route.
 - Polish: "Jesteś poza trasą" needs no gender, and the action is the noun "Powrót na trasę" (the app
   observes rather than advises).
+
+**Settled in E** (by the agent, 2026-10-31, building it; each is the owner's to reverse):
+
+- The saved Route's id is kept beside the points, so a resumed Route is still the saved one: Save
+  writes over it, and a rename or a delete in the Routes tab reaches it as before.
+- The value is written whenever the points, the name or Progress change, each write stamped with the
+  time, and "last touched" is that stamp. Leaving's count and the leg back are not kept: a reopen is
+  a gap of more than 30 s anyway, which restarts the count (§ 4).
+- On reopening, the Route is planned again from today's network and followed only if it is still
+  complete; otherwise it stays drawn, unfollowed, and the value goes. A Route or a Hike the map was
+  asked to show before the read wins, and the value goes with the next write.
+- A resumed Route keeps the user in view, as a Follow tap does.
 ---
 
 ## 0. What this phase inherits
@@ -455,5 +467,5 @@ owner's Pace rather than the signposts'.
 | R1 | The gate (§ 1): firings of 40 m / 30 s per hour over real Tracks on Trails | `python3 scripts/track-offsets.py <gate.db or gpx>…` | *(owed)* |
 | R2 | The Pace from the owner's Hikes: each Hike's ratio, which counted, the median, and three Routes' times before and after. And whether a GPS Track's length is inflated against the network's line: for a Hike walked on Trails, its length against a Route planned along it; a Track longer than the line lowers the ratio, so a Pace that promises too little time, and a gap over 5 % goes to the owner; B's merge does not wait on R2 | the Play build's export restored into the debug build on the owner's phone; `adb logcat -d -s KozicaPace`; `RouteReceiver` | *(owed)* |
 | R3 | Progress on an out-and-back Route and a loop: Progress never moves back, and the time left falls with every fix | `RouteReceiver --ez show true`, Follow tapped, `scripts/replay-track.py`; `adb logcat -d -s KozicaFollow` | *(owed)* |
-| R4 | Following survives a killed process: force-stop mid-Route, relaunch, and the sheet is back with the same Progress | R3's replay paused; `am force-stop`, the next fix sent, relaunch, screencap; `KozicaFollow` before and after | *(owed)* |
+| R4 | Following survives a killed process: force-stop mid-Route, relaunch, and the sheet is back with the same Progress | R3's replay paused; `am force-stop`, the next fix sent, relaunch, screencap; `KozicaFollow` before and after | **Pass**, 2026-10-31, test phone, by hand since R3's apparatus is not built: a 0.4 km Route from Kuźnice long-pressed, Follow, one `PositionReceiver` fix midway; the sheet read "Do końca: 0,2 km · ↑ 26 m · 10 min" before `am force-stop` and the same after the fix re-sent and a relaunch, the map back on the dot. Stop then left no `followed_route` in the settings (`run-as … cat files/datastore/app_preferences.preferences_pb`) |
 | R5 | The closing walk: a Route followed end to end with a deliberate wrong turn and a stretch under poor sky; when the banner showed against the first fix beyond the distance, how far the leg back was, and the time left at three points against the Hike's moving time from each to the end, within 15 % or 10 minutes, whichever is larger | the owner's walk on the debug build, recorded as a Hike; `KozicaFollow` | *(owed)* |

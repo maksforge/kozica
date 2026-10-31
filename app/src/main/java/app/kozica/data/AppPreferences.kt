@@ -7,9 +7,11 @@ import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import app.kozica.data.routes.FollowedRoute
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
 import java.time.Instant
 
 /** Which colour scheme applies, regardless of what the phone is set to. */
@@ -57,6 +59,7 @@ class AppPreferences(
         val AUTO_RESUME = booleanPreferencesKey("auto_resume")
         val NOTIFICATIONS_ASKED = booleanPreferencesKey("notifications_asked")
         val LAST_EVERYTHING_EXPORT = longPreferencesKey("last_everything_export")
+        val FOLLOWED_ROUTE = stringPreferencesKey("followed_route")
     }
 
     /**
@@ -104,6 +107,12 @@ class AppPreferences(
     /** Whether Record has asked for notifications, which it does once (docs/phase-6.md § 2). */
     val notificationsAsked: Flow<Boolean> = store.data.map { it[Keys.NOTIFICATIONS_ASKED] ?: false }
 
+    /** The Route being followed and its Progress, null when none is; unreadable reads as none, like [themeMode]. */
+    val followedRoute: Flow<FollowedRoute?> =
+        store.data.map { prefs ->
+            prefs[Keys.FOLLOWED_ROUTE]?.let { runCatching { json.decodeFromString<FollowedRoute>(it) }.getOrNull() }
+        }
+
     /**
      * The theme mode, read once, before any Activity exists.
      *
@@ -150,9 +159,21 @@ class AppPreferences(
         }
     }
 
+    suspend fun setFollowedRoute(followed: FollowedRoute?) {
+        store.edit { prefs ->
+            if (followed == null) {
+                prefs.remove(Keys.FOLLOWED_ROUTE)
+            } else {
+                prefs[Keys.FOLLOWED_ROUTE] = json.encodeToString(FollowedRoute.serializer(), followed)
+            }
+        }
+    }
+
     suspend fun setBackupFolderUri(uri: String?) {
         store.edit { prefs ->
             if (uri == null) prefs.remove(Keys.BACKUP_FOLDER_URI) else prefs[Keys.BACKUP_FOLDER_URI] = uri
         }
     }
 }
+
+private val json = Json { ignoreUnknownKeys = true }

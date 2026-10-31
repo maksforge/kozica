@@ -34,8 +34,10 @@ import app.kozica.data.hikes.trim
 import app.kozica.data.regions.Region
 import app.kozica.data.regions.RegionState
 import app.kozica.data.routes.DemandingStretch
+import app.kozica.data.routes.FOLLOWED_KEPT_MILLIS
 import app.kozica.data.routes.FollowFix
 import app.kozica.data.routes.FollowedLine
+import app.kozica.data.routes.FollowedRoute
 import app.kozica.data.routes.Leaving
 import app.kozica.data.routes.Left
 import app.kozica.data.routes.Place
@@ -323,6 +325,7 @@ class MapViewModel(
     private val sectionsOf: (longDistance: Long) -> List<Long> = { emptyList() },
     private val routeAlong: suspend (TrailDetail) -> List<RoutePoint>? = { null },
     pace: Flow<Pace?> = flowOf(null),
+    private val now: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
     // Paired before stateIn, so the style is never built from Regions whose relief has not been read yet.
     private val packs: StateFlow<Pair<List<Region>, Region?>?> =
@@ -368,6 +371,8 @@ class MapViewModel(
     private var followed: FollowedLine? = null
 
     private var planningBack: Job? = null
+
+    private var resuming: Job? = null
 
     // Changes whenever the map's Route is replaced, so a Save that returns late lands only on its own.
     private var routeGeneration = 0
@@ -446,6 +451,10 @@ class MapViewModel(
             }
         }
         viewModelScope.launch { followSavedName() }
+        viewModelScope.launch {
+            preferences.followedRoute.first()?.let { resume(it) }
+            keepFollowed()
+        }
         // Play fetches fast-follow packs by itself; this covers one it has not started and a Region a
         // later build adds. A failed or cancelled one waits for Retry (docs/phase-2c.md § 1).
         viewModelScope.launch {
@@ -903,11 +912,55 @@ class MapViewModel(
     }
 
     /** Follow on a complete Route's sheet; Progress waits for the first fix that counts. */
-    fun follow() {
+    fun follow() = startFollowing(null)
+
+    private fun startFollowing(progress: Progress?) {
         val current = route.value
         val planned = current.planned?.takeIf { it.complete && !current.planning } ?: return
         val line = FollowedLine(planned).also { followed = it }
-        route.update { it.copy(following = FollowingUiState(left = line.left(Progress(0.0, 0))), followingNote = null) }
+        val kept = progress?.let { it.copy(metres = it.metres.coerceIn(0.0, line.metres)) }
+        route.update {
+            it.copy(
+                following = FollowingUiState(progress = kept, left = line.left(kept ?: Progress(0.0, 0))),
+                followingNote = null,
+            )
+        }
+    }
+
+    /**
+     * docs/phase-6b.md § 3: the Route followed when the app was closed, planned again and followed from
+     * its Progress, unless it was last touched over a day ago or the map already shows something else.
+     */
+    private suspend fun resume(stored: FollowedRoute) {
+        if (now() - stored.touchedAtMillis > FOLLOWED_KEPT_MILLIS) {
+            preferences.setFollowedRoute(null)
+            return
+        }
+        if (route.value.points.isNotEmpty() || shownHike.value != null) return
+        routeGeneration++
+        route.value = RouteUiState(savedId = stored.savedId, name = stored.name)
+        changePoints { stored.points }
+        val job =
+            viewModelScope.launch {
+                route.first { !it.planning }
+                startFollowing(stored.progress)
+            }
+        resuming = job
+        job.join()
+    }
+
+    /** Writes the followed Route as it changes, and clears it once following ends, for [resume]. */
+    private suspend fun keepFollowed() {
+        route
+            .map { state ->
+                state.following?.let { FollowedRoute(state.points, state.name, state.savedId, it.progress) }
+            }.distinctUntilChanged()
+            .collect { followed ->
+                // Past the screen's life, so a Stop just before Back is not lost and resumed on the next open.
+                applicationScope
+                    .launch { preferences.setFollowedRoute(followed?.copy(touchedAtMillis = now())) }
+                    .join()
+            }
     }
 
     fun stopFollowing() {
@@ -918,6 +971,7 @@ class MapViewModel(
     private fun unfollow() {
         followed = null
         planningBack?.cancel()
+        resuming?.cancel()
     }
 
     fun dismissFollowingNote() {

@@ -5,7 +5,7 @@ title: Privacy Policy
 
 # Privacy Policy
 
-_Last updated: 27 October 2026_
+_Last updated: 31 October 2026_
 
 Kozica is an Android app for hiking in the Polish mountains: an offline map of the trails, drawn in
 their signpost colours. This policy describes what the app does with information about you. It is
@@ -51,6 +51,12 @@ The app itself sends the file nowhere.
   for as long as you keep the hike. It is never sent anywhere by the app. While a hike records, a
   notification says so, and the app reads your location with the screen off until you stop it.
   Recording asks for notifications once, for that notification; you can say no and still record.
+- **Your location while you follow a Route**, only once you tap Follow and allow precise location.
+  While the app is on screen it reads your location to show how far along the Route you are. So
+  that it can pick up where you were if Android closes it, the app keeps the Route you follow and
+  how far along it you are in its settings on the phone, until following ends, or the next time you
+  open the app once 24 hours have passed. It is never sent anywhere by the app, and goes into
+  Android's backup below with the rest of the app's data.
 - **Photos you add to a hike**, only the ones you take with your camera app from the recording bar
   or pick yourself with Android's photo picker, which shows the app nothing else. Neither needs a
   permission. The app keeps its own smaller copy in its private storage, **with the photo's location

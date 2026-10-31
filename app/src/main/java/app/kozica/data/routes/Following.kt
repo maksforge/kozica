@@ -1,5 +1,6 @@
 package app.kozica.data.routes
 
+import kotlinx.serialization.Serializable
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -13,6 +14,9 @@ internal const val FIX_OLDEST_MILLIS = 30_000L
 internal const val WINDOW_METRES_PER_SECOND = 6000.0 / 3600
 internal const val WINDOW_LEAST_METRES = 200.0
 internal const val LEAVING_MILLIS = 30_000L
+
+/** docs/phase-6b.md § 3: a followed Route untouched for longer is dropped on the next open. */
+internal const val FOLLOWED_KEPT_MILLIS = 24 * 60 * 60 * 1000L
 
 /** A position fix as Following reads it; [ageMillis] is how old it was when it arrived, [atMillis] its own time. */
 data class FollowFix(
@@ -29,9 +33,23 @@ data class FollowFix(
 }
 
 /** Where the user is along the Route's line, [metres] from its start, as of the fix matched [atMillis]. */
+@Serializable
 data class Progress(
     val metres: Double,
     val atMillis: Long,
+)
+
+/**
+ * What following keeps in the app's settings so it survives a closed app (docs/phase-6b.md § 3): the
+ * points rather than the saved Route's id, so a Route followed before it was saved survives too.
+ */
+@Serializable
+data class FollowedRoute(
+    val points: List<RoutePoint>,
+    val name: String? = null,
+    val savedId: String? = null,
+    val progress: Progress? = null,
+    val touchedAtMillis: Long = 0,
 )
 
 /** What is left to a place along the Route, by the signposts' rule; a Pace applies to [seconds]. */

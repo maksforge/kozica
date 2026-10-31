@@ -1,5 +1,6 @@
 package app.kozica.data.routes
 
+import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 
 /**
@@ -7,6 +8,7 @@ import kotlin.math.ceil
  *
  * @param label the place's name, or null for a point with no place near it, shown by its position.
  */
+@Serializable
 data class RoutePoint(
     val latitude: Double,
     val longitude: Double,

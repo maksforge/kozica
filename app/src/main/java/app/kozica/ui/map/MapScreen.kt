@@ -218,10 +218,7 @@ fun MapScreen(
         val read = state.location
         when {
             read == null -> Unit
-            read.grant == LocationGrant.PRECISE -> {
-                viewModel.follow()
-                keepInView = true
-            }
+            read.grant == LocationGrant.PRECISE -> viewModel.follow()
             read.grant == LocationGrant.NONE && (!denied || activity.mayAskAgain()) -> {
                 followWanted = true
                 ask.launch(LOCATION_PERMISSIONS)
@@ -522,9 +519,12 @@ fun MapScreen(
         if (!followWanted || state.location?.grant != LocationGrant.PRECISE) return@LaunchedEffect
         followWanted = false
         viewModel.follow()
-        keepInView = true
     }
     val following = state.route.following != null
+    // A Follow tap and a Route resumed on reopening alike (docs/phase-6b.md § 3).
+    LaunchedEffect(following) {
+        if (following) keepInView = true
+    }
     LaunchedEffect(following, state.fix) {
         if (following) state.fix?.let { viewModel.followFix(it.toFollowFix()) }
     }
