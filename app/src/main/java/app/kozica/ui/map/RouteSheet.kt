@@ -76,7 +76,12 @@ internal fun RouteSheet(
         tonalElevation = 1.dp,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(horizontal = Spacing.base).padding(bottom = Spacing.base)) {
+        Column(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Spacing.base)
+                .padding(bottom = Spacing.base),
+        ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier =
@@ -143,7 +148,7 @@ internal fun RouteSheet(
                     }) { Text(stringResource(R.string.route_save)) }
                 }
             }
-            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+            Column {
                 if (planned != null) Warnings(planned, route, locale)
                 if (open) {
                     route.points.forEachIndexed { i, point ->
