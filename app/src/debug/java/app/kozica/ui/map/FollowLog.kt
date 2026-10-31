@@ -6,15 +6,18 @@ import app.kozica.data.hikes.minutes
 import app.kozica.data.routes.FIX_OLDEST_MILLIS
 import app.kozica.data.routes.FIX_WORST_ACCURACY_METRES
 import app.kozica.data.routes.FollowFix
+import app.kozica.data.routes.Progress
 import java.util.Locale
 
 /**
  * One line per fix while following, under `KozicaFollow`, for phase 6b's R3 to R5
- * (docs/phase-6b.md, Readings). `why` is why the fix did not move Progress; `left` is in minutes
- * at the Pace, as the sheet shows it.
+ * (docs/phase-6b.md, Readings). `moved` is whether this fix moved Progress on from [before]; `why` names
+ * a reason it could not, `-` when none applies. `_min` is the time left as the sheet shows it, `_s`
+ * the seconds at the Pace before rounding.
  */
 fun logFollow(
     fix: FollowFix,
+    before: Progress?,
     metres: Double,
     reach: Double,
     following: FollowingUiState?,
@@ -33,12 +36,13 @@ fun logFollow(
     val line =
         String.format(
             Locale.ROOT,
-            "time=%d accuracy=%.0f distance=%.1f counts=%b why=%s progress=%s reach=%.0f leaving=%s banner=%b " +
-                "next=%s next_min=%s end_m=%s end_min=%s note=%s",
+            "time=%d accuracy=%.0f distance=%.1f counts=%b moved=%b why=%s progress=%s reach=%.0f leaving=%s " +
+                "banner=%b next=%s next_min=%s next_s=%s end_m=%s end_min=%s end_s=%s note=%s",
             fix.atMillis,
             fix.accuracyMetres,
             metres,
             fix.counts,
+            following?.progress?.metres != before?.metres,
             why,
             following?.progress?.metres?.let { String.format(Locale.ROOT, "%.1f", it) } ?: "-",
             reach,
@@ -46,10 +50,17 @@ fun logFollow(
             leaving?.shown == true,
             left?.nextPoint ?: "-",
             left?.let { pace.minutes(it.toNext.seconds) } ?: "-",
+            left?.let { atPace(pace, it.toNext.seconds) } ?: "-",
             left?.let { String.format(Locale.ROOT, "%.0f", it.toEnd.metres) } ?: "-",
             left?.let { pace.minutes(it.toEnd.seconds) } ?: "-",
+            left?.let { atPace(pace, it.toEnd.seconds) } ?: "-",
             note ?: "-",
         )
     // JVM unit tests run the debug source set, where android.util.Log is a stub that throws.
     runCatching { Log.i("KozicaFollow", line) }
 }
+
+private fun atPace(
+    pace: Pace?,
+    seconds: Double,
+) = String.format(Locale.ROOT, "%.0f", seconds * (pace?.factor ?: 1.0))
