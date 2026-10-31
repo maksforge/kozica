@@ -15,6 +15,6 @@ licences, reproduced in the app's licences screen and in
 app/src/main/assets/licences/. Those obligations travel with every build.
 
 The map data is not covered by this notice. It is built from OpenStreetMap and
-offered under the Open Database License 1.0 with every release on GitHub, as
-MAP-DATA-LICENCE.txt says; the relief keeps the licences of its national
-sources, in RELIEF-DATA-LICENCE.txt. Both are in app/src/main/assets/licences/.
+offered under the Open Database License 1.0 with every version's release on
+GitHub, as scripts/map/MAP-DATA-LICENCE.txt says; the relief keeps the licences
+of its national sources, in scripts/map/RELIEF-DATA-LICENCE.txt.

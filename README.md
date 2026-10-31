@@ -4,7 +4,8 @@ Kozica is an offline hiking map of the Polish mountains, from the Karkonosze to 
 across the Czech and Slovak borders, with every marked trail drawn in its signposts' colour. Plan a
 route over the trails, record a hike, and look back at it, all without signal.
 
-Everything stays on the phone: the app never opens a network connection. Free, no ads, no account.
+The app has no permission to use the internet and never opens a network connection. Free, no
+ads, no account.
 
 ## Status
 
