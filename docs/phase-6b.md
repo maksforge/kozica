@@ -209,6 +209,11 @@ marked Trails exported from the Play build's share sheet; if there are neither, 
 marked Trails with the gate recorder beside it, ideally with forest or a gorge in it. The same Hikes
 are R2's.
 
+**Settled in building it** (by the agent, 2026-10-31; the owner's to reverse): a firing is at least
+40 m from every edge, so none of its minutes can lie within 40 m of a second Trail. The script
+reports the bias where it can hide a wrong turn instead: the minutes walked within 40 m of a second
+edge not joined to the nearest. A `gate.db` is pulled with its `-wal`, whose rows are the newest.
+
 ### The verdicts, decided now rather than argued about later
 
 1. **No firing on a stretch walked on a Trail, or at most one per three hours, each under a minute**
