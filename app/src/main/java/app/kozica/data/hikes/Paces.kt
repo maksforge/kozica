@@ -22,6 +22,7 @@ class Paces(
     // By id and length, since a trim changes the length, and for one state of the relief.
     private val timed = mutableMapOf<Pair<String, Double>, Double?>()
     private var timedWithRelief: Boolean? = null
+    private val readFailed = mutableSetOf<String>()
 
     val pace: Flow<Pace?> =
         combine(hikes, relief.distinctUntilChanged()) { hikes, relief ->
@@ -31,7 +32,7 @@ class Paces(
             }
             val samples = samples(hikes)
             paceOf(samples).also { pace ->
-                logPace(hikes.mapIndexed { i, hike -> hike.id to samples.getOrNull(i) }, pace)
+                logPace(hikes.mapIndexed { i, hike -> hike.id to samples.getOrNull(i) }, pace, readFailed)
             }
         }.distinctUntilChanged()
 
@@ -49,10 +50,14 @@ class Paces(
         val key = hike.id to hike.metres
         if (key in timed) return timed[key]
         return try {
-            ruleSecondsOf(hike.id).also { timed[key] = it }
+            ruleSecondsOf(hike.id).also {
+                timed[key] = it
+                readFailed -= hike.id
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
+            readFailed += hike.id
             null
         }
     }
