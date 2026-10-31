@@ -359,3 +359,17 @@ If Kozica is closed while you follow a Route, opening it again within 24 hours p
 ```
 Jeśli Kozica zostanie zamknięta podczas prowadzenia, otwarcie jej w ciągu 24 godzin wznowi prowadzenie tam, gdzie zostało przerwane. Ikona aplikacji jest nieco większa: kozica wypełnia więcej swojej ramki, jej dłuższy róg jest odrobinę krótszy, a skała pod nią odrobinę węższa. Ikona powiadomień zmienia się razem z nią.
 ```
+
+### 0.14.1 — a planned Route's buttons in landscape
+
+**English** — 137/500:
+
+```
+With the phone turned sideways, a planned Route's details now scroll as a whole, so Follow, Reverse and Save route can always be reached.
+```
+
+**Polish** — 160/500:
+
+```
+Przy telefonie obróconym poziomo szczegóły zaplanowanej trasy przewijają się teraz w całości, więc przyciski Prowadź, Odwróć i Zapisz trasę są zawsze w zasięgu.
+```
