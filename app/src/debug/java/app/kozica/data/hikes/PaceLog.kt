@@ -10,6 +10,7 @@ import java.util.Locale
 fun logPace(
     hikes: List<Pair<String, PaceSample?>>,
     pace: Pace?,
+    readFailed: Set<String>,
 ) {
     val lines =
         hikes.map { (id, sample) ->
@@ -18,6 +19,7 @@ fun logPace(
                     sample == null -> "not read"
                     sample.counts -> "counted"
                     !sample.mayCount -> "under 3 km or an hour"
+                    sample.ruleSeconds == null && id in readFailed -> "height read failed"
                     sample.ruleSeconds == null -> "no grid heights"
                     else -> "ratio outside 0.5..2"
                 }

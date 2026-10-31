@@ -5,4 +5,5 @@ package app.kozica.data.hikes
 fun logPace(
     hikes: List<Pair<String, PaceSample?>>,
     pace: Pace?,
+    readFailed: Set<String>,
 ) = Unit
