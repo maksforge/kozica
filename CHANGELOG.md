@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.4](https://github.com/maksforge/kozica/compare/v0.14.3...v0.14.4) (2026-11-01)
+
+
+### Bug Fixes
+
+* the relief keeps whole metres, a third of its download ([06ffd5e](https://github.com/maksforge/kozica/commit/06ffd5ede9c6655367bee618f481a543460afb0c))
+
 ## [0.14.3](https://github.com/maksforge/kozica/compare/v0.14.2...v0.14.3) (2026-11-01)
 
 
