@@ -128,7 +128,15 @@ Measured before the decision, on the test phone and against relief-2026-10-25:
 - **The map is unchanged.** Three views, zoom 13 to 15.5 over the Tatry, differ by at most 6 of 255
   in any channel, which no one can see.
 - **An ascent moves by about 0.5 %.** Phase 5's dead band counts a climb only past 5 m, and a height
-  moves by at most 0.5 m: over 112 profiles of 6.4 km, +4.5 m on average, +30 m at most.
+  moves by at most 0.5 m: over 112 profiles of 6.4 km, +4.5 m on average, +30 m at most. Read
+  again on the Trails once 0.14.4 rebuilt the network from it, against 0.14.3's at the same OSM pin:
+  the whole network's ascent +0.15 %, the median Trail's +0.05 % with a median absolute change of
+  0.9 m, but only 60 % of the 2,290 Trails within 1 %, 75 % within 2 % and 90 % within 6.35 %. The
+  large percentages fall on Trails that climb little, where a metre or two across the dead band is
+  a big share: the 871 Trails climbing 300 m or more move +0.03 % in the median and +4.2 % at
+  worst, and the largest change is +65 m on a 396 km regional Trail (+0.5 %).
+- **Play sends 96.8 MB for the pack instead of 267.8 MB**, read on the test phone in 0.14.3 →
+  0.14.4 ([`phase-2b.md`](../phase-2b.md) R12).
 
 **relief-2026-11-01 is relief-2026-10-25 re-encoded, not rebuilt**: `build-relief.py --reencode`
 reads the published archive and writes each tile through the same `terrarium()` a full build uses,
