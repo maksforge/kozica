@@ -5,6 +5,7 @@
     map-data/relief/venv/bin/python scripts/build-relief.py                 # every Region
     map-data/relief/venv/bin/python scripts/build-relief.py --region tatry  # one Region, to try it
     map-data/relief/venv/bin/python scripts/build-relief.py --sample 49.232 19.982
+    map-data/relief/venv/bin/python scripts/build-relief.py --reencode relief/src/main/assets/relief.pmtiles
 
 Run once, by hand, on a machine that can download about 220 GB; the output is published to its own
 GitHub release and pinned in scripts/relief.pin (ADR-0009). Each sheet is resampled as it arrives,
@@ -526,9 +527,10 @@ def terrarium(block: np.ndarray) -> bytes:
     if missing.any():
         nearest = distance_transform_edt(missing, return_distances=False, return_indices=True)
         block = block[tuple(nearest)]
-    # Tenths of a metre: finer noise is the 1 m sources averaged, and doubles the archive.
-    tenths = np.rint(block.astype(np.float64) * 10) / 10
-    q = np.rint((tenths + 32768) * 256).astype(np.int64)
+    # Whole metres by way of tenths, so that re-encoding relief-2026-10-25's tenths gives a rebuild's
+    # bytes. A pixel averages 12 m of ground; the tenths tripled the archive (ADR-0009's amendment).
+    metres = np.rint(np.rint(block.astype(np.float64) * 10) / 10)
+    q = np.rint((metres + 32768) * 256).astype(np.int64)
     rgb = np.stack([(q >> 16) & 255, (q >> 8) & 255, q & 255], axis=-1).astype(np.uint8)
     out = io.BytesIO()
     Image.fromarray(rgb, "RGB").save(out, format="WEBP", lossless=True, quality=100, method=4, exact=True)
@@ -625,6 +627,11 @@ def build_archives(heights: np.ndarray, grid: Grid, inside, attribution: str) ->
     )
 
 
+def heights_of(data: bytes) -> np.ndarray:
+    rgb = np.asarray(Image.open(io.BytesIO(data)).convert("RGB"), dtype=np.float64)
+    return rgb[..., 0] * 256 + rgb[..., 1] + rgb[..., 2] / 256 - 32768
+
+
 def sample(latitude: float, longitude: float) -> None:
     from pmtiles.reader import MmapSource, Reader
 
@@ -633,8 +640,35 @@ def sample(latitude: float, longitude: float) -> None:
         data = Reader(MmapSource(f)).get(Z, int(x) // TILE, int(y) // TILE)
     if data is None:
         fail("no relief tile there")
-    rgb = np.asarray(Image.open(io.BytesIO(data)).convert("RGB"), dtype=np.float64)[int(y) % TILE, int(x) % TILE]
-    print(f"{rgb[0] * 256 + rgb[1] + rgb[2] / 256 - 32768:.2f} m")
+    print(f"{heights_of(data)[int(y) % TILE, int(x) % TILE]:.2f} m")
+
+
+def reencoded(item: tuple[tuple[int, int, int], bytes]) -> tuple[int, bytes]:
+    (z, x, y), data = item
+    return zxy_to_tileid(z, x, y), terrarium(heights_of(data))
+
+
+def reencode(source: Path) -> None:
+    """Writes a published relief.pmtiles again through `terrarium()`, without its 220 GB of sheets."""
+    from pmtiles.reader import MmapSource, Reader, all_tiles
+
+    with source.open("rb") as f:
+        reader = Reader(MmapSource(f))
+        header, metadata = reader.header(), reader.metadata()
+        with concurrent.futures.ProcessPoolExecutor() as pool:
+            tiles = dict(pool.map(reencoded, all_tiles(MmapSource(f)), chunksize=8))
+    WORK.mkdir(parents=True, exist_ok=True)
+    path = WORK / "relief.pmtiles"
+    with path.open("wb") as f:
+        writer = Writer(f)
+        for tile_id in sorted(tiles):
+            writer.write_tile(tile_id, tiles[tile_id])
+        kept = (
+            "tile_type", "tile_compression", "min_zoom", "max_zoom", "min_lon_e7", "min_lat_e7",
+            "max_lon_e7", "max_lat_e7", "center_zoom", "center_lon_e7", "center_lat_e7",
+        )
+        writer.finalize({key: header[key] for key in kept}, metadata)
+    log(f"relief.pmtiles: {path.stat().st_size:,} bytes, sha256 {sha256(path)}")
 
 
 def sheet_kinds(sheets: list[Sheet]) -> list[str]:
@@ -667,11 +701,15 @@ def main() -> None:
     parser.add_argument("--jobs", type=int, default=8, help="sheets fetched at once")
     parser.add_argument("--device", help="network interface to download through, e.g. enp6s0")
     parser.add_argument("--sample", nargs=2, type=float, metavar=("LAT", "LON"))
+    parser.add_argument("--reencode", type=Path, metavar="RELIEF", help="re-encode a published relief.pmtiles")
     args = parser.parse_args()
     if args.device:
         os.environ["KOZICA_RELIEF_DEVICE"] = args.device
     if args.sample:
         sample(*args.sample)
+        return
+    if args.reencode:
+        reencode(args.reencode)
         return
 
     WORK.mkdir(parents=True, exist_ok=True)
