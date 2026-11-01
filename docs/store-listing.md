@@ -387,3 +387,17 @@ The map's OpenStreetMap data is refreshed to 31 October 2026: trails, paths and 
 ```
 Dane OpenStreetMap na mapie są odświeżone do 31 października 2026: szlaki, ścieżki i miejsca tak, jak zmienili je maperzy od ostatniej aktualizacji.
 ```
+
+### 0.14.3 — map data one day back
+
+**English** — 159/500:
+
+```
+The map's OpenStreetMap data goes back one day, to 30 October 2026, to test how Google Play delivers map-only updates. The next update brings it current again.
+```
+
+**Polish** — 191/500:
+
+```
+Dane OpenStreetMap na mapie cofają się o jeden dzień, do stanu z 30 października 2026, by sprawdzić, jak Google Play dostarcza aktualizacje samej mapy. Następna aktualizacja znów je odświeży.
+```
