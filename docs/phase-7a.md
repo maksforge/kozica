@@ -222,7 +222,7 @@ and "Uphill S*n* at its hardest" for its ways'; "Ridden one way".
 
 ## 5. Search
 
-Search finds places in both Modes, Trails in Hiking and Bike routes in Cycling. When the other Mode
+Search finds places in both Modes, Trails in Hiking and Bike routes in Cycling. A parent with a row for its own ways is found once, as that row, not again as its Sections' parent. When the other Mode
 has matches, one row closes the results: a tap switches the Mode and keeps the text, so the results
 are now those routes. The row switches the Mode, so it sits behind the switch's seam until 7c:
 `app/src/release/`'s half counts no Bike routes and shows no row, and a release search never queries
