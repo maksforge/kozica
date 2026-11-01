@@ -75,3 +75,11 @@ pin); its format is unchanged. **`trails.edges`** is a third base file beside th
 and the name index: each Trail's walk as steps into the network's edges. It is an ODbL derivative, and
 it ships, is recorded and is attached to the release as the other two are. The router is unchanged:
 a Route along a Trail is an ordinary Route that its via points hold on the Trail.
+
+## Amendment — 2026-11-01: the network carries Bike routes too
+
+ADR-0011 adds Cycling, whose Routes run only along Bike routes; Rides and their timing are decided
+there. The network gains the Bike routes' ways as a second set of edges beside the Trails', with
+their own direction and timing, so it holds every way drawn as a Trail or a Bike route, and a Route
+in Hiking still runs over the Trails' edges alone. The base files' growth is measured in phases 7a
+and 7b.
