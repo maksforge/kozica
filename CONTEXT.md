@@ -26,6 +26,7 @@ user-facing word genuinely differ, both are written here with the difference sta
 | **Pace** | The user's walking speed against the signposts' rule: one factor from their recorded Hikes, never below 0.75 ([`docs/phase-6b.md`](docs/phase-6b.md) § 2). In Cycling, one factor per Bike for Touring and one for MTB, from its Rides, against our riding-time rule ([ADR-0011](docs/adr/0011-cycling-follows-marked-bike-routes-and-its-times-are-our-own-estimate.md)). Polish UI: *twoje tempo*. | "speed", "fitness" |
 | **Mode** | Hiking or Cycling: the one switch the map, search, planning and recording all follow. Search finds places in both, and only the current Mode's Trails or Bike routes, with a hint offering the other's. Polish UI: *pieszo* / *rowerem*. | "profile", "activity type", "layer" |
 | **Bike route** | A signed cycling route, as on the cycling signs: Touring (`route=bicycle`) or MTB (`route=mtb`). A long one made of others is one Bike route with Sections, as a Long-distance Trail is. Polish UI: *szlak rowerowy*, *szlak MTB*. | "Trail" (kept for hiking), "cycle path" (a way, not a route) |
+| **MTB route** | A Bike route of the MTB kind (`route=mtb`), marked for mountain bikes; its sheet says "for mountain bikes" under the kind. The chip reads "MTB". Polish UI: *szlak MTB*. | "MTB trail", "mountain bike route" |
 | **Bike** | One of the user's bikes in "My bikes": a unique name and an optional photo, nothing else. With none added, every Ride is the same Bike. Polish UI: *rower*. | "profile", "vehicle", "equipment" |
 
 ## Words we deliberately avoid
