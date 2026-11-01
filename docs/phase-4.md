@@ -224,9 +224,11 @@ not work per frame; C's R3 and R4 read seams and delivery, not frame time. Two t
 
 ## 3. The relief on the map
 
-- **One `relief` pack**, fast-follow like the Regions, holding both archives, about 268 MB from
-  Play (R2, R4). It never changes between relief builds, so a release that moves only the OSM pin
-  costs nothing for it. `publish-play.yml` downloads the pinned release's archives, checks both
+- **One `relief` pack**, fast-follow like the Regions, holding both archives: 86.5 + 10.3 MB of
+  files since relief-2026-11-01 keeps whole metres (ADR-0009's amendment), where Play sent 268 MB
+  before (R2, R4); what Play sends for it now is read with 0.14.4.
+  It never changes between relief builds, yet Play sends it whole with every update all the same
+  ([`phase-2b.md`](phase-2b.md) R10, R11). `publish-play.yml` downloads the pinned release's archives, checks both
   hashes against the pin and fails on a mismatch, before `bundleRelease -PmapPacks`.
 - **`RegionFiles` learns the `relief` pack**; it is not a Region, so it does not join
   `REGION_NAMES`, and phase 2c's progress line counts it as one more item: "Downloading maps — 4 of
@@ -281,8 +283,9 @@ only on the owner's PC, so CI has no venv to run them in.
   well under a metre. Against 20 m contours that is invisible, and correcting it would be a geodesy
   step with its own source to pin.
 - **Relief stops at Ukraine's and Germany's borders**, a little short of where the OSM data does.
-- **Every install carries about 268 MB more from Play** (R4). Accepted with phase 2c's decision to
-  ship everything.
+- **Every install carries the relief's archives too**, 97 MB of files since relief-2026-11-01, where
+  Play sent 268 MB before it (R4); Play's own figure is read with 0.14.4. Accepted with phase 2c's
+  decision to ship everything.
 
 ## Readings
 
