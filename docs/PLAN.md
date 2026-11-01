@@ -28,6 +28,10 @@ was extracted from and the first app built from it settled on exactly this split
 - [ ] **Phase 6** — The hike log: record a hike, its photos and a note, look back, back it up, export GPX
 - [ ] **Phase 6b** — Walking a Route: following it on the way, and times from the user's own pace
 - [ ] **Phase 6c** — Named Trails: a whole Trail highlighted, the rest of the map fainter
+- [ ] **Phase 7a** — Cycling on the map: Bike routes, the Hiking/Cycling switch, search, the mark
+- [ ] **Phase 7b** — Planning a ride: along Bike routes, one-way lines, riding times
+- [ ] **Phase 7c** — Recording Rides: Rides in the log, My bikes, a Pace per Bike
+- [ ] **Phase 7d** — Following a ride: the screen kept on, voice directions
 - [ ] **Phase N** — Ship shape: screenshots, production access, **1.0**
 
 ---
@@ -225,6 +229,38 @@ name or relation id in the tiles, which `KozicaProfile` does not write today: a 
 rebuild and every Region's pack delivered again, needing nothing from 6 or 6b, so it can run beside
 either. Moved here from phase 5 with the owner on 2026-10-25. Planned with the owner on 2026-10-27 in
 [`phase-6c.md`](phase-6c.md): tap or search a Trail, see it whole, and make it a Route or a GPX file.
+
+## Phase 7a — Cycling on the map
+
+The Regions' signed cycling routes in the tiles, Touring and MTB, drawn in their marking colours with
+bicycle symbols along the line, and one switch, Hiking or Cycling, that the map, search and later
+planning and recording follow, the other kind faded beneath; a sub-filter for All, Touring or MTB; a
+Bike route tapped and seen whole, with its MTB difficulty; the mark with a bike drawn into its rock,
+read at launcher size (48 dp) first. A Bike route with no marking colour, as the Czech KČT numbered
+routes and any relation without `colour`, gets a style decided in this phase, and CLAUDE.md's colour
+exceptions gain the Bike routes' colours when it builds them. Planned with the owner on 2026-11-01
+for 1.0.0, in four phases built alongside everything else
+([ADR-0011](adr/0011-cycling-follows-marked-bike-routes-and-its-times-are-our-own-estimate.md),
+[`cycling-research.md`](cycling-research.md)).
+
+## Phase 7b — Planning a ride
+
+A Route in Cycling, along Bike routes only and the sub-filter's kind, honouring one-way MTB lines
+wherever OSM puts their direction. It shows distance and ascent first and an estimated time from our
+own rule, checked against published riding times for 10–15 of our Bike routes before release.
+
+## Phase 7c — Recording Rides
+
+A Ride recorded as a Hike is and kept in the same log, shown as a Ride and changeable afterwards;
+"My bikes", a name and an optional photo each; a Pace per Bike for Touring and MTB, learned from its
+Rides. The log's tab name once it holds Rides is open, decided when this phase opens.
+
+## Phase 7d — Following a ride
+
+Following in Cycling with the screen kept on in a look for a handlebar mount, and spoken junction
+directions through the phone's own speech engine in an on-device voice, checked to speak with no
+network connection, with experimental sharp-bend warnings off by default and the voice able to be
+turned off. Hiking stays silent.
 
 ## Phase N — Ship shape
 

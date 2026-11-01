@@ -16,18 +16,25 @@ user-facing word genuinely differ, both are written here with the difference sta
 | **Path** | Any footway on the map, marked or not. A Path is never drawn or named as if it were a Trail. Polish UI: *ścieżka*. | "trail" for an unmarked way |
 | **Hut** | A staffed mountain hut. Polish UI: *schronisko*. | "shelter", "refuge", "hostel" |
 | **Shelter** | An unstaffed roof on or near a Trail. Polish UI: *wiata*. A staffed *chatka* is a Hut. | "hut", *chatka* |
-| **Route** | What the user plans: a start, an end and any via points, in an order the user can change, each leg joined over Trails only. It can be saved under a name. Polish UI: *trasa*. | "trail" for a route, "track" (kept for a recorded hike) |
+| **Route** | What the user plans: a start, an end and any via points, in an order the user can change, each leg joined over Trails only in Hiking, over Bike routes only in Cycling. It can be saved under a name. Polish UI: *trasa*. | "trail" for a route, "track" (kept for a recorded hike) |
 | **Region** | A group of neighbouring mountain ranges that the map data is built and delivered in, e.g. *Beskidy Zachodnie*. Its boundary follows the ranges, not administrative borders, and crosses into Slovakia and Czechia where the ranges do; it stops at Ukraine's and Germany's. The user never picks one: every Region arrives with the app. | "area", "pack", "map" (a Region is what the map shows, not the map itself) |
-| **Hike** | One recorded outing, from Record to Stop: its track, its photos, its note. Saved in the Hikes tab. Polish UI: *wycieczka*. | "activity", "walk", "trip", "recording" (the act, not the thing kept) |
-| **Track** | The line a Hike leaves: the phone's fixes in order, broken into stretches at each pause. Polish UI: *ślad*. | "route", "trail", "path" |
-| **Following** | Walking a Route with the map keeping the user in view along it, from "Follow" to "Stop" or the Route's end, on screen only. Polish UI: *prowadzenie*. | "navigation", "guidance", "tracking" (a Track is a Hike's) |
-| **Progress** | How far along the Route's line the user is while Following; it only moves forward. Polish UI: *postęp*. | "position" (that is the fix), "distance walked" |
-| **Pace** | The user's walking speed against the signposts' rule: one factor from their recorded Hikes, never below 0.75 ([`docs/phase-6b.md`](docs/phase-6b.md) § 2). Polish UI: *twoje tempo*. | "speed", "fitness" |
+| **Hike** | One recorded outing on foot, from Record to Stop: its track, its photos, its note. Saved in the Hikes tab. Polish UI: *wycieczka*. | "activity", "walk", "trip", "recording" (the act, not the thing kept) |
+| **Ride** | One recorded outing on a Bike, kept in the same log as Hikes and shown as a Ride; a Hike can be made a Ride afterwards, and back. The tab's name once it holds Rides is open, decided when phase 7c opens. Polish UI: *wycieczka rowerowa*. | "activity", "trip", "Hike" for a Ride |
+| **Track** | The line a Hike or a Ride leaves: the phone's fixes in order, broken into stretches at each pause. Polish UI: *ślad*. | "route", "trail", "path" |
+| **Following** | Walking or riding a Route with the map keeping the user in view along it, from "Follow" to "Stop" or the Route's end: on screen only in Hiking, with spoken junction directions in Cycling. Polish UI: *prowadzenie*. | "navigation", "guidance", "tracking" (a Track is a Hike's or a Ride's) |
+| **Progress** | How far along the Route's line the user is while Following; it only moves forward. Polish UI: *postęp*. | "position" (that is the fix), "distance walked" or "ridden" |
+| **Pace** | The user's walking speed against the signposts' rule: one factor from their recorded Hikes, never below 0.75 ([`docs/phase-6b.md`](docs/phase-6b.md) § 2). In Cycling, one factor per Bike for Touring and one for MTB, from its Rides, against our riding-time rule ([ADR-0011](docs/adr/0011-cycling-follows-marked-bike-routes-and-its-times-are-our-own-estimate.md)). Polish UI: *twoje tempo*. | "speed", "fitness" |
+| **Mode** | Hiking or Cycling: the one switch the map, search, planning and recording all follow. Search finds places in both, and only the current Mode's Trails or Bike routes, with a hint offering the other's. Polish UI: *pieszo* / *rowerem*. | "profile", "activity type", "layer" |
+| **Bike route** | A signed cycling route, as on the cycling signs: Touring (`route=bicycle`) or MTB (`route=mtb`). A long one made of others is one Bike route with Sections, as a Long-distance Trail is. Polish UI: *szlak rowerowy*, *szlak MTB*. | "Trail" (kept for hiking), "cycle path" (a way, not a route) |
+| **Bike** | One of the user's bikes in "My bikes": a unique name and an optional photo, nothing else. With none added, every Ride is the same Bike. Polish UI: *rower*. | "profile", "vehicle", "equipment" |
 
 ## Words we deliberately avoid
 
 - **"Trail" never names an unmarked way.** In the Tatras only marked Trails may be walked, so the
   word, the map and the copy keep a Path from passing for one.
+- **"Trail" never names a Bike route.** In Polish both are *szlak* on the signs; in code and in
+  English the two stay apart, because a Route in Cycling follows Bike routes only and one in Hiking
+  Trails only.
 - **"Route" and "track" never name a Trail**, because each is kept for a concept of its own: what the
   user plans (a Route, above) and the line a Hike leaves (a Track, above).
 
