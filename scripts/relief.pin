@@ -1,5 +1,5 @@
 # The relief every release packs (ADR-0009): its own GitHub release, and each archive's sha256.
 # Written once per relief build by hand; scripts/fetch-relief.py downloads and checks both.
-tag relief-2026-10-25
-relief.pmtiles 43fe5fa1824863181c6f9c2ce6e14c5b19e5680f3914a40bc48f321418285be5
+tag relief-2026-11-01
+relief.pmtiles 5537a93b845b7e0b30025c298e8b0a117f46f4036645c61a58b6364342f093ac
 contours.pmtiles ac2d5ed2b7a5104e5d852605b179b27c5be3e964d6a74ef0bbce024c7ce1f3df

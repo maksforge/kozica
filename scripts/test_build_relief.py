@@ -22,11 +22,11 @@ def decode(webp: bytes) -> np.ndarray:
 
 
 class TerrariumTest(unittest.TestCase):
-    def test_heights_survive_the_round_trip_to_a_tenth_of_a_metre(self):
-        heights = np.array([-12.3, 0.0, 2499.0, 1234.56], dtype=np.float32)
+    def test_heights_survive_the_round_trip_to_a_whole_metre_by_way_of_tenths(self):
+        heights = np.array([-12.3, 0.0, 2499.0, 1234.56, 1235.46], dtype=np.float32)
         block = np.resize(heights, (relief["TILE"], relief["TILE"])).astype(np.float32)
         decoded = decode(relief["terrarium"](block))
-        np.testing.assert_allclose(decoded[0, :4], [-12.3, 0.0, 2499.0, 1234.6], atol=0.005)
+        np.testing.assert_array_equal(decoded[0, :5], [-12.0, 0.0, 2499.0, 1235.0, 1236.0])
 
 
 class GapCheckTest(unittest.TestCase):
