@@ -401,3 +401,17 @@ The map's OpenStreetMap data goes back one day, to 30 October 2026, to test how 
 ```
 Dane OpenStreetMap na mapie cofają się o jeden dzień, do stanu z 30 października 2026, by sprawdzić, jak Google Play dostarcza aktualizacje samej mapy. Następna aktualizacja znów je odświeży.
 ```
+
+### 0.14.4 — a smaller relief
+
+**English** — 170/500:
+
+```
+The map's relief, its shading and the heights behind ascents, is now a third of its former download size: each update downloads about 170 MB less. The map looks the same.
+```
+
+**Polish** — 204/500:
+
+```
+Rzeźba terenu na mapie, czyli cieniowanie i wysokości, z których liczone są podejścia, ma teraz jedną trzecią wcześniejszego rozmiaru: każda aktualizacja pobiera około 170 MB mniej. Mapa wygląda tak samo.
+```

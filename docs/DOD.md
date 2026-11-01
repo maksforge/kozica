@@ -113,15 +113,16 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       such as a hike with the dot shown on the owner's phone, shows what it costs the battery; if it
       matters, find what about the dot draws them (its animation, compass bearing updates, or the
       fixes it is fed) before changing anything; either way, tick it and record the verdict.
-- [ ] **Take R10 and R11's verdict on the map format.** Two releases that only move the pin, read
+- [x] **Take R10 and R11's verdict on the map format.** Two releases that only move the pin, read
       through the internal track: 0.14.1 → 0.14.2 queued 361.7 MB 33 minutes after its upload,
       patching six Regions on the sixth request after five refused; 0.14.2 → 0.14.3 queued 562.8 MB
       2 hours after its upload, at the first request, and patched nothing. The unchanged relief,
       268 MB, came whole every time, as it did with every pack in a code-only update
       ([`phase-2b.md`](phase-2b.md) R10, R11). Still unread: whether a later request, or a second
       device's, gets patches for a pair Play first sent whole, and whether Play ever patches or skips
-      the relief. § 1's verdict 3: the owner decides what that reopens (the format, the relief's
-      size, how often a release ships). Tick it with the decision.
+      the relief. § 1's verdict 3, decided with the owner on 2026-11-01: the format stays, and the
+      relief, the largest pack and sent whole every time, keeps whole metres instead of tenths, 86 MB
+      instead of 257 MB with no visible change (ADR-0009's 2026-11-01 amendment).
 
 ## Standing checks that never close
 

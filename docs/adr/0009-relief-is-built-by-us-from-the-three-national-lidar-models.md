@@ -115,3 +115,23 @@ at the water level. So the named source for this gap is the reservoir's own shor
 each gap inside the reservoir's listed bounds that data surrounds at one level, the lowest tenth of
 the heights around it (the median would lift the water onto its banks), and logs the level. The list is `WATER` in `scripts/build-relief.py`; a water
 body joins it only through a gap a build has found, and every other gap still fails.
+
+## Amendment — 2026-11-01: heights in whole metres
+
+Play sends the `relief` pack whole with every update, although its bytes never change between relief
+builds ([`phase-2b.md`](../phase-2b.md) R10, R11): 268 MB of every update, to every install. Decided
+with the owner: **the grid keeps whole metres instead of tenths.** A pixel averages about 12 m of
+ground whose height varies by metres within it, so the tenths described the averaging, not the
+ground, and they were two thirds of the archive: `relief.pmtiles` is 86 MB instead of 257 MB.
+Measured before the decision, on the test phone and against relief-2026-10-25:
+
+- **The map is unchanged.** Three views, zoom 13 to 15.5 over the Tatry, differ by at most 6 of 255
+  in any channel, which no one can see.
+- **An ascent moves by about 0.5 %.** Phase 5's dead band counts a climb only past 5 m, and a height
+  moves by at most 0.5 m: over 112 profiles of 6.4 km, +4.5 m on average, +30 m at most.
+
+**relief-2026-11-01 is relief-2026-10-25 re-encoded, not rebuilt**: `build-relief.py --reencode`
+reads the published archive and writes each tile through the same `terrarium()` a full build uses,
+which rounds to tenths and then to metres, so the two give the same bytes. The contours are drawn
+from the grid itself, not from the tiles, and stay as they were. The Trail network reads the relief
+for its ascents, so it is rebuilt from the new one with the release that first packs it.
