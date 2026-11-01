@@ -241,12 +241,14 @@ routes and any relation without `colour`, gets a style decided in this phase, an
 exceptions gain the Bike routes' colours when it builds them. Planned with the owner on 2026-11-01
 for 1.0.0, in four phases built alongside everything else
 ([ADR-0011](adr/0011-cycling-follows-marked-bike-routes-and-its-times-are-our-own-estimate.md),
-[`cycling-research.md`](cycling-research.md)).
+[`cycling-research.md`](cycling-research.md)). Planned in full on 2026-11-01 in [`phase-7a.md`](phase-7a.md): the
+Bike routes' edges, membership and direction moved here from 7b, for the sheet, and the switch and
+the new mark stay developer-only until 7c.
 
 ## Phase 7b — Planning a ride
 
 A Route in Cycling, along Bike routes only and the sub-filter's kind, honouring one-way MTB lines
-wherever OSM puts their direction. It shows distance and ascent first and an estimated time from our
+by the direction 7a reads into the network. It shows distance and ascent first and an estimated time from our
 own rule, checked against published riding times for 10–15 of our Bike routes before release.
 
 ## Phase 7c — Recording Rides
