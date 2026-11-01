@@ -5,8 +5,8 @@ relies on [ADR-0011](adr/0011-cycling-follows-marked-bike-routes-and-its-times-a
 (one Mode switch, Bike routes only), ADR-0007 (every Region's pack is rebuilt and delivered again),
 ADR-0008 (the Bike routes' index ships in the app like the Trails') and ADR-0010 (the network gains
 the Bike routes' ways as a second set of edges, with their direction; from B its router keeps a Route in
-Hiking off them, and plans along them from 7b). [`CONTEXT.md`](../CONTEXT.md) already holds **Mode**, **Bike route** and **Bike**; it owes
-the English for an MTB Bike route (§ 4's "MTB route", *szlak MTB*), the owner's to confirm. Planned
+Hiking off them, and plans along them from 7b). [`CONTEXT.md`](../CONTEXT.md) already holds **Mode**, **Bike route** and **Bike**; it gains
+**MTB route**, a Bike route of the MTB kind (*szlak MTB*), confirmed with the owner on 2026-11-02. Planned
 with the owner on 2026-11-01, the design advised by a design review of the style and the mark.
 
 **What closing this phase means.** Today the map draws Trails and nothing else that is marked; the
@@ -109,15 +109,17 @@ of the renders.
 
 - **Kept relations**: `route=bicycle` (Touring) and `route=mtb` (MTB), with `name`, `name:pl`, `ref`,
   `colour`, `network`, `from`/`to`, `mtb:scale`, `mtb:scale:uphill`, `signed_direction`.
-- **Relations of relations: open, the owner's.** 19 Bike routes at the current pin hold Bike routes,
-  and 6c's two rules (`nwn`/`iwn` → Sections, `rwn`/`lwn` → same-marked pieces) do not map onto them
-  cleanly: `icn`/`ncn` parents such as Greenway r2110268 (2,210 ways of its own) and ncn 21 r38927
-  (277) would drop their own ways under the Sections rule, since the profile reads `part` and
-  `connection` as no role; and the trail centres, Singltrek pod Smrkem r611323 (`rcn`, four
-  `connection` ways, ten loops in four colours), Single Track Świeradów r13699712, Babia Góra Trails
-  r13222440 and Bike Park Czarna Góra r3132963 (`lcn`, no ways), are groups of differently marked
-  lines. Rychlebské stezky r377944 holds ways only. The rule per `network`, and for none, is decided
-  before B.
+- **Relations of relations**, decided with the owner on 2026-11-02: 19 Bike routes at the current
+  pin hold Bike routes. **An `icn` or `ncn` parent, and any parent whose Bike routes are marked
+  otherwise than itself, has Sections**: each child its own Bike route, the parent seen whole too.
+  **A parent whose Bike routes all carry its own marking is one Bike route of pieces**, as 6c's
+  regional Trails are. The marking decides, not `network` alone, because the trail centres are
+  `rcn` or `lcn`: Singltrek pod Smrkem r611323 (`rcn`, ten loops in four colours), Single Track
+  Świeradów r13699712, Babia Góra Trails r13222440 and Bike Park Czarna Góra r3132963 (`lcn`) are
+  groups of differently marked lines, each ridden on its own. **A parent's own ways stay on the
+  map as the parent's** whatever its rule: `part` and `connection` count as members, so Greenway
+  r2110268 (2,210 ways of its own) and ncn 21 r38927 (277) keep theirs. Rychlebské stezky r377944
+  holds ways only.
 - **The `bike_routes` layer**, from tile zoom 10: one feature per Bike route per way, with
   `bike_route` (the relation id), `kind` (`touring` | `mtb`), `colour` (the five or `other`),
   `network`, `ref`, `index`, `count`, and `dir` (`forward` | `backward`) on a one-way way only.
@@ -200,7 +202,7 @@ Copy: "Hiking", "Cycling" (the switch's descriptions), "All", "Touring", "MTB".
   *kind*: *from* – *to*" from the ends a mapper wrote or the places nearest them, else the colour
   and kind alone. `other` is "marked", as 6c's Trails are. A route with both a name and a number
   shows the number under the title.
-- **The facts**: kind, colour and plate, length, ascent and descent each way, the profile. A one-way
+- **The facts**: kind, with "for mountain bikes" under an MTB route's, colour and plate, length, ascent and descent each way, the profile. A one-way
   route gives the ridden direction only. No time.
 - **The MTB difficulty**: the route's own `mtb:scale` if it carries one (the row's `mtb_scale`),
   else the hardest grade on its walk's edges with the share of its length graded, read from the
@@ -209,7 +211,7 @@ Copy: "Hiking", "Cycling" (the switch's descriptions), "All", "Touring", "MTB".
 
 Copy: "Bike route *n*", "MTB route *n*", "*colour* Bike route: *from* – *to*", "*colour* MTB route:
 *from* – *to*", "*colour* Bike route", "*colour* MTB route", with "marked" among the colours; "S*n*"
-and "Uphill S*n*" for the route's own tags; "S*n* at its hardest · graded over *p* % of its length"
+and "Uphill S*n*" for the route's own tags; "For mountain bikes"; "S*n* at its hardest · graded over *p* % of its length"
 and "Uphill S*n* at its hardest" for its ways'; "Ridden one way".
 
 ## 5. Search
@@ -284,10 +286,10 @@ merges.
   sheets will have no difficulty line, and that is said by its absence rather than guessed.
 - **Release users see faded Bike routes they cannot select** from C until 7c. Harmless, and the
   alternative, a second set of archives, is not worth it.
-- **Strands hidden by zoom or by a chip keep their slots: open, the owner's.** Below zoom 12 and
-  under Touring or MTB, the drawn strands sit off-centre with gaps where hidden ones would be.
-  Accepted as a gap, or each zoom tier and chip gets its own slots in the tiles, at a cost R1
-  measures.
+- **Strands hidden by zoom or by a chip keep their slots**, accepted with the owner on 2026-11-02.
+  Below zoom 12 and under Touring or MTB, the drawn strands sit off-centre with gaps where hidden
+  ones would be; the other Mode's are faded, not hidden, so a switch of Mode leaves none. R3 looks
+  at it; if it reads badly, each zoom tier and chip gets its own slots in the tiles.
 
 ## Readings
 
