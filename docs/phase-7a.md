@@ -4,8 +4,8 @@ Sequence lives in [`PLAN.md`](PLAN.md); the live worklist lives in [`DOD.md`](DO
 relies on [ADR-0011](adr/0011-cycling-follows-marked-bike-routes-and-its-times-are-our-own-estimate.md)
 (one Mode switch, Bike routes only), ADR-0007 (every Region's pack is rebuilt and delivered again),
 ADR-0008 (the Bike routes' index ships in the app like the Trails') and ADR-0010 (the network gains
-the Bike routes' ways as a second set of edges, with their direction; its router is untouched until
-7b). [`CONTEXT.md`](../CONTEXT.md) already holds **Mode**, **Bike route** and **Bike**; it owes
+the Bike routes' ways as a second set of edges, with their direction; from B its router keeps a Route in
+Hiking off them, and plans along them from 7b). [`CONTEXT.md`](../CONTEXT.md) already holds **Mode**, **Bike route** and **Bike**; it owes
 the English for an MTB Bike route (§ 4's "MTB route", *szlak MTB*), the owner's to confirm. Planned
 with the owner on 2026-11-01, the design advised by a design review of the style and the mark.
 
@@ -264,7 +264,7 @@ merges.
 ## Documents this phase amends
 
 - **ADR-0010**: an amendment: the Bike routes' ways are a second set of edges with direction, built
-  in 7a, read by the router from 7b.
+  in 7a; from B the router keeps a Route in Hiking off them, and from 7b it plans along them.
 - **ADR-0011**: its Consequences note that the edges and direction are built in 7a.
 - **`PLAN.md`**: 7a's and 7b's paragraphs, for the edges and direction moved here.
 - **`CLAUDE.md`**: the colour exceptions gain violet, and `gen_style.py`'s docstring with them; the
