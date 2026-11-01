@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.2](https://github.com/maksforge/kozica/compare/v0.14.1...v0.14.2) (2026-11-01)
+
+
+### Bug Fixes
+
+* refresh the map data to OpenStreetMap as of 31 October 2026 ([78fa0ac](https://github.com/maksforge/kozica/commit/78fa0ac1b78745a770013a42c31c5b99abce746e))
+
 ## [0.14.1](https://github.com/maksforge/kozica/compare/v0.14.0...v0.14.1) (2026-10-31)
 
 
