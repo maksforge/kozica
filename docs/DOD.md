@@ -85,9 +85,9 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       entry.
 - [x] **Take checkpoint E, phase 2b's since phase 2 split.** Passed with 0.3.0 (R4, R7, R8, R9);
       the Console asked no foreground-service declaration for `dataSync` (2026-10-27,
-      [`play-app-content.md`](play-app-content.md)). The one-pin update was read on 2026-11-01
-      ([`phase-2b.md`](phase-2b.md) R10); its verdict waits on the owner, under *After the closed
-      test*.
+      [`play-app-content.md`](play-app-content.md)). The one-pin update was read twice on 2026-11-01
+      ([`phase-2b.md`](phase-2b.md) R10, R11); their verdict waits on the owner, under *After the
+      closed test*.
 - [x] **Take phase 1's phone readings before phase 2 builds on MapLibre.** Taken 2026-10-19: R1
       verdict 1, R8 verdict 3 (undecided until E), R9 after fixing a crash, R10's screen
       ([`phase-1.md`](phase-1.md) § 1).
@@ -113,12 +113,15 @@ close. Whenever `APP_SCHEMA_VERSION` changes, all five hold before the release g
       such as a hike with the dot shown on the owner's phone, shows what it costs the battery; if it
       matters, find what about the dot draws them (its animation, compass bearing updates, or the
       fixes it is fed) before changing anything; either way, tick it and record the verdict.
-- [ ] **Take R10's verdict on the map format.** 0.14.1 → 0.14.2, a release that only moves the pin,
-      patched six Regions but sent the Tatry, Sudety Środkowe, Sudety Zachodnie and the unchanged
-      relief whole, 33 minutes after the upload: § 1's verdict 3 on the Tatry
-      ([`phase-2b.md`](phase-2b.md) R10). The owner decides whether that reopens the format, or
-      whether one more pin-only release is read first, an hour or more after its upload, to tell
-      "Play won't patch them" from "the patches were not ready yet". Tick it with the decision.
+- [ ] **Take R10 and R11's verdict on the map format.** Two releases that only move the pin, read
+      through the internal track: 0.14.1 → 0.14.2 queued 361.7 MB 33 minutes after its upload,
+      patching six Regions on the sixth request after five refused; 0.14.2 → 0.14.3 queued 562.8 MB
+      2 hours after its upload, at the first request, and patched nothing. The unchanged relief,
+      268 MB, came whole every time, as it did with every pack in a code-only update
+      ([`phase-2b.md`](phase-2b.md) R10, R11). Still unread: whether a later request, or a second
+      device's, gets patches for a pair Play first sent whole, and whether Play ever patches or skips
+      the relief. § 1's verdict 3: the owner decides what that reopens (the format, the relief's
+      size, how often a release ships). Tick it with the decision.
 
 ## Standing checks that never close
 
