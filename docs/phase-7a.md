@@ -109,17 +109,23 @@ of the renders.
 
 - **Kept relations**: `route=bicycle` (Touring) and `route=mtb` (MTB), with `name`, `name:pl`, `ref`,
   `colour`, `network`, `from`/`to`, `mtb:scale`, `mtb:scale:uphill`, `signed_direction`.
-- **Relations of relations**, decided with the owner on 2026-11-02: 19 Bike routes at the current
-  pin hold Bike routes. **An `icn` or `ncn` parent, and any parent whose Bike routes are marked
-  otherwise than itself, has Sections**: each child its own Bike route, the parent seen whole too.
-  **A parent whose Bike routes all carry its own marking is one Bike route of pieces**, as 6c's
-  regional Trails are. The marking decides, not `network` alone, because the trail centres are
-  `rcn` or `lcn`: Singltrek pod Smrkem r611323 (`rcn`, ten loops in four colours), Single Track
-  Świeradów r13699712, Babia Góra Trails r13222440 and Bike Park Czarna Góra r3132963 (`lcn`) are
-  groups of differently marked lines, each ridden on its own. **A parent's own ways stay on the
-  map as the parent's** whatever its rule: `part` and `connection` count as members, so Greenway
-  r2110268 (2,210 ways of its own) and ncn 21 r38927 (277) keep theirs. Rychlebské stezky r377944
-  holds ways only.
+- **Relations of relations**, decided with the owner on 2026-11-02 (19 Bike routes at the current
+  pin hold Bike routes), following 6c's per-member reading:
+  - **An `icn` or `ncn` parent has Sections**, whatever their marking: each member relation without
+    a role is a Bike route of its own, and "Show the whole" shows the parent, as a Long-distance
+    Trail's does.
+  - **Any other parent is read per member.** A member carrying the parent's marking is a piece: its
+    ways write the parent's id, and the parent is one Bike route. A member marked otherwise is a
+    Bike route of its own. A parent with no member carrying its marking has Sections, as an `icn`
+    one does. That is the trail centres: Singltrek pod Smrkem r611323 (`rcn`, ten loops in four
+    colours), Single Track Świeradów r13699712, Babia Góra Trails r13222440 and Bike Park Czarna
+    Góra r3132963 (`lcn`), each line ridden on its own. The marking decides, not `network` alone,
+    because these are `rcn` and `lcn`.
+  - **A parent's own ways stay on the map as the parent's**, unlike a Long-distance Trail's
+    (6c § 2): `part` and `connection` count as members. A parent with Sections and ways of its own
+    gets a row for those ways, titled as the parent, with its own walk and sheet; a tap on them
+    takes it, and "Show the whole" adds its Sections. Greenway r2110268 (2,210 ways of its own) and
+    ncn 21 r38927 (277) keep theirs. Rychlebské stezky r377944 holds ways only.
 - **The `bike_routes` layer**, from tile zoom 10: one feature per Bike route per way, with
   `bike_route` (the relation id), `kind` (`touring` | `mtb`), `colour` (the five or `other`),
   `network`, `ref`, `index`, `count`, and `dir` (`forward` | `backward`) on a one-way way only.
@@ -253,6 +259,12 @@ merges.
   four distinct slots, in the union's order, and the drawn direction of the union's first. Fails
   towards a strand drawn over another.
 - **The title rule**, each branch, in English and Polish, as 6c's test does for Trails.
+- **Sections or pieces**, in the build, one fixture per branch: an `ncn` parent with same-marked
+  members (Sections), an `lcn` parent with all members marked otherwise (Sections), a mixed `rcn`
+  parent (the same-marked member a piece writing the parent's id, the other a Bike route of its
+  own), and a parent with Sections and `part`/`connection` ways of its own (a row for those ways,
+  under the parent's id). Fails towards a tap that takes a fragment, or a parent's own ways that
+  vanish.
 - **The difficulty line**: the route's own tag over its ways', the hardest grade and its share, and
   no line when nothing is graded; in the build, an edge cut where `mtb:scale` changes along a way.
   Fails towards an easy grade claimed for an ungraded route.
@@ -300,7 +312,7 @@ build with the Regions hand-pushed.
 | --- | --- | --- | --- |
 | R1 | The archives' and base files' growth, per Region and in total, on B's branch before it merges | `build-map-data.py` over B's pin; `ls -l map-data/archives/` against the v0.14.4 release's attachments | |
 | R2 | The title tally for Bike routes, and the largest union `count` on a way | `python3 scripts/map/trail-tally.py` | |
-| R3 | The plates, the fade and the zoom thresholds at real size, in both themes | test phone, screencaps at zoom 10–17 over Beskidy Zachodnie and the Sudety | |
+| R3 | The plates, the fade, the zoom thresholds and the gaps where strands are hidden (below zoom 12, under each chip) at real size, in both themes | test phone, screencaps at zoom 10–17 over Beskidy Zachodnie and the Sudety | |
 | R4 | Direction: Twister (r5738733) and Rapický okruh (r1636172) draw their chevrons the way they are ridden and their sheets give one direction; Rychlebské stezky (r377944), part directed, draws chevrons on its directed ways and its sheet gives both | test phone, `CameraReceiver` to each, screencaps | |
 | R5 | A tap in Cycling where Trails and Bike routes share a way lists the Bike routes only | test phone, screencap of the chooser | |
 | R6 | The frame time at zoom 11 and 13 in Cycling with every Bike route drawn, against the same pan with v0.14.4's Region archives hand-pushed instead, taken straight before it. Pass: p95 within 25 % of the baseline's, and no frame over 100 ms beyond the baseline's | phase 4's R1 apparatus and pan as 6c's R3 reread it, all nine Regions and the relief hand-pushed; `CameraReceiver` to Bielsko-Biała's Enduro Trails on Twister (49.77, 19.05), the town's Touring routes in the same frame at zoom 11; `logcat -d -s KozicaFrames \| python3 scripts/map/frame-stats.py` | |
