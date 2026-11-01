@@ -373,3 +373,17 @@ With the phone turned sideways, a planned Route's details now scroll as a whole,
 ```
 Przy telefonie obróconym poziomo szczegóły zaplanowanej trasy przewijają się teraz w całości, więc przyciski Prowadź, Odwróć i Zapisz trasę są zawsze w zasięgu.
 ```
+
+### 0.14.2 — fresher map data
+
+**English** — 138/500:
+
+```
+The map's OpenStreetMap data is refreshed to 31 October 2026: trails, paths and places as mappers have changed them since the last update.
+```
+
+**Polish** — 148/500:
+
+```
+Dane OpenStreetMap na mapie są odświeżone do 31 października 2026: szlaki, ścieżki i miejsca tak, jak zmienili je maperzy od ostatniej aktualizacji.
+```
